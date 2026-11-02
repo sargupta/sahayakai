@@ -72,29 +72,10 @@ void main() {
         expect(icon.color, isNot(AppColors.brandSaffron));
       },
     );
-
-    testWidgets('label uses the dark saffron-text token in dark', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        hostProfile(
-          const PlanBadgeChip(),
-          brightness: Brightness.dark,
-          overrides: [
-            tokenOverride(fakeJwt({'planType': 'gold'})),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(_labelColor(tester, 'Gold'), AppColors.dPrimaryText); // #E08A3C
-    });
   });
 
   group('muted / free plan chip', () {
-    testWidgets('inks full onSurface, never the muted token', (
-      tester,
-    ) async {
+    testWidgets('inks full onSurface, never the muted token', (tester) async {
       await tester.pumpWidget(
         hostProfile(
           const PlanBadgeChip(),

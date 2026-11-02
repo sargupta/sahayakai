@@ -136,11 +136,12 @@ String _tripAsText(FieldTrip trip) {
   return b.toString().trimRight();
 }
 
-/// A plain-text export of the itinerary for Copy and Share. Same body as
-/// [_tripAsText] plus each stop's Google Earth link, which is the part a
+/// A plain-text export of the itinerary — for the clipboard, the OS share
+/// sheet, and the deliver tray. One serialiser, so every path reads alike. Same
+/// body as [_tripAsText] plus each stop's Google Earth link, which is the part a
 /// colleague receiving this on WhatsApp actually needs — and exactly the part
 /// that must NOT be in the read-aloud text, where a URL is unspeakable noise.
-String _tripAsShareText(FieldTrip trip) {
+String fieldTripAsPlainText(FieldTrip trip) {
   final b = StringBuffer()..writeln(trip.title);
   final metaBits = [
     trip.gradeLevel,
@@ -221,7 +222,7 @@ class _ActionBar extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.space3),
         ResultActionsBar(
-          text: _tripAsShareText(trip),
+          text: fieldTripAsPlainText(trip),
           shareSubject: trip.title.isEmpty ? null : trip.title,
           saveResetKey: trip,
           onSave: canSave

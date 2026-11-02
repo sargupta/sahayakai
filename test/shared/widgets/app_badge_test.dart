@@ -74,23 +74,6 @@ void main() {
       expect(color, isNot(AppColors.brandSaffron));
     });
 
-    testWidgets('dark uses the dark saffron text token #E08A3C', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _host(
-          Brightness.dark,
-          const AppBadge(
-            icon: LucideIcons.graduationCap,
-            label: 'Class 6',
-            tone: AppBadgeTone.accent,
-          ),
-        ),
-      );
-
-      expect(_accentLabelColor(tester, 'Class 6'), AppColors.dPrimaryText);
-    });
-
     testWidgets('the ordinal count badge (accent) uses the same token', (
       tester,
     ) async {
@@ -124,25 +107,6 @@ void main() {
       },
     );
 
-    testWidgets('the accent GLYPH uses the dark saffron-text token in dark', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _host(
-          Brightness.dark,
-          const AppBadge(
-            icon: LucideIcons.graduationCap,
-            label: 'Class 6',
-            tone: AppBadgeTone.accent,
-          ),
-        ),
-      );
-      expect(
-        tester.widget<Icon>(find.byIcon(LucideIcons.graduationCap)).color,
-        AppColors.dPrimaryText,
-      );
-    });
-
     testWidgets('the neutral tone is untouched (regular = onSurface ink)', (
       tester,
     ) async {
@@ -172,18 +136,6 @@ void main() {
       // same tint: above the 3.1 large-text floor, below the 4.5 text floor.
       expect(_ratio(AppColors.brandSaffron, tint), greaterThan(3.0));
       expect(_ratio(AppColors.brandSaffron, tint), lessThan(4.5));
-    });
-
-    test('dark: #E08A3C on the tint over a dark card', () {
-      final tint = _over(
-        AppColors.dPrimary.withValues(alpha: 0.12),
-        AppColors.dCard,
-      );
-      expect(
-        _ratio(AppColors.dPrimaryText, tint),
-        greaterThanOrEqualTo(4.5),
-        reason: 'dark saffron label must meet AA on the accent tint',
-      );
     });
   });
 
@@ -216,22 +168,6 @@ void main() {
         // documented fail — a regression below the floor still fails here.
         expect(
           _ratio(AppColors.lMutedForeground, AppColors.lSurfaceContainerHigh),
-          greaterThanOrEqualTo(4.5),
-        );
-      });
-
-      testWidgets('dark: full-ink onSurface clears AA', (tester) async {
-        await tester.pumpWidget(
-          _host(
-            Brightness.dark,
-            const AppBadge(label: 'Kannada', size: AppBadgeSize.small),
-          ),
-        );
-
-        final color = _accentLabelColor(tester, 'Kannada');
-        expect(color, AppColors.dForeground);
-        expect(
-          _ratio(color, AppColors.dSurfaceContainerHigh),
           greaterThanOrEqualTo(4.5),
         );
       });

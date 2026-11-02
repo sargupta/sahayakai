@@ -5,18 +5,17 @@ import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
 
-/// v3 floating tab bar — Design System v3 ("icons only, four tabs, saffron
-/// disc on the active one").
+/// The floating tab bar, drawn to the UX map's `tabbar`: four tabs, the active
+/// one a saffron-600 pill carrying its name, VIDYA optionally docked (v2 9a).
 ///
-/// Drives the widget in isolation so the icon-only structure, the saffron
-/// disc, the 48dp touch area, the docked-VIDYA layout (v2 9a), the
-/// reduce-motion degradation and the camera (scanner) tone are asserted
-/// directly. Tab
-/// routing through the shell is covered end-to-end by the shell/home suites.
+/// Drives the widget in isolation so the pill, the 48dp touch cells, the
+/// docked layout, the reduce-motion degradation and the camera (scanner) tone
+/// are asserted directly. Tab routing through the shell is covered end-to-end
+/// by the shell/home suites.
 
 const _icons = <IconData>[
   LucideIcons.home,
-  LucideIcons.library,
+  LucideIcons.folder,
   LucideIcons.users,
   LucideIcons.user,
 ];
@@ -36,25 +35,30 @@ Future<void> _pumpNav(
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
-      // The bar is icon-only visually but carries localized screen-reader
-      // labels (v3), so it resolves `context.l10n` — the host must install the
+      // The active tab draws its localized name, so the host installs the
       // app's delegates or `AppLocalizations.of` throws on the first build.
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(disableAnimations: reduceMotion),
-        child: StatefulBuilder(
-          builder: (context, setState) => Scaffold(
-            bottomNavigationBar: FloatingBottomNav(
-              currentIndex: selected,
-              dock: dock,
-              prompt: prompt,
-              showDock: showDock,
-              tone: tone,
-              onSelected: (i) {
-                onSelect?.call(i);
-                setState(() => selected = i);
-              },
+      // Inherit the test surface's real size (the bar measures it to decide
+      // whether the active name fits); only reduce-motion is overridden.
+      home: Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(disableAnimations: reduceMotion),
+          child: StatefulBuilder(
+            builder: (context, setState) => Scaffold(
+              bottomNavigationBar: FloatingBottomNav(
+                currentIndex: selected,
+                dock: dock,
+                prompt: prompt,
+                showDock: showDock,
+                tone: tone,
+                onSelected: (i) {
+                  onSelect?.call(i);
+                  setState(() => selected = i);
+                },
+              ),
             ),
           ),
         ),
@@ -64,12 +68,10 @@ Future<void> _pumpNav(
   await tester.pumpAndSettle();
 }
 
-/// The AnimatedContainer carrying tab [index]'s disc/background.
-///
-/// The `tab_$i` key marks the tab BUTTON (the keyed element must own the
-/// semantics node the a11y assertions read); the disc container is its
-/// decorated descendant.
-AnimatedContainer _tabContainer(WidgetTester tester, int index) =>
+/// The AnimatedContainer drawing tab [index]'s button. The `tab_$i` key marks
+/// the 48dp touch cell (the element owning the semantics node); the drawn
+/// button is its decorated descendant.
+AnimatedContainer _button(WidgetTester tester, int index) =>
     tester.widget<AnimatedContainer>(
       find.descendant(
         of: find.byKey(ValueKey('tab_$index')),
@@ -77,39 +79,68 @@ AnimatedContainer _tabContainer(WidgetTester tester, int index) =>
       ),
     );
 
-/// The background colour currently painted behind tab [index].
-Color? _tabColor(WidgetTester tester, int index) =>
-    (_tabContainer(tester, index).decoration as BoxDecoration).color;
+/// The fill painted behind tab [index], or null when it is bare.
+Color? _fill(WidgetTester tester, int index) =>
+    (_button(tester, index).decoration as ShapeDecoration?)?.color;
+
+Size _drawnSize(WidgetTester tester, int index) => tester.getSize(
+  find.descendant(
+    of: find.byKey(ValueKey('tab_$index')),
+    matching: find.byType(AnimatedContainer),
+  ),
+);
 
 void main() {
   group('structure', () {
-    testWidgets('renders exactly the four destination glyphs, no labels', (
+    testWidgets('four destination glyphs; only the active tab shows its name', (
       tester,
     ) async {
-      await _pumpNav(tester);
+      await _pumpNav(tester, initialIndex: 1);
 
       for (final icon in _icons) {
         expect(find.byIcon(icon), findsOneWidget);
       }
-      // Icon-only: labels are accessible names, never drawn.
-      expect(find.byType(Text), findsNothing);
+      // The map's Library glyph is a folder.
+      expect(find.byIcon(LucideIcons.library), findsNothing);
+      // The active tab carries its name; the others are icon-only.
+      expect(find.text('Library'), findsOneWidget);
+      expect(find.text('Home'), findsNothing);
+      expect(find.text('Profile'), findsNothing);
       // No fifth tab, no Create action.
       expect(find.byIcon(LucideIcons.sparkles), findsNothing);
     });
 
-    testWidgets('the active tab wears the saffron disc', (tester) async {
+    testWidgets('the active tab is a saffron-600 pill with a white icon', (
+      tester,
+    ) async {
       await _pumpNav(tester, initialIndex: 1);
 
-      expect(_tabColor(tester, 1), AppColors.saffron500);
-      // Inactive tabs are bare (transparent) — ink icons only.
-      expect(_tabColor(tester, 0), isNull);
-      expect(_tabColor(tester, 2), isNull);
-      expect(_tabColor(tester, 3), isNull);
+      expect(_fill(tester, 1), AppColors.accentFill);
+      final active = tester.widget<Icon>(find.byIcon(LucideIcons.folder));
+      expect(active.color, AppColors.textOnAccent);
+      // Inactive tabs are bare, with muted icons.
+      expect(_fill(tester, 0), isNull);
+      expect(_fill(tester, 3), isNull);
+      final inactive = tester.widget<Icon>(find.byIcon(LucideIcons.home));
+      expect(inactive.color, AppColors.ink500);
+    });
+
+    testWidgets('the pill grows past a bare 42px button to fit its name', (
+      tester,
+    ) async {
+      await _pumpNav(tester, initialIndex: 1);
+
+      expect(_drawnSize(tester, 0), const Size(42, 42));
+      final pill = _drawnSize(tester, 1);
+      expect(pill.height, 42);
+      expect(pill.width, greaterThan(42));
     });
   });
 
   group('selection', () {
-    testWidgets('tapping a tab reports its index to the shell', (tester) async {
+    testWidgets('tapping a tab reports its index and moves the pill', (
+      tester,
+    ) async {
       int? tapped;
       await _pumpNav(tester, onSelect: (i) => tapped = i);
 
@@ -117,54 +148,31 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tapped, 2);
-      // And the disc follows: index 2 now carries it.
-      expect(_tabColor(tester, 2), AppColors.saffron500);
-      expect(_tabColor(tester, 0), isNull);
+      expect(_fill(tester, 2), AppColors.accentFill);
+      expect(_fill(tester, 0), isNull);
+      expect(find.text('Community'), findsOneWidget);
     });
   });
 
   group('with VIDYA docked (v2 9a)', () {
     const dock = SizedBox.square(key: ValueKey('dock'), dimension: 44);
 
-    testWidgets('the active tab is a 12% saffron tint, not the disc', (
-      tester,
-    ) async {
+    testWidgets('the dock follows the tabs after a divider', (tester) async {
       await _pumpNav(tester, initialIndex: 2, dock: dock);
 
-      expect(_tabColor(tester, 2), AppColors.accentTintStrong);
-      expect(_tabColor(tester, 0), isNull);
-      final active = tester.widget<Icon>(find.byIcon(LucideIcons.users));
-      expect(active.color, AppColors.saffron600);
-    });
-
-    testWidgets('40dp discs in 44dp touch cells, the dock after the tabs', (
-      tester,
-    ) async {
-      await _pumpNav(tester, dock: dock);
-
-      for (var i = 0; i < 4; i++) {
-        expect(
-          tester.getSize(find.byKey(ValueKey('tab_$i'))),
-          const Size(44, 44),
-        );
-        final disc = _tabContainer(tester, i).constraints!;
-        expect(disc.maxWidth, 40);
-      }
+      expect(_fill(tester, 2), AppColors.accentFill);
       final lastTab = tester.getRect(find.byKey(const ValueKey('tab_3')));
       final dockRect = tester.getRect(find.byKey(const ValueKey('dock')));
-      // 5 lead + 1 divider + 6 trail between the last tab cell and the dock.
-      expect(dockRect.left - lastTab.right, 12);
+      // 4 lead + 1 divider + 6 trail between the last touch cell and the dock.
+      expect(dockRect.left - lastTab.right, 11);
       expect(dockRect.center.dy, lastTab.center.dy);
     });
 
-    testWidgets('showDock false hides the dock but keeps the docked tabs', (
-      tester,
-    ) async {
+    testWidgets('showDock false hides the dock', (tester) async {
       await _pumpNav(tester, dock: dock, showDock: false);
 
       expect(find.byKey(const ValueKey('dock')), findsNothing);
-      expect(_tabContainer(tester, 0).constraints!.maxWidth, 40);
-      expect(_tabColor(tester, 0), AppColors.accentTintStrong);
+      expect(_fill(tester, 0), AppColors.accentFill);
     });
 
     testWidgets('the prompt sits above the capsule', (tester) async {
@@ -191,18 +199,16 @@ void main() {
       expect(inactive, isSemantics(isSelected: false));
     });
 
-    testWidgets('every tab draws a 42dp disc inside a 48dp touch area', (
+    testWidgets('every tab is a 48dp touch cell around its drawn button', (
       tester,
     ) async {
       await _pumpNav(tester);
 
       for (var i = 0; i < 4; i++) {
-        final size = tester.getSize(find.byKey(ValueKey('tab_$i')));
-        expect(size.width, greaterThanOrEqualTo(48));
-        expect(size.height, greaterThanOrEqualTo(48));
-        final disc = _tabContainer(tester, i).constraints!;
-        expect(disc.maxWidth, 42);
-        expect(disc.maxHeight, 42);
+        final cell = tester.getSize(find.byKey(ValueKey('tab_$i')));
+        expect(cell.width, greaterThanOrEqualTo(48));
+        expect(cell.height, greaterThanOrEqualTo(48));
+        expect(_drawnSize(tester, i).height, 42);
       }
     });
 
@@ -216,31 +222,62 @@ void main() {
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       handle.dispose();
     });
+
+    testWidgets('a long localized name still fits at 360dp x textScale 1.3', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('ta'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: MediaQuery(
+            data: const MediaQueryData(
+              size: Size(360, 800),
+              textScaler: TextScaler.linear(1.3),
+            ),
+            child: Scaffold(
+              bottomNavigationBar: FloatingBottomNav(
+                currentIndex: 3,
+                onSelected: (_) {},
+                dock: const SizedBox.square(dimension: 44),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('reduce-motion renders a static composed frame', () {
-    testWidgets('the disc jumps instead of tweening', (tester) async {
+    testWidgets('the pill jumps instead of tweening', (tester) async {
       await _pumpNav(tester, initialIndex: 0, reduceMotion: true);
 
-      expect(_tabContainer(tester, 0).duration, Duration.zero);
+      expect(_button(tester, 0).duration, Duration.zero);
 
-      // ...and a switch still lands on the new tab — final frame.
+      // ...and a switch still lands on the new tab: final frame.
       await tester.tap(find.byIcon(LucideIcons.user));
       await tester.pump();
-      expect(_tabColor(tester, 3), AppColors.saffron500);
+      expect(_fill(tester, 3), AppColors.accentFill);
     });
 
-    testWidgets('with motion ON the disc tween carries the spec duration', (
+    testWidgets('with motion ON the pill tween carries the spec duration', (
       tester,
     ) async {
       await _pumpNav(tester, initialIndex: 0);
 
-      expect(_tabContainer(tester, 0).duration, AppMotion.small);
+      expect(_button(tester, 0).duration, AppMotion.small);
     });
   });
 
   group('camera tone (scanner surface)', () {
-    testWidgets('a 16% milk capsule with no shadow, saffron disc kept', (
+    testWidgets('a 16% milk capsule with no shadow, saffron pill kept', (
       tester,
     ) async {
       await _pumpNav(tester, tone: FloatingNavTone.camera);
@@ -260,9 +297,8 @@ void main() {
               as BoxDecoration;
       expect(capsule.color, AppColors.cameraGlass);
       expect(capsule.boxShadow, isNull);
-      // The active tab keeps its saffron disc; inactive icons are on-camera.
-      expect(_tabColor(tester, 0), AppColors.saffron500);
-      final inactive = tester.widget<Icon>(find.byIcon(LucideIcons.library));
+      expect(_fill(tester, 0), AppColors.accentFill);
+      final inactive = tester.widget<Icon>(find.byIcon(LucideIcons.folder));
       expect(inactive.color, AppColors.onCameraIcon);
     });
   });

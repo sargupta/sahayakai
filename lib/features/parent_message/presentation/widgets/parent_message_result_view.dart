@@ -79,7 +79,7 @@ class ParentMessageResultView extends StatelessWidget {
       title: l10n.parentMessageResultTitle,
       meta: meta,
       footer: _ActionBar(
-        message: message.message,
+        message: parentMessageAsPlainText(message),
         language: message.languageCode,
         onRegenerate: onRegenerate,
       ),
@@ -129,3 +129,9 @@ class _ActionBar extends StatelessWidget {
     );
   }
 }
+
+/// A plain-text export of the message — for the clipboard, the OS share sheet,
+/// and the deliver tray. The letter body alone: it leaves for WhatsApp as is,
+/// with no title or meta for the parent to read past. One serialiser, so every
+/// path reads alike.
+String parentMessageAsPlainText(ParentMessage message) => message.message;

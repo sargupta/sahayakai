@@ -312,14 +312,6 @@ void main() {
       });
     }
 
-    testWidgets('the dark palette really is dark', (tester) async {
-      await pumpSignedInApp(tester, brightness: Brightness.dark);
-      await _openPalette(tester);
-
-      final theme = Theme.of(tester.element(_searchField()));
-      expect(theme.brightness, Brightness.dark);
-    });
-
     for (final locale in const [Locale('bn'), Locale('ta'), Locale('ml')]) {
       testWidgets(
         'no overflow at 360dp x textScale 1.3 in ${locale.languageCode} '

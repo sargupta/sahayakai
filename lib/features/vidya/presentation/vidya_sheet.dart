@@ -27,6 +27,10 @@ import 'widgets/vidya_orb.dart';
 /// and a second orb riding over the composer would be a duplicate.
 final vidyaSheetOpenProvider = StateProvider<bool>((ref) => false);
 
+/// The shell tab on screen (0 Home, 1 Library, 2 Community, 3 Profile). All
+/// four share the `/` route, so the sheet reads this to name the page.
+final vidyaShellTabProvider = StateProvider<int>((ref) => 0);
+
 /// Opens VIDYA as a modal sheet from anywhere — the "co-teacher on every page"
 /// affordance (SPEC §C.6). Reuses the SAME top-level [VidyaController] as the
 /// home, so the conversation is continuous across surfaces.
@@ -99,6 +103,7 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
       case VidyaStatus.signedOut:
       case VidyaStatus.limitReached:
       case VidyaStatus.upgradeRequired:
+      case VidyaStatus.notHeard:
       case VidyaStatus.failed:
         if (bgActive) return VidyaOrbVisual.working;
         return readyCount > 0 ? VidyaOrbVisual.ready : VidyaOrbVisual.resting;
@@ -144,24 +149,40 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
     await ref.read(vidyaControllerProvider.notifier).sendText(text);
   }
 
-  String _titleFor(VidyaStatus status) {
-    switch (status) {
+  /// The header title (UX map Listening screen): what VIDYA is doing, or
+  /// "Heard you" once the teacher's words are in.
+  String _titleFor(VidyaState state, AppLocalizations l10n) {
+    switch (state.status) {
       case VidyaStatus.listening:
       case VidyaStatus.requestingPermission:
-        return 'Listening…';
+        return l10n.vidyaStateListening;
       case VidyaStatus.transcribing:
       case VidyaStatus.thinking:
-        return 'Thinking…';
+        return l10n.vidyaStateThinking;
       case VidyaStatus.speaking:
-        return 'Speaking…';
+        return l10n.vidyaStateSpeaking;
       case VidyaStatus.idle:
       case VidyaStatus.micDenied:
       case VidyaStatus.signedOut:
       case VidyaStatus.limitReached:
       case VidyaStatus.upgradeRequired:
+      case VidyaStatus.notHeard:
       case VidyaStatus.failed:
-        return 'Ask VIDYA';
+        final heard = state.conversation.any(
+          (b) => b.role == ConversationRole.teacher,
+        );
+        return heard ? l10n.vidyaHeardYou : l10n.vidyaOpen;
     }
+  }
+
+  /// The orb starts or stops listening in every state; only a denied mic
+  /// sends the teacher to Settings, because a tap cannot fix that.
+  void _onOrbTap(VidyaState state, VidyaController controller) {
+    if (state.status == VidyaStatus.micDenied) {
+      unawaited(controller.openMicSettings());
+      return;
+    }
+    unawaited(controller.onMicTap());
   }
 
   @override
@@ -171,7 +192,7 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
     final state = ref.watch(vidyaControllerProvider);
     final controller = ref.read(vidyaControllerProvider.notifier);
     final terminal = isVidyaTerminal(state.status);
-    final title = _titleFor(state.status);
+    final title = _titleFor(state, l10n);
 
     ref.listen(vidyaControllerProvider.select((s) => s.pendingNavigation), (
       _,
@@ -198,12 +219,31 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
 
     final locale = Localizations.localeOf(context);
     final nativeLanguage = AppLocale.fromCode(locale.languageCode).nativeLabel;
-    final pageLabel = _pageLabelFor(widget.pagePath ?? Routes.home, l10n);
+    final pageLabel = _pageLabelFor(
+      widget.pagePath ?? Routes.home,
+      ref.watch(vidyaShellTabProvider),
+      l10n,
+    );
+    final micOn =
+        state.status == VidyaStatus.listening ||
+        state.status == VidyaStatus.requestingPermission;
+    final busy =
+        state.status == VidyaStatus.transcribing ||
+        state.status == VidyaStatus.thinking ||
+        state.status == VidyaStatus.speaking;
+
+    // The current turn: the teacher's latest words, quoted, and VIDYA's
+    // replies to them. Earlier turns stay in the session, off the sheet.
+    final lastTeacher = conversation.lastIndexWhere(
+      (b) => b.role == ConversationRole.teacher,
+    );
+    final heard = lastTeacher < 0 ? null : conversation[lastTeacher].text;
+    final replies = conversation.sublist(lastTeacher + 1);
 
     // Auto-scroll to the newest message unless the user has scrolled up.
     if (conversation.length != _lastMessageCount) {
       _lastMessageCount = conversation.length;
-      if (_stickToBottom && conversation.isNotEmpty) {
+      if (_stickToBottom && replies.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scroll.hasClients) {
             final motion = context.motionEnabled;
@@ -246,35 +286,16 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const _GrabHandle(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.space3),
                   Row(
                     children: [
                       VidyaOrb(
                         state: visual,
-                        size: 56,
+                        size: 46,
                         semanticLabel: l10n.appTitle,
-                        onTap: () {
-                          final unavailable =
-                              state.status == VidyaStatus.micDenied ||
-                              state.status == VidyaStatus.failed ||
-                              state.status == VidyaStatus.signedOut ||
-                              state.status == VidyaStatus.limitReached ||
-                              state.status == VidyaStatus.upgradeRequired;
-                          if (unavailable) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Mic permission needed — open Settings to enable.',
-                                ),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-                          controller.onMicTap();
-                        },
+                        onTap: () => _onOrbTap(state, controller),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.space3),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,71 +303,86 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                           children: [
                             Text(
                               title,
-                              style: text.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              style: text.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                            const SizedBox(height: 1),
                             Text(
-                              '$nativeLanguage · ${pageLabel ?? 'Home'}',
+                              '$nativeLanguage · ${l10n.vidyaAboutThisPage}',
                               style: text.bodySmall?.copyWith(
                                 color: AppColors.textMuted,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(LucideIcons.x),
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).closeButtonTooltip,
-                      ),
+                      if (micOn)
+                        _MicOnPill(label: l10n.vidyaMicOn)
+                      else
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(LucideIcons.x),
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).closeButtonTooltip,
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  _StatusLine(status: state.status, visual: visual),
+                  if (micOn || busy) ...[
+                    const SizedBox(height: AppSpacing.space2),
+                    _StatusLine(status: state.status, visual: visual),
+                  ],
+                  if (pageLabel != null) ...[
+                    const SizedBox(height: AppSpacing.space3),
+                    _ThisPageCard(label: pageLabel),
+                  ],
                   if (terminal)
                     Padding(
-                      padding: const EdgeInsets.only(top: 12),
+                      padding: const EdgeInsets.only(top: AppSpacing.space3),
                       child: _SheetTerminalPanel(
                         status: state.status,
                         controller: controller,
                       ),
                     )
                   else ...[
-                    if (conversation.isEmpty)
-                      Flexible(
-                        child: _EmptyState(
-                          onSuggestion: (route) {
-                            Navigator.of(context).pop();
-                            GoRouter.of(context).push(route);
-                          },
+                    if (heard != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.space4),
+                        child: Text(
+                          '\u201C$heard\u201D',
+                          style: text.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      )
-                    else
+                      ),
+                    if (replies.isNotEmpty)
                       Flexible(
                         child: ListView.builder(
                           controller: _scroll,
                           shrinkWrap: true,
-                          padding: const EdgeInsets.only(top: 8),
-                          itemCount: conversation.length,
-                          itemBuilder: (context, index) {
-                            final block = conversation[index];
-                            final firstOfGroup =
-                                index == 0 ||
-                                conversation[index - 1].role != block.role;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: ConversationBlockView(
-                                block: block,
-                                showTimestamp: firstOfGroup,
-                                onChipTap: controller.dispatchDirective,
-                              ),
-                            );
+                          padding: const EdgeInsets.only(
+                            top: AppSpacing.space3,
+                          ),
+                          itemCount: replies.length,
+                          itemBuilder: (context, index) => Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.space2,
+                            ),
+                            child: ConversationBlockView(
+                              block: replies[index],
+                              showTimestamp: index == 0,
+                              onChipTap: controller.dispatchDirective,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (!busy)
+                      Flexible(
+                        child: _SuggestionRows(
+                          onSuggestion: (route) {
+                            final router = GoRouter.of(context);
+                            Navigator.of(context).pop();
+                            router.push(route);
                           },
                         ),
                       ),
@@ -389,7 +425,7 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
               },
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                hintText: 'Type your question',
+                hintText: l10n.vidyaTypeHint,
                 hintStyle: text.bodyMedium?.copyWith(
                   color: AppColors.textMuted,
                 ),
@@ -491,7 +527,7 @@ class _StatusLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
-    final text = _statusText(status);
+    final text = _statusText(status, context.l10n);
     final listening =
         status == VidyaStatus.listening ||
         status == VidyaStatus.requestingPermission;
@@ -511,37 +547,29 @@ class _StatusLine extends StatelessWidget {
                 ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
               ),
             ),
-          if (listening) ...[
-            Text(
-              'Listening…',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
-            ),
-            const SizedBox(width: 8),
-            _Waveform(reduceMotion: reduceMotion),
-          ],
+          if (listening) ...[_Waveform(reduceMotion: reduceMotion)],
         ],
       ),
     );
   }
 
-  String? _statusText(VidyaStatus status) {
-    // Duplicated helper kept local for the line's own copy.
+  String? _statusText(VidyaStatus status, AppLocalizations l10n) {
     switch (status) {
-      case VidyaStatus.idle:
-        return null;
       case VidyaStatus.requestingPermission:
-        return 'Getting the mic ready…';
+        return l10n.vidyaStateReady;
       case VidyaStatus.transcribing:
-        return 'Transcribing…';
       case VidyaStatus.thinking:
-        return 'Thinking…';
+        return l10n.vidyaStateThinking;
       case VidyaStatus.speaking:
-        return 'Speaking…';
+        return l10n.vidyaStateSpeaking;
+      case VidyaStatus.idle:
       case VidyaStatus.listening:
-        return null;
-      default:
+      case VidyaStatus.micDenied:
+      case VidyaStatus.signedOut:
+      case VidyaStatus.limitReached:
+      case VidyaStatus.upgradeRequired:
+      case VidyaStatus.notHeard:
+      case VidyaStatus.failed:
         return null;
     }
   }
@@ -623,51 +651,161 @@ class _WaveformState extends State<_Waveform>
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onSuggestion});
+/// What VIDYA can do from here, as rows to pick (UX map `SuggestionRow`s). The
+/// first is the likeliest, so it carries the selected look.
+class _SuggestionRows extends StatelessWidget {
+  const _SuggestionRows({required this.onSuggestion});
 
   final ValueChanged<String> onSuggestion;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final suggestions = <(String, String)>[
-      ('Lesson plan', Routes.lessonPlan),
-      ('Quiz', Routes.quizGenerator),
-      ('Attendance', Routes.attendance),
+      (l10n.homeTileLesson, Routes.lessonPlan),
+      (l10n.homeTileRollCall, Routes.attendance),
+      (l10n.homeTileScan, Routes.assessmentScanner),
     ];
 
-    return Center(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(top: AppSpacing.space3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (index, suggestion) in suggestions.indexed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.space2),
+              child: Material(
+                color: index == 0 ? AppColors.accentTint : AppColors.milk50,
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadius.rCard,
+                  side: BorderSide(
+                    color: index == 0
+                        ? AppColors.accentTintBorder
+                        : AppColors.ink900.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: InkWell(
+                  borderRadius: AppRadius.rCard,
+                  onTap: () => onSuggestion(suggestion.$2),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.space4,
+                        vertical: AppSpacing.space3,
+                      ),
+                      child: Row(
+                        children: [
+                          ExcludeSemantics(
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: index == 0
+                                    ? AppColors.accentFill
+                                    : AppColors.textFaint,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.space3),
+                          Expanded(
+                            child: Text(
+                              suggestion.$1,
+                              style: text.bodyMedium?.copyWith(
+                                color: AppColors.textStrong,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "THIS PAGE · My Library": the page VIDYA is reading before she acts (design
+/// guide: context first).
+class _ThisPageCard extends StatelessWidget {
+  const _ThisPageCard({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final latin = Localizations.localeOf(context).languageCode == 'en';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.milk300,
+        borderRadius: AppRadius.rCard,
+        border: Border.all(color: AppColors.ink900.withValues(alpha: 0.06)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space4,
+          vertical: AppSpacing.space3,
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Ask VIDYA anything',
-              style: text.titleMedium,
-              textAlign: TextAlign.center,
+              latin ? l10n.vidyaThisPage.toUpperCase() : l10n.vidyaThisPage,
+              style: text.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: latin ? 1.7 : 0,
+                color: AppColors.textEyebrow,
+              ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.space1),
             Text(
-              'Type a question or tap the mic to start.',
-              style: text.bodySmall?.copyWith(color: AppColors.textMuted),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: AppSpacing.space2,
-              runSpacing: AppSpacing.space2,
-              children: [
-                for (final suggestion in suggestions)
-                  ActionChip(
-                    label: Text(suggestion.$1),
-                    onPressed: () => onSuggestion(suggestion.$2),
-                  ),
-              ],
+              label,
+              style: text.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textStrong,
+              ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The leaf "Mic on" pill, shown whenever the sheet's microphone is open
+/// (design guide: no background listening, and the teacher can always see it).
+class _MicOnPill extends StatelessWidget {
+  const _MicOnPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.leaf100,
+        borderRadius: AppRadius.rPill,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space3,
+          vertical: AppSpacing.space1,
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.leaf700,
+          ),
         ),
       ),
     );
@@ -693,7 +831,7 @@ class _SheetTerminalPanel extends ConsumerWidget {
         icon: LucideIcons.settings,
         onPressed: controller.openMicSettings,
       );
-    } else if (status == VidyaStatus.failed) {
+    } else if (status == VidyaStatus.failed || status == VidyaStatus.notHeard) {
       action = SecondaryButton(
         label: l10n.actionRetry,
         icon: LucideIcons.refreshCw,
@@ -730,7 +868,7 @@ class _SheetTerminalPanel extends ConsumerWidget {
           const SizedBox(height: AppSpacing.space3),
           TextButton(
             onPressed: controller.dismissTerminal,
-            child: const Text('Type instead'),
+            child: Text(l10n.vidyaTypeInstead),
           ),
         ],
       ),
@@ -759,10 +897,16 @@ class _GrabHandle extends StatelessWidget {
   }
 }
 
-String? _pageLabelFor(String? path, AppLocalizations l10n) {
+String? _pageLabelFor(String? path, int shellTab, AppLocalizations l10n) {
   if (path == null || path.isEmpty) return null;
   final mapped = <String?>[
-    if (path == Routes.home) l10n.navHome,
+    if (path == Routes.home)
+      switch (shellTab) {
+        1 => l10n.libraryTitle,
+        2 => l10n.communityTitle,
+        3 => l10n.navProfile,
+        _ => l10n.navHome,
+      },
     if (path.startsWith('/attendance')) l10n.attendanceTitle,
     if (path.startsWith(Routes.lessonPlan)) l10n.lessonPlanTitle,
     if (path.startsWith(Routes.quizGenerator)) l10n.quizTitle,
@@ -782,7 +926,7 @@ String? _pageLabelFor(String? path, AppLocalizations l10n) {
     if (path.startsWith(Routes.library)) l10n.libraryTitle,
     if (path.startsWith(Routes.settings)) l10n.settingsTitle,
     if (path.startsWith(Routes.staffroom)) l10n.staffroomTitle,
-    if (path.startsWith(Routes.network)) l10n.networkTitle,
+    if (path.startsWith(Routes.network)) l10n.communityTitle,
     if (path.startsWith(Routes.profile)) l10n.navProfile,
   ];
   return mapped.isNotEmpty ? mapped.first : null;

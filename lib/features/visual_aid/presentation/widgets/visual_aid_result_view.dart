@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
@@ -221,21 +222,7 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-
-    final buffer = StringBuffer();
-    if (prompt != null) buffer.writeln('$prompt\n');
-    if (aid.pedagogicalContext.isNotEmpty) {
-      buffer
-        ..writeln(l10n.visualAidHowToUse)
-        ..writeln(aid.pedagogicalContext);
-    }
-    if (aid.discussionSpark.isNotEmpty) {
-      buffer
-        ..writeln()
-        ..writeln(l10n.visualAidDiscussionSpark)
-        ..writeln(aid.discussionSpark);
-    }
-    final spoken = buffer.toString().trimRight();
+    final spoken = visualAidAsPlainText(aid, l10n, prompt: prompt);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -253,4 +240,29 @@ class _ActionBar extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A plain-text export of the aid — for the clipboard, the OS share sheet, and
+/// the deliver tray. One serialiser, so every path reads alike: the [prompt]
+/// (already trimmed; null when there was none), then the how-to-use notes and
+/// the discussion spark. The drawing itself is not text and is not included.
+String visualAidAsPlainText(
+  VisualAid aid,
+  AppLocalizations l10n, {
+  String? prompt,
+}) {
+  final buffer = StringBuffer();
+  if (prompt != null) buffer.writeln('$prompt\n');
+  if (aid.pedagogicalContext.isNotEmpty) {
+    buffer
+      ..writeln(l10n.visualAidHowToUse)
+      ..writeln(aid.pedagogicalContext);
+  }
+  if (aid.discussionSpark.isNotEmpty) {
+    buffer
+      ..writeln()
+      ..writeln(l10n.visualAidDiscussionSpark)
+      ..writeln(aid.discussionSpark);
+  }
+  return buffer.toString().trimRight();
 }

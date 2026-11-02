@@ -16,7 +16,7 @@
   "@navLibrary": {
     "description": "Bottom-nav label: saved generations."
   },
-  "navProfile": "Me",
+  "navProfile": "Profile",
   "@navProfile": {
     "description": "Bottom-nav label: profile / account tab."
   },
@@ -1297,7 +1297,7 @@
   "@profileSaveSignIn": {
     "description": "Shown when a save is rejected because the session has expired."
   },
-  "meTitle": "Me",
+  "meTitle": "Profile",
   "@meTitle": {
     "description": "App bar title of the Me tab: the operating-system hub (profile summary, plan and usage, defaults, settings)."
   },
@@ -4950,5 +4950,162 @@
   "outputBackToResult": "Back to result",
   "@outputBackToResult": {
     "description": "Shown while editing a tool's request: returns to the result without regenerating (nothing is lost by Edit)."
+  },
+  "vidyaOpeningScreen": "Opening {screen}",
+  "@vidyaOpeningScreen": {
+    "description": "VIDYA's reply when the teacher asks to go to a screen (e.g. 'take me to my profile'). {screen} is that screen's name.",
+    "placeholders": {
+      "screen": {
+        "type": "String"
+      }
+    }
+  },
+  "vidyaHeardYou": "Heard you",
+  "@vidyaHeardYou": {
+    "description": "VIDYA sheet title once the teacher's words are captured (UX map Listening screen)."
+  },
+  "vidyaNotHeardTitle": "I couldn't hear that clearly",
+  "@vidyaNotHeardTitle": {
+    "description": "Honest-failure title when VIDYA heard no usable speech."
+  },
+  "vidyaNotHeardBody": "Speak a little closer to the phone and tap the orb again, or type instead.",
+  "@vidyaNotHeardBody": {
+    "description": "Honest-failure body when VIDYA heard no usable speech: the way forward."
+  },
+  "vidyaTypeInstead": "Type instead",
+  "@vidyaTypeInstead": {
+    "description": "VIDYA sheet: leave a voice error and use the type box instead."
+  },
+  "libraryMyWork": "My work",
+  "@libraryMyWork": {
+    "description": "Library tab title (UX map: My work)."
+  },
+  "librarySearchHint": "Find your work, like “water cycle”",
+  "@librarySearchHint": {
+    "description": "Library search field hint; the example is a typical saved topic."
+  },
+  "librarySearchEmpty": "Nothing you made matches that.",
+  "@librarySearchEmpty": {
+    "description": "Library: the search matched nothing."
+  },
+  "librarySynced": "Synced",
+  "@librarySynced": {
+    "description": "Library row: this saved item is on the server."
+  },
+  "libraryMakeNew": "Make something new",
+  "@libraryMakeNew": {
+    "description": "Library: button that opens the tool picker."
+  },
+  "librarySelectedCount": "{count} selected",
+  "@librarySelectedCount": {
+    "description": "Library multi-select: how many rows are selected.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "librarySelectAll": "Select all",
+  "@librarySelectAll": {
+    "description": "Library multi-select: select every visible row."
+  },
+  "libraryDeleteTitle": "{count, plural, =1{Delete 1 item?} other{Delete {count} items?}}",
+  "@libraryDeleteTitle": {
+    "description": "Library: confirm deleting the selected rows.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryDeleteBody": "This can't be undone.",
+  "@libraryDeleteBody": {
+    "description": "Library: delete confirmation body."
+  },
+  "libraryDelete": "Delete",
+  "@libraryDelete": {
+    "description": "Library: the delete action."
+  },
+  "libraryDeleted": "Deleted",
+  "@libraryDeleted": {
+    "description": "Library: snackbar after a row is deleted."
+  },
+  "libraryUndo": "Undo",
+  "@libraryUndo": {
+    "description": "Library: snackbar action that restores a deleted row."
+  },
+  "communityTitle": "Community",
+  "@communityTitle": {
+    "description": "The Community tab: its title, tab name and the page VIDYA reads."
+  },
+  "communityDeck": "Teachers across Bharat",
+  "@communityDeck": {
+    "description": "Community: the line under the title."
+  },
+  "communityOpenChat": "Open chat",
+  "@communityOpenChat": {
+    "description": "Community: the Staff room tile's second line."
+  },
+  "communityYourNetwork": "Your network",
+  "@communityYourNetwork": {
+    "description": "Community: the tile that jumps to your groups and people."
+  },
+  "communityGroupsAndPeople": "Groups and people",
+  "@communityGroupsAndPeople": {
+    "description": "Community: the Your network tile's second line."
+  },
+  "communityConversationsCount": "Conversations · {count}",
+  "@communityConversationsCount": {
+    "description": "Community Messages: the conversations section label with its count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityTypeTried": "Tried this",
+  "@communityTypeTried": {
+    "description": "Community post type (share): a teacher tried something in class."
+  },
+  "communityTypeNeedHelp": "Need help",
+  "@communityTypeNeedHelp": {
+    "description": "Community post type (ask_help)."
+  },
+  "communityTypeCelebrate": "Celebrate",
+  "@communityTypeCelebrate": {
+    "description": "Community post type (celebrate)."
+  },
+  "meThisMonth": "This month",
+  "@meThisMonth": {
+    "description": "Profile usage card label."
+  },
+  "mePlanName": "{plan} plan",
+  "@mePlanName": {
+    "description": "Profile: the plan pill, e.g. 'Free plan'. {plan} is the plan's name.",
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "meStatMade": "made",
+  "@meStatMade": {
+    "description": "Profile: under the number of things made this month."
+  },
+  "meStatAskedVidya": "asked VIDYA",
+  "@meStatAskedVidya": {
+    "description": "Profile: under the number of times VIDYA was asked this month."
+  },
+  "meChange": "Change",
+  "@meChange": {
+    "description": "Profile row action: change this setting."
+  },
+  "meOrbLeftHand": "Orb on the left hand",
+  "@meOrbLeftHand": {
+    "description": "Profile toggle: park VIDYA's orb on the left side."
+  },
+  "mePrivacyForTeachers": "Privacy for teachers",
+  "@mePrivacyForTeachers": {
+    "description": "Link to the Privacy for teachers page."
   }
 }

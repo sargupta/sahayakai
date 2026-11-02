@@ -4117,4 +4117,120 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get outputBackToResult => 'निकालाकडे परत';
+
+  @override
+  String vidyaOpeningScreen(String screen) {
+    return '$screen उघडत आहे';
+  }
+
+  @override
+  String get vidyaHeardYou => 'ऐकलं';
+
+  @override
+  String get vidyaNotHeardTitle => 'मला नीट ऐकू आलं नाही';
+
+  @override
+  String get vidyaNotHeardBody =>
+      'फोनच्या थोडं जवळ बोला आणि पुन्हा ऑर्ब दाबा, किंवा टाइप करा.';
+
+  @override
+  String get vidyaTypeInstead => 'टाइप करा';
+
+  @override
+  String get libraryMyWork => 'माझे काम';
+
+  @override
+  String get librarySearchHint => 'तुमचे काम शोधा, जसे “जलचक्र”';
+
+  @override
+  String get librarySearchEmpty => 'याच्याशी जुळणारे काम नाही.';
+
+  @override
+  String get librarySynced => 'सिंक झाले';
+
+  @override
+  String get libraryMakeNew => 'काहीतरी नवीन बनवा';
+
+  @override
+  String librarySelectedCount(int count) {
+    return '$count निवडले';
+  }
+
+  @override
+  String get librarySelectAll => 'सर्व निवडा';
+
+  @override
+  String libraryDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count कामे हटवायची?',
+      one: '1 काम हटवायचे?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get libraryDeleteBody => 'हे परत आणता येणार नाही.';
+
+  @override
+  String get libraryDelete => 'हटवा';
+
+  @override
+  String get libraryDeleted => 'हटवले';
+
+  @override
+  String get libraryUndo => 'परत आणा';
+
+  @override
+  String get communityTitle => 'समुदाय';
+
+  @override
+  String get communityDeck => 'संपूर्ण भारतातील शिक्षक';
+
+  @override
+  String get communityOpenChat => 'चॅट उघडा';
+
+  @override
+  String get communityYourNetwork => 'तुमचे नेटवर्क';
+
+  @override
+  String get communityGroupsAndPeople => 'गट आणि लोक';
+
+  @override
+  String communityConversationsCount(int count) {
+    return 'संभाषणे · $count';
+  }
+
+  @override
+  String get communityTypeTried => 'करून पाहिले';
+
+  @override
+  String get communityTypeNeedHelp => 'मदत हवी';
+
+  @override
+  String get communityTypeCelebrate => 'आनंदोत्सव';
+
+  @override
+  String get meThisMonth => 'या महिन्यात';
+
+  @override
+  String mePlanName(String plan) {
+    return '$plan प्लॅन';
+  }
+
+  @override
+  String get meStatMade => 'बनवले';
+
+  @override
+  String get meStatAskedVidya => 'VIDYAला विचारले';
+
+  @override
+  String get meChange => 'बदला';
+
+  @override
+  String get meOrbLeftHand => 'ऑर्ब डाव्या हाताकडे';
+
+  @override
+  String get mePrivacyForTeachers => 'शिक्षकांसाठी गोपनीयता';
 }

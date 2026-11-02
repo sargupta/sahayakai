@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -12,14 +13,17 @@ import '../../../shared/widgets/icon_well.dart';
 import '../../library/presentation/library_screen.dart';
 import '../../profile/presentation/me_screen.dart';
 import '../../staffroom/presentation/network_hub_screen.dart';
+import '../../vidya/domain/vidya_screen_intent.dart';
+import '../../vidya/presentation/vidya_controller.dart';
 import '../../vidya/presentation/vidya_home_screen.dart';
+import '../../vidya/presentation/vidya_sheet.dart';
 import '../../vidya/presentation/widgets/vidya_dock.dart';
 import 'floating_bottom_nav.dart';
 
 /// The signed-in shell: 4 swipeable tabs (Home · Library · Community · You)
 /// held in a [PageView]. Swiping horizontally switches tabs; the bottom nav
 /// indicator follows the swipe progress.
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
   static Future<void> openCreatePalette(BuildContext context) async {
@@ -33,10 +37,10 @@ class AppShell extends StatefulWidget {
   }
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
   double _currentPage = 0.0;
@@ -74,6 +78,7 @@ class _AppShellState extends State<AppShell> {
     if (_currentIndex != index) {
       HapticFeedback.selectionClick();
       setState(() => _currentIndex = index);
+      ref.read(vidyaShellTabProvider.notifier).state = index;
     }
   }
 
@@ -86,8 +91,30 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  /// Opens a screen the teacher asked VIDYA for by name. The shell is always
+  /// under every pushed screen, so it is the one place that can close VIDYA's
+  /// sheet, come back to the root and switch tabs.
+  void _openScreen(VidyaScreen screen) {
+    ref.read(vidyaControllerProvider.notifier).consumeScreen();
+    final router = GoRouter.of(context);
+    Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+    final tab = screen.tab;
+    if (tab != null) {
+      _onNavTap(tab);
+    } else {
+      router.push(screen.route!);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen(vidyaControllerProvider.select((s) => s.pendingScreen), (
+      _,
+      screen,
+    ) {
+      if (screen != null) _openScreen(screen);
+    });
+
     return PopScope(
       canPop: _currentIndex == 0,
       onPopInvokedWithResult: (didPop, _) {

@@ -5,7 +5,8 @@ import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/app_card.dart';
-import '../../../../shared/widgets/icon_well.dart';
+import '../../../../shared/widgets/map_card.dart';
+import '../../../../shared/widgets/map_icon_tile.dart';
 import '../../../inbox/presentation/inbox_time.dart';
 import '../../domain/teacher_notification.dart';
 
@@ -50,12 +51,15 @@ class NotificationRow extends StatelessWidget {
       l10n,
     );
 
-    return AppCard(
+    return MapCard(
       onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconWell(icon: _glyph(notification.kind)),
+          MapIconTile(
+            icon: _glyph(notification.kind),
+            tint: _tint(notification.kind),
+          ),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(
@@ -130,6 +134,13 @@ class NotificationRow extends StatelessWidget {
       ),
     );
   }
+
+  static MapTint _tint(TeacherNotificationKind kind) => switch (kind) {
+    TeacherNotificationKind.callCompleted ||
+    TeacherNotificationKind.callFailed => MapTint.leaf,
+    TeacherNotificationKind.absenceRun => MapTint.amber,
+    TeacherNotificationKind.examPaperQueued => MapTint.indigo,
+  };
 
   static IconData _glyph(TeacherNotificationKind kind) => switch (kind) {
     TeacherNotificationKind.callCompleted => LucideIcons.phoneCall,

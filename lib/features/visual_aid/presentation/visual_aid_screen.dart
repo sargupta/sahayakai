@@ -15,6 +15,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/visual_aid.dart';
 import 'visual_aid_controller.dart';
@@ -119,6 +120,23 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
     ref.read(visualAidControllerProvider.notifier).generate(request);
   }
 
+  /// The aid on the Output screen as the deliver tray takes it. Keyed by the
+  /// aid instance, so a regeneration is a new deliverable. An imageless aid is
+  /// an empty state with no action bar, so it delivers nothing. The prompt is
+  /// trimmed exactly as the result view trims it for its own action bar.
+  Deliverable? _deliverableFor(VisualAid? aid, AppLocalizations l10n) {
+    if (aid == null || !aid.hasImage) return null;
+    final trimmed = _submittedPrompt?.trim();
+    final prompt = (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+    return Deliverable(
+      id: 'visual-aid-${identityHashCode(aid)}',
+      title: prompt ?? l10n.visualAidTitle,
+      subtitle: prompt,
+      text: visualAidAsPlainText(aid, l10n, prompt: prompt),
+      shareSubject: prompt,
+    );
+  }
+
   /// Brings the result masthead to the top of the viewport when a fresh drawing
   /// lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -203,6 +221,7 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasActionableResult,
       onResubmit: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.visualAidAction,
       // Hide the sticky submit button once a usable drawing is on screen — the
       // document's own action bar (Regenerate / Copy) takes over. An imageless

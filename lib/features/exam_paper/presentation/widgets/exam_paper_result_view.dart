@@ -155,7 +155,7 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final text = _paperAsText(ready.paper, l10n);
+    final text = examPaperAsPlainText(ready.paper, l10n);
     final title = ready.paper.title;
 
     return Column(
@@ -537,8 +537,9 @@ class _Medallion extends StatelessWidget {
 
 /// A plain-text export of the whole paper — instructions, every section and its
 /// questions (with answer key and marking scheme), the blueprint and PYQ sources
-/// — for the clipboard.
-String _paperAsText(ExamPaper paper, AppLocalizations l10n) {
+/// — for the clipboard, the OS share sheet, and the deliver tray. One
+/// serialiser, so every path reads alike.
+String examPaperAsPlainText(ExamPaper paper, AppLocalizations l10n) {
   final b = StringBuffer();
   if (paper.title.isNotEmpty) b.writeln(paper.title);
   final metaBits = [

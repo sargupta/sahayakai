@@ -413,7 +413,7 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final text = _assessmentAsText(
+    final text = assessmentAsPlainText(
       assessment,
       l10n,
       includeScore: includeScore,
@@ -448,11 +448,12 @@ class _ActionBar extends ConsumerWidget {
   }
 }
 
-/// A plain-text export of the scorecard, for the clipboard. Carries no student
-/// name — grading collects none. When [includeScore] is false ("Read only"
-/// mode) the export is just the transcript — no grade, criteria or feedback,
-/// matching what is shown on screen.
-String _assessmentAsText(
+/// A plain-text export of the scorecard — for the clipboard, the OS share sheet,
+/// and the deliver tray. One serialiser, so every path reads alike. Carries no
+/// student name — grading collects none. When [includeScore] is false ("Read
+/// only" mode) the export is just the transcript — no grade, criteria or
+/// feedback, matching what is shown on screen.
+String assessmentAsPlainText(
   Assessment assessment,
   AppLocalizations l10n, {
   bool includeScore = true,

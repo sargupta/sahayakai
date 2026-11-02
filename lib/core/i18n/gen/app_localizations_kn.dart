@@ -4134,4 +4134,120 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get outputBackToResult => 'ಫಲಿತಾಂಶಕ್ಕೆ ಹಿಂತಿರುಗಿ';
+
+  @override
+  String vidyaOpeningScreen(String screen) {
+    return '$screen ತೆರೆಯುತ್ತಿದ್ದೇನೆ';
+  }
+
+  @override
+  String get vidyaHeardYou => 'ಕೇಳಿಸಿಕೊಂಡೆ';
+
+  @override
+  String get vidyaNotHeardTitle => 'ನನಗೆ ಸರಿಯಾಗಿ ಕೇಳಿಸಲಿಲ್ಲ';
+
+  @override
+  String get vidyaNotHeardBody =>
+      'ಫೋನ್‌ಗೆ ಸ್ವಲ್ಪ ಹತ್ತಿರ ಮಾತನಾಡಿ ಮತ್ತು ಮತ್ತೆ ಆರ್ಬ್ ಒತ್ತಿ, ಅಥವಾ ಟೈಪ್ ಮಾಡಿ.';
+
+  @override
+  String get vidyaTypeInstead => 'ಟೈಪ್ ಮಾಡಿ';
+
+  @override
+  String get libraryMyWork => 'ನನ್ನ ಕೆಲಸ';
+
+  @override
+  String get librarySearchHint => 'ನಿಮ್ಮ ಕೆಲಸ ಹುಡುಕಿ, ಉದಾ. “ಜಲ ಚಕ್ರ”';
+
+  @override
+  String get librarySearchEmpty => 'ಇದಕ್ಕೆ ಹೊಂದುವ ಯಾವುದೇ ಕೆಲಸವಿಲ್ಲ.';
+
+  @override
+  String get librarySynced => 'ಸಿಂಕ್ ಆಗಿದೆ';
+
+  @override
+  String get libraryMakeNew => 'ಹೊಸದನ್ನು ಮಾಡಿ';
+
+  @override
+  String librarySelectedCount(int count) {
+    return '$count ಆಯ್ಕೆಯಾಗಿದೆ';
+  }
+
+  @override
+  String get librarySelectAll => 'ಎಲ್ಲಾ ಆಯ್ಕೆಮಾಡಿ';
+
+  @override
+  String libraryDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ಕೆಲಸಗಳನ್ನು ಅಳಿಸುವುದೇ?',
+      one: '1 ಕೆಲಸ ಅಳಿಸುವುದೇ?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get libraryDeleteBody => 'ಇದನ್ನು ಹಿಂಪಡೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ.';
+
+  @override
+  String get libraryDelete => 'ಅಳಿಸಿ';
+
+  @override
+  String get libraryDeleted => 'ಅಳಿಸಲಾಗಿದೆ';
+
+  @override
+  String get libraryUndo => 'ರದ್ದುಗೊಳಿಸಿ';
+
+  @override
+  String get communityTitle => 'ಸಮುದಾಯ';
+
+  @override
+  String get communityDeck => 'ಭಾರತದಾದ್ಯಂತದ ಶಿಕ್ಷಕರು';
+
+  @override
+  String get communityOpenChat => 'ಚಾಟ್ ತೆರೆಯಿರಿ';
+
+  @override
+  String get communityYourNetwork => 'ನಿಮ್ಮ ನೆಟ್‌ವರ್ಕ್';
+
+  @override
+  String get communityGroupsAndPeople => 'ಗುಂಪುಗಳು ಮತ್ತು ಜನರು';
+
+  @override
+  String communityConversationsCount(int count) {
+    return 'ಸಂಭಾಷಣೆಗಳು · $count';
+  }
+
+  @override
+  String get communityTypeTried => 'ಪ್ರಯತ್ನಿಸಿದೆ';
+
+  @override
+  String get communityTypeNeedHelp => 'ಸಹಾಯ ಬೇಕು';
+
+  @override
+  String get communityTypeCelebrate => 'ಸಂಭ್ರಮ';
+
+  @override
+  String get meThisMonth => 'ಈ ತಿಂಗಳು';
+
+  @override
+  String mePlanName(String plan) {
+    return '$plan ಯೋಜನೆ';
+  }
+
+  @override
+  String get meStatMade => 'ಮಾಡಿದವು';
+
+  @override
+  String get meStatAskedVidya => 'VIDYAಗೆ ಕೇಳಿದ್ದು';
+
+  @override
+  String get meChange => 'ಬದಲಿಸಿ';
+
+  @override
+  String get meOrbLeftHand => 'ಆರ್ಬ್ ಎಡಗೈ ಕಡೆ';
+
+  @override
+  String get mePrivacyForTeachers => 'ಶಿಕ್ಷಕರ ಗೌಪ್ಯತೆ';
 }

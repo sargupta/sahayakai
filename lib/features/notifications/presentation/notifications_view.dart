@@ -6,9 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/empty_view.dart';
-import '../../../shared/widgets/note_banner.dart';
-import '../../../shared/widgets/secondary_button.dart';
+import '../../../shared/widgets/map_card.dart';
 import '../data/notifications_store.dart';
 import '../domain/teacher_notification.dart';
 import 'widgets/notification_row.dart';
@@ -35,6 +33,14 @@ import 'widgets/notification_row.dart';
 class NotificationsView extends ConsumerWidget {
   const NotificationsView({super.key, this.now});
 
+  /// The map's screen frame under the hub header.
+  static const EdgeInsets _padding = EdgeInsets.fromLTRB(
+    AppSpacing.mapGutter,
+    AppSpacing.space3,
+    AppSpacing.mapGutter,
+    AppSpacing.mapBottomClearance,
+  );
+
   /// Injectable clock, forwarded to the rows' relative timestamps.
   final DateTime? now;
 
@@ -46,25 +52,27 @@ class NotificationsView extends ConsumerWidget {
 
     if (notifications.isEmpty) {
       return SingleChildScrollView(
-        padding: AppSpacing.pagePadding,
+        padding: _padding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            EmptyView(
-              icon: LucideIcons.bell,
-              title: l10n.notificationsEmptyTitle,
-              message: l10n.notificationsEmptyBody,
-            ),
-            const SizedBox(height: AppSpacing.space4),
             _localNote(context),
+            const SizedBox(height: AppSpacing.space3),
+            MapCard(
+              child: MapEmptyNote(
+                icon: LucideIcons.bell,
+                title: l10n.notificationsEmptyTitle,
+                message: l10n.notificationsEmptyBody,
+              ),
+            ),
           ],
         ),
       );
     }
 
     return ListView.separated(
-      padding: AppSpacing.pagePadding,
+      padding: _padding,
       // +1 leading slot for the note (and the mark-all action when it applies).
       itemCount: notifications.length + 1,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.space3),
@@ -84,23 +92,28 @@ class NotificationsView extends ConsumerWidget {
     );
   }
 
+  /// The map's Updates header: where these come from, and "Mark all as
+  /// read" as a link while anything is unread.
   Widget _header(BuildContext context, WidgetRef ref, {required int unread}) {
     final l10n = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _localNote(context),
+        Expanded(child: _localNote(context)),
         if (unread > 0) ...[
-          const SizedBox(height: AppSpacing.space3),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: SecondaryButton(
-              label: l10n.notificationsMarkAllRead,
-              icon: LucideIcons.checkCheck,
-              onPressed: () =>
-                  ref.read(notificationsProvider.notifier).markAllRead(),
+          const SizedBox(width: AppSpacing.space2),
+          TextButton(
+            onPressed: () =>
+                ref.read(notificationsProvider.notifier).markAllRead(),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textLink,
+              minimumSize: const Size(48, 48),
+              textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
+            child: Text(l10n.notificationsMarkAllRead),
           ),
         ],
       ],
@@ -110,18 +123,13 @@ class NotificationsView extends ConsumerWidget {
   /// The honesty line. It is on screen, not only in a handoff note, because the
   /// misunderstanding it prevents is one a teacher would act on: seeing an
   /// "Updates" list, they would reasonably assume the phone will tell them when
-  /// a call comes back. It will not — there is no push in this build.
+  /// a call comes back. It will not: there is no push in this build.
   Widget _localNote(BuildContext context) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    return NoteBanner.custom(
-      icon: LucideIcons.info,
-      child: Text(
-        l10n.notificationsLocalNote,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
+    return Text(
+      context.l10n.notificationsLocalNote,
+      style: Theme.of(
+        context,
+      ).textTheme.bodyMedium?.copyWith(color: AppColors.textBody),
     );
   }
 

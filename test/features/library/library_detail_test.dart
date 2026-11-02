@@ -75,7 +75,7 @@ Future<void> _openDetail(
   // Tap the Library tab by its icon, not the English label: the app now honours
   // the device locale (LocaleController seeds from it), so in bn/ta/ml the nav
   // reads the translated `navLibrary` and a `find.text('Library')` would miss.
-  await tester.tap(find.byIcon(LucideIcons.library));
+  await tester.tap(find.byIcon(LucideIcons.folder));
   await tester.pumpAndSettle();
 
   // The list has loaded; now answer the per-item GET.

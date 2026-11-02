@@ -14,6 +14,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/parent_message.dart';
 import 'parent_message_controller.dart';
@@ -116,6 +117,19 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     );
   }
 
+  /// The message on the Output screen as the deliver tray takes it. Keyed by
+  /// the message instance, so a re-draft is a new deliverable. A blank draft is
+  /// the empty state, not something to deliver.
+  Deliverable? _deliverableFor(ParentMessage? message, AppLocalizations l10n) {
+    if (message == null || message.isEmpty) return null;
+    return Deliverable(
+      id: 'parent-message-${identityHashCode(message)}',
+      title: l10n.parentMessageResultTitle,
+      text: parentMessageAsPlainText(message),
+      language: message.languageCode,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -154,6 +168,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       onResubmit: _submit,
       submitLabel: l10n.parentMessageAction,
       // Hide the sticky action button once a draft is on screen — the document's

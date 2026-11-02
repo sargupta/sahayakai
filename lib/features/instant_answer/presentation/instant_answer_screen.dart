@@ -15,6 +15,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/instant_answer.dart';
 import 'instant_answer_controller.dart';
@@ -122,6 +123,22 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     ref.read(instantAnswerControllerProvider.notifier).ask(request);
   }
 
+  /// The answer on the Output screen as the deliver tray takes it. Keyed by the
+  /// answer instance, so a regeneration is a new deliverable. The question is
+  /// trimmed and dropped when blank, exactly as the result view titles it.
+  Deliverable? _deliverableFor(InstantAnswer? answer, AppLocalizations l10n) {
+    if (answer == null) return null;
+    final asked = _submittedQuestion?.trim();
+    final question = (asked == null || asked.isEmpty) ? null : asked;
+    return Deliverable(
+      id: 'instant-answer-${identityHashCode(answer)}',
+      title: question ?? l10n.instantAnswerTitle,
+      subtitle: question,
+      text: instantAnswerAsPlainText(answer, question: question),
+      shareSubject: question,
+    );
+  }
+
   /// Brings the result masthead to the top of the viewport when a fresh answer
   /// lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -199,6 +216,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       onResubmit: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.instantAnswerAction,
       // Hide the sticky submit button once an answer is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.

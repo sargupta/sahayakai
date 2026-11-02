@@ -311,6 +311,35 @@ class AppShadows {
   /// Floating bottom nav (light) — `0 8px 22px rgba(23,19,16,.10)`.
   static const BoxShadow navFloatLight = float;
 
+  /// UX map card: `0 2px 10px rgba(60,40,20,.05)` (its hairline ring is a
+  /// border on the card itself).
+  static const BoxShadow mapCard = BoxShadow(
+    color: Color(0x0D3C2814),
+    blurRadius: 10,
+    offset: Offset(0, 2),
+  );
+
+  /// UX map primary button: `0 8px 22px rgba(165,85,29,.28)`.
+  static const BoxShadow mapButton = BoxShadow(
+    color: Color(0x47A5551D),
+    blurRadius: 22,
+    offset: Offset(0, 8),
+  );
+
+  /// UX map toggle knob: `0 1px 3px rgba(0,0,0,.2)`.
+  static const BoxShadow mapKnob = BoxShadow(
+    color: Color(0x33000000),
+    blurRadius: 3,
+    offset: Offset(0, 1),
+  );
+
+  /// UX map tab bar: `0 10px 30px rgba(60,40,20,.14)`.
+  static const BoxShadow tabBar = BoxShadow(
+    color: Color(0x243C2814),
+    blurRadius: 30,
+    offset: Offset(0, 10),
+  );
+
   /// Floating bottom nav (dark).
   static const BoxShadow navFloatDark = BoxShadow(
     color: Color(0x73000000),

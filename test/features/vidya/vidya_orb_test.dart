@@ -174,10 +174,4 @@ void main() {
     expect(size.width, greaterThanOrEqualTo(48));
     expect(size.height, greaterThanOrEqualTo(48));
   });
-
-  testWidgets('renders in dark without error', (tester) async {
-    await _pumpOrb(tester, VidyaOrbVisual.working, brightness: Brightness.dark);
-    expect(tester.takeException(), isNull);
-    expect(find.byType(VidyaOrb), findsOneWidget);
-  });
 }

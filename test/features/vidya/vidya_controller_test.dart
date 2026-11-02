@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
+import 'package:sahayakai/features/vidya/domain/vidya_screen_intent.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
 import 'package:sahayakai/shared/voice/audio_player_service.dart';
 import 'package:sahayakai/shared/voice/audio_recorder_service.dart';
@@ -594,8 +595,11 @@ void main() {
       await vidya.onMicTap();
       await vidya.onMicTap();
 
-      expect(container.read(vidyaControllerProvider).status, VidyaStatus.failed);
-      expect(container.read(vidyaControllerProvider).errorMessage, 'No speech detected. Please try again.');
+      // Said in words (the "not heard" panel), never a generic failure.
+      expect(
+        container.read(vidyaControllerProvider).status,
+        VidyaStatus.notHeard,
+      );
       expect(container.read(vidyaControllerProvider).conversation, isEmpty);
       expect(client.multiparts, isEmpty, reason: 'no STT call for silence');
     });
@@ -615,7 +619,7 @@ void main() {
       await vidya.onMicTap();
 
       final state = container.read(vidyaControllerProvider);
-      expect(state.status, VidyaStatus.idle);
+      expect(state.status, VidyaStatus.notHeard);
       expect(state.conversation, isEmpty);
     });
 
@@ -642,6 +646,91 @@ void main() {
           reason: 'the abandoned utterance must not ink a block',
         );
         expect(player.stopCount, greaterThanOrEqualTo(1));
+      },
+    );
+  });
+
+  group('screen navigation ("take me to my profile")', () {
+    test(
+      'a typed request opens the screen without asking the server',
+      () async {
+        final client = _happyClient();
+        final container = _container(client: client);
+        final vidya = container.read(vidyaControllerProvider.notifier);
+
+        await vidya.sendText('take me to my profile');
+
+        final state = container.read(vidyaControllerProvider);
+        expect(state.pendingScreen, VidyaScreen.profile);
+        expect(state.status, VidyaStatus.idle);
+        expect(state.conversation.map((b) => b.text), [
+          'take me to my profile',
+          'Opening Profile',
+        ]);
+        expect(
+          client.posts.where((p) => p.path == '/api/assistant'),
+          isEmpty,
+          reason: 'a screen request is answered on the device',
+        );
+
+        vidya.consumeScreen();
+        expect(container.read(vidyaControllerProvider).pendingScreen, isNull);
+      },
+    );
+
+    test('a spoken request opens the screen too', () async {
+      final container = _container(
+        client: FakeApiClient(
+          multipartResponse: {'text': 'प्रोफ़ाइल खोलो', 'language': 'hi'},
+        ),
+      );
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap();
+      await vidya.onMicTap();
+
+      expect(
+        container.read(vidyaControllerProvider).pendingScreen,
+        VidyaScreen.profile,
+      );
+    });
+
+    test('a tool request still goes to the classifier', () async {
+      final client = _happyClient();
+      final container = _container(client: client);
+
+      await container
+          .read(vidyaControllerProvider.notifier)
+          .sendText('make a lesson plan on fractions');
+
+      final state = container.read(vidyaControllerProvider);
+      expect(state.pendingScreen, isNull);
+      expect(state.pendingNavigation?.flow, VidyaFlow.lessonPlan);
+    });
+  });
+
+  group('listening on a quiet mic', () {
+    test(
+      'speech under the old fixed onset is still heard and transcribed',
+      () async {
+        final recorder = FakeAudioRecorderService();
+        final client = _happyClient();
+        final container = _container(client: client, recorder: recorder);
+        final vidya = container.read(vidyaControllerProvider.notifier);
+
+        await vidya.onMicTap(); // listening
+        recorder.emitAmplitude(0.02); // the room
+        recorder.emitAmplitude(0.15); // a teacher speaking softly (< 0.18)
+        // Trailing silence after detected speech auto-stops the capture.
+        await Future<void>.delayed(
+          kTrailingSilence + const Duration(milliseconds: 300),
+        );
+
+        expect(
+          client.multiparts,
+          isNotEmpty,
+          reason: 'the words were sent to STT',
+        );
       },
     );
   });

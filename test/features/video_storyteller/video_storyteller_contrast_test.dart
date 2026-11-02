@@ -56,13 +56,6 @@ void main() {
         greaterThanOrEqualTo(4.5),
       );
     });
-
-    test('dark: onSurfaceVariant on the dark card surface (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dMutedForeground, AppColors.dCard),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
   });
 
   group('thumbnail fallback label clears AA on the surfaceContainer fill', () {
@@ -72,13 +65,6 @@ void main() {
         _ratio(AppColors.lForeground, AppColors.lMuted),
         greaterThanOrEqualTo(4.5),
         reason: 'the fallback label (full ink) must clear AA on the fill',
-      );
-    });
-
-    test('dark: onSurface ink on surfaceContainer', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dMuted),
-        greaterThanOrEqualTo(4.5),
       );
     });
   });

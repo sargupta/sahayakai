@@ -16,6 +16,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/quiz.dart';
 import '../domain/quiz_options.dart';
@@ -179,6 +180,21 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     );
   }
 
+  /// The quiz on the Output screen as the deliver tray takes it, with no
+  /// answers revealed. Keyed by the quiz instance, so a regeneration is a new
+  /// deliverable. A quiz without variants is the empty state.
+  Deliverable? _deliverableFor(Quiz? quiz, AppLocalizations l10n) {
+    if (quiz == null || quiz.variants.isEmpty) return null;
+    final heading = quiz.topic ?? quiz.variants.first.title;
+    return Deliverable(
+      id: 'quiz-${identityHashCode(quiz)}',
+      title: heading.isEmpty ? l10n.quizTitle : heading,
+      subtitle: heading.isEmpty ? null : heading,
+      text: quizAsPlainText(quiz, l10n),
+      shareSubject: heading.isEmpty ? null : heading,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -223,6 +239,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       onResubmit: _submit,
       submitLabel: l10n.actionGenerate,
       // Hide the sticky Generate button once a quiz with questions is on screen

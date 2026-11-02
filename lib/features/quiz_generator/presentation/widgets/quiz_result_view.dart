@@ -204,7 +204,7 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final text = _quizAsText(quiz, l10n, revealed: revealed);
+    final text = quizAsPlainText(quiz, l10n, revealed: revealed);
     final request = saveRequest;
     final canSave = request != null && quiz.raw != null;
     final heading = quiz.topic ?? quiz.variants.first.title;
@@ -236,14 +236,16 @@ class _ActionBar extends ConsumerWidget {
   }
 }
 
-/// A plain-text export of the quiz for the clipboard. A question's answer and
-/// explanation are written out ONLY when that question is currently revealed on
-/// screen ([revealed], keyed by variant difficulty); a hidden answer is left
-/// out, so a projected/printed copy stays unspoiled.
-String _quizAsText(
+/// A plain-text export of the quiz — for the clipboard, the OS share sheet, and
+/// the deliver tray. One serialiser, so every path reads alike. A question's
+/// answer and explanation are written out ONLY when that question is currently
+/// revealed on screen ([revealed], keyed by variant difficulty); a hidden answer
+/// is left out, so a projected/printed copy stays unspoiled. The default reveals
+/// nothing, which is what the deliver tray carries.
+String quizAsPlainText(
   Quiz quiz,
   AppLocalizations l10n, {
-  required Map<QuizDifficulty, Set<int>> revealed,
+  Map<QuizDifficulty, Set<int>> revealed = const {},
 }) {
   final b = StringBuffer();
   final heading = quiz.topic ?? quiz.variants.first.title;

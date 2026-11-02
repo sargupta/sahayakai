@@ -15,6 +15,7 @@ import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../domain/assessment_scan.dart';
 import 'assessment_scanner_controller.dart';
 import 'widgets/assessment_scanner_error_view.dart';
@@ -98,6 +99,21 @@ class _AssessmentScannerScreenState
     ref.read(assessmentScannerControllerProvider.notifier).grade(request);
   }
 
+  /// The scorecard on the Output screen as the deliver tray takes it. Keyed by
+  /// the result instance, so a re-grade is a new deliverable.
+  Deliverable? _deliverableFor(
+    AssessmentResult? result,
+    AppLocalizations l10n,
+  ) {
+    if (result == null) return null;
+    return Deliverable(
+      id: 'assessment-scanner-${identityHashCode(result)}',
+      title: l10n.assessmentScannerResultTitle,
+      text: assessmentResultAsPlainText(result, l10n),
+      shareSubject: l10n.assessmentScannerResultTitle,
+    );
+  }
+
   /// Brings the result masthead to the top of the viewport when a fresh grade
   /// lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -159,6 +175,7 @@ class _AssessmentScannerScreenState
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       onResubmit: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.assessmentScannerSubmit,
       onSubmit: canSubmit ? _submit : null,
       // Screen 11 (capture) wears the solid dark scanner surface; Screen 12

@@ -5,11 +5,12 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/map_card.dart';
 import '../../domain/inbox_models.dart';
 import '../inbox_time.dart';
 import 'inbox_avatar.dart';
 
-/// One inbox row (SPEC §B3.1): a `AppCard(flat)` **register row** — not a
+/// One inbox row (SPEC §B3.1): a `MapCard(flat)` **register row** — not a
 /// chat-app row — carrying the avatar, the conversation label, the last-message
 /// preview, a relative timestamp, and an unread pill.
 ///
@@ -58,7 +59,7 @@ class ConversationRow extends StatelessWidget {
     );
     final preview = conversation.lastMessage.trim();
 
-    return AppCard(
+    return MapCard(
       onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,8 +93,9 @@ class ConversationRow extends StatelessWidget {
                       const SizedBox(width: AppSpacing.space2),
                       Text(
                         timestamp,
-                        style: extras.dataMedium
-                            .copyWith(color: scheme.onSurfaceVariant),
+                        style: extras.dataMedium.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ],
@@ -178,8 +180,9 @@ class InboxAvatarShim extends StatelessWidget {
     final name = conversation.isGroup
         ? (conversation.name ?? '')
         : (other?.displayName ?? '');
-    final photo =
-        conversation.isGroup ? conversation.groupPhotoURL : other?.photoURL;
+    final photo = conversation.isGroup
+        ? conversation.groupPhotoURL
+        : other?.photoURL;
     return InboxAvatar(
       name: name,
       photoUrl: photo,

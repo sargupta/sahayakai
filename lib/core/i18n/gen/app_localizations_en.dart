@@ -21,7 +21,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navLibrary => 'Library';
 
   @override
-  String get navProfile => 'Me';
+  String get navProfile => 'Profile';
 
   @override
   String get actionRetry => 'Try again';
@@ -1037,7 +1037,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSaveSignIn => 'Please sign in again to save your profile.';
 
   @override
-  String get meTitle => 'Me';
+  String get meTitle => 'Profile';
 
   @override
   String get mePlanUsageTitle => 'Plan & usage';
@@ -4093,4 +4093,120 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get outputBackToResult => 'Back to result';
+
+  @override
+  String vidyaOpeningScreen(String screen) {
+    return 'Opening $screen';
+  }
+
+  @override
+  String get vidyaHeardYou => 'Heard you';
+
+  @override
+  String get vidyaNotHeardTitle => 'I couldn\'t hear that clearly';
+
+  @override
+  String get vidyaNotHeardBody =>
+      'Speak a little closer to the phone and tap the orb again, or type instead.';
+
+  @override
+  String get vidyaTypeInstead => 'Type instead';
+
+  @override
+  String get libraryMyWork => 'My work';
+
+  @override
+  String get librarySearchHint => 'Find your work, like “water cycle”';
+
+  @override
+  String get librarySearchEmpty => 'Nothing you made matches that.';
+
+  @override
+  String get librarySynced => 'Synced';
+
+  @override
+  String get libraryMakeNew => 'Make something new';
+
+  @override
+  String librarySelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get librarySelectAll => 'Select all';
+
+  @override
+  String libraryDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count items?',
+      one: 'Delete 1 item?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get libraryDeleteBody => 'This can\'t be undone.';
+
+  @override
+  String get libraryDelete => 'Delete';
+
+  @override
+  String get libraryDeleted => 'Deleted';
+
+  @override
+  String get libraryUndo => 'Undo';
+
+  @override
+  String get communityTitle => 'Community';
+
+  @override
+  String get communityDeck => 'Teachers across Bharat';
+
+  @override
+  String get communityOpenChat => 'Open chat';
+
+  @override
+  String get communityYourNetwork => 'Your network';
+
+  @override
+  String get communityGroupsAndPeople => 'Groups and people';
+
+  @override
+  String communityConversationsCount(int count) {
+    return 'Conversations · $count';
+  }
+
+  @override
+  String get communityTypeTried => 'Tried this';
+
+  @override
+  String get communityTypeNeedHelp => 'Need help';
+
+  @override
+  String get communityTypeCelebrate => 'Celebrate';
+
+  @override
+  String get meThisMonth => 'This month';
+
+  @override
+  String mePlanName(String plan) {
+    return '$plan plan';
+  }
+
+  @override
+  String get meStatMade => 'made';
+
+  @override
+  String get meStatAskedVidya => 'asked VIDYA';
+
+  @override
+  String get meChange => 'Change';
+
+  @override
+  String get meOrbLeftHand => 'Orb on the left hand';
+
+  @override
+  String get mePrivacyForTeachers => 'Privacy for teachers';
 }

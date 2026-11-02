@@ -80,10 +80,12 @@ void main() {
   testWidgets('the tabs keep their size whether the dock shows or not', (
     tester,
   ) async {
+    // Tab 2 is inactive on both screens; the active tab's pill is meant to
+    // widen with its name, so only the dock could change this one's size.
     await pumpSignedInApp(tester);
-    final onHome = tester.getSize(find.byKey(const ValueKey('tab_0')));
+    final onHome = tester.getSize(find.byKey(const ValueKey('tab_2')));
     await openTab(tester, 1);
-    final onLibrary = tester.getSize(find.byKey(const ValueKey('tab_0')));
+    final onLibrary = tester.getSize(find.byKey(const ValueKey('tab_2')));
 
     expect(onHome, onLibrary);
   });

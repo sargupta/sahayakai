@@ -96,6 +96,19 @@ class AppSpacing {
   // Tab bar with VIDYA docked (v2 9a): 40px discs, 4px gap, a 1×24 divider
   // with 3px margins, then the 42px orb.
   static const double dockTabSize = 40;
+
+  // UX map tab bar: 42px buttons in 48dp touch cells (so 6 apart, not the
+  // map's 4); the active one is a saffron pill carrying its label (13 start /
+  // 15 end padding, 7 between icon and label).
+  static const double tabButton = 42;
+
+  // UX map screen frame (`.scr`): 18 at the sides, 130 clear of the tab bar.
+  static const double mapGutter = 18;
+  static const double mapBottomClearance = 130;
+  static const double tabIcon = 19;
+  static const double tabPillStart = 13;
+  static const double tabPillEnd = 15;
+  static const double tabLabelGap = 7;
   static const double dockCell = 44; // touch cell for a docked tab or the orb
   static const double dockGap = 4;
   static const double dockDividerHeight = 24;

@@ -15,6 +15,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/rubric.dart';
 import 'rubric_controller.dart';
@@ -152,6 +153,19 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     );
   }
 
+  /// The rubric on the Output screen as the deliver tray takes it. Keyed by the
+  /// rubric instance, so a regeneration is a new deliverable.
+  Deliverable? _deliverableFor(Rubric? rubric, AppLocalizations l10n) {
+    if (rubric == null) return null;
+    return Deliverable(
+      id: 'rubric-${identityHashCode(rubric)}',
+      title: rubric.title.isEmpty ? l10n.rubricTitle : rubric.title,
+      subtitle: rubric.title.isEmpty ? null : rubric.title,
+      text: rubricAsPlainText(rubric, l10n),
+      shareSubject: rubric.title.isEmpty ? null : rubric.title,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -190,6 +204,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       onResubmit: _submit,
       submitLabel: l10n.actionGenerate,
       // Hide the sticky Generate button once a rubric is on screen — the

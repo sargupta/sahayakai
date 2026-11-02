@@ -24,7 +24,7 @@ import 'video_card.dart';
 /// action. Each section inks in on the reveal (reduce-motion degrades to a
 /// static frame), and every card opens its video through the injected
 /// [linkOpenerProvider] seam. The list closes with the shared
-/// [ResultActionsBar], carrying Copy and Share only — see [_shelfAsText] for
+/// [ResultActionsBar], carrying Copy and Share only — see [videoShelfAsPlainText] for
 /// what those export and the class doc there for why Save is absent.
 ///
 /// The per-section [_maxVideosPerCategory] cap keeps the eager scroll view
@@ -80,7 +80,7 @@ class VideoStorytellerResultView extends ConsumerWidget {
         ],
         const SizedBox(height: AppSpacing.sectionGap),
         ResultActionsBar(
-          text: _shelfAsText(recommendations, l10n),
+          text: videoShelfAsPlainText(recommendations, l10n),
           shareSubject: l10n.videoStorytellerTitle,
         ),
       ],
@@ -88,8 +88,9 @@ class VideoStorytellerResultView extends ConsumerWidget {
   }
 }
 
-/// A plain-text export of the shelf for Copy and Share: the model's opening
-/// note, then each bucket's videos as "title — channel" plus the watch URL. The
+/// A plain-text export of the shelf — for the clipboard, the OS share sheet,
+/// and the deliver tray. One serialiser, so every path reads alike: the
+/// model's opening note, then each bucket's videos as "title — channel" plus the watch URL. The
 /// URL is the point — a teacher forwarding this to a colleague is forwarding
 /// links, not titles — so unlike the document tools it is written out in full.
 ///
@@ -101,7 +102,10 @@ class VideoStorytellerResultView extends ConsumerWidget {
 /// `sahayakai-main/src/ai/schemas/content-schemas.ts` lists eleven types and
 /// none of them is a video shelf — so a Save button here would post a body the
 /// route rejects with a 400. Sharing the links is the whole job.
-String _shelfAsText(VideoRecommendations shelf, AppLocalizations l10n) {
+String videoShelfAsPlainText(
+  VideoRecommendations shelf,
+  AppLocalizations l10n,
+) {
   final b = StringBuffer();
   if (shelf.personalizedMessage.isNotEmpty) {
     b.writeln(shelf.personalizedMessage);

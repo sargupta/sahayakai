@@ -721,7 +721,7 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final text = _resultAsText(result, l10n);
+    final text = assessmentResultAsPlainText(result, l10n);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -744,8 +744,12 @@ class _ActionBar extends StatelessWidget {
   }
 }
 
-/// A plain-text export of the scorecard, for the clipboard.
-String _resultAsText(AssessmentResult result, AppLocalizations l10n) {
+/// A plain-text export of the scorecard — for the clipboard, the OS share sheet,
+/// and the deliver tray. One serialiser, so every path reads alike.
+String assessmentResultAsPlainText(
+  AssessmentResult result,
+  AppLocalizations l10n,
+) {
   final b = StringBuffer();
   b.writeln('${result.scorePercent} ${l10n.assessmentScannerScoreOutOf}');
   if (result.totalMaxMarks > 0) {

@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/inbox/presentation/inbox_screen.dart';
-import 'package:sahayakai/features/staffroom/presentation/network_hub_screen.dart';
 import 'package:sahayakai/features/staffroom/presentation/staffroom_screen.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,7 +34,8 @@ void main() {
   final surfaces = <String, Widget>{
     'Pro Inbox': const InboxScreen(),
     'Staffroom': const StaffroomScreen(),
-    'Network hub': const NetworkHubScreen(),
+    // The Community tab (NetworkHubScreen) has no app-bar launcher: VIDYA is
+    // docked in the tab bar there (UX map; v2 9a).
   };
 
   surfaces.forEach((name, screen) {

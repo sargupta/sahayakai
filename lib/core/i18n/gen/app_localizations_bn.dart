@@ -4134,4 +4134,120 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get outputBackToResult => 'ফলাফলে ফিরুন';
+
+  @override
+  String vidyaOpeningScreen(String screen) {
+    return '$screen খুলছি';
+  }
+
+  @override
+  String get vidyaHeardYou => 'শুনেছি';
+
+  @override
+  String get vidyaNotHeardTitle => 'আমি ঠিকমতো শুনতে পাইনি';
+
+  @override
+  String get vidyaNotHeardBody =>
+      'ফোনের একটু কাছে বলুন এবং আবার অর্বে চাপুন, অথবা লিখে দিন।';
+
+  @override
+  String get vidyaTypeInstead => 'লিখে জানান';
+
+  @override
+  String get libraryMyWork => 'আমার কাজ';
+
+  @override
+  String get librarySearchHint => 'আপনার কাজ খুঁজুন, যেমন “জলচক্র”';
+
+  @override
+  String get librarySearchEmpty => 'এর সঙ্গে মেলে এমন কোনো কাজ নেই।';
+
+  @override
+  String get librarySynced => 'সিঙ্ক হয়েছে';
+
+  @override
+  String get libraryMakeNew => 'নতুন কিছু তৈরি করুন';
+
+  @override
+  String librarySelectedCount(int count) {
+    return '$countটি বাছাই করা হয়েছে';
+  }
+
+  @override
+  String get librarySelectAll => 'সব বাছুন';
+
+  @override
+  String libraryDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি কাজ মুছবেন?',
+      one: '1টি কাজ মুছবেন?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get libraryDeleteBody => 'এটি আর ফেরানো যাবে না।';
+
+  @override
+  String get libraryDelete => 'মুছুন';
+
+  @override
+  String get libraryDeleted => 'মুছে ফেলা হয়েছে';
+
+  @override
+  String get libraryUndo => 'ফিরিয়ে আনুন';
+
+  @override
+  String get communityTitle => 'কমিউনিটি';
+
+  @override
+  String get communityDeck => 'সারা ভারতের শিক্ষক';
+
+  @override
+  String get communityOpenChat => 'চ্যাট খুলুন';
+
+  @override
+  String get communityYourNetwork => 'আপনার নেটওয়ার্ক';
+
+  @override
+  String get communityGroupsAndPeople => 'গ্রুপ ও মানুষ';
+
+  @override
+  String communityConversationsCount(int count) {
+    return 'কথোপকথন · $count';
+  }
+
+  @override
+  String get communityTypeTried => 'চেষ্টা করেছি';
+
+  @override
+  String get communityTypeNeedHelp => 'সাহায্য চাই';
+
+  @override
+  String get communityTypeCelebrate => 'উদযাপন';
+
+  @override
+  String get meThisMonth => 'এই মাসে';
+
+  @override
+  String mePlanName(String plan) {
+    return '$plan প্ল্যান';
+  }
+
+  @override
+  String get meStatMade => 'তৈরি';
+
+  @override
+  String get meStatAskedVidya => 'VIDYA-কে জিজ্ঞাসা';
+
+  @override
+  String get meChange => 'বদলান';
+
+  @override
+  String get meOrbLeftHand => 'অর্ব বাঁ হাতের দিকে';
+
+  @override
+  String get mePrivacyForTeachers => 'শিক্ষকদের জন্য গোপনীয়তা';
 }

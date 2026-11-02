@@ -6,87 +6,80 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/i18n/locale_provider.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/motion/animated_entrance.dart';
-import '../../../shared/widgets/app_badge.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
-import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
-import '../../../shared/widgets/glass_app_bar.dart';
-import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/language_switcher.dart';
+import '../../../shared/widgets/map_card.dart';
+import '../../../shared/widgets/map_toggle.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../vidya/presentation/vidya_orb_placement_controller.dart';
 import '../data/usage_repository.dart';
 import '../domain/plan_badge.dart';
 import '../domain/teacher_profile.dart';
 import 'profile_controller.dart';
-import 'widgets/plan_badge_chip.dart';
 
-/// U-OS1 — the Me / operating-system hub (pillar 06), the 4th nav tab.
+/// The Profile tab, drawn to the UX map's "Me" screen (VIDYA 16 · App board
+/// E3): who the teacher is, what they made this month against their plan, the
+/// settings they reach for, and Sign out.
 ///
-/// COMPOSES what already exists rather than duplicating it. The read-only
-/// summary header, the Defaults board row and the Privacy & settings rows all
-/// draw from the ONE profile reader ([profileControllerProvider], shared with
-/// the full editor and Settings); the language control is the shared
-/// [LanguageSwitcher]; the plan badge is the shared [PlanBadgeChip]; and the
-/// full profile *editor* is unchanged — this hub links to it (`Routes.profile`)
-/// and to Settings (`Routes.settings`) rather than re-implementing either.
-///
-/// The one genuinely new surface is **Plan & usage**, backed by
-/// [usageSummaryProvider] (`GET /api/usage`).
+/// COMPOSES what already exists rather than duplicating it: the identity and
+/// the board come from the ONE profile reader ([profileControllerProvider],
+/// shared with the full editor and Settings); the language row opens the
+/// shared language picker; the orb toggle writes the same placement setting
+/// Settings does; usage is [usageSummaryProvider] (`GET /api/usage`).
 ///
 /// AUTH GATE: the hub is gated on the profile read, exactly as the editor and
-/// Settings are. A 401 (today's runtime state — `tokenProvider` is the P0.2
-/// stub) degrades the WHOLE hub to a sign-in prompt: no faked identity, and the
-/// usage read is never even fired (it is watched only inside the data branch).
+/// Settings are. A 401 degrades the WHOLE hub to a sign-in prompt: no faked
+/// identity, and the usage read is never fired (it is watched only inside the
+/// data branch).
 class MeScreen extends ConsumerWidget {
   const MeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileControllerProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // v3 screen 16 "Offline and you": the warm paper wash the spec draws this
-    // screen on, so the header, the offline card and the settings card sit on
-    // one surface instead of the flat page background.
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: isDark ? AppGradients.darkVignette : AppGradients.washOffline,
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: GlassAppBar(title: Text(context.l10n.meTitle)),
-        body: SafeArea(
-          child: profile.when(
-            loading: () => const Padding(
-              padding: AppSpacing.pagePadding,
-              child: AppSkeleton(lines: 6),
-            ),
-            error: (error, _) => _MeError(
-              error: error,
-              onRetry: () =>
-                  ref.read(profileControllerProvider.notifier).refresh(),
-            ),
-            // A brand-new teacher has no document (the onboarding gate is OFF in
-            // production), which is an EMPTY profile — a valid, supported hub, not
-            // an error.
-            data: (data) => _MeHub(profile: data),
+    // No app bar: the map opens on the teacher. The wash comes from
+    // AppBackground (app.dart), as on the other tabs.
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        bottom: false,
+        child: profile.when(
+          loading: () => const Padding(
+            padding: _frame,
+            child: MapCard(child: AppSkeleton(lines: 6)),
           ),
+          error: (error, _) => _MeError(
+            error: error,
+            onRetry: () =>
+                ref.read(profileControllerProvider.notifier).refresh(),
+          ),
+          // A brand-new teacher has no document, which is an EMPTY profile: a
+          // valid, supported hub, not an error.
+          data: (data) => _MeHub(profile: data),
         ),
       ),
     );
   }
 }
 
+/// The map's screen frame.
+const EdgeInsets _frame = EdgeInsets.fromLTRB(
+  AppSpacing.mapGutter,
+  AppSpacing.space4,
+  AppSpacing.mapGutter,
+  AppSpacing.mapBottomClearance,
+);
+
 /// The profile read failed. Which state this is depends on WHY, so it branches
-/// on the typed [ApiException] kind — the same three answers the editor and
+/// on the typed [ApiException] kind: the same three answers the editor and
 /// Settings give for the same read.
 class _MeError extends StatelessWidget {
   const _MeError({required this.error, required this.onRetry});
@@ -98,27 +91,29 @@ class _MeError extends StatelessWidget {
   Widget build(BuildContext context) {
     final kind = error is ApiException ? (error as ApiException).kind : null;
 
-    // No identity -> the whole hub is a sign-in prompt. Offering "Try again"
-    // here would be a lie: the read cannot succeed until the teacher signs in.
+    // No identity: the whole hub is a sign-in prompt. "Try again" would be a
+    // lie; the read cannot succeed until the teacher signs in.
     if (kind == ApiErrorKind.unauthorized) {
       return const SingleChildScrollView(
-        padding: AppSpacing.pagePadding,
+        padding: _frame,
         child: _SignedOutCard(),
       );
     }
-    // Rural connectivity is intermittent: an expected failure with its own copy
-    // and retry — the saffron offline card of v3 screen 16, not a grey error.
+    // Rural connectivity is intermittent: an expected failure with its own
+    // copy and retry (the map's saffron "Working offline" card).
     if (kind == ApiErrorKind.network || kind == ApiErrorKind.timeout) {
       return SingleChildScrollView(
-        padding: AppSpacing.pagePadding,
+        padding: _frame,
         child: _OfflineCard(onRetry: onRetry),
       );
     }
     return SingleChildScrollView(
-      padding: AppSpacing.pagePadding,
-      child: ErrorView(
-        message: context.l10n.profileLoadFailed,
-        onRetry: onRetry,
+      padding: _frame,
+      child: MapCard(
+        child: ErrorView(
+          message: context.l10n.profileLoadFailed,
+          onRetry: onRetry,
+        ),
       ),
     );
   }
@@ -139,8 +134,7 @@ class _OfflineCard extends StatelessWidget {
     final theme = Theme.of(context);
     final text = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
-    final titleColor =
-        isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    final titleColor = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
     final bodyColor = isDark ? AppColors.dMutedForeground : AppColors.ink600;
 
     return Container(
@@ -192,8 +186,7 @@ class _OfflineCard extends StatelessWidget {
   }
 }
 
-/// The composed hub. Blocks in reading order, each inking in on the shared
-/// staggered entrance (reduce-motion returns the static composed frame).
+/// The composed hub, in the map's order: who, this month, settings, sign out.
 class _MeHub extends StatelessWidget {
   const _MeHub({required this.profile});
 
@@ -202,17 +195,17 @@ class _MeHub extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final blocks = <Widget>[
-      _ProfileSummaryCard(profile: profile),
-      const _PlanUsageSection(),
-      _DefaultsSection(profile: profile),
-      const _PrivacySettingsSection(),
+      _Identity(profile: profile),
+      const _ThisMonthCard(),
+      _SettingsCard(profile: profile),
+      const _SignOutButton(),
     ];
 
     return ListView(
-      padding: AppSpacing.pagePadding,
+      padding: _frame,
       children: [
         for (final (index, block) in blocks.indexed) ...[
-          if (index > 0) const SizedBox(height: AppSpacing.space8),
+          if (index > 0) const SizedBox(height: AppSpacing.space3),
           inkSettle(context, block, index: index),
         ],
       ],
@@ -220,106 +213,68 @@ class _MeHub extends StatelessWidget {
   }
 }
 
-// --------------------------------------------------------------- (a) header
+// ------------------------------------------------------------------ identity
 
-/// The read-only identity summary: who the teacher is + their plan, tapping
-/// through to the full editor (`Routes.profile`). v3 screen 16 draws it as a
-/// BARE header on the wash (glass avatar, name, one muted line) rather than a
-/// card; the chevron + press signal that the block is still the way in to
-/// editing, so the hub needs no separate "Edit" affordance.
-class _ProfileSummaryCard extends StatelessWidget {
-  const _ProfileSummaryCard({required this.profile});
+/// The map's identity row: a 58px initials avatar, the name, and "role ·
+/// school". The whole row opens the full profile editor; its chevron says so.
+class _Identity extends StatelessWidget {
+  const _Identity({required this.profile});
 
   final TeacherProfile profile;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final text = theme.textTheme;
-    final isDark = theme.brightness == Brightness.dark;
-
+    final text = Theme.of(context).textTheme;
     final name = profile.displayName?.trim();
-    final displayName =
-        (name != null && name.isNotEmpty) ? name : l10n.profileNoName;
-    final subtitle = _roleAndSchool(l10n, profile);
-    final board = profile.settings.educationBoard;
-    final language = profile.preferredLanguage;
-    // 11px muted line on the wash — legible in both themes without a card
-    // behind it (the spec's #5C534A is exactly `ink600`).
-    final subColor = isDark ? AppColors.dMutedForeground : AppColors.ink600;
+    final displayName = (name != null && name.isNotEmpty)
+        ? name
+        : l10n.profileNoName;
 
-    // v3 screen 16 "You": a BARE header on the wash — glass avatar, name, one
-    // muted line — not a card. The whole block stays the way in to the editor,
-    // so the hub still needs no separate "Edit" affordance.
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => context.push(Routes.profile),
-        borderRadius: AppRadius.rCard,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.space2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _InitialAvatar(name: name),
-                  const SizedBox(width: AppSpacing.space3),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          displayName,
-                          style: text.displaySmall?.copyWith(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
+    return Semantics(
+      button: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () => context.push(Routes.profile),
+          borderRadius: AppRadius.rCard,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.space1),
+            child: Row(
+              children: [
+                _InitialAvatar(name: name),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        displayName,
+                        style: text.displayLarge?.copyWith(
+                          fontSize: 19,
+                          color: AppColors.textStrong,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: text.bodySmall?.copyWith(
-                            fontSize: 12,
-                            color: subColor,
-                          ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _roleAndSchool(l10n, profile),
+                        style: text.bodyLarge?.copyWith(
+                          fontSize: 13,
+                          color: AppColors.textBody,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: AppSpacing.space2),
-                  Icon(
-                    LucideIcons.chevronRight,
-                    size: AppIconSize.inline,
-                    color: subColor,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.space3),
-              // Wrap, not Row: at textScale 1.3 in Malayalam the badge and
-              // chips cannot share one line on a 360dp screen.
-              Wrap(
-                spacing: AppSpacing.space2,
-                runSpacing: AppSpacing.space2,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  const PlanBadgeChip(),
-                  if (board != null)
-                    AppBadge(label: board, size: AppBadgeSize.small),
-                  if (language != null)
-                    AppBadge(
-                      label: language.nativeLabel,
-                      size: AppBadgeSize.small,
-                    ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: AppSpacing.space2),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  size: AppIconSize.inline,
+                  color: AppColors.textMuted,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -338,12 +293,8 @@ String _roleAndSchool(AppLocalizations l10n, TeacherProfile profile) {
   return '$roleLabel · $school';
 }
 
-/// A 44dp glass circle showing the teacher's initials (up to two, taken by rune
-/// so an Indic name shows its base characters rather than split code units), or
-/// the user glyph when they have no name yet. Fill and ring are the shared glass
-/// tokens — the spec's `rgba(255,255,255,.86)` / `.95` are [AppGlass.lFlatFill]
-/// / [AppGlass.lBorderColor]; the glyphs use the muted ink token, which the spec
-/// itself sets (#5C534A = `ink600`).
+/// The map's `.av.w` avatar: a 58px white disc with a hairline ring and the
+/// teacher's initials, or the user glyph when they have no name yet.
 class _InitialAvatar extends StatelessWidget {
   const _InitialAvatar({required this.name});
 
@@ -351,32 +302,28 @@ class _InitialAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final initials = _initialsOf(name);
-    final fg = isDark ? AppColors.dMutedForeground : AppColors.ink600;
-
     return Container(
-      width: 56,
-      height: 56,
+      width: 58,
+      height: 58,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isDark ? AppGlass.dFlatFill : AppGlass.lFlatFill,
-        border: Border.all(
-          color: isDark ? AppGlass.dBorderColor : AppGlass.lBorderColor,
-          width: 1,
-        ),
-        boxShadow: isDark ? AppShadows.cardDark : AppShadows.cardLight,
+        color: Colors.white,
+        border: Border.all(color: AppColors.borderHairline),
       ),
       child: initials == null
-          ? Icon(LucideIcons.user, size: AppIconSize.inline, color: fg)
+          ? const Icon(
+              LucideIcons.user,
+              size: AppIconSize.inline,
+              color: AppColors.textBody,
+            )
           : Text(
               initials,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: fg,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textBody,
               ),
             ),
     );
@@ -403,39 +350,34 @@ String? _initialsOf(String? name) {
   return initials.isEmpty ? null : initials;
 }
 
-// ----------------------------------------------------------- (b) plan & usage
+// ---------------------------------------------------------------- this month
 
-/// Plan & usage. Watches [usageSummaryProvider] with its OWN loading / error /
-/// data — the hub-wide auth gate lives on the profile read above, so a usage
-/// hiccup while signed in degrades only this section, never the whole hub.
-class _PlanUsageSection extends ConsumerWidget {
-  const _PlanUsageSection();
+/// "This month": the plan pill, what the teacher made and how often they asked
+/// VIDYA (both straight from `/api/usage`, never estimated), then one slim bar
+/// per metered tool. Watches [usageSummaryProvider] with its OWN states, so a
+/// usage hiccup degrades only this card, never the hub.
+class _ThisMonthCard extends ConsumerWidget {
+  const _ThisMonthCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final usage = ref.watch(usageSummaryProvider);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        EditorialSectionHeader(l10n.mePlanUsageTitle),
-        const SizedBox(height: AppSpacing.space4),
-        usage.when(
-          loading: () => const AppCard(child: AppSkeleton(lines: 4)),
-          error: (_, _) => AppCard(
-            child: ErrorView(
-              message: l10n.meUsageUnavailable,
-              onRetry: () => ref.invalidate(usageSummaryProvider),
-            ),
-          ),
-          data: (summary) => _UsageCard(summary: summary),
+    return usage.when(
+      loading: () => const MapCard(child: AppSkeleton(lines: 4)),
+      error: (_, _) => MapCard(
+        child: ErrorView(
+          message: l10n.meUsageUnavailable,
+          onRetry: () => ref.invalidate(usageSummaryProvider),
         ),
-      ],
+      ),
+      data: (summary) => _UsageCard(summary: summary),
     );
   }
 }
+
+/// The features that are VIDYA conversation, not things made.
+const Set<String> _voiceFeatures = {'voice-to-text', 'assistant'};
 
 class _UsageCard extends StatelessWidget {
   const _UsageCard({required this.summary});
@@ -445,37 +387,60 @@ class _UsageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
+    final made = summary.features
+        .where((f) => !_voiceFeatures.contains(f.feature))
+        .fold<int>(0, (sum, f) => sum + f.used);
+    final asked = summary.features
+        .where((f) => f.feature == 'assistant')
+        .fold<int>(0, (sum, f) => sum + f.used);
+    final metered = [
+      for (final f in summary.features)
+        if (f.isMetered) f,
+    ];
+    // The map's one bar: everything metered, used against everything allowed.
+    final usedOfPlan = metered.fold<int>(0, (sum, f) => sum + f.used);
+    final planLimit = metered.fold<int>(0, (sum, f) => sum + f.limit);
+    // Per-tool detail only for tools actually used: eleven empty bars would
+    // say nothing the overall bar does not.
+    final used = [
+      for (final f in metered)
+        if (f.used > 0) f,
+    ];
 
-    return AppCard(
+    return MapCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: MapOverline(l10n.meThisMonth)),
+              _PlanPill(label: l10n.mePlanName(_planLabel(l10n, summary.plan))),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
             children: [
               Expanded(
-                child: Text(
-                  l10n.mePlanUsageSubtitle,
-                  style: text.bodyMedium
-                      ?.copyWith(color: scheme.onSurfaceVariant),
-                ),
+                child: _Stat(value: '$made', label: l10n.meStatMade),
               ),
-              const SizedBox(width: AppSpacing.space3),
-              AppBadge(
-                label: _planLabel(l10n, summary.plan),
-                icon: summary.plan.isPaid ? LucideIcons.sparkles : null,
-                tone: summary.plan.isPaid
-                    ? AppBadgeTone.accent
-                    : AppBadgeTone.neutral,
-                size: AppBadgeSize.small,
+              Expanded(
+                child: _Stat(value: '$asked', label: l10n.meStatAskedVidya),
               ),
             ],
           ),
-          for (final feature in summary.features) ...[
-            const SizedBox(height: AppSpacing.space5),
+          if (planLimit > 0) ...[
+            const SizedBox(height: AppSpacing.space4),
+            _UsageLine(
+              key: const ValueKey<String>('usage-overall'),
+              label: l10n.mePlanUsageSubtitle,
+              used: usedOfPlan,
+              limit: planLimit,
+              muted: true,
+            ),
+          ],
+          for (final feature in used) ...[
+            const SizedBox(height: AppSpacing.space4),
             _UsageRow(
               key: ValueKey<String>('usage-row-${feature.feature}'),
               feature: feature,
@@ -487,57 +452,64 @@ class _UsageCard extends StatelessWidget {
   }
 }
 
-/// One feature's line: its name, its `used / limit` (or "Unlimited"), and — only
-/// when it is genuinely metered — the meter. The number is the non-colour
-/// signifier that pairs with the bar (WCAG 1.4.1).
-class _UsageRow extends StatelessWidget {
-  const _UsageRow({super.key, required this.feature});
+/// The map's `.pill.p-sf`: the plan in a saffron tint.
+class _PlanPill extends StatelessWidget {
+  const _PlanPill({required this.label});
 
-  final FeatureUsage feature;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: const ShapeDecoration(
+        color: AppColors.tileSaffronBg,
+        shape: StadiumBorder(),
+      ),
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.accentFill,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One of the map's big numbers: the figure in the display face over its
+/// muted label, read out as one phrase.
+class _Stat extends StatelessWidget {
+  const _Stat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final extras = AppTextExtras.of(context);
-
-    final name = _featureLabel(l10n, feature.feature);
-    final valueLabel = feature.isUnlimited
-        ? l10n.meUsageUnlimited
-        : l10n.meUsageValue(feature.used, feature.limit);
-
-    // The bar is otherwise a silent decoration next to a bare number. Collapse
-    // the whole row (name + value + meter) into ONE labelled node so a screen
-    // reader announces "Lesson plans, 3 / 10" rather than reading the visual
-    // fragments — or leaving the meter unspoken.
     return Semantics(
       container: true,
-      label: '$name, $valueLabel',
+      label: '$value $label',
       child: ExcludeSemantics(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Text(name, style: text.bodyLarge)),
-                const SizedBox(width: AppSpacing.space3),
-                Text(
-                  valueLabel,
-                  style: extras.dataMedium
-                      .copyWith(color: scheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-            if (feature.isMetered) ...[
-              const SizedBox(height: AppSpacing.space2),
-              _UsageMeter(
-                key: ValueKey<String>('usage-meter-${feature.feature}'),
-                fraction: feature.fraction,
+            Text(
+              value,
+              style: text.displayLarge?.copyWith(
+                fontSize: 22,
+                color: AppColors.textStrong,
               ),
-            ],
+            ),
+            Text(
+              label,
+              style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
+            ),
           ],
         ),
       ),
@@ -545,53 +517,106 @@ class _UsageRow extends StatelessWidget {
   }
 }
 
-/// An honest usage bar: a track with a filled portion sized by [fraction]. No
-/// `LinearProgressIndicator` styling hacks — a track [ColoredBox] under a
-/// [FractionallySizedBox] fill, tokens only.
-///
-/// AA (WCAG 1.4.11, computed vs the ACTUAL fill): the fill is the saffron-text
-/// token — `#AC4815` light / `#EB9447` dark — NOT the `#E0924D` brand FILL,
-/// which is only ~2:1 on the track. Saffron-text on `surfaceContainerHigh` is
-/// 4.7:1 (light) / 5.6:1 (dark), clearing the 3:1 non-text floor; and the
-/// `used / limit` number carries the value non-colour too. Static (no sweep),
-/// so it is reduce-motion safe by construction.
-class _UsageMeter extends StatelessWidget {
-  const _UsageMeter({super.key, required this.fraction});
+/// One metered tool, as a [_UsageLine] named for the tool.
+class _UsageRow extends StatelessWidget {
+  const _UsageRow({super.key, required this.feature});
+
+  final FeatureUsage feature;
+
+  @override
+  Widget build(BuildContext context) => _UsageLine(
+    label: _featureLabel(context.l10n, feature.feature),
+    used: feature.used,
+    limit: feature.limit,
+    meterKey: ValueKey<String>('usage-meter-${feature.feature}'),
+  );
+}
+
+/// A label and its `used / limit` over the map's 8px bar. The number is the
+/// non-colour signifier that pairs with the bar (WCAG 1.4.1), and the line
+/// reads as one phrase ("Lesson plans, 3 / 10").
+class _UsageLine extends StatelessWidget {
+  const _UsageLine({
+    super.key,
+    required this.label,
+    required this.used,
+    required this.limit,
+    this.muted = false,
+    this.meterKey,
+  });
+
+  final String label;
+  final int used;
+  final int limit;
+
+  /// The overall line's label is muted copy, not a tool name.
+  final bool muted;
+  final Key? meterKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final valueLabel = context.l10n.meUsageValue(used, limit);
+
+    return Semantics(
+      container: true,
+      label: '$label, $valueLabel',
+      child: ExcludeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: text.bodyMedium?.copyWith(
+                      color: muted ? AppColors.textMuted : AppColors.textStrong,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.space3),
+                Text(
+                  valueLabel,
+                  style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            _UsageBar(key: meterKey, fraction: limit <= 0 ? 0 : used / limit),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The map's `.bar`: an 8px pill track with a saffron fill sized by
+/// [fraction]. The fill is the saffron-text token, legible against the track
+/// as a non-text indicator; static, so reduce-motion safe by construction.
+class _UsageBar extends StatelessWidget {
+  const _UsageBar({super.key, required this.fraction});
 
   final double fraction;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final fill = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
-
-    return SizedBox(
-      height: AppSpacing.space2,
-      child: DecoratedBox(
-        // A 1px outline gives the track a visible extent on the white card: its
-        // surfaceContainerHigh fill alone is only ~1.2:1 on white, so a nearly
-        // empty bar would read as nothing. `outline` (not the lighter
-        // `outlineVariant`, which sits ABOVE the track tone and would vanish)
-        // draws the hairline.
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHigh,
-          borderRadius: AppRadius.rSm,
-          border: Border.all(color: scheme.outline, width: 1),
-        ),
-        child: ClipRRect(
-          borderRadius: AppRadius.rSm,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              FractionallySizedBox(
-                alignment: AlignmentDirectional.centerStart,
-                widthFactor: fraction.clamp(0.0, 1.0),
-                child: ColoredBox(color: fill),
+    return ClipRRect(
+      borderRadius: AppRadius.rPill,
+      child: SizedBox(
+        height: 8,
+        child: ColoredBox(
+          color: AppColors.mapBarTrack,
+          child: FractionallySizedBox(
+            alignment: AlignmentDirectional.centerStart,
+            widthFactor: fraction.clamp(0.0, 1.0),
+            child: const DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.accentFill,
+                borderRadius: AppRadius.rPill,
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -599,192 +624,214 @@ class _UsageMeter extends StatelessWidget {
   }
 }
 
-// --------------------------------------------------------------- (c) defaults
+// ------------------------------------------------------------------ settings
 
-/// The defaults that shape the material SahayakAI makes: the education board
-/// (a link into the editor, which owns the picker) and the app language (the
-/// shared [LanguageSwitcher], which is also the AI `language` source of truth).
-class _DefaultsSection extends StatelessWidget {
-  const _DefaultsSection({required this.profile});
+/// The map's settings card: plain rows over hairlines. Every row leads to
+/// something that exists; the orb toggle writes the same setting Settings does.
+class _SettingsCard extends ConsumerWidget {
+  const _SettingsCard({required this.profile});
 
   final TeacherProfile profile;
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final board = profile.settings.educationBoard;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        EditorialSectionHeader(l10n.meDefaultsTitle),
-        const SizedBox(height: AppSpacing.space4),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: _HubRow(
-            icon: LucideIcons.landmark,
-            label: l10n.settingsBoardLabel,
-            value: board ?? l10n.settingsBoardNone,
-            onTap: () => context.push(Routes.profile),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        const AppCard(padding: EdgeInsets.zero, child: LanguageSwitcher()),
-      ],
-    );
-  }
-}
-
-// ------------------------------------------------------- (d) privacy & settings
-
-/// The account rows: Settings (the real screen — notifications, appearance,
-/// teaching profile, delete account) and Sign out. Each links to something that
-/// already exists; nothing here is a fabricated destination.
-class _PrivacySettingsSection extends ConsumerWidget {
-  const _PrivacySettingsSection();
-
-  @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final language = ref.watch(localeControllerProvider);
     final hand = ref.watch(
       vidyaOrbPlacementControllerProvider.select((p) => p.hand),
     );
+    final board = profile.settings.educationBoard;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        EditorialSectionHeader(l10n.mePrivacyTitle),
-        const SizedBox(height: AppSpacing.space4),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _HubRow(
-                icon: LucideIcons.settings,
-                label: l10n.settingsTitle,
-                onTap: () => context.push(Routes.settings),
-              ),
-              // Bare Divider inherits DividerTheme (outline@0.6, 1px, space 1).
-              const Divider(),
-              _OrbHandRow(hand: hand),
-              const Divider(),
-              const _SignOutRow(),
-            ],
+    final rows = <Widget>[
+      _SettingsRow(
+        label: '${l10n.languageLabel} · ${language.nativeLabel}',
+        trailing: _ChangeLink(label: l10n.meChange),
+        onTap: () => showLanguagePickerSheet(context, ref),
+      ),
+      _SettingsRow(
+        label:
+            '${l10n.settingsBoardLabel} · ${board ?? l10n.settingsBoardNone}',
+        trailing: _ChangeLink(label: l10n.meChange),
+        onTap: () => context.push(Routes.profile),
+      ),
+      _SettingsRow(
+        label: l10n.meOrbLeftHand,
+        // The toggle's 48dp cell overhangs its 44px track; pull it in so its
+        // edge lines up with the chevrons and links above and below.
+        trailing: Padding(
+          padding: const EdgeInsetsDirectional.only(end: 4),
+          child: MapToggle(
+            value: hand == VidyaHand.left,
+            label: l10n.meOrbLeftHand,
+            onChanged: (left) => ref
+                .read(vidyaOrbPlacementControllerProvider.notifier)
+                .setHand(left ? VidyaHand.left : VidyaHand.right),
           ),
         ),
-      ],
+      ),
+      _SettingsRow(
+        label: l10n.settingsTitle,
+        trailing: const _Chevron(),
+        onTap: () => context.push(Routes.settings),
+      ),
+      _SettingsRow(
+        label: l10n.mePrivacyForTeachers,
+        trailing: const _Chevron(),
+        onTap: () => context.push(Routes.privacyForTeachers),
+      ),
+    ];
+
+    return MapCard(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Column(
+        children: [
+          for (final (index, row) in rows.indexed) ...[
+            if (index > 0)
+              const Divider(
+                height: 1,
+                thickness: 1,
+                indent: 14,
+                endIndent: 14,
+                color: AppColors.borderHairline,
+              ),
+            row,
+          ],
+        ],
+      ),
     );
   }
 }
 
-/// v3 screen 16's "Orb on the left hand" line: which side VIDYA's floating orb
-/// parks under, shown as its current value. It LINKS to Settings — which owns
-/// the switch — rather than flipping it here, so one setting stays one control.
-class _OrbHandRow extends StatelessWidget {
-  const _OrbHandRow({required this.hand});
+/// One settings row: the label and its trailing control. With [onTap] the
+/// whole row is the target; without it the trailing control is.
+class _SettingsRow extends StatelessWidget {
+  const _SettingsRow({required this.label, required this.trailing, this.onTap});
 
-  final VidyaHand hand;
+  final String label;
+  final Widget trailing;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return _HubRow(
-      icon: LucideIcons.hand,
-      label: l10n.settingsOrbHandTitle,
-      value: hand == VidyaHand.left
-          ? l10n.onboardingHandLeft
-          : l10n.onboardingHandRight,
-      onTap: () => context.push(Routes.settings),
+    final row = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.only(start: 14, end: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 14,
+                    color: AppColors.textStrong,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.space2),
+            trailing,
+          ],
+        ),
+      ),
+    );
+    if (onTap == null) return row;
+    return Semantics(
+      button: true,
+      child: InkWell(onTap: onTap, child: row),
     );
   }
 }
 
-/// Sign out flips the auth state the router's redirect guard reads. No chevron:
-/// it is an action, not a step into another screen.
-class _SignOutRow extends ConsumerWidget {
-  const _SignOutRow();
+/// The map's `.link`: saffron, 13px, semibold. The row carries the tap.
+class _ChangeLink extends StatelessWidget {
+  const _ChangeLink({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 6),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textLink,
+        ),
+      ),
+    );
+  }
+}
+
+class _Chevron extends StatelessWidget {
+  const _Chevron();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsetsDirectional.only(end: 6),
+    child: Icon(
+      LucideIcons.chevronRight,
+      size: AppIconSize.inline,
+      color: AppColors.textMuted,
+    ),
+  );
+}
+
+// ------------------------------------------------------------------ sign out
+
+/// The map's white button (`.btn.w`): a 52px pill with a hairline. Sign out
+/// flips the auth state the router's redirect guard reads.
+class _SignOutButton extends ConsumerWidget {
+  const _SignOutButton();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _HubRow(
-      icon: LucideIcons.logOut,
-      label: context.l10n.actionSignOut,
-      showChevron: false,
-      onTap: () => ref.read(authControllerProvider.notifier).signOut(),
-    );
-  }
-}
-
-/// One hub row: a shared [IconWell] (which floors the row past 48dp), a label,
-/// an optional value line, and (for navigation) a chevron. A [ListTile] so it
-/// carries the M3 ripple, semantics and the >=48dp target for free.
-class _HubRow extends StatelessWidget {
-  const _HubRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.value,
-    this.showChevron = true,
-  });
-
-  final IconData icon;
-  final String label;
-  final String? value;
-  final VoidCallback onTap;
-  final bool showChevron;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-
-    return ListTile(
-      onTap: onTap,
-      shape: const RoundedRectangleBorder(borderRadius: AppRadius.rRow),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.space4,
-        vertical: AppSpacing.space3,
+    return Material(
+      color: Colors.white,
+      shape: const StadiumBorder(
+        side: BorderSide(color: AppColors.borderHairline),
       ),
-      leading: IconWell(icon: icon),
-      title: Text(label, style: text.titleMedium),
-      subtitle: value == null
-          ? null
-          : Text(
-              value!,
-              style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: () => ref.read(authControllerProvider.notifier).signOut(),
+        child: SizedBox(
+          height: 52,
+          child: Center(
+            child: Text(
+              context.l10n.actionSignOut,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textStrong,
+              ),
             ),
-      trailing: showChevron
-          ? Icon(
-              LucideIcons.chevronRight,
-              size: AppIconSize.inline,
-              color: scheme.onSurfaceVariant,
-            )
-          : null,
+          ),
+        ),
+      ),
     );
   }
 }
 
-/// The signed-out hub: a sign-in prompt, no faked identity. Mirrors the editor's
-/// and Settings' signed-out card so all three account surfaces answer "you are
-/// signed out" identically.
+/// The signed-out hub: a sign-in prompt, no faked identity. Mirrors the
+/// editor's and Settings' answer to "you are signed out".
 class _SignedOutCard extends StatelessWidget {
   const _SignedOutCard();
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-
-    return AppCard(
-      accentBar: true,
-      child: EmptyView(
+    return MapCard(
+      child: MapEmptyNote(
         icon: LucideIcons.logIn,
         title: l10n.profileSignedOutTitle,
         message: l10n.profileSignedOutBody,
         action: FilledButton(
-          onPressed: () => context.go(Routes.loginWithReturnTo(Routes.settings)),
+          onPressed: () =>
+              context.go(Routes.loginWithReturnTo(Routes.settings)),
           child: Text(l10n.settingsSignIn),
         ),
       ),

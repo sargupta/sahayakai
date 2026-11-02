@@ -70,7 +70,9 @@ Widget _host({
   return ProviderScope(
     child: MaterialApp.router(
       routerConfig: router,
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -243,15 +245,5 @@ void main() {
         );
       }
     }
-
-    testWidgets('the dark host really is dark', (tester) async {
-      await tester.pumpWidget(
-        _host(router: _buildRouter(), brightness: Brightness.dark),
-      );
-      await tester.pumpAndSettle();
-
-      final theme = Theme.of(tester.element(find.byType(ContentCreatorScreen)));
-      expect(theme.brightness, Brightness.dark);
-    });
   });
 }

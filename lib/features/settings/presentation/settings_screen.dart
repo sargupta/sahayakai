@@ -468,7 +468,9 @@ class _VoiceModeSection extends ConsumerWidget {
               title: Text(l10n.settingsVoiceModeLabel, style: text.bodyLarge),
               subtitle: Text(
                 l10n.settingsVoiceModeHint,
-                style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                style: text.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ),
             const Divider(height: 1),
@@ -699,8 +701,11 @@ class _PrivacySection extends StatelessWidget {
             size: AppIconSize.inline,
             color: scheme.primary,
           ),
-          title: Text('Privacy for Teachers', style: text.bodyLarge),
-          trailing: const Icon(LucideIcons.chevronRight, size: AppIconSize.inline),
+          title: Text(context.l10n.mePrivacyForTeachers, style: text.bodyLarge),
+          trailing: const Icon(
+            LucideIcons.chevronRight,
+            size: AppIconSize.inline,
+          ),
           onTap: () => context.push(Routes.privacyForTeachers),
         ),
       ),

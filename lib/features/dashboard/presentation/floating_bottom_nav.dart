@@ -12,27 +12,21 @@ import '../../../shared/motion/animated_entrance.dart';
 /// Where the bar is drawn: the app's wash, or the scanner's dark camera ground.
 enum FloatingNavTone { standard, camera }
 
-/// Icon-only floating tab bar — design system `TabBar`
-/// (docs/design-system/components/TabBar), with VIDYA optionally docked in it
-/// (v2 canvas 9a, "VIDYA lives in the tab bar").
+/// The floating tab bar, drawn to the UX map's `tabbar`, with VIDYA optionally
+/// docked at its end (v2 canvas 9a, kept by the product owner).
 ///
-/// A centred capsule 18px above the screen bottom: `surface-chrome` fill,
-/// 1px `border-glass` edge, `shadow-float`, 7px inner padding. Four tabs in
-/// order: **Home · Library · Community · You**. Labels are never drawn: each is
-/// the tab's accessible name only.
+/// A centred capsule 18px above the screen bottom: 92% white, a 1px white
+/// edge, a soft warm shadow, 7px inner padding. Four tabs in order: **Home ·
+/// Library · Community · Profile**, 42px tall and 4px apart. An inactive tab
+/// is a bare 19px icon; the active tab is a saffron-600 pill carrying a white
+/// icon AND its name, so the teacher always reads where she is.
 ///
-/// - **Undocked**: 42px discs 6px apart in 48px touch cells; the active tab is
-///   a saffron disc with a white icon.
-/// - **Docked** ([dock] given): 40px discs 4px apart in 44px touch cells, then
-///   a 1×24 divider and the [dock] (VIDYA's orb). The active tab is a 12%
-///   saffron tint with a saffron-600 icon, so the orb stays the one saffron
-///   sphere in the bar.
+/// With a [dock], a 1×24 divider and VIDYA's orb follow the tabs. [prompt]
+/// sits directly above the capsule and owns its own spacing. With
+/// [FloatingNavTone.camera] the capsule is 16% milk with no shadow and
+/// inactive icons are `on-camera-icon`.
 ///
-/// [prompt] sits directly above the capsule (the dock's "what VIDYA offers
-/// here" capsule) and owns its own spacing. With [FloatingNavTone.camera] the
-/// capsule is 16% milk with no shadow and inactive icons are `on-camera-icon`.
-///
-/// No fifth tab, no Create action — creation starts from VIDYA.
+/// No fifth tab, no Create action: creation starts from VIDYA.
 class FloatingBottomNav extends StatelessWidget {
   const FloatingBottomNav({
     super.key,
@@ -45,10 +39,11 @@ class FloatingBottomNav extends StatelessWidget {
     this.tone = FloatingNavTone.standard,
   });
 
-  /// Fractional page position (0.0-3.0) for indicator animation.
+  /// Fractional page position (0.0-3.0) while the teacher swipes. Kept for the
+  /// shell's API; the pill moves when the page settles on [currentIndex].
   final double currentPage;
 
-  /// Index of the active tab: 0=Home, 1=Library, 2=Community, 3=You.
+  /// Index of the active tab: 0=Home, 1=Library, 2=Community, 3=Profile.
   final int currentIndex;
 
   /// Called when a tab is tapped.
@@ -57,9 +52,8 @@ class FloatingBottomNav extends StatelessWidget {
   /// VIDYA's docked orb, drawn after a divider at the end of the bar.
   final Widget? dock;
 
-  /// Whether the [dock] is drawn right now. Home hides it — its big orb is
-  /// VIDYA there — while the bar keeps the docked layout, so the tabs do not
-  /// change size as the teacher swipes; the bar's width animates instead.
+  /// Whether the [dock] is drawn right now. Home hides it: its big orb is
+  /// VIDYA there.
   final bool showDock;
 
   /// A capsule drawn above the bar; it owns its own spacing.
@@ -68,9 +62,13 @@ class FloatingBottomNav extends StatelessWidget {
   /// The ground the bar sits on.
   final FloatingNavTone tone;
 
+  /// How far a tab's 48dp touch cell reaches past its drawn 42px button.
+  static const double _hit = (AppSpacing.tabHit - AppSpacing.tabButton) / 2;
+
+  /// The map's glyphs: a folder for Library (saved work), not a bookshelf.
   static const List<IconData> _icons = [
     LucideIcons.home,
-    LucideIcons.library,
+    LucideIcons.folder,
     LucideIcons.users,
     LucideIcons.user,
   ];
@@ -79,40 +77,37 @@ class FloatingBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final motion = context.motionEnabled;
     final camera = tone == FloatingNavTone.camera;
-    final docked = dock != null;
-    final geometry = docked ? _Geometry.docked : _Geometry.undocked;
+    final docked = dock != null && showDock;
     final labels = _labels(context);
-    final effectivePage = (currentPage == 0.0 && currentIndex != 0)
-        ? currentIndex.toDouble()
-        : currentPage;
-
-    final tabs = List<Widget>.generate(_icons.length, (i) {
-      final dist = (effectivePage - i).abs().clamp(0.0, 1.0);
-      return _TabButton(
-        key: ValueKey('tab_$i'),
-        icon: _icons[i],
-        label: labels[i],
-        isActive: i == currentIndex,
-        activeWeight: 1.0 - dist,
-        camera: camera,
-        tint: docked,
-        geometry: geometry,
-        motion: motion,
-        onTap: () {
-          if (i != currentIndex) HapticFeedback.selectionClick();
-          onSelected(i);
-        },
-      );
-    });
+    final showName = _nameFits(context, labels[currentIndex], docked: docked);
 
     final row = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ...tabs,
-        if (docked && showDock) ...[
-          const SizedBox(width: _Geometry.dividerLead),
+        for (var i = 0; i < _icons.length; i++)
+          _TabButton(
+            key: ValueKey('tab_$i'),
+            icon: _icons[i],
+            label: labels[i],
+            isActive: i == currentIndex,
+            showName: i == currentIndex && showName,
+            camera: camera,
+            motion: motion,
+            onTap: () {
+              if (i != currentIndex) HapticFeedback.selectionClick();
+              onSelected(i);
+            },
+          ),
+        if (docked) ...[
+          // Last tab's 3px overhang, then gap + margin, divider, margin + gap,
+          // less the orb cell's 1px overhang.
+          const SizedBox(
+            width: AppSpacing.dockGap + AppSpacing.dockDividerMargin - _hit,
+          ),
           const _DockDivider(),
-          const SizedBox(width: _Geometry.dividerTrail),
+          const SizedBox(
+            width: AppSpacing.dockDividerMargin + AppSpacing.dockGap - 1,
+          ),
           dock!,
         ],
       ],
@@ -120,18 +115,29 @@ class FloatingBottomNav extends StatelessWidget {
 
     final capsule = DecoratedBox(
       decoration: BoxDecoration(
-        color: camera ? AppColors.cameraGlass : AppColors.surfaceChrome,
+        color: camera ? AppColors.cameraGlass : AppColors.surfaceTabBar,
         borderRadius: BorderRadius.circular(9999),
         border: Border.all(
           color: camera ? AppColors.cameraBorder : AppColors.borderGlass,
         ),
-        boxShadow: camera ? null : const [AppShadows.navFloatLight],
+        boxShadow: camera ? null : const [AppShadows.tabBar],
       ),
       child: Padding(
-        padding: geometry.capsulePadding,
-        // The bar's width eases when the dock shows or hides. Under reduce
-        // motion it simply jumps: a zero-length AnimatedSize re-dirties its
-        // own layout, so it is left out rather than run at Duration.zero.
+        // Each tab's 48dp touch cell overhangs its drawn 42px button by 3px a
+        // side, into the capsule's 7px padding, so the drawn geometry stays
+        // the map's 56px capsule. The docked orb's 44 cell overhangs by 1.
+        padding: EdgeInsetsDirectional.fromSTEB(
+          AppSpacing.tabBarPadding - _hit,
+          AppSpacing.tabBarPadding - _hit,
+          docked
+              ? AppSpacing.tabBarPadding - 1
+              : AppSpacing.tabBarPadding - _hit,
+          AppSpacing.tabBarPadding - _hit,
+        ),
+        // The pill's width eases as it moves between tabs and the dock shows
+        // or hides. Under reduce motion it jumps: a zero-length AnimatedSize
+        // re-dirties its own layout, so it is left out rather than run at
+        // Duration.zero.
         child: motion
             ? AnimatedSize(
                 duration: AppMotion.small,
@@ -170,54 +176,59 @@ class FloatingBottomNav extends StatelessWidget {
     );
   }
 
-  /// Screen-reader labels — the bar is icon-only visually; assistive tech
-  /// still gets the localized destination name.
+  /// Whether the active tab's drawn name fits on this screen. A long name at
+  /// a large text size (Tamil at 1.3x on 360dp, say) would push the bar past
+  /// the screen; the a11y rules forbid shrinking or ellipsizing it, so the pill
+  /// keeps only its icon then. The name is still the tab's accessible label.
+  static bool _nameFits(
+    BuildContext context,
+    String name, {
+    required bool docked,
+  }) {
+    final painter = TextPainter(
+      text: TextSpan(text: name, style: _TabButton.nameStyle(context)),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final nameWidth = painter.width;
+    painter.dispose();
+
+    const inactiveCells = 3 * AppSpacing.tabHit;
+    final activeCell =
+        AppSpacing.tabPillStart +
+        AppSpacing.tabIcon +
+        AppSpacing.tabLabelGap +
+        nameWidth +
+        AppSpacing.tabPillEnd +
+        2 * _hit;
+    // Padding both sides, plus the 1px border both sides.
+    const chrome = 2 * (AppSpacing.tabBarPadding - _hit) + 2;
+    const dockRun =
+        (AppSpacing.dockGap + AppSpacing.dockDividerMargin - _hit) +
+        1 +
+        (AppSpacing.dockDividerMargin + AppSpacing.dockGap - 1) +
+        AppSpacing.dockCell +
+        // The docked end padding is 1 under the bar's 7, not 3.
+        (_hit - 1);
+    final barWidth =
+        inactiveCells + activeCell + chrome + (docked ? dockRun : 0);
+    final available =
+        MediaQuery.sizeOf(context).width - 2 * AppSpacing.screenGutter;
+    return barWidth <= available;
+  }
+
+  /// The localized destination names: drawn on the active tab, and every
+  /// tab's accessible name.
   static List<String> _labels(BuildContext context) {
     final l10n = context.l10n;
-    return [l10n.navHome, l10n.navLibrary, l10n.networkTitle, l10n.navProfile];
+    return [
+      l10n.navHome,
+      l10n.navLibrary,
+      l10n.communityTitle,
+      l10n.navProfile,
+    ];
   }
-}
-
-/// Disc and touch-cell sizes for the two bar layouts. Touch cells overlap the
-/// drawn padding and gaps, so the capsule keeps the drawn geometry exactly.
-class _Geometry {
-  const _Geometry({
-    required this.disc,
-    required this.cell,
-    required this.capsulePadding,
-  });
-
-  /// 42 discs, 6 apart, 7 from the edge: 48 cells overhang 3 a side.
-  static const undocked = _Geometry(
-    disc: AppSpacing.tabSize,
-    cell: AppSpacing.tabHit,
-    capsulePadding: EdgeInsets.all(AppSpacing.tabBarPadding - 3),
-  );
-
-  /// 40 discs, 4 apart, 7 from the left edge (44 cells overhang 2); the 42
-  /// orb in a 44 cell sits 7 from the right edge and sets the 56 height.
-  static const docked = _Geometry(
-    disc: AppSpacing.dockTabSize,
-    cell: AppSpacing.dockCell,
-    capsulePadding: EdgeInsets.fromLTRB(
-      AppSpacing.tabBarPadding - 2,
-      AppSpacing.tabBarPadding - 1,
-      AppSpacing.tabBarPadding - 1,
-      AppSpacing.tabBarPadding - 1,
-    ),
-  );
-
-  /// Last disc → divider: 4 gap + 3 margin, less the cell's 2 overhang.
-  static const double dividerLead =
-      AppSpacing.dockGap + AppSpacing.dockDividerMargin - 2;
-
-  /// Divider → orb sphere: 3 margin + 4 gap, less the orb cell's 1 overhang.
-  static const double dividerTrail =
-      AppSpacing.dockDividerMargin + AppSpacing.dockGap - 1;
-
-  final double disc;
-  final double cell;
-  final EdgeInsets capsulePadding;
 }
 
 /// The 1×24 hairline between the destinations and VIDYA.
@@ -234,19 +245,17 @@ class _DockDivider extends StatelessWidget {
   }
 }
 
-/// One tab: a touch cell around a disc — saffron (or a saffron tint when
-/// VIDYA is docked) when active, bare when not. Exposed to assistive tech as a
-/// selected/unselected button carrying the localized destination label.
+/// One tab. Inactive: a 42px circle around a muted icon. Active: a saffron-600
+/// pill with a white icon and the destination's name. Exposed to assistive
+/// tech as a selected/unselected button carrying the localized name.
 class _TabButton extends StatelessWidget {
   const _TabButton({
     super.key,
     required this.icon,
     required this.label,
     required this.isActive,
-    this.activeWeight = 0.0,
+    required this.showName,
     required this.camera,
-    required this.tint,
-    required this.geometry,
     required this.motion,
     required this.onTap,
   });
@@ -255,27 +264,21 @@ class _TabButton extends StatelessWidget {
   final String label;
   final bool isActive;
 
-  /// 0..1 — how close the swipe is to this tab; drives the disc cross-fade.
-  final double activeWeight;
-  final bool camera;
+  /// Whether the active pill draws its name (see `_nameFits`).
+  final bool showName;
 
-  /// Active tab as a 12% saffron tint instead of a filled disc.
-  final bool tint;
-  final _Geometry geometry;
+  /// The drawn name's style; the bar measures with it too.
+  static TextStyle? nameStyle(BuildContext context) => Theme.of(
+    context,
+  ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600);
+  final bool camera;
   final bool motion;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final inactiveIcon = camera ? AppColors.onCameraIcon : AppColors.ink500;
-    final activeFill = tint ? AppColors.accentTintStrong : AppColors.saffron500;
-    final activeIcon = tint ? AppColors.saffron600 : AppColors.textOnAccent;
-
-    // Inactive tabs paint no background at all (null, not transparent).
-    final background = activeWeight <= 0.0
-        ? null
-        : Color.lerp(Colors.transparent, activeFill, activeWeight);
-    final iconColor = Color.lerp(inactiveIcon, activeIcon, activeWeight)!;
+    final inactive = camera ? AppColors.onCameraIcon : AppColors.ink500;
+    final foreground = isActive ? AppColors.textOnAccent : inactive;
 
     return Semantics(
       button: true,
@@ -284,28 +287,47 @@ class _TabButton extends StatelessWidget {
       enabled: true,
       onTap: onTap,
       excludeSemantics: true,
-      child: SizedBox.square(
-        dimension: geometry.cell,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkResponse(
-            onTap: onTap,
-            radius: geometry.disc / 2,
-            customBorder: const CircleBorder(),
-            child: Center(
+      // The whole 48dp cell is the target; the drawn button sits inside it.
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(FloatingBottomNav._hit),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: onTap,
+              customBorder: const StadiumBorder(),
               child: AnimatedContainer(
                 duration: motion ? AppMotion.small : Duration.zero,
                 curve: AppMotion.easeOutQuart,
-                width: geometry.disc,
-                height: geometry.disc,
-                decoration: BoxDecoration(
-                  color: background,
-                  shape: BoxShape.circle,
+                height: AppSpacing.tabButton,
+                constraints: const BoxConstraints(
+                  minWidth: AppSpacing.tabButton,
                 ),
-                child: Icon(
-                  icon,
-                  size: AppSpacing.tabIconSize,
-                  color: iconColor,
+                padding: isActive
+                    ? const EdgeInsetsDirectional.only(
+                        start: AppSpacing.tabPillStart,
+                        end: AppSpacing.tabPillEnd,
+                      )
+                    : EdgeInsets.zero,
+                decoration: ShapeDecoration(
+                  color: isActive ? AppColors.accentFill : null,
+                  shape: const StadiumBorder(),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: AppSpacing.tabIcon, color: foreground),
+                    if (showName) ...[
+                      const SizedBox(width: AppSpacing.tabLabelGap),
+                      Text(
+                        label,
+                        style: nameStyle(context)?.copyWith(color: foreground),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),

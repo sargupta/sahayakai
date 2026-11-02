@@ -152,9 +152,7 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final spoken =
-        ((question != null ? '$question\n\n' : '') + answer.answer.trim())
-            .trimRight();
+    final spoken = instantAnswerAsPlainText(answer, question: question);
     final request = saveRequest;
     final canSave = request != null && answer.raw != null;
 
@@ -184,6 +182,13 @@ class _ActionBar extends ConsumerWidget {
     );
   }
 }
+
+/// A plain-text export of the answer — for the clipboard, the OS share sheet,
+/// and the deliver tray. One serialiser, so every path reads alike. The
+/// [question] (when known) leads, then the answer's Markdown.
+String instantAnswerAsPlainText(InstantAnswer answer, {String? question}) =>
+    ((question != null ? '$question\n\n' : '') + answer.answer.trim())
+        .trimRight();
 
 /// The video suggestion. A full-width card, not a link buried in prose: the
 /// whole card is the target, so it clears 48dp comfortably, and the copy says

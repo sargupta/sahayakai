@@ -151,7 +151,7 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final text = _worksheetAsText(worksheet, l10n);
+    final text = worksheetAsPlainText(worksheet, l10n);
     final request = saveRequest;
 
     return Column(
@@ -186,8 +186,9 @@ class _ActionBar extends ConsumerWidget {
   }
 }
 
-/// A plain-text export of the worksheet, for the clipboard.
-String _worksheetAsText(Worksheet worksheet, AppLocalizations l10n) {
+/// A plain-text export of the worksheet — for the clipboard, the OS share
+/// sheet, and the deliver tray. One serialiser, so every path reads alike.
+String worksheetAsPlainText(Worksheet worksheet, AppLocalizations l10n) {
   final b = StringBuffer();
   if (worksheet.title.isNotEmpty) b.writeln(worksheet.title);
   final metaBits = [

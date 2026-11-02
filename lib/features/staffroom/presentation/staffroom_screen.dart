@@ -3,16 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_skeleton.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
-import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
+import '../../../shared/widgets/map_card.dart';
+import '../../../shared/widgets/map_chip.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../vidya/presentation/vidya_sheet.dart';
 import '../data/staffroom_providers.dart';
@@ -20,9 +19,9 @@ import '../domain/community_post.dart';
 import '../domain/group.dart';
 import '../domain/staffroom_results.dart';
 import '../domain/teacher.dart';
-import 'widgets/chat_entry_tile.dart';
 import 'widgets/feed_item_view.dart';
 import 'widgets/group_chip.dart';
+import 'widgets/post_type_style.dart';
 import 'widgets/teacher_suggestion_card.dart';
 
 /// U-SI2 — the Staffroom home (SPEC §A3.1). A scroll of editorial registers: a
@@ -102,15 +101,20 @@ class _StaffroomReady extends ConsumerStatefulWidget {
 }
 
 class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
-  /// null = "All". Otherwise the one feed type the chips have narrowed to.
-  FeedItemType? _filter;
+  /// null = "All". Otherwise the one post type the chips have narrowed to.
+  PostType? _filter;
 
-  /// The chips, in order — each a real [FeedItemType] the feed can carry.
-  static const _chips = <(FeedItemType?,)>[
-    (null,),
-    (FeedItemType.groupPost,),
-    (FeedItemType.resourceShare,),
-    (FeedItemType.chatHighlight,),
+  /// The "Your network" tile scrolls here.
+  final GlobalKey _networkKey = GlobalKey();
+
+  /// The chips, in the map's order: All, Resource, Tried this, Celebrate,
+  /// Need help. Each is a real [PostType] the feed carries.
+  static const _chips = <PostType?>[
+    null,
+    PostType.resource,
+    PostType.share,
+    PostType.celebrate,
+    PostType.askHelp,
   ];
 
   Future<void> _refresh() async {
@@ -123,20 +127,14 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
     await ref.read(unifiedFeedProvider.future);
   }
 
-  String _chipLabel(AppLocalizations l10n, FeedItemType? type) {
-    switch (type) {
-      case null:
-        return l10n.communityFilterAll;
-      case FeedItemType.groupPost:
-        return l10n.communityFilterPosts;
-      case FeedItemType.resourceShare:
-        return l10n.communityFilterResources;
-      case FeedItemType.chatHighlight:
-        return l10n.communityFilterHighlights;
-      case FeedItemType.connectionSuggestion:
-      case FeedItemType.groupSuggestion:
-        return l10n.communityFilterAll; // not offered as a chip
-    }
+  void _showNetwork() {
+    final target = _networkKey.currentContext;
+    if (target == null) return;
+    Scrollable.ensureVisible(
+      target,
+      duration: context.motionEnabled ? AppMotion.medium : Duration.zero,
+      curve: AppMotion.emphasized,
+    );
   }
 
   @override
@@ -156,68 +154,67 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
         ? feed
         : [
             for (final item in feed)
-              if (item.type == _filter) item,
+              if (item.post?.postType == _filter) item,
           ];
 
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView(
-        padding: AppSpacing.pagePadding,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.mapGutter,
+          AppSpacing.space3,
+          AppSpacing.mapGutter,
+          AppSpacing.mapBottomClearance,
+        ),
         children: [
-          const _StaffroomHero(),
-          const SizedBox(height: AppSpacing.space5),
-
-          // The Staff Room chat entry (SPEC §A3.1) — the community-wide live room.
-          ChatEntryTile(
-            title: l10n.staffroomChatTitle,
-            subtitle: l10n.staffroomChatEntryBody,
-            feature: true,
-            onTap: () => context.push(Routes.staffRoomChat),
-          ),
-          const SizedBox(height: AppSpacing.space6),
-
-          // Your groups.
-          EditorialSectionHeader(l10n.staffroomSectionGroups),
-          const SizedBox(height: AppSpacing.space3),
-          if (myGroups.isEmpty)
-            const _GroupsEmpty()
-          else
-            _GroupStrip(groups: myGroups),
-          const SizedBox(height: AppSpacing.space6),
-
-          // Discover groups (only when there are suggestions).
-          if (discover.isNotEmpty) ...[
-            EditorialSectionHeader(l10n.staffroomSectionDiscover),
-            const SizedBox(height: AppSpacing.space3),
-            _GroupStrip(groups: discover),
-            const SizedBox(height: AppSpacing.space6),
-          ],
-
-          // From your groups — the unified feed, with type filter chips.
-          EditorialSectionHeader(l10n.staffroomSectionFeed),
-          const SizedBox(height: AppSpacing.space3),
-          if (feed.isEmpty)
-            _FeedEmpty()
-          else ...[
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              child: Row(
-                spacing: AppSpacing.space2,
-                children: [
-                  for (final (type,) in _chips)
-                    ChoiceChip(
-                      label: Text(_chipLabel(l10n, type)),
-                      selected: _filter == type,
-                      materialTapTargetSize: MaterialTapTargetSize.padded,
-                      onSelected: (_) => setState(() => _filter = type),
-                    ),
-                ],
-              ),
+          // The map's two tiles: the live staff room, and the teacher's own
+          // network further down this page.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _HubTile(
+                    title: l10n.staffroomChatTitle,
+                    subtitle: l10n.communityOpenChat,
+                    onTap: () => context.push(Routes.staffRoomChat),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HubTile(
+                    title: l10n.communityYourNetwork,
+                    subtitle: l10n.communityGroupsAndPeople,
+                    onTap: _showNetwork,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.space3),
+          ),
+          const SizedBox(height: AppSpacing.space3),
+
+          if (feed.isEmpty)
+            const MapCard(child: _FeedEmpty())
+          else ...[
+            Wrap(
+              spacing: 7,
+              children: [
+                for (final type in _chips)
+                  MapChip(
+                    label: postTypeLabel(l10n, type),
+                    selected: _filter == type,
+                    selectedFill: AppColors.accentFill,
+                    idleFill: type == null ? null : postTypeTint(type).fill,
+                    idleInk: type == null
+                        ? AppColors.textStrong
+                        : postTypeTint(type).ink,
+                    onTap: () => setState(() => _filter = type),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.space1),
             if (shown.isEmpty)
-              _FeedEmpty()
+              const MapCard(child: _FeedEmpty())
             else
               ...shown.asMap().entries.map(
                 (entry) => Padding(
@@ -235,11 +232,29 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
               ),
           ],
 
-          // People you may know (only when there are recommendations).
+          // Your network: groups, groups to discover, people you may know.
+          const SizedBox(height: AppSpacing.space3),
+          KeyedSubtree(
+            key: _networkKey,
+            child: MapOverline(l10n.staffroomSectionGroups),
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          if (myGroups.isEmpty)
+            const MapCard(child: _GroupsEmpty())
+          else
+            _GroupStrip(groups: myGroups),
+
+          if (discover.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.space5),
+            MapOverline(l10n.staffroomSectionDiscover),
+            const SizedBox(height: AppSpacing.space2),
+            _GroupStrip(groups: discover),
+          ],
+
           if (people.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.space3),
-            EditorialSectionHeader(l10n.staffroomSectionPeople),
-            const SizedBox(height: AppSpacing.space3),
+            const SizedBox(height: AppSpacing.space5),
+            MapOverline(l10n.staffroomSectionPeople),
+            const SizedBox(height: AppSpacing.space2),
             ...people.asMap().entries.map(
               (entry) => Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.space3),
@@ -255,6 +270,49 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// The map's `.tile`: a white rounded block with a bold name over a muted
+/// line, tappable as a whole.
+class _HubTile extends StatelessWidget {
+  const _HubTile({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      child: MapCard(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: text.bodyLarge?.copyWith(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textStrong,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -332,73 +390,25 @@ class _GroupsEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final text = theme.textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(l10n.staffroomGroupsEmptyTitle, style: text.titleSmall),
-        const SizedBox(height: AppSpacing.space1),
-        // Full-ink on the scaffold ground ("muted only on white cards").
-        Text(
-          l10n.staffroomGroupsEmptyBody,
-          style: text.bodyMedium?.copyWith(color: scheme.onSurface),
-        ),
-      ],
+    return MapEmptyNote(
+      icon: LucideIcons.users,
+      title: l10n.staffroomGroupsEmptyTitle,
+      message: l10n.staffroomGroupsEmptyBody,
     );
   }
 }
 
 /// The prominent feed-empty state (ready, no items).
 class _FeedEmpty extends StatelessWidget {
+  const _FeedEmpty();
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return EmptyView(
+    return MapEmptyNote(
       icon: LucideIcons.messagesSquare,
       title: l10n.staffroomFeedEmptyTitle,
       message: l10n.staffroomFeedEmptyBody,
-    );
-  }
-}
-
-/// The hero masthead: saffron eyebrow → serif greeting → saffron rule → deck.
-class _StaffroomHero extends StatelessWidget {
-  const _StaffroomHero();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final text = theme.textTheme;
-    final extras = AppTextExtras.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        EditorialSectionHeader(l10n.staffroomTitle, rule: false),
-        const SizedBox(height: AppSpacing.space3),
-        Text(l10n.staffroomHeroTitle, style: text.displaySmall),
-        const SizedBox(height: AppSpacing.space3),
-        const SizedBox(
-          width: 48,
-          height: 2,
-          child: DecoratedBox(
-            decoration: BoxDecoration(gradient: AppGradients.accentBar),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        Text(
-          // Full-ink on the scaffold ground: onSurfaceVariant is only 4.36:1 on
-          // the ground (< AA); the deck stays subordinate via the lighter `lead`
-          // weight, not a muted colour ("muted only on white cards").
-          l10n.staffroomHeroDeck,
-          style: extras.lead.copyWith(color: scheme.onSurface),
-        ),
-      ],
     );
   }
 }
@@ -412,19 +422,26 @@ class _StaffroomSignIn extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return SingleChildScrollView(
-      padding: AppSpacing.pagePadding,
-      child: EmptyView(
-        icon: LucideIcons.users,
-        title: l10n.staffroomSignInTitle,
-        message: l10n.staffroomSignInBody,
-        action: SecondaryButton(
-          label: l10n.actionSignIn,
-          icon: LucideIcons.logIn,
-          // Real auth landed — a plain push is correct now. See
-          // inbox_screen.dart's _InboxSignIn for the Firestore-handoff
-          // caveat this button still carries (same shape here).
-          onPressed: () =>
-              context.push(Routes.loginWithReturnTo(Routes.staffroom)),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.mapGutter,
+        AppSpacing.space3,
+        AppSpacing.mapGutter,
+        AppSpacing.mapBottomClearance,
+      ),
+      child: MapCard(
+        child: MapEmptyNote(
+          icon: LucideIcons.users,
+          title: l10n.staffroomSignInTitle,
+          message: l10n.staffroomSignInBody,
+          action: SecondaryButton(
+            label: l10n.actionSignIn,
+            icon: LucideIcons.logIn,
+            // Real auth landed — a plain push is correct now. See
+            // inbox_screen.dart's _InboxSignIn for the Firestore-handoff
+            // caveat this button still carries (same shape here).
+            onPressed: () =>
+                context.push(Routes.loginWithReturnTo(Routes.staffroom)),
+          ),
         ),
       ),
     );
@@ -441,8 +458,15 @@ class _StaffroomError extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return SingleChildScrollView(
-      padding: AppSpacing.pagePadding,
-      child: ErrorView(message: l10n.staffroomErrorBody, onRetry: onRetry),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.mapGutter,
+        AppSpacing.space3,
+        AppSpacing.mapGutter,
+        AppSpacing.mapBottomClearance,
+      ),
+      child: MapCard(
+        child: ErrorView(message: l10n.staffroomErrorBody, onRetry: onRetry),
+      ),
     );
   }
 }

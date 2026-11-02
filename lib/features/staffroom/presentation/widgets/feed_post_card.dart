@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/ai_text.dart';
-import '../../../../shared/widgets/app_badge.dart';
-import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/map_card.dart';
 import '../../../inbox/data/block_c_transport.dart';
 import '../../../inbox/presentation/inbox_time.dart';
 import '../../data/staffroom_transport.dart';
 import '../../domain/group.dart';
+import 'post_type_style.dart';
 import 'staffroom_avatar.dart';
 
 /// A group-post card (SPEC §A3.3 / §A3.4) — the unified feed's primary grammar
-/// and the group detail's post row, in one `AppCard(flat)`:
+/// and the group detail's post row, in one `MapCard(flat)`:
 ///
 ///   masthead: [StaffroomAvatar] · author `titleSmall` · a saffron post-type
 ///     overline (`Lightbulb` share / `HelpCircle` ask_help / `Trophy` celebrate
@@ -115,30 +114,31 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
-    final extras = AppTextExtras.of(context);
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
     final post = widget.post;
 
-    final (icon: typeIcon, label: typeLabel) = _postType(l10n, post.postType);
+    final group = widget.groupName?.trim() ?? '';
     final timestamp = inboxRelativeTime(post.createdAt, DateTime.now(), l10n);
+    final meta = [
+      if (group.isNotEmpty) group,
+      if (timestamp.isNotEmpty) timestamp,
+    ].join(' · ');
 
-    return AppCard(
+    return MapCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Masthead: avatar + author + post-type overline · timestamp.
+          // Masthead (UX map post): avatar, the author over "group · time",
+          // and the post type as a tinted pill.
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               StaffroomAvatar(
                 name: post.authorName,
                 photoUrl: post.authorPhotoURL,
-                size: 40,
+                size: 36,
               ),
-              const SizedBox(width: AppSpacing.space3),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,69 +146,38 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                   children: [
                     Text(
                       post.authorName,
-                      style: text.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      style: text.bodyLarge?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textStrong,
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.space1),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(
-                          typeIcon,
-                          size: AppIconSize.inline,
-                          // saffron-TEXT token (AA on the white card), never the
-                          // #E0924D fill routed as an icon.
-                          color: saffronText,
+                    if (meta.isNotEmpty)
+                      Text(
+                        meta,
+                        style: text.bodyMedium?.copyWith(
+                          color: AppColors.textMuted,
                         ),
-                        const SizedBox(width: AppSpacing.space1),
-                        Flexible(
-                          child: Text(
-                            typeLabel,
-                            style: extras.overline,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (timestamp.isNotEmpty) ...[
-                          const SizedBox(width: AppSpacing.space2),
-                          Text(
-                            timestamp,
-                            style: extras.dataMedium
-                                .copyWith(color: scheme.onSurfaceVariant),
-                          ),
-                        ],
-                      ],
-                    ),
+                      ),
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.space2),
+              _TypePill(type: post.postType),
             ],
           ),
-          const SizedBox(height: AppSpacing.space3),
+          const SizedBox(height: 9),
           // Body: server-authored prose (full ink, matra-safe).
           AiText(post.content),
-          const SizedBox(height: AppSpacing.space3),
-          // Footer: group chip + optimistic like.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (widget.groupName != null &&
-                  widget.groupName!.trim().isNotEmpty)
-                Flexible(
-                  child: AppBadge(
-                    label: widget.groupName!.trim(),
-                    icon: LucideIcons.users,
-                    size: AppBadgeSize.small,
-                  ),
-                ),
-              const Spacer(),
-              _LikeButton(
-                liked: _isLiked,
-                count: _likeCount,
-                onTap: _toggle,
-              ),
-            ],
+          const SizedBox(height: AppSpacing.space1),
+          // Footer: the optimistic like, leading, as in the map.
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: _LikeButton(
+              liked: _isLiked,
+              count: _likeCount,
+              onTap: _toggle,
+            ),
           ),
           if (_failed) ...[
             const SizedBox(height: AppSpacing.space1),
@@ -227,24 +196,38 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
       ),
     );
   }
+}
 
-  ({IconData icon, String label}) _postType(
-    AppLocalizations l10n,
-    PostType type,
-  ) {
-    switch (type) {
-      case PostType.share:
-        return (icon: LucideIcons.lightbulb, label: l10n.staffroomPostTypeShare);
-      case PostType.askHelp:
-        return (
-          icon: LucideIcons.helpCircle,
-          label: l10n.staffroomPostTypeAskHelp
-        );
-      case PostType.celebrate:
-        return (icon: LucideIcons.trophy, label: l10n.staffroomPostTypeCelebrate);
-      case PostType.resource:
-        return (icon: LucideIcons.fileUp, label: l10n.staffroomPostTypeResource);
-    }
+/// The post type as the map's pill: tinted, bold, small caps in Latin script.
+class _TypePill extends StatelessWidget {
+  const _TypePill({required this.type});
+
+  final PostType type;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = postTypeTint(type);
+    final latin = Localizations.localeOf(context).languageCode == 'en';
+    final label = postTypeLabel(context.l10n, type);
+    return Container(
+      height: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: ShapeDecoration(
+        color: tint.fill,
+        shape: const StadiumBorder(),
+      ),
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          latin ? label.toUpperCase() : label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: latin ? 0.7 : 0,
+            color: tint.ink,
+          ),
+        ),
+      ),
+    );
   }
 }
 

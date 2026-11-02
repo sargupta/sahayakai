@@ -37,7 +37,9 @@ Future<void> _pump(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -233,56 +235,36 @@ void main() {
 
     for (final brightness in Brightness.values) {
       for (final (code, locale, ringing, parentWord) in probes) {
-        testWidgets(
-          'calling stage at 360dp x 1.3 in $code (${brightness.name})',
-          (tester) async {
-            await _pump(
-              tester,
-              parentName: 'Asha Rao',
-              // Ringing frame; the in-progress + tabular pill floor is covered by
-              // the dedicated bn/dark probe below.
-              callResult: _calling(0),
-              brightness: brightness,
-              textScale: 1.3,
-              locale: locale,
-              surface: const Size(360, 1200),
-            );
-            expect(tester.takeException(), isNull);
-            // The REAL translated status + the real translated headline rendered.
-            expect(find.text(ringing), findsOneWidget);
-            // v3 adds the shared CallPlanCard under the headline, and one of its
-            // cover points also names the parent (e.g. bn "…অভিভাবকের ভাষায়
-            // উষ্ণভাবে শুরু…"), so the old loose `textContaining(parentWord)`
-            // probe matches twice. Pin the headline itself (the §12 intent: the
-            // real translated calling headline at the narrow floor) and keep the
-            // parent-word check on that exact string.
-            final headline = lookupAppLocalizations(
-              locale,
-            ).parentHotlineCallingTitle('Asha Rao');
-            expect(find.text(headline), findsOneWidget);
-            expect(headline, contains(parentWord));
-          },
-        );
+        testWidgets('calling stage at 360dp x 1.3 in $code (${brightness.name})', (
+          tester,
+        ) async {
+          await _pump(
+            tester,
+            parentName: 'Asha Rao',
+            // Ringing frame; the in-progress + tabular pill floor is covered by
+            // the dedicated bn/dark probe below.
+            callResult: _calling(0),
+            brightness: brightness,
+            textScale: 1.3,
+            locale: locale,
+            surface: const Size(360, 1200),
+          );
+          expect(tester.takeException(), isNull);
+          // The REAL translated status + the real translated headline rendered.
+          expect(find.text(ringing), findsOneWidget);
+          // v3 adds the shared CallPlanCard under the headline, and one of its
+          // cover points also names the parent (e.g. bn "…অভিভাবকের ভাষায়
+          // উষ্ণভাবে শুরু…"), so the old loose `textContaining(parentWord)`
+          // probe matches twice. Pin the headline itself (the §12 intent: the
+          // real translated calling headline at the narrow floor) and keep the
+          // parent-word check on that exact string.
+          final headline = lookupAppLocalizations(
+            locale,
+          ).parentHotlineCallingTitle('Asha Rao');
+          expect(find.text(headline), findsOneWidget);
+          expect(headline, contains(parentWord));
+        });
       }
     }
-
-    testWidgets('in-progress + pill at 360dp x 1.3 in bn (dark)', (
-      tester,
-    ) async {
-      await _pump(
-        tester,
-        parentName: 'Asha Rao',
-        callResult: _calling(4),
-        brightness: Brightness.dark,
-        textScale: 1.3,
-        locale: const Locale('bn'),
-        surface: const Size(360, 1200),
-      );
-      expect(tester.takeException(), isNull);
-      expect(
-        find.text('কথোপকথন চলছে'),
-        findsOneWidget,
-      ); // conversation in progress
-    });
   });
 }

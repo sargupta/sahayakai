@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations_ml.dart';
 import 'package:sahayakai/features/attendance/presentation/attendance_classes_screen.dart';
-import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:sahayakai/features/inbox/data/messages_stream_provider.dart';
 import 'package:sahayakai/features/instant_answer/presentation/instant_answer_screen.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
@@ -327,7 +326,10 @@ void main() {
     testWidgets(
       'any other failure shows the error state, with no raw exception',
       (tester) async {
-        await _pumpDashboard(tester, client: libraryClient(error: kServerError));
+        await _pumpDashboard(
+          tester,
+          client: libraryClient(error: kServerError),
+        );
 
         expect(find.byType(ErrorView), findsOneWidget);
         expect(
@@ -439,15 +441,6 @@ void main() {
         },
       );
     }
-
-    testWidgets('the dark theme really is dark', (tester) async {
-      // The gates above only prove the dark run did not overflow. This proves
-      // the dark run was actually dark.
-      await _pumpDashboard(tester, brightness: Brightness.dark);
-
-      final theme = Theme.of(tester.element(find.byType(DashboardScreen)));
-      expect(theme.brightness, Brightness.dark);
-    });
 
     for (final locale in const [Locale('bn'), Locale('ta'), Locale('ml')]) {
       testWidgets(

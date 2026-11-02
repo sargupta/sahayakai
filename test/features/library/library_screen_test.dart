@@ -11,13 +11,11 @@ import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_scree
 import 'package:sahayakai/features/library/presentation/library_detail_screen.dart';
 import 'package:sahayakai/features/library/presentation/library_screen.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
-import 'package:sahayakai/features/vidya/presentation/vidya_sheet.dart';
 import 'package:sahayakai/shared/data/library_items_provider.dart';
 import 'package:sahayakai/shared/domain/library_item.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
-import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
-import 'package:sahayakai/shared/widgets/library_item_row.dart';
+import 'package:sahayakai/shared/widgets/map_card.dart';
 import 'package:sahayakai/shared/widgets/offline_view.dart';
 import 'package:sahayakai/shared/widgets/secondary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -123,9 +121,28 @@ Future<void> _openLibrary(
     surface: surface,
     extraOverrides: _shellOverrides(),
   );
-  await tester.tap(find.byIcon(LucideIcons.library));
-  await (settle ? tester.pumpAndSettle() : tester.pump());
+  await tester.tap(find.byIcon(LucideIcons.folder));
+  // Unsettled: still let the tab's page swipe finish (well under the reads'
+  // 1s fake delay), so the Library page is on screen while it loads.
+  await (settle
+      ? tester.pumpAndSettle()
+      : tester.pump(const Duration(milliseconds: 500)));
 }
+
+/// One "Synced" status per saved-work row.
+Finder _rows() => find.text('Synced');
+
+/// The filter chips: selectable buttons (rows are not selectable outside
+/// multi-select).
+Finder _chips() => find.descendant(
+  of: find.byType(LibraryScreen),
+  matching: find.byWidgetPredicate(
+    (w) =>
+        w is Semantics &&
+        w.properties.button == true &&
+        w.properties.selected != null,
+  ),
+);
 
 /// Drags the Library list to its end, asserting no overflow along the way.
 Future<void> _scrollWholeList(WidgetTester tester) async {
@@ -180,13 +197,13 @@ void main() {
       );
 
       expect(find.byType(LibraryScreen), findsOneWidget);
-      expect(find.byType(LibraryItemRow), findsNWidgets(2));
+      expect(_rows(), findsNWidgets(2));
       expect(find.text('Photosynthesis for Class 6'), findsOneWidget);
       expect(find.text('Fractions quiz'), findsOneWidget);
-      expect(find.byType(EmptyView), findsNothing);
-      // P1.2 launcher ubiquity: the VIDYA co-teacher action is in the app bar
-      // here too, not only on the ToolScaffold tool screens.
-      expect(find.byType(VidyaAppBarAction), findsOneWidget);
+      expect(find.byType(MapEmptyNote), findsNothing);
+      // UX map: the screen is titled "My work"; VIDYA is docked in the tab
+      // bar, so the screen carries no app-bar launcher of its own.
+      expect(find.text('My work'), findsOneWidget);
     });
 
     testWidgets('shows a shaped skeleton while the read is in flight, never a '
@@ -201,7 +218,11 @@ void main() {
       // dropped in the content area (DESIGN_RUBRIC §6). The only
       // CircularProgressIndicator in this tree belongs to the pull-to-refresh
       // affordance, which is not the loading state.
-      expect(find.byType(AppSkeleton), findsOneWidget);
+      // Any AppSkeleton subclass (find.byType matches the exact type only).
+      expect(
+        find.byWidgetPredicate((w) => w is AppSkeleton, skipOffstage: false),
+        findsOneWidget,
+      );
       expect(
         find.descendant(
           of: find.byType(ListView),
@@ -221,9 +242,9 @@ void main() {
           client: libraryClient(response: contentListResponse(items: [])),
         );
 
-        expect(find.byType(EmptyView), findsOneWidget);
+        expect(find.byType(MapEmptyNote), findsOneWidget);
         // The old screen was an EmptyView with NO action. This is the fix.
-        expect(find.text('Create a lesson plan'), findsOneWidget);
+        expect(find.text('Make something new'), findsOneWidget);
       },
     );
 
@@ -235,9 +256,13 @@ void main() {
         client: libraryClient(response: contentListResponse(items: [])),
       );
 
-      await tester.tap(find.text('Create a lesson plan'));
+      await tester.tap(find.text('Make something new'));
       await tester.pumpAndSettle();
 
+      // It opens the tool picker, whose first entry is a real, routed tool.
+      expect(find.text('Search tools'), findsOneWidget);
+      await tester.tap(find.text('Lesson Plan').last);
+      await tester.pumpAndSettle();
       expect(find.byType(LessonPlanScreen), findsOneWidget);
     });
   });
@@ -267,14 +292,14 @@ void main() {
 
       expect(client.gets.length, greaterThan(before));
       expect(find.byType(ErrorView), findsNothing);
-      expect(find.byType(LibraryItemRow), findsOneWidget);
+      expect(_rows(), findsOneWidget);
     });
 
     testWidgets('no identity asks for sign-in and does NOT offer a retry that '
         'cannot work', (tester) async {
       await _openLibrary(tester, client: libraryClient(error: kUnauthorized));
 
-      expect(find.byType(EmptyView), findsOneWidget);
+      expect(find.byType(MapEmptyNote), findsOneWidget);
       expect(find.text('Sign in to see your saved work.'), findsOneWidget);
       expect(find.text('Try again'), findsNothing);
       // The dead-end this unit fixes: the signed-out state now offers a way
@@ -344,7 +369,7 @@ void main() {
           client.gets.where((g) => g.path == '/api/content/list').length;
       expect(contentReads(), 1);
 
-      await tester.tap(find.byIcon(LucideIcons.library));
+      await tester.tap(find.byIcon(LucideIcons.folder));
       await tester.pumpAndSettle();
 
       // Switching to the tab shows the already-loaded list without a re-read.
@@ -362,9 +387,9 @@ void main() {
     ) async {
       await _openLibrary(tester, client: _twoTypeClient());
 
-      // "All" plus one chip per present type. The chips are ChoiceChips.
-      expect(find.byType(ChoiceChip), findsNWidgets(3));
-      expect(find.text('All'), findsOneWidget);
+      // "All 2" (with the count, as in the map) plus one chip per type.
+      expect(_chips(), findsNWidgets(3));
+      expect(find.text('All 2'), findsOneWidget);
     });
 
     testWidgets(
@@ -383,8 +408,8 @@ void main() {
           ),
         );
 
-        expect(find.byType(ChoiceChip), findsNothing);
-        expect(find.byType(LibraryItemRow), findsNWidgets(2));
+        expect(_chips(), findsNothing);
+        expect(_rows(), findsNWidgets(2));
       },
     );
 
@@ -392,14 +417,14 @@ void main() {
       tester,
     ) async {
       await _openLibrary(tester, client: _twoTypeClient());
-      expect(find.byType(LibraryItemRow), findsNWidgets(2));
+      expect(_rows(), findsNWidgets(2));
 
-      // The "Quiz" chip is the only widget with exactly that text — the row's
-      // meta line is a single joined string ("Quiz - ...").
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Quiz'));
+      // The "Quiz" chip is the only widget with exactly that text: the row's
+      // meta line is a single joined string ("Quiz · ...").
+      await tester.tap(find.text('Quiz'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(LibraryItemRow), findsOneWidget);
+      expect(_rows(), findsOneWidget);
       expect(find.text('Fractions quiz'), findsOneWidget);
       expect(find.text('Photosynthesis for Class 6'), findsNothing);
     });
@@ -407,13 +432,13 @@ void main() {
     testWidgets('the All chip clears the filter again', (tester) async {
       await _openLibrary(tester, client: _twoTypeClient());
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Quiz'));
+      await tester.tap(find.text('Quiz'));
       await tester.pumpAndSettle();
-      expect(find.byType(LibraryItemRow), findsOneWidget);
+      expect(_rows(), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'All'));
+      await tester.tap(find.text('All 2'));
       await tester.pumpAndSettle();
-      expect(find.byType(LibraryItemRow), findsNWidgets(2));
+      expect(_rows(), findsNWidgets(2));
     });
 
     testWidgets('client-side filtering fires no extra request', (tester) async {
@@ -421,7 +446,7 @@ void main() {
       await _openLibrary(tester, client: client);
       final before = client.gets.length;
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Quiz'));
+      await tester.tap(find.text('Quiz'));
       await tester.pumpAndSettle();
 
       // The filter narrows the loaded list; it does not re-query the route.
@@ -467,7 +492,7 @@ void main() {
           expect(tester.takeException(), isNull);
           // The filter bar is the row most likely to break: pills plus icons at
           // 1.3 on a 360dp line.
-          expect(find.byType(ChoiceChip), findsNWidgets(3));
+          expect(_chips(), findsNWidgets(3));
           await _scrollWholeList(tester);
         },
       );

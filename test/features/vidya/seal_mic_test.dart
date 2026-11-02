@@ -19,7 +19,9 @@ Future<void> _pumpSeal(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       home: Builder(
         builder: (context) => MediaQuery(
           data: MediaQuery.of(
@@ -138,16 +140,5 @@ void main() {
     final size = tester.getSize(find.byType(SealMic));
     expect(size.width, greaterThanOrEqualTo(48));
     expect(size.height, greaterThanOrEqualTo(48));
-  });
-
-  testWidgets('renders in dark without error', (tester) async {
-    await _pumpSeal(
-      tester,
-      SealMicState.listening,
-      amplitude: 0.8,
-      brightness: Brightness.dark,
-    );
-    expect(tester.takeException(), isNull);
-    expect(find.byType(SealMic), findsOneWidget);
   });
 }

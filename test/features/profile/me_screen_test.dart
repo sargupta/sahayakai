@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sahayakai/core/auth/auth_providers.dart';
+import 'package:sahayakai/core/i18n/app_locale.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/profile/presentation/me_screen.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
-import 'package:sahayakai/shared/widgets/empty_view.dart';
-import 'package:sahayakai/shared/widgets/language_switcher.dart';
+import 'package:sahayakai/shared/widgets/map_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart' as net;
@@ -164,16 +164,17 @@ void main() {
     ) async {
       await _pumpMe(tester, token: fakeJwt({'planType': 'pro'}));
 
-      // Name + role · school + the identity plan badge (from the token claim).
+      // UX map identity: name over "role · school".
       expect(find.text('Lakshmi Iyer'), findsWidgets);
       expect(
         find.textContaining('Government Higher Primary School'),
         findsWidgets,
       );
-      expect(find.text('Pro'), findsOneWidget);
-      // Board + language summary chips.
-      expect(find.text('Karnataka State Board (KSEEB)'), findsWidgets);
-      expect(find.text('ಕನ್ನಡ'), findsOneWidget); // Kannada endonym
+      // The board sits in its settings row.
+      expect(
+        find.textContaining('Karnataka State Board (KSEEB)'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('no display name falls back to a placeholder, never a blank', (
@@ -183,7 +184,7 @@ void main() {
       // An empty profile is a valid hub (onboarding gate is OFF): the header
       // shows the placeholder identity, not an error.
       expect(find.text('Your profile'), findsOneWidget);
-      expect(find.byType(EmptyView), findsNothing);
+      expect(find.byType(MapEmptyNote), findsNothing);
     });
   });
 
@@ -193,8 +194,8 @@ void main() {
     ) async {
       await _pumpMe(tester);
 
-      // Section is present (the editorial eyebrow uppercases Latin).
-      expect(find.text('PLAN & USAGE'), findsOneWidget);
+      // The map's "This month" card (Latin uppercased).
+      expect(find.text('THIS MONTH'), findsOneWidget);
 
       // The metered lesson-plan row: its "3 / 10" and a meter whose fill is the
       // fraction 0.3.
@@ -216,35 +217,33 @@ void main() {
       expect(fill.widthFactor, closeTo(0.3, 1e-6));
     });
 
-    testWidgets('an unlimited feature says "Unlimited" and draws no bar', (
+    testWidgets('an unlimited tool gets no bar; its use still counts as made', (
       tester,
     ) async {
       await _pumpMe(tester);
 
-      final instantRow = find.byKey(
-        const ValueKey<String>('usage-row-instant-answer'),
-      );
-      expect(instantRow, findsOneWidget);
+      // Only metered tools draw a row and a bar (the map's slim bars).
       expect(
-        find.descendant(of: instantRow, matching: find.text('Unlimited')),
-        findsOneWidget,
+        find.byKey(const ValueKey<String>('usage-row-instant-answer')),
+        findsNothing,
       );
-      // No meter for the unlimited row.
       expect(
         find.byKey(const ValueKey<String>('usage-meter-instant-answer')),
         findsNothing,
       );
+      // "made" is real: the sum of this month's generations from /api/usage.
+      expect(find.bySemanticsLabel(RegExp(r'^\d+ made$')), findsOneWidget);
     });
 
     testWidgets('the plan tier badge reflects the usage plan', (tester) async {
       await _pumpMe(
         tester,
         client: net.FakeApiClient(getResponse: usageJson(plan: 'gold')),
-        token: null, // header badge is "Not available"; the usage badge is Gold
+        token: null,
       );
 
-      expect(find.text('Gold'), findsOneWidget);
-      expect(find.text('Not available'), findsOneWidget);
+      // The plan pill reads the usage plan.
+      expect(find.text('Gold plan'), findsOneWidget);
     });
 
     testWidgets('a usage failure degrades only the section, keeping the hub', (
@@ -269,12 +268,19 @@ void main() {
     ) async {
       await _pumpMe(tester);
 
-      expect(find.text('DEFAULTS'), findsOneWidget); // uppercased eyebrow
-      expect(find.text('Education board'), findsOneWidget);
-      // The board value appears in the Defaults row (and the header chip).
-      expect(find.text('Karnataka State Board (KSEEB)'), findsWidgets);
-      // The ONE shared switcher, not a second picker.
-      expect(find.byType(LanguageSwitcher), findsOneWidget);
+      // The map's rows: "Language · …" and "Education board · …", each with
+      // a Change link.
+      expect(
+        find.text('Education board · Karnataka State Board (KSEEB)'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Language · '), findsOneWidget);
+      expect(find.text('Change'), findsNWidgets(2));
+
+      // The language row opens the ONE shared picker, not a second one.
+      await tester.tap(find.textContaining('Language · '));
+      await tester.pumpAndSettle();
+      expect(find.byType(RadioGroup<AppLocale>), findsOneWidget);
     });
   });
 
@@ -282,13 +288,19 @@ void main() {
     testWidgets('every hub row clears the 48dp touch floor', (tester) async {
       await _pumpMe(tester);
 
-      // Board, Settings and Sign out are the hub rows (scoped by label so the
-      // shared LanguageSwitcher's own tiles are not counted).
-      for (final label in const ['Education board', 'Settings', 'Sign out']) {
-        final tile = find.ancestor(
-          of: find.text(label),
-          matching: find.byType(ListTile),
-        );
+      // Board, Settings, Privacy and Sign out are the hub's tap targets.
+      for (final label in const [
+        'Education board · ',
+        'Settings',
+        'Privacy for teachers',
+        'Sign out',
+      ]) {
+        final tile = find
+            .ancestor(
+              of: find.textContaining(label),
+              matching: find.byType(InkWell),
+            )
+            .first;
         expect(tile, findsOneWidget, reason: label);
         expect(
           tester.getSize(tile).height,
@@ -340,7 +352,7 @@ void main() {
         ],
       );
 
-      await tester.tap(find.text('Education board'));
+      await tester.tap(find.textContaining('Education board · '));
       await tester.pumpAndSettle();
       expect(find.text('EDIT-PROFILE'), findsOneWidget);
     });
@@ -391,7 +403,7 @@ void main() {
         );
 
         // A sign-in prompt, not a retry, not an invented profile.
-        expect(find.byType(EmptyView), findsOneWidget);
+        expect(find.byType(MapEmptyNote), findsOneWidget);
         expect(find.text('You are signed out'), findsOneWidget);
         expect(find.text('Sign in'), findsOneWidget);
         expect(find.text('Lakshmi Iyer'), findsNothing);

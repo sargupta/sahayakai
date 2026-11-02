@@ -15,6 +15,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/virtual_field_trip.dart';
 import 'virtual_field_trip_controller.dart';
@@ -120,6 +121,25 @@ class _VirtualFieldTripScreenState
   /// The footer's Done action: dismiss the itinerary back to the pristine form.
   void _done() => ref.read(virtualFieldTripControllerProvider.notifier).clear();
 
+  /// The itinerary on the Output screen as the deliver tray takes it. Keyed by
+  /// the trip instance, so a regeneration is a new deliverable. Only a rendered
+  /// itinerary with stops delivers: the still-generating panel and the
+  /// zero-stops empty state have nothing to hand over.
+  Deliverable? _deliverableFor(
+    FieldTripOutcome? outcome,
+    AppLocalizations l10n,
+  ) {
+    if (outcome is! FieldTripResult || !outcome.trip.hasStops) return null;
+    final trip = outcome.trip;
+    return Deliverable(
+      id: 'field-trip-${identityHashCode(trip)}',
+      title: trip.title.isEmpty ? l10n.virtualFieldTripTitle : trip.title,
+      subtitle: trip.title.isEmpty ? null : trip.title,
+      text: fieldTripAsPlainText(trip),
+      shareSubject: trip.title.isEmpty ? null : trip.title,
+    );
+  }
+
   /// Brings the result to the top of the viewport when a fresh outcome lands.
   /// Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -216,6 +236,7 @@ class _VirtualFieldTripScreenState
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasTrip,
       onResubmit: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.virtualFieldTripAction,
       onSubmit: (state.isLoading || hasTrip) ? null : _submit,
       result: KeyedSubtree(

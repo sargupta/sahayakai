@@ -15,6 +15,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/teacher_advice.dart';
 import 'teacher_training_controller.dart';
@@ -151,6 +152,22 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
     );
   }
 
+  /// The advice on the Output screen as the deliver tray takes it, under the
+  /// question that produced it. Keyed by the advice instance, so a regeneration
+  /// is a new deliverable.
+  Deliverable? _deliverableFor(TeacherAdvice? advice, AppLocalizations l10n) {
+    if (advice == null) return null;
+    final question = _lastRequest?.question.trim();
+    final hasQuestion = question != null && question.isNotEmpty;
+    return Deliverable(
+      id: 'teacher-training-${identityHashCode(advice)}',
+      title: l10n.teacherTrainingTitle,
+      subtitle: hasQuestion ? question : null,
+      text: teacherAdviceAsPlainText(advice, l10n),
+      shareSubject: hasQuestion ? question : l10n.teacherTrainingResultTitle,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -191,6 +208,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       onResubmit: _submit,
       submitLabel: l10n.teacherTrainingAction,
       // Hide the sticky action button once advice is on screen — the document's

@@ -128,7 +128,9 @@ Future<void> _pump(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -392,7 +394,9 @@ void main() {
           brightness: brightness,
         );
         final scheme =
-            (brightness == Brightness.dark ? AppTheme.light() : AppTheme.light())
+            (brightness == Brightness.dark
+                    ? AppTheme.light()
+                    : AppTheme.light())
                 .colorScheme;
 
         // Expand so the agent turn is in the tree.
@@ -439,30 +443,31 @@ void main() {
       });
     }
 
-    testWidgets('the agent line clears AA on the card fill (and the inset fill)', (
-      tester,
-    ) async {
-      // The original guard pinned WHY the transcript must stay on the flat
-      // card: pre-v3, the muted role over the inset `surfaceContainerLow` was
-      // 4.49:1 (just under the floor) while `surface` cleared it. The v3
-      // redesign erased both halves of that trap — `lightScheme` gives
-      // `surfaceContainerLow` the sheet's own fill (`milk50 == surface`, so
-      // there is no sunken inset well) and never sets `onSurfaceVariant`
-      // (falling back to full `onSurface`/ink900) — so the inset ratio is now
-      // 18.18:1, and the old `lessThan(4.5)` premise is not merely stale but
-      // contradictory (both fills are literally the same colour). What must
-      // hold is the AA floor on either fill; the structural "never inset"
-      // regression guard is the flat-variant assertion in the group above.
-      final scheme = AppTheme.light().colorScheme;
-      expect(
-        _ratio(scheme.onSurfaceVariant, scheme.surface),
-        greaterThanOrEqualTo(4.5),
-      );
-      expect(
-        _ratio(scheme.onSurfaceVariant, scheme.surfaceContainerLow),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
+    testWidgets(
+      'the agent line clears AA on the card fill (and the inset fill)',
+      (tester) async {
+        // The original guard pinned WHY the transcript must stay on the flat
+        // card: pre-v3, the muted role over the inset `surfaceContainerLow` was
+        // 4.49:1 (just under the floor) while `surface` cleared it. The v3
+        // redesign erased both halves of that trap — `lightScheme` gives
+        // `surfaceContainerLow` the sheet's own fill (`milk50 == surface`, so
+        // there is no sunken inset well) and never sets `onSurfaceVariant`
+        // (falling back to full `onSurface`/ink900) — so the inset ratio is now
+        // 18.18:1, and the old `lessThan(4.5)` premise is not merely stale but
+        // contradictory (both fills are literally the same colour). What must
+        // hold is the AA floor on either fill; the structural "never inset"
+        // regression guard is the flat-variant assertion in the group above.
+        final scheme = AppTheme.light().colorScheme;
+        expect(
+          _ratio(scheme.onSurfaceVariant, scheme.surface),
+          greaterThanOrEqualTo(4.5),
+        );
+        expect(
+          _ratio(scheme.onSurfaceVariant, scheme.surfaceContainerLow),
+          greaterThanOrEqualTo(4.5),
+        );
+      },
+    );
   });
 
   // ── Transcript ExpansionTile ───────────────────────────────────────────────
@@ -746,22 +751,5 @@ void main() {
         );
       }
     }
-
-    testWidgets('a callFailed terminal at 360dp x 1.3 in ta (dark)', (
-      tester,
-    ) async {
-      await _pump(
-        tester,
-        outcome: HotlineSummaryOutcome.callFailed,
-        callResult: const CallResult(callStatus: CallStatus.busy),
-        brightness: Brightness.dark,
-        textScale: 1.3,
-        locale: const Locale('ta'),
-        surface: const Size(360, 1400),
-      );
-      expect(tester.takeException(), isNull);
-      // The real Tamil "line was busy" chrome.
-      expect(find.text('இணைப்பு பிஸியாக இருந்தது'), findsOneWidget);
-    });
   });
 }

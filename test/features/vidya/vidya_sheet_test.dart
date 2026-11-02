@@ -112,9 +112,13 @@ void main() {
     await tester.tap(find.byIcon(LucideIcons.sparkles));
     await tester.pumpAndSettle();
 
-    expect(find.text('make a quiz on fractions'), findsOneWidget);
+    // UX map Listening screen: the teacher's words quoted, VIDYA's reply,
+    // "Heard you", the page she is reading, and the type box.
+    expect(find.text('“make a quiz on fractions”'), findsOneWidget);
     expect(find.text('Making your fractions quiz.'), findsOneWidget);
-    expect(find.text('Ask VIDYA'), findsOneWidget);
+    expect(find.text('Heard you'), findsOneWidget);
+    expect(find.text('THIS PAGE'), findsOneWidget);
+    expect(find.text('Or type what you need…'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

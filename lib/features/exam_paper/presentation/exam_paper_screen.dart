@@ -18,6 +18,7 @@ import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../../notifications/data/notifications_store.dart';
 import '../../notifications/domain/teacher_notification.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../domain/exam_paper.dart';
 import 'exam_paper_controller.dart';
 import 'widgets/exam_paper_error_view.dart';
@@ -255,6 +256,21 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     );
   }
 
+  /// The paper on the Output screen as the deliver tray takes it. Only a ready
+  /// paper is deliverable (a 202 in-progress has nothing to send). Keyed by the
+  /// result instance, so a regeneration is a new deliverable.
+  Deliverable? _deliverableFor(ExamPaperResult? result, AppLocalizations l10n) {
+    if (result is! ExamPaperReady) return null;
+    final title = result.paper.title;
+    return Deliverable(
+      id: 'exam-paper-${identityHashCode(result)}',
+      title: title.isEmpty ? l10n.examPaperTitle : title,
+      subtitle: title.isEmpty ? null : title,
+      text: examPaperAsPlainText(result.paper, l10n),
+      shareSubject: title.isEmpty ? null : title,
+    );
+  }
+
   /// Brings the result masthead to the top of the viewport when a fresh paper
   /// lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -326,6 +342,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasReadyPaper,
       onResubmit: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.actionGenerate,
       onSubmit: (state.isLoading || hasReadyPaper) ? null : _submit,
       result: KeyedSubtree(

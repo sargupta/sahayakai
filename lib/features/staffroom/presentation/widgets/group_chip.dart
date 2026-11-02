@@ -3,12 +3,13 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/icon_well.dart';
+import '../../../../shared/widgets/map_card.dart';
+import '../../../../shared/widgets/map_icon_tile.dart';
 import '../../domain/group.dart';
 
 /// A group chip for the horizontal "Your groups" / "Discover groups" strips
-/// (SPEC §A3.1). A fixed-width tappable `AppCard(flat)`: an [IconWell] spine
+/// (SPEC §A3.1). A fixed-width tappable `MapCard(flat)`: an [IconWell] spine
 /// (the group `coverColor` degrades to the deterministic saffron token tint —
 /// a CSS gradient string is never bled full-width, per the §2.4 gradient ban),
 /// the group name, and the member count. Tapping opens the group detail.
@@ -31,12 +32,12 @@ class GroupChip extends StatelessWidget {
 
     return SizedBox(
       width: 220,
-      child: AppCard(
+      child: MapCard(
         onTap: onTap,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const IconWell(icon: LucideIcons.users),
+            const MapIconTile(icon: LucideIcons.users, tint: MapTint.leaf),
             const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: Column(
@@ -52,8 +53,9 @@ class GroupChip extends StatelessWidget {
                   const SizedBox(height: AppSpacing.space1),
                   Text(
                     l10n.staffroomMemberCount(group.memberCount),
-                    style:
-                        extras.dataMedium.copyWith(color: scheme.onSurfaceVariant),
+                    style: extras.dataMedium.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

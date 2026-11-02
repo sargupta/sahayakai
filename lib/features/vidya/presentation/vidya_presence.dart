@@ -84,6 +84,7 @@ VidyaOrbVisual vidyaOrbVisualFor({
     case VidyaStatus.signedOut:
     case VidyaStatus.limitReached:
     case VidyaStatus.upgradeRequired:
+    case VidyaStatus.notHeard:
     case VidyaStatus.failed:
       // A minimised generation still running shows the working orb even while
       // VIDYA's own turn is idle; a finished one shows the green ready badge.

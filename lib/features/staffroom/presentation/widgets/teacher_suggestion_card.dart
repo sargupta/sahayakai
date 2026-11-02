@@ -5,7 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/app_badge.dart';
-import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/map_card.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../../inbox/data/block_c_transport.dart';
 import '../../data/staffroom_transport.dart';
@@ -80,7 +80,7 @@ class _TeacherSuggestionCardState extends ConsumerState<TeacherSuggestionCard> {
     final teacher = widget.teacher;
     final reason = teacher.recommendationReason?.trim();
 
-    return AppCard(
+    return MapCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

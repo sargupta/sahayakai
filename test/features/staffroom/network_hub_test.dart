@@ -172,8 +172,9 @@ void main() {
     expect(find.text(l10n.networkTabStaffroom), findsWidgets);
     expect(find.text(l10n.networkTabMessages), findsWidgets);
     expect(find.text(l10n.networkTabUpdates), findsWidgets);
-    // The Network hub title.
-    expect(find.text(l10n.networkTitle), findsOneWidget);
+    // The Community hub title (UX map).
+    expect(find.text(l10n.communityTitle), findsOneWidget);
+    expect(find.text(l10n.communityDeck), findsOneWidget);
     // The Staffroom tab is active → the feed body shows; the Messages tab is
     // offstage → its conversation is not found.
     expect(find.text('staffroom body'), findsOneWidget);
@@ -340,11 +341,17 @@ void main() {
         updates: [callRow()],
       );
 
-      // Unread → the ringing glyph, visible from the Staffroom tab.
-      expect(find.byIcon(LucideIcons.bellRing), findsOneWidget);
+      // Unread: the map's red dot on the bell, and the count in its label,
+      // visible from the Staffroom tab.
+      expect(
+        find.bySemanticsLabel(
+          '${l10n.networkTabUpdates}, ${l10n.inboxUnreadLabel(1)}',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('staffroom body'), findsOneWidget);
 
-      await tester.tap(find.byIcon(LucideIcons.bellRing));
+      await tester.tap(find.byIcon(LucideIcons.bell));
       await tester.pumpAndSettle();
 
       expect(
@@ -367,7 +374,12 @@ void main() {
       );
 
       expect(find.byIcon(LucideIcons.bell), findsOneWidget);
-      expect(find.byIcon(LucideIcons.bellRing), findsNothing);
+      // No unread count in the bell's label (the plain name is shared with
+      // the Updates segment, so look for the count suffix).
+      expect(
+        find.bySemanticsLabel(RegExp('^${l10n.networkTabUpdates}, ')),
+        findsNothing,
+      );
     });
   });
 }

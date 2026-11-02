@@ -28,7 +28,7 @@ import '../support/app_harness.dart';
 /// on macOS will not match ubuntu CI. CI is the sole authority (unit U0.12
 /// re-baselines there via workflow_dispatch); the local ladder runs
 /// `--exclude-tags golden` precisely so a developer on a Mac is not staring at
-/// 16 red tests that mean nothing.
+/// 10 red tests that mean nothing.
 ///
 /// Fonts come from `test/flutter_test_config.dart`, which FontLoader-registers
 /// the bundled TTFs. Without it every glyph here would be an Ahem box.
@@ -41,8 +41,9 @@ void main() {
   });
 
   group('screen baselines at 360dp', () {
-    for (final brightness in Brightness.values) {
-      final mode = brightness == Brightness.light ? 'light' : 'dark';
+    // Light only: the app ships no dark theme.
+    for (final brightness in const [Brightness.light]) {
+      final mode = brightness.name;
 
       testWidgets('login — $mode', (tester) async {
         await pumpSignedInApp(
@@ -110,8 +111,9 @@ void main() {
   group('screen baselines at 800dp', () {
     // The wide surface catches the opposite failure from 360dp: a row that
     // stretches instead of centring, and a card that loses its max-width.
-    for (final brightness in Brightness.values) {
-      final mode = brightness == Brightness.light ? 'light' : 'dark';
+    // Light only: the app ships no dark theme.
+    for (final brightness in const [Brightness.light]) {
+      final mode = brightness.name;
 
       testWidgets('login wide — $mode', (tester) async {
         await pumpSignedInApp(

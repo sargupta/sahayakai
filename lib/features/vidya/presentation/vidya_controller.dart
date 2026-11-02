@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/ai/openrouter_client.dart';
 import '../../../core/ai/openrouter_providers.dart';
+import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../shared/voice/audio_player_service.dart';
@@ -26,6 +28,7 @@ import '../data/vidya_profile_repository.dart';
 import '../data/vidya_repository.dart';
 import '../data/vidya_session_repository.dart';
 import '../data/voice_to_text_repository.dart';
+import '../domain/vidya_screen_intent.dart';
 import 'vidya_status_ui.dart';
 
 // The language→BCP-47 helpers now live in shared voice infra (so the
@@ -38,16 +41,30 @@ part 'vidya_controller.g.dart';
 
 // ─── VAD / capture thresholds (ported from the web, SPEC §A.4 / §C.2) ────────
 
-/// Normalised (0..1) input level that counts as speech (the recorder maps dBFS
+/// The HIGHEST normalised (0..1) level speech onset may require (the recorder maps dBFS
 /// to 0..1; a quiet room sits well under this).
 const double kSpeechOnsetLevel = 0.18;
+
+/// The lowest onset, so a dead-silent line (an emulator, a muted mic) does not
+/// count every flicker as speech.
+const double kMinSpeechOnsetLevel = 0.08;
+
+/// How far above the room's quietest level speech must rise. The onset is
+/// `floor + margin`, clamped to [kMinSpeechOnsetLevel, kSpeechOnsetLevel]: a
+/// fixed 0.18 (about -37 dBFS) missed normal speech on quiet mics with auto
+/// gain off, and the capture was thrown away as silence.
+const double kSpeechMargin = 0.12;
+
+/// Sound this far above the floor, heard before the initial-silence window
+/// closes, is worth transcribing even though it never crossed the onset.
+const double kSoundHeardMargin = 0.05;
 
 /// Trailing silence after speech began that auto-stops the capture, so the
 /// teacher never has to press stop.
 const Duration kTrailingSilence = Duration(milliseconds: 2500);
 
 /// Silence before any speech that abandons the capture (a mis-tap).
-const Duration kInitialSilence = Duration(milliseconds: 5000);
+const Duration kInitialSilence = Duration(milliseconds: 8000);
 
 /// Hard failsafe cap on a single capture.
 const Duration kMaxCapture = Duration(seconds: 30);
@@ -115,6 +132,11 @@ enum VidyaStatus {
   /// matching what every other AI tool screen already does for a 403.
   upgradeRequired,
 
+  /// The capture ended without usable speech (silence, a mis-tap, or words
+  /// the speech-to-text could not make out). Said in words, never a silent
+  /// bounce back to idle (design guide: honest failure).
+  notHeard,
+
   failed,
 }
 
@@ -176,6 +198,7 @@ class VidyaState {
     this.lastQueryAtMs,
     this.lastQueryPath,
     this.pendingNavigation,
+    this.pendingScreen,
     this.errorMessage,
   });
 
@@ -216,6 +239,10 @@ class VidyaState {
   /// [VidyaController.consumeNavigation]. Null when there is nothing to route.
   final VidyaDirective? pendingNavigation;
 
+  /// A screen the teacher asked to go to by name ("take me to my profile");
+  /// the shell consumes it and calls [VidyaController.consumeScreen].
+  final VidyaScreen? pendingScreen;
+
   /// User-safe copy for a terminal error phase.
   final String? errorMessage;
 
@@ -240,6 +267,7 @@ class VidyaState {
     Object? lastQueryAtMs = _unset,
     Object? lastQueryPath = _unset,
     Object? pendingNavigation = _unset,
+    Object? pendingScreen = _unset,
     Object? errorMessage = _unset,
   }) {
     return VidyaState(
@@ -268,6 +296,9 @@ class VidyaState {
       pendingNavigation: identical(pendingNavigation, _unset)
           ? this.pendingNavigation
           : pendingNavigation as VidyaDirective?,
+      pendingScreen: identical(pendingScreen, _unset)
+          ? this.pendingScreen
+          : pendingScreen as VidyaScreen?,
       errorMessage: identical(errorMessage, _unset)
           ? this.errorMessage
           : errorMessage as String?,
@@ -300,6 +331,10 @@ class VidyaController extends _$VidyaController {
   int _activeGen =
       0; // gen captured when listening started (for timer closures)
   bool _speechDetected = false;
+
+  /// The quietest and loudest levels of this capture, for the adaptive onset.
+  double _floorLevel = 1;
+  double _peakLevel = 0;
   bool _restored = false;
   bool _restoring = false;
   StreamSubscription<double>? _amplitudeSub;
@@ -391,6 +426,7 @@ class VidyaController extends _$VidyaController {
       // — re-running the paid call is exactly the "retry" the panel is careful
       // not to offer as a labelled button, because it only succeeds post-upgrade.
       case VidyaStatus.upgradeRequired:
+      case VidyaStatus.notHeard:
       case VidyaStatus.failed:
         await _beginVoice();
     }
@@ -464,6 +500,14 @@ class VidyaController extends _$VidyaController {
   void consumeNavigation() {
     if (state.pendingNavigation != null) {
       _set(pendingNavigation: null);
+    }
+  }
+
+  /// The shell opened [VidyaState.pendingScreen]; clear it so it is not
+  /// opened twice.
+  void consumeScreen() {
+    if (state.pendingScreen != null) {
+      _set(pendingScreen: null);
     }
   }
 
@@ -591,6 +635,8 @@ class VidyaController extends _$VidyaController {
     }
 
     _speechDetected = false;
+    _floorLevel = 1;
+    _peakLevel = 0;
     try {
       await _recorder.start();
       debugPrint('[Vidya] recorder started');
@@ -616,8 +662,15 @@ class VidyaController extends _$VidyaController {
       if (!_stale(gen) &&
           state.status == VidyaStatus.listening &&
           !_speechDetected) {
-        debugPrint('[Vidya] initial silence timeout - discarding');
-        _discardCapture();
+        if (_peakLevel >= _floorLevel + kSoundHeardMargin) {
+          // Something was said, just quieter than the onset: let the
+          // speech-to-text decide rather than throwing the words away.
+          debugPrint('[Vidya] no onset, but sound heard - transcribing');
+          _stopAndProcess(gen);
+        } else {
+          debugPrint('[Vidya] initial silence timeout - nothing heard');
+          _discardCapture();
+        }
       }
     });
   }
@@ -626,7 +679,13 @@ class VidyaController extends _$VidyaController {
     if (_stale(_activeGen)) return;
     if (state.status != VidyaStatus.listening) return;
     _set(amplitude: level);
-    if (level >= kSpeechOnsetLevel) {
+    if (level < _floorLevel) _floorLevel = level;
+    if (level > _peakLevel) _peakLevel = level;
+    final onset = (_floorLevel + kSpeechMargin).clamp(
+      kMinSpeechOnsetLevel,
+      kSpeechOnsetLevel,
+    );
+    if (level >= onset) {
       if (!_speechDetected) {
         debugPrint('[Vidya] speech detected!');
       }
@@ -641,11 +700,11 @@ class VidyaController extends _$VidyaController {
     }
   }
 
-  /// Nothing was said (initial silence elapsed): drop the capture silently.
+  /// Nothing was said (initial silence elapsed): drop the capture and say so.
   Future<void> _discardCapture() async {
     _teardownCapture();
     await _recorder.cancel();
-    _set(status: VidyaStatus.idle, amplitude: 0);
+    _set(status: VidyaStatus.notHeard, amplitude: 0);
   }
 
   Future<void> _stopAndProcess([int? genParam]) async {
@@ -669,10 +728,7 @@ class VidyaController extends _$VidyaController {
     if (_stale(gen)) return;
     // Silence / mis-tap reject before paying for STT.
     if (recording == null || recording.byteLength < kMinAudioBytes) {
-      _set(
-        status: VidyaStatus.failed,
-        errorMessage: 'No speech detected. Please try again.',
-      );
+      _set(status: VidyaStatus.notHeard);
       return;
     }
 
@@ -687,7 +743,7 @@ class VidyaController extends _$VidyaController {
       if (_stale(gen)) return;
       if (!transcript.isUsable ||
           isLikelyTranscriptionRefusal(transcript.text)) {
-        _set(status: VidyaStatus.idle);
+        _set(status: VidyaStatus.notHeard);
         return;
       }
       await _converse(transcript.text, transcript.language, gen);
@@ -707,6 +763,7 @@ class VidyaController extends _$VidyaController {
   // ── Conversation ─────────────────────────────────────────────────────────
 
   Future<void> _converse(String message, String detectedLang, int gen) async {
+    if (_openScreenIfAsked(message)) return;
     // Ink the teacher's words immediately, then think.
     final withUser = [
       ...state.conversation,
@@ -850,6 +907,42 @@ class VidyaController extends _$VidyaController {
     _set(status: VidyaStatus.idle, pendingNavigation: single);
 
     _persistTurn(message, turn.response, single);
+  }
+
+  /// Answers "take me to my profile" on the device: inks the teacher's words
+  /// and "Opening Profile", and hands the screen to the shell. Returns false
+  /// (and changes nothing) when [message] is not a request to open a screen,
+  /// so it goes to the classifier as before. The classifier only knows the AI
+  /// tools, so without this a screen request came back as a spoken answer.
+  bool _openScreenIfAsked(String message) {
+    final ui = _localizations(_uiLanguage());
+    final screen = matchVidyaScreen(message, {
+      ui,
+      _localizations('en'),
+      _localizations('hi'),
+    });
+    if (screen == null) return false;
+    final reply = ui.vidyaOpeningScreen(screen.label(ui));
+    final now = DateTime.now();
+    _set(
+      status: VidyaStatus.idle,
+      conversation: [
+        ...state.conversation,
+        ConversationBlock(
+          role: ConversationRole.teacher,
+          text: message,
+          timestamp: now,
+        ),
+        ConversationBlock(
+          role: ConversationRole.vidya,
+          text: reply,
+          timestamp: now,
+        ),
+      ],
+      chatHistory: _appendHistory(message, reply),
+      pendingScreen: screen,
+    );
+    return true;
   }
 
   /// Calls OpenRouter directly for VEDA responses (bypasses backend).
@@ -1143,6 +1236,14 @@ Make answers practical and classroom-ready, and easy to follow when read aloud:
     }
   }
 
+  AppLocalizations _localizations(String code) {
+    try {
+      return lookupAppLocalizations(Locale(code));
+    } catch (_) {
+      return lookupAppLocalizations(const Locale('en'));
+    }
+  }
+
   bool _stale(int gen) => gen != _gen;
 
   void _teardownCapture() {
@@ -1384,6 +1485,7 @@ Make answers practical and classroom-ready, and easy to follow when read aloud:
     Object? lastQueryAtMs = _unset,
     Object? lastQueryPath = _unset,
     Object? pendingNavigation = _unset,
+    Object? pendingScreen = _unset,
     Object? errorMessage = _unset,
   }) {
     state = state.copyWith(
@@ -1398,6 +1500,7 @@ Make answers practical and classroom-ready, and easy to follow when read aloud:
       lastQueryAtMs: lastQueryAtMs,
       lastQueryPath: lastQueryPath,
       pendingNavigation: pendingNavigation,
+      pendingScreen: pendingScreen,
       errorMessage: errorMessage,
     );
   }

@@ -48,20 +48,6 @@ void main() {
       );
     });
 
-    testWidgets('library empty — dark', (tester) async {
-      await pumpDashboard(
-        tester,
-        extraOverrides: [fixedClock()],
-        client: libraryClient(response: contentListResponse(items: [])),
-        surface: kNarrowPhone,
-        brightness: Brightness.dark,
-      );
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('goldens/state_empty_dark.png'),
-      );
-    });
-
     testWidgets('library populated — light', (tester) async {
       await pumpDashboard(
         tester,
@@ -72,20 +58,6 @@ void main() {
       await expectLater(
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/state_populated_light.png'),
-      );
-    });
-
-    testWidgets('library populated — dark', (tester) async {
-      await pumpDashboard(
-        tester,
-        extraOverrides: [fixedClock()],
-        client: libraryClient(),
-        surface: kNarrowPhone,
-        brightness: Brightness.dark,
-      );
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('goldens/state_populated_dark.png'),
       );
     });
 

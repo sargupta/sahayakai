@@ -15,6 +15,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/video_storyteller.dart';
 import 'video_storyteller_controller.dart';
@@ -113,6 +114,22 @@ class _VideoStorytellerScreenState
     ref.read(videoStorytellerControllerProvider.notifier).find(request);
   }
 
+  /// The shelf on the Output screen as the deliver tray takes it. Keyed by the
+  /// result instance, so a new search is a new deliverable. An all-empty shelf
+  /// renders an empty state with no share bar, so it delivers nothing either.
+  Deliverable? _deliverableFor(
+    VideoRecommendations? shelf,
+    AppLocalizations l10n,
+  ) {
+    if (shelf == null || !shelf.hasVideos) return null;
+    return Deliverable(
+      id: 'video-${identityHashCode(shelf)}',
+      title: l10n.videoStorytellerTitle,
+      text: videoShelfAsPlainText(shelf, l10n),
+      shareSubject: l10n.videoStorytellerTitle,
+    );
+  }
+
   /// Brings the result to the top of the viewport when fresh videos land.
   /// Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -187,6 +204,7 @@ class _VideoStorytellerScreenState
       hasResult: state.hasValue && state.valueOrNull != null,
       onResubmit: _submit,
       onRegenerate: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.videoStorytellerAction,
       // A browse re-searches, so the Find button stays available after a result
       // (only a live request suppresses it) — the teacher tweaks the topic and

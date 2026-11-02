@@ -6,17 +6,15 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/app_skeleton.dart';
-import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
-import '../../../shared/widgets/glass_app_bar.dart';
+import '../../../shared/widgets/map_card.dart';
+import '../../../shared/widgets/map_segmented.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
 import '../../notifications/data/notifications_store.dart';
 import '../../notifications/presentation/notifications_view.dart';
-import '../../vidya/presentation/vidya_sheet.dart';
 import 'staffroom_screen.dart';
 
 /// U-SI2 — the **Network** hub (the SPEC's "Network" surface = Staffroom (04) +
@@ -58,93 +56,104 @@ class _NetworkHubScreenState extends State<NetworkHubScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // v3 "Community": the same soft pink-to-lavender wash as the Staffroom
-    // hero deck, so the glass app bar and the feed below read as one surface.
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: isDark ? AppGradients.darkVignette : AppGradients.washCommunity,
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: GlassAppBar(
-          title: Text(
-            l10n.networkTitle,
-            style: Theme.of(context)
-                .textTheme
-                .displaySmall
-                ?.copyWith(fontSize: 21, fontWeight: FontWeight.w700),
-          ),
-          actions: [
-            _NotificationsBell(
-              onPressed: () => setState(() => _index = _updatesIndex),
+    // The UX map's Community header: the title with the Updates bell, the deck
+    // line, and the segmented control. No app bar: VIDYA is docked in the tab
+    // bar, so the sparkle launcher is not repeated here. The wash comes from
+    // AppBackground (app.dart), as on the other tabs.
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.mapGutter,
+                AppSpacing.space4,
+                AppSpacing.mapGutter,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Semantics(
+                          header: true,
+                          child: Text(
+                            l10n.communityTitle,
+                            style: Theme.of(context).textTheme.displayLarge
+                                ?.copyWith(
+                                  fontSize: 27,
+                                  color: AppColors.textStrong,
+                                ),
+                          ),
+                        ),
+                      ),
+                      _NotificationsBell(
+                        onPressed: () => setState(() => _index = _updatesIndex),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    l10n.communityDeck,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 13,
+                      color: AppColors.textBody,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.space2),
+                  MapSegmented<int>(
+                    value: _index,
+                    onChanged: (value) => setState(() => _index = value),
+                    segments: [
+                      MapSegment<int>(
+                        value: 0,
+                        label: l10n.networkTabStaffroom,
+                      ),
+                      MapSegment<int>(value: 1, label: l10n.networkTabMessages),
+                      MapSegment<int>(
+                        value: _updatesIndex,
+                        label: l10n.networkTabUpdates,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const VidyaAppBarAction(),
+            // All three panes stay mounted (warm) via a Stack of Offstage panes:
+            // the inbox stream stays subscribed and the feed does not refetch
+            // on a switch, but only the selected pane is laid out and painted
+            // (so an offstage-respecting finder sees exactly the active pane).
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Offstage(
+                    offstage: _index != 0,
+                    child: const StaffroomFeedView(),
+                  ),
+                  Offstage(offstage: _index != 1, child: const _MessagesTab()),
+                  Offstage(
+                    offstage: _index != _updatesIndex,
+                    child: const NotificationsView(),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screenGutter,
-                  AppSpacing.space1,
-                  AppSpacing.screenGutter,
-                  AppSpacing.space2,
-                ),
-                child: AppSegmented<int>(
-                  value: _index,
-                  onChanged: (value) => setState(() => _index = value),
-                  segments: [
-                    AppSegment<int>(value: 0, label: l10n.networkTabStaffroom),
-                    AppSegment<int>(value: 1, label: l10n.networkTabMessages),
-                    AppSegment<int>(
-                      value: _updatesIndex,
-                      label: l10n.networkTabUpdates,
-                    ),
-                  ],
-                ),
-              ),
-              // Both tabs stay mounted (warm) via a Stack of Offstage panes — the
-              // inbox stream stays subscribed and the feed does not refetch on a
-              // tab switch — but only the selected pane is laid out/painted (so an
-              // offstage-respecting finder sees exactly the active tab).
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Offstage(
-                      offstage: _index != 0,
-                      child: const StaffroomFeedView(),
-                    ),
-                    Offstage(
-                      offstage: _index != 1,
-                      child: const _MessagesTab(),
-                    ),
-                    Offstage(
-                      offstage: _index != _updatesIndex,
-                      child: const NotificationsView(),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
 }
 
-/// The app-bar bell: a badged entry to the Updates pane, visible from all three
-/// tabs. The badge is a dot, not a number — the count already sits on every
-/// unread row, and a numeral in a 40dp app-bar target is the first thing to
-/// clip at textScale 1.3 in an Indic locale. Its accessible label carries the
-/// count instead, through the same `inboxUnreadLabel` plural the inbox uses.
-///
-/// The dot takes the saffron TEXT token, not `scheme.primary`: the brand fill
-/// on the app bar's glass ground is ~2.26:1, under the 3:1 floor for a
-/// meaningful non-text indicator.
+/// The Updates bell, drawn as the map's `iconbtn`: a 40px white disc with a
+/// hairline ring, and a red dot ringed in white while anything is unread. Its
+/// touch area is 48dp; its accessible label carries the unread count through
+/// the same `inboxUnreadLabel` plural the inbox uses.
 class _NotificationsBell extends ConsumerWidget {
   const _NotificationsBell({required this.onPressed});
 
@@ -154,35 +163,54 @@ class _NotificationsBell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final unread = ref.watch(unreadNotificationCountProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return IconButton(
-      tooltip: l10n.networkTabUpdates,
-      onPressed: onPressed,
-      icon: Semantics(
-        label: unread > 0 ? l10n.inboxUnreadLabel(unread) : null,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Icon(unread > 0 ? LucideIcons.bellRing : LucideIcons.bell),
-            if (unread > 0)
-              PositionedDirectional(
-                top: -1,
-                end: -1,
-                child: SizedBox(
-                  width: 8,
-                  height: 8,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark
-                          ? AppColors.dPrimaryText
-                          : AppColors.lPrimaryText,
-                    ),
+    return Semantics(
+      button: true,
+      label: unread > 0
+          ? '${l10n.networkTabUpdates}, ${l10n.inboxUnreadLabel(unread)}'
+          : l10n.networkTabUpdates,
+      excludeSemantics: true,
+      onTap: onPressed,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed,
+        child: SizedBox.square(
+          dimension: 48,
+          child: Center(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMapCard,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.borderHairline),
+                  ),
+                  child: const Icon(
+                    LucideIcons.bell,
+                    size: 18,
+                    color: AppColors.textStrong,
                   ),
                 ),
-              ),
-          ],
+                if (unread > 0)
+                  PositionedDirectional(
+                    top: 4,
+                    end: 4,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: AppColors.danger,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -198,6 +226,14 @@ class _NotificationsBell extends ConsumerWidget {
 class _MessagesTab extends ConsumerWidget {
   const _MessagesTab();
 
+  /// The map's screen frame under the hub header.
+  static const EdgeInsets _panePadding = EdgeInsets.fromLTRB(
+    AppSpacing.mapGutter,
+    AppSpacing.space3,
+    AppSpacing.mapGutter,
+    AppSpacing.mapBottomClearance,
+  );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
@@ -205,33 +241,34 @@ class _MessagesTab extends ConsumerWidget {
     final myUid = ref.watch(currentInboxUserIdProvider);
 
     return async.when(
-      loading: () => const Padding(
-        padding: AppSpacing.pagePadding,
-        child: AppSkeleton(lines: 5),
-      ),
+      loading: () =>
+          const Padding(padding: _panePadding, child: AppSkeleton(lines: 5)),
       error: (_, _) => _messagesError(context, ref),
       data: (snapshot) {
         if (snapshot.hasError) return _messagesError(context, ref);
         if (snapshot.isLoading) {
           return const Padding(
-            padding: AppSpacing.pagePadding,
+            padding: _panePadding,
             child: AppSkeleton(lines: 5),
           );
         }
         if (snapshot.isEmptyByDesign || myUid == null) {
           return SingleChildScrollView(
-            padding: AppSpacing.pagePadding,
-            child: EmptyView(
-              icon: LucideIcons.messageCircle,
-              title: l10n.inboxSignInTitle,
-              message: l10n.inboxSignInBody,
-              action: SecondaryButton(
-                label: l10n.actionSignIn,
-                icon: LucideIcons.logIn,
-                // Real auth landed — a plain push is correct now. See
-                // inbox_screen.dart's _InboxSignIn for the Firestore-handoff
-                // caveat this button still carries (same shape here).
-                onPressed: () => context.push(Routes.loginWithReturnTo(Routes.network)),
+            padding: _panePadding,
+            child: MapCard(
+              child: MapEmptyNote(
+                icon: LucideIcons.messageCircle,
+                title: l10n.inboxSignInTitle,
+                message: l10n.inboxSignInBody,
+                action: SecondaryButton(
+                  label: l10n.actionSignIn,
+                  icon: LucideIcons.logIn,
+                  // Real auth landed — a plain push is correct now. See
+                  // inbox_screen.dart's _InboxSignIn for the Firestore-handoff
+                  // caveat this button still carries (same shape here).
+                  onPressed: () =>
+                      context.push(Routes.loginWithReturnTo(Routes.network)),
+                ),
               ),
             ),
           );
@@ -239,20 +276,30 @@ class _MessagesTab extends ConsumerWidget {
         final conversations = snapshot.data;
         if (conversations.isEmpty) {
           return SingleChildScrollView(
-            padding: AppSpacing.pagePadding,
-            child: EmptyView(
-              icon: LucideIcons.messagesSquare,
-              title: l10n.inboxEmptyTitle,
-              message: l10n.inboxEmptyBody,
+            padding: _panePadding,
+            child: MapCard(
+              child: MapEmptyNote(
+                icon: LucideIcons.messagesSquare,
+                title: l10n.inboxEmptyTitle,
+                message: l10n.inboxEmptyBody,
+              ),
             ),
           );
         }
         return ListView.separated(
-          padding: AppSpacing.pagePadding,
-          itemCount: conversations.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.space3),
+          padding: _panePadding,
+          // +1 leading slot for the map's "Conversations · N" label.
+          itemCount: conversations.length + 1,
+          separatorBuilder: (_, index) => SizedBox(
+            height: index == 0 ? AppSpacing.space2 : AppSpacing.space3,
+          ),
           itemBuilder: (context, index) {
-            final conversation = conversations[index];
+            if (index == 0) {
+              return MapOverline(
+                l10n.communityConversationsCount(conversations.length),
+              );
+            }
+            final conversation = conversations[index - 1];
             return ConversationRow(
               key: ValueKey<String>('network-inbox-${conversation.id.value}'),
               conversation: conversation,
@@ -271,10 +318,12 @@ class _MessagesTab extends ConsumerWidget {
   Widget _messagesError(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     return SingleChildScrollView(
-      padding: AppSpacing.pagePadding,
-      child: ErrorView(
-        message: l10n.inboxErrorBody,
-        onRetry: () => ref.invalidate(inboxListProvider),
+      padding: _panePadding,
+      child: MapCard(
+        child: ErrorView(
+          message: l10n.inboxErrorBody,
+          onRetry: () => ref.invalidate(inboxListProvider),
+        ),
       ),
     );
   }

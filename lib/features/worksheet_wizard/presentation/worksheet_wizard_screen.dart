@@ -15,6 +15,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/worksheet.dart';
 import 'widgets/worksheet_error_view.dart';
@@ -156,6 +157,22 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
     );
   }
 
+  /// The worksheet on the Output screen as the deliver tray takes it. Keyed by
+  /// the worksheet instance, so a regeneration is a new deliverable. An empty
+  /// worksheet renders an empty state with no action bar, so it delivers
+  /// nothing.
+  Deliverable? _deliverableFor(Worksheet? worksheet, AppLocalizations l10n) {
+    if (worksheet == null || worksheet.isEmpty) return null;
+    final title = worksheet.title;
+    return Deliverable(
+      id: 'worksheet-${identityHashCode(worksheet)}',
+      title: title.isEmpty ? l10n.worksheetTitle : title,
+      subtitle: title.isEmpty ? null : title,
+      text: worksheetAsPlainText(worksheet, l10n),
+      shareSubject: title.isEmpty ? null : title,
+    );
+  }
+
   /// Brings the result masthead to the top of the viewport when a fresh
   /// worksheet lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -212,6 +229,7 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       onResubmit: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.actionGenerate,
       // Hide the sticky Generate button once a worksheet is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.

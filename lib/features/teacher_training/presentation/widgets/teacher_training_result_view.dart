@@ -157,7 +157,7 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final text = _adviceAsText(advice, l10n);
+    final text = teacherAdviceAsPlainText(advice, l10n);
     final request = saveRequest;
     final canSave = request != null && advice.raw != null;
     final question = request?.question.trim();
@@ -191,8 +191,9 @@ class _ActionBar extends ConsumerWidget {
   }
 }
 
-/// A plain-text export of the advice, for the clipboard.
-String _adviceAsText(TeacherAdvice advice, AppLocalizations l10n) {
+/// A plain-text export of the advice — for the clipboard, the OS share sheet,
+/// and the deliver tray. One serialiser, so every path reads alike.
+String teacherAdviceAsPlainText(TeacherAdvice advice, AppLocalizations l10n) {
   final b = StringBuffer();
   final metaBits = [
     advice.gradeLevel,

@@ -7,8 +7,8 @@ import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
-import '../../../../shared/widgets/app_card.dart';
-import '../../../../shared/widgets/icon_well.dart';
+import '../../../../shared/widgets/map_card.dart';
+import '../../../../shared/widgets/map_icon_tile.dart';
 import '../../domain/community_post.dart';
 import '../../domain/group.dart';
 import '../../domain/staffroom_results.dart';
@@ -27,11 +27,7 @@ import 'teacher_suggestion_card.dart';
 /// A degenerate item (e.g. a `group_post` with a null payload, which the DTO
 /// decoder already guards) renders nothing rather than crashing the feed.
 class FeedItemView extends StatelessWidget {
-  const FeedItemView({
-    super.key,
-    required this.item,
-    required this.likedIds,
-  });
+  const FeedItemView({super.key, required this.item, required this.likedIds});
 
   final FeedItem item;
   final LikedItemIds likedIds;
@@ -89,11 +85,11 @@ class _ResourceCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
     final extras = AppTextExtras.of(context);
-    return AppCard(
+    return MapCard(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const IconWell(icon: LucideIcons.fileText),
+          const MapIconTile(icon: LucideIcons.fileText),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(
@@ -114,8 +110,9 @@ class _ResourceCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         resource.authorName,
-                        style: text.bodyMedium
-                            ?.copyWith(color: scheme.onSurfaceVariant),
+                        style: text.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -150,12 +147,12 @@ class _FeedGroupCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
     final extras = AppTextExtras.of(context);
-    return AppCard(
+    return MapCard(
       onTap: () => context.push(Routes.groupDetailPath(group.id)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const IconWell(icon: LucideIcons.users),
+          const MapIconTile(icon: LucideIcons.users, tint: MapTint.leaf),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(
@@ -171,8 +168,9 @@ class _FeedGroupCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.space1),
                 Text(
                   l10n.staffroomMemberCount(group.memberCount),
-                  style:
-                      extras.dataMedium.copyWith(color: scheme.onSurfaceVariant),
+                  style: extras.dataMedium.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -202,12 +200,15 @@ class _ChatHighlightCard extends StatelessWidget {
     final text = theme.textTheme;
     final extras = AppTextExtras.of(context);
     final latest = highlight.latestMessage?.trim();
-    return AppCard(
+    return MapCard(
       onTap: () => context.push(Routes.groupDetailPath(highlight.groupId)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const IconWell(icon: LucideIcons.messagesSquare),
+          const MapIconTile(
+            icon: LucideIcons.messagesSquare,
+            tint: MapTint.indigo,
+          ),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(

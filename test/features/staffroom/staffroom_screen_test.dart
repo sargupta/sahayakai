@@ -16,8 +16,8 @@ import 'package:sahayakai/features/staffroom/domain/group.dart';
 import 'package:sahayakai/features/staffroom/domain/staffroom_results.dart';
 import 'package:sahayakai/features/staffroom/presentation/staffroom_screen.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
-import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
+import 'package:sahayakai/shared/widgets/map_card.dart';
 import 'package:sahayakai/shared/widgets/secondary_button.dart';
 
 import '../../support/fake_block_c_transports.dart';
@@ -181,7 +181,7 @@ void main() {
     ) async {
       await _pump(tester, uid: null);
       expect(find.text(l10n.staffroomSignInBody), findsOneWidget);
-      expect(find.byType(EmptyView), findsOneWidget);
+      expect(find.byType(MapEmptyNote), findsOneWidget);
     });
 
     testWidgets('loading → AppSkeleton feed', (tester) async {
@@ -286,7 +286,8 @@ void main() {
         );
         expect(find.text('Asha'), findsOneWidget);
         expect(find.text('hello staffroom'), findsOneWidget);
-        expect(find.text('Class 8 Science'), findsOneWidget); // the group chip
+        // The group leads the meta line under the author (UX map post).
+        expect(find.textContaining('Class 8 Science'), findsOneWidget);
         expect(find.text('3'), findsOneWidget); // the like count
         expect(find.byIcon(LucideIcons.heart), findsOneWidget);
       },
@@ -300,17 +301,18 @@ void main() {
         fake: FakeStaffroomTransport()..feed = [_feedPost(_post())],
       );
 
-      // The chip row over the real feed types (v2 Group H "Community").
+      // The UX map's chips, one per real post type.
       expect(find.text('All'), findsOneWidget);
-      expect(find.text('Posts'), findsOneWidget);
-      expect(find.text('Resources'), findsOneWidget);
-      expect(find.text('Highlights'), findsOneWidget);
+      expect(find.text('Resource'), findsOneWidget);
+      expect(find.text('Tried this'), findsOneWidget);
+      expect(find.text('Celebrate'), findsOneWidget);
+      expect(find.text('Need help'), findsOneWidget);
 
-      // The seeded group_post shows under All and under Posts.
+      // The seeded post (a share, "Tried this") shows under All.
       expect(find.text('hello staffroom'), findsOneWidget);
 
-      // Filtering to Resources hides the (group_post) item.
-      await tester.tap(find.text('Resources'));
+      // Filtering to Resource hides it.
+      await tester.tap(find.text('Resource'));
       await tester.pumpAndSettle();
       expect(find.text('hello staffroom'), findsNothing);
 

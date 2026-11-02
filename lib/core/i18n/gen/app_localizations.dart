@@ -143,7 +143,7 @@ abstract class AppLocalizations {
   /// Bottom-nav label: profile / account tab.
   ///
   /// In en, this message translates to:
-  /// **'Me'**
+  /// **'Profile'**
   String get navProfile;
 
   /// Retry a failed action.
@@ -1985,7 +1985,7 @@ abstract class AppLocalizations {
   /// App bar title of the Me tab: the operating-system hub (profile summary, plan and usage, defaults, settings).
   ///
   /// In en, this message translates to:
-  /// **'Me'**
+  /// **'Profile'**
   String get meTitle;
 
   /// Section header over the plan tier and per-feature monthly usage on the Me hub.
@@ -7153,6 +7153,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to result'**
   String get outputBackToResult;
+
+  /// VIDYA's reply when the teacher asks to go to a screen (e.g. 'take me to my profile'). {screen} is that screen's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening {screen}'**
+  String vidyaOpeningScreen(String screen);
+
+  /// VIDYA sheet title once the teacher's words are captured (UX map Listening screen).
+  ///
+  /// In en, this message translates to:
+  /// **'Heard you'**
+  String get vidyaHeardYou;
+
+  /// Honest-failure title when VIDYA heard no usable speech.
+  ///
+  /// In en, this message translates to:
+  /// **'I couldn\'t hear that clearly'**
+  String get vidyaNotHeardTitle;
+
+  /// Honest-failure body when VIDYA heard no usable speech: the way forward.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak a little closer to the phone and tap the orb again, or type instead.'**
+  String get vidyaNotHeardBody;
+
+  /// VIDYA sheet: leave a voice error and use the type box instead.
+  ///
+  /// In en, this message translates to:
+  /// **'Type instead'**
+  String get vidyaTypeInstead;
+
+  /// Library tab title (UX map: My work).
+  ///
+  /// In en, this message translates to:
+  /// **'My work'**
+  String get libraryMyWork;
+
+  /// Library search field hint; the example is a typical saved topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your work, like “water cycle”'**
+  String get librarySearchHint;
+
+  /// Library: the search matched nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing you made matches that.'**
+  String get librarySearchEmpty;
+
+  /// Library row: this saved item is on the server.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get librarySynced;
+
+  /// Library: button that opens the tool picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Make something new'**
+  String get libraryMakeNew;
+
+  /// Library multi-select: how many rows are selected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String librarySelectedCount(int count);
+
+  /// Library multi-select: select every visible row.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get librarySelectAll;
+
+  /// Library: confirm deleting the selected rows.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete 1 item?} other{Delete {count} items?}}'**
+  String libraryDeleteTitle(int count);
+
+  /// Library: delete confirmation body.
+  ///
+  /// In en, this message translates to:
+  /// **'This can\'t be undone.'**
+  String get libraryDeleteBody;
+
+  /// Library: the delete action.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get libraryDelete;
+
+  /// Library: snackbar after a row is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get libraryDeleted;
+
+  /// Library: snackbar action that restores a deleted row.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get libraryUndo;
+
+  /// The Community tab: its title, tab name and the page VIDYA reads.
+  ///
+  /// In en, this message translates to:
+  /// **'Community'**
+  String get communityTitle;
+
+  /// Community: the line under the title.
+  ///
+  /// In en, this message translates to:
+  /// **'Teachers across Bharat'**
+  String get communityDeck;
+
+  /// Community: the Staff room tile's second line.
+  ///
+  /// In en, this message translates to:
+  /// **'Open chat'**
+  String get communityOpenChat;
+
+  /// Community: the tile that jumps to your groups and people.
+  ///
+  /// In en, this message translates to:
+  /// **'Your network'**
+  String get communityYourNetwork;
+
+  /// Community: the Your network tile's second line.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups and people'**
+  String get communityGroupsAndPeople;
+
+  /// Community Messages: the conversations section label with its count.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations · {count}'**
+  String communityConversationsCount(int count);
+
+  /// Community post type (share): a teacher tried something in class.
+  ///
+  /// In en, this message translates to:
+  /// **'Tried this'**
+  String get communityTypeTried;
+
+  /// Community post type (ask_help).
+  ///
+  /// In en, this message translates to:
+  /// **'Need help'**
+  String get communityTypeNeedHelp;
+
+  /// Community post type (celebrate).
+  ///
+  /// In en, this message translates to:
+  /// **'Celebrate'**
+  String get communityTypeCelebrate;
+
+  /// Profile usage card label.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get meThisMonth;
+
+  /// Profile: the plan pill, e.g. 'Free plan'. {plan} is the plan's name.
+  ///
+  /// In en, this message translates to:
+  /// **'{plan} plan'**
+  String mePlanName(String plan);
+
+  /// Profile: under the number of things made this month.
+  ///
+  /// In en, this message translates to:
+  /// **'made'**
+  String get meStatMade;
+
+  /// Profile: under the number of times VIDYA was asked this month.
+  ///
+  /// In en, this message translates to:
+  /// **'asked VIDYA'**
+  String get meStatAskedVidya;
+
+  /// Profile row action: change this setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get meChange;
+
+  /// Profile toggle: park VIDYA's orb on the left side.
+  ///
+  /// In en, this message translates to:
+  /// **'Orb on the left hand'**
+  String get meOrbLeftHand;
+
+  /// Link to the Privacy for teachers page.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy for teachers'**
+  String get mePrivacyForTeachers;
 }
 
 class _AppLocalizationsDelegate

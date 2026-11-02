@@ -101,6 +101,26 @@ class AppColors {
 
   // Borders
   static const Color borderGlass = Color(0xF2FFFFFF); // 95% white
+  static const Color surfaceTabBar = Color(
+    0xEBFFFFFF,
+  ); // UX map tab bar, 92% white
+
+  // UX map list card and ask bar.
+  static const Color surfaceMapCard = Color(0xDBFFFFFF); // card, 86% white
+  static const Color surfaceAskBar = Color(0xFFFAF5ED); // ask / search pill
+  static const Color borderAskBar = Color(0xFFEFE6D8);
+  static const Color mapToggleOff = Color(0xFFE2DDD6); // `.tgl` track, off
+  static const Color mapBarTrack = Color(0xFFE5E5EC); // `.bar` track
+
+  // UX map type tiles (`mono`): a tint and the ink on it, per content family.
+  static const Color tileSaffronBg = Color(0xFFF7E4D5); // lessons, answers
+  static const Color tileSaffronInk = Color(0xFFA5541C);
+  static const Color tileLeafBg = Color(0xFFE1E8DC); // worksheets
+  static const Color tileLeafInk = Color(0xFF2B5E2D);
+  static const Color tileIndigoBg = Color(0xFFE5E3F0); // quizzes, papers
+  static const Color tileIndigoInk = Color(0xFF293B8F);
+  static const Color tileAmberBg = Color(0xFFFBEFDC); // rubrics, assessments
+  static const Color tileAmberInk = Color(0xFF8A4A08);
   static const Color borderHairline = Color(0x14171310); // rgba(23,19,16,.08)
   static const Color borderStrong = Color(0x1F171310); // rgba(23,19,16,.12)
   static const Color borderRow = Color(0x1A171310); // rgba(23,19,16,.10)

@@ -14,6 +14,7 @@ import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/assessment.dart';
 import 'assess_assignment_controller.dart';
@@ -94,6 +95,24 @@ class _AssessAssignmentScreenState
     ref.read(assessAssignmentControllerProvider.notifier).assess(request);
   }
 
+  /// The scorecard on the Output screen as the deliver tray takes it. Keyed by
+  /// the assessment instance, so a re-run is a new deliverable. "Read only"
+  /// mode delivers the transcript alone, as the result view shows it.
+  Deliverable? _deliverableFor(Assessment? assessment, AppLocalizations l10n) {
+    if (assessment == null) return null;
+    return Deliverable(
+      id: 'assess-assignment-${identityHashCode(assessment)}',
+      title: l10n.assessResultTitle,
+      text: assessmentAsPlainText(
+        assessment,
+        l10n,
+        includeScore: _resultMode != AssessmentMode.transcribe,
+      ),
+      shareSubject: l10n.assessResultTitle,
+      language: assessment.language,
+    );
+  }
+
   /// Brings the result masthead to the top of the viewport when a fresh
   /// assessment lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -150,6 +169,7 @@ class _AssessAssignmentScreenState
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       onResubmit: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.assessSubmit,
       // Hide the sticky Assess button once a scorecard is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.

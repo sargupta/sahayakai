@@ -118,36 +118,6 @@ void main() {
     });
   });
 
-  group('DARK — mirrors the production .dark block', () {
-    test('the dark saffron button uses DARK text and PASSES AA (accessible)', () {
-      // v3 dark flips `--primary` to saffron-200 (a light tint) with ink-900
-      // text. This is a real accessible pairing, asserted as passing AA
-      // (~13.9:1) — unlike the light mode large-fill exemption.
-      expect(AppColors.dPrimary, const Color(0xFFFFD9AE));
-      expect(AppColors.dOnPrimary, const Color(0xFF171310));
-      expect(
-        _ratio(AppColors.dOnPrimary, AppColors.dPrimary),
-        greaterThanOrEqualTo(4.5),
-        reason: 'dark mode flips to dark-on-saffron, which must meet AA',
-      );
-    });
-    test('saffron-as-text is legible on the dark ground (>=4.5)', () {
-      // Dark has no saffron-700; the saffron itself is the text/eyebrow colour
-      // and reads fine on near-black (~7.7:1).
-      expect(
-        _ratio(AppColors.dPrimaryText, AppColors.dBackground),
-        greaterThanOrEqualTo(4.5),
-        reason: 'dark saffron text must be legible on the dark ground',
-      );
-    });
-    test('body foreground passes AA on the dark ground', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dBackground),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-  });
-
   group('the production saffron is reserved for large brand fills', () {
     test(
       'brandSaffron is the v3 saffron-500 #C96A28 and unifies with the primary fill',

@@ -38,6 +38,7 @@ SealMicState sealStateForStatus(VidyaStatus status) {
     case VidyaStatus.signedOut:
     case VidyaStatus.limitReached:
     case VidyaStatus.upgradeRequired:
+    case VidyaStatus.notHeard:
     case VidyaStatus.failed:
       return SealMicState.idle;
   }
@@ -62,6 +63,7 @@ String? vidyaStateCaption(VidyaStatus status, AppLocalizations l10n) {
     case VidyaStatus.signedOut:
     case VidyaStatus.limitReached:
     case VidyaStatus.upgradeRequired:
+    case VidyaStatus.notHeard:
     case VidyaStatus.failed:
       return null; // rendered as a panel
   }
@@ -74,6 +76,7 @@ bool isVidyaTerminal(VidyaStatus status) =>
     status == VidyaStatus.micDenied ||
     status == VidyaStatus.limitReached ||
     status == VidyaStatus.upgradeRequired ||
+    status == VidyaStatus.notHeard ||
     status == VidyaStatus.failed;
 
 /// The terminal panel's title.
@@ -87,6 +90,8 @@ String vidyaTerminalTitle(VidyaStatus status, AppLocalizations l10n) {
       return l10n.vidyaLimitTitle;
     case VidyaStatus.upgradeRequired:
       return l10n.vidyaUpgradeTitle;
+    case VidyaStatus.notHeard:
+      return l10n.vidyaNotHeardTitle;
     case VidyaStatus.failed:
       return l10n.vidyaErrorTitle;
     case VidyaStatus.idle:
@@ -110,6 +115,8 @@ String vidyaTerminalBody(VidyaStatus status, AppLocalizations l10n) {
       return l10n.vidyaLimitBody;
     case VidyaStatus.upgradeRequired:
       return l10n.vidyaUpgradeBody;
+    case VidyaStatus.notHeard:
+      return l10n.vidyaNotHeardBody;
     case VidyaStatus.failed:
       return l10n.vidyaErrorBody;
     case VidyaStatus.idle:

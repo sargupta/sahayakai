@@ -134,7 +134,7 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final text = _rubricAsText(rubric, l10n);
+    final text = rubricAsPlainText(rubric, l10n);
     final request = saveRequest;
     final canSave = request != null && rubric.raw != null;
 
@@ -166,8 +166,9 @@ class _ActionBar extends ConsumerWidget {
 }
 
 /// A plain-text export of the rubric — the assignment, then each criterion with
-/// its performance levels — for the clipboard.
-String _rubricAsText(Rubric rubric, AppLocalizations l10n) {
+/// its performance levels — for the clipboard, the OS share sheet, and the
+/// deliver tray. One serialiser, so every path reads alike.
+String rubricAsPlainText(Rubric rubric, AppLocalizations l10n) {
   final b = StringBuffer();
   if (rubric.title.isNotEmpty) b.writeln(rubric.title);
   final metaBits = [
@@ -195,4 +196,3 @@ String _rubricAsText(Rubric rubric, AppLocalizations l10n) {
   }
   return b.toString().trimRight();
 }
-
