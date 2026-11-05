@@ -8,8 +8,13 @@ part 'outreach_dtos.g.dart';
 // ─── POST /api/attendance/outreach ───────────────────────────────────────────
 
 /// Serialises the `POST /api/attendance/outreach` body. `includeIfNull: false`
-/// drops the optional fields (`teacherNote`, `subject`, `performanceContext`)
-/// so the server applies its own behaviour.
+/// drops the optional fields (`teacherNote`, `spokenScript`, `subject`,
+/// `performanceContext`) so the server applies its own behaviour.
+///
+/// **`spokenScript`.** The route stores it (trimmed, capped at 1500 chars) and
+/// the call speaks it INSTEAD of `generatedMessage` — the written letter with
+/// its salutation and sign-off. Omitting it makes the AI read the letter aloud,
+/// so it is sent whenever the draft returned one.
 ///
 /// **F9-001 — no `parentPhone`.** The SPEC's illustrative body carries a
 /// `parentPhone` "for shape only", but the route *ignores* it and always reads
@@ -32,6 +37,7 @@ class CreateOutreachRequestDto {
     required this.generatedMessage,
     required this.deliveryMethod,
     this.teacherNote,
+    this.spokenScript,
     this.subject,
     this.performanceContext,
   });
@@ -49,6 +55,7 @@ class CreateOutreachRequestDto {
     required String generatedMessage,
     required DeliveryMethod deliveryMethod,
     String? teacherNote,
+    String? spokenScript,
     String? subject,
     Map<String, dynamic>? performanceContext,
   }) {
@@ -62,6 +69,7 @@ class CreateOutreachRequestDto {
       generatedMessage: generatedMessage.trim(),
       deliveryMethod: deliveryMethod.wire,
       teacherNote: _clean(teacherNote),
+      spokenScript: _clean(spokenScript),
       subject: _clean(subject),
       performanceContext:
           (performanceContext != null && performanceContext.isNotEmpty)
@@ -85,6 +93,10 @@ class CreateOutreachRequestDto {
   /// `DeliveryMethod` wire token (`twilio_call` | `whatsapp_copy`).
   final String deliveryMethod;
   final String? teacherNote;
+
+  /// The phone-call rendition the voice call speaks instead of
+  /// [generatedMessage].
+  final String? spokenScript;
 
   /// Subject name for the streaming voicebot greeting personalization.
   final String? subject;

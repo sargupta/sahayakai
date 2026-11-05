@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../core/network/api_exception.dart';
 
 /// Typed, branchable domain errors for the Parent Hotline data layer.
@@ -16,7 +18,8 @@ import '../../../core/network/api_exception.dart';
 ///     [NoParentPhoneException] (422 no-valid-phone),
 ///     [CallPlacementFailedException] (502),
 ///     [TwilioNotConfiguredException] (503),
-///     [OutreachTargetNotFoundException] (404).
+///     [OutreachTargetNotFoundException] (404),
+///     [OutsideCallingHoursException] (409 `OUTSIDE_CALLING_HOURS`).
 ///   • Everything else — including **401 (signed-out / auth)**, a non-premium
 ///     403 (ownership `Forbidden`), 5xx, network, and timeout — is rethrown
 ///     as-is (the original [ApiException]). Auth stays an [ApiException] so the
@@ -90,6 +93,18 @@ sealed class ParentHotlineException implements Exception {
     switch (e.statusCode) {
       case 404:
         return OutreachTargetNotFoundException(e);
+      case 409:
+        // Quiet hours (`checkCallingWindow`): `{ error: <sentence>, code:
+        // 'OUTSIDE_CALLING_HOURS', nextAllowedAt: <ISO> | null }`. The
+        // branchable token is in `code`, NOT `error` (which is a human
+        // sentence), so it is matched on either field.
+        if (e.hasCode(_outsideCallingHoursCode)) {
+          return OutsideCallingHoursException(
+            e,
+            nextAllowedAt: _nextAllowedAt(e),
+          );
+        }
+        return null;
       case 422:
         if (e.message.toLowerCase().contains('phone')) {
           return NoParentPhoneException(e);
@@ -106,6 +121,18 @@ sealed class ParentHotlineException implements Exception {
 
   /// The exact machine string the outreach route emits for a non-advanced plan.
   static const String _premiumRequiredCode = 'PREMIUM_REQUIRED';
+
+  /// The call route's quiet-hours `code`.
+  static const String _outsideCallingHoursCode = 'OUTSIDE_CALLING_HOURS';
+
+  /// `nextAllowedAt` from the 409 body (an ISO-8601 instant, or null). Read off
+  /// the raw Dio response because it is specific to this one route.
+  static DateTime? _nextAllowedAt(ApiException e) {
+    final raw = e.raw;
+    final data = raw is DioException ? raw.response?.data : null;
+    final value = data is Map ? data['nextAllowedAt'] : null;
+    return value is String ? DateTime.tryParse(value)?.toUtc() : null;
+  }
 
   /// The route's dedup window is 5 minutes; used only if a 429 carried no
   /// numeric hint at all (it always should).
@@ -155,6 +182,15 @@ final class CallPlacementFailedException extends ParentHotlineException {
 /// URL absent). U-PH2 falls back to WhatsApp copy.
 final class TwilioNotConfiguredException extends ParentHotlineException {
   const TwilioNotConfiguredException(super.cause);
+}
+
+/// 409 `OUTSIDE_CALLING_HOURS` — parents are only called between 09:00 and
+/// 21:00 IST, enforced by the call route. No call was placed. [nextAllowedAt]
+/// is when calling next opens (UTC), or null if the server did not say.
+final class OutsideCallingHoursException extends ParentHotlineException {
+  const OutsideCallingHoursException(super.cause, {this.nextAllowedAt});
+
+  final DateTime? nextAllowedAt;
 }
 
 /// 404 — the class / student (create) or the outreach doc (call) was not

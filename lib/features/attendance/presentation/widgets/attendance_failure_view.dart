@@ -69,11 +69,10 @@ class AttendanceFailureView extends StatelessWidget {
 
 /// **The state this unit exists to get right.**
 ///
-/// `listRoster` throws `RosterProjectionUnavailableException` today, on
-/// purpose. The masked `?projection=roster` response ships in draft PR #124
-/// and is not merged, so production ignores the unknown query parameter and
-/// answers with the FULL student documents — every parent's E.164 number, for
-/// every student in the class. The repository refuses to decode that rather
+/// `listRoster` throws `RosterProjectionUnavailableException` on purpose when
+/// a deployment ignores the `?projection=roster` parameter and answers with
+/// the FULL student documents — every parent's E.164 number, for every student
+/// in the class. The repository refuses to decode that rather
 /// than putting those numbers on the handset, and the refusal reaches here.
 ///
 /// Three things this panel must therefore be, and one it must not:

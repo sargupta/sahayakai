@@ -44,13 +44,11 @@ final attendanceClassesProvider = FutureProvider<List<AttendanceClass>>(
 
 /// One class's roster in the **masked** projection.
 ///
-/// This is the provider that currently FAILS, on purpose: `listRoster` throws
-/// `RosterProjectionUnavailableException` until the masked
-/// `?projection=roster` endpoint (draft PR #124) merges, because production
-/// still answers with unmasked parent phone numbers and the repository refuses
-/// to decode them. A screen watching this must render that one error as its
-/// own dignified state, NOT as a generic failure — see
-/// `attendance_roster_screen.dart`.
+/// `listRoster` throws `RosterProjectionUnavailableException` if a deployment
+/// ever answers with unmasked parent phone numbers instead of the masked
+/// `?projection=roster` shape; the repository refuses to decode them. A screen
+/// watching this must render that one error as its own dignified state, NOT as
+/// a generic failure — see `attendance_roster_screen.dart`.
 ///
 /// Invalidated after a successful `addStudent`.
 final attendanceRosterProvider =

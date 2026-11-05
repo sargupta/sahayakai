@@ -6,7 +6,9 @@ import 'package:sahayakai/features/parent_hotline/domain/parent_outreach.dart';
 /// Golden-decode + request-shape pinning for the Parent Hotline DTOs. Pure DTO
 /// logic — no network. Every wire shape mirrors the four `/api/attendance/*`
 /// routes in `sahayakai-main`, and the enum tolerance mirrors the
-/// `VidyaFlow.fromWire` guard (unknown → a safe default, never a throw).
+/// `VidyaFlow.fromWire` guard (never a throw). Where a guess would invent an
+/// outcome — a call status, a parent's mood, who said a line — unknown decodes
+/// to "not known" (null / [CallStatus.unknown]) and is not shown.
 void main() {
   // A full `GET /api/attendance/call-summary` 200 body, as the route emits it.
   Map<String, dynamic> callSummaryBody() => {
@@ -153,15 +155,15 @@ void main() {
   });
 
   group('CallSummaryDto — tolerant decode of model-generated content', () {
-    test('an unknown sentiment / quality fall back to safe defaults', () {
+    test('an unknown sentiment / quality are not known — never guessed', () {
       final s = CallSummaryDto.fromJson({
         'parentResponse': 'ok',
         'parentSentiment': 'ecstatic', // not in the enum
         'callQuality': 'legendary', // not in the enum
       }).toDomain();
 
-      expect(s.parentSentiment, ParentSentiment.indifferent);
-      expect(s.callQuality, CallQuality.brief);
+      expect(s.parentSentiment, isNull);
+      expect(s.callQuality, isNull);
     });
 
     test('an empty actionItems array is tolerated (server guarantees >=1)', () {
@@ -183,19 +185,22 @@ void main() {
       },
     );
 
-    test('a completely empty summary decodes to safe defaults', () {
-      final s = CallSummaryDto.fromJson(<String, dynamic>{}).toDomain();
-      expect(s.parentResponse, '');
-      expect(s.parentConcerns, isEmpty);
-      expect(s.actionItemsForTeacher, isEmpty);
-      expect(s.parentSentiment, ParentSentiment.indifferent);
-      expect(s.callQuality, CallQuality.brief);
-      expect(s.followUpNeeded, isFalse);
-      expect(s.followUpSuggestion, isNull);
-    });
+    test(
+      'a completely empty summary decodes to empties, inventing nothing',
+      () {
+        final s = CallSummaryDto.fromJson(<String, dynamic>{}).toDomain();
+        expect(s.parentResponse, '');
+        expect(s.parentConcerns, isEmpty);
+        expect(s.actionItemsForTeacher, isEmpty);
+        expect(s.parentSentiment, isNull);
+        expect(s.callQuality, isNull);
+        expect(s.followUpNeeded, isFalse);
+        expect(s.followUpSuggestion, isNull);
+      },
+    );
   });
 
-  group('Enum tolerant fromWire (unknown → safe default, never throws)', () {
+  group('Enum tolerant fromWire (never throws; never guesses an outcome)', () {
     test('OutreachReason', () {
       expect(
         OutreachReason.fromWire('poor_performance'),
@@ -208,10 +213,13 @@ void main() {
       expect(OutreachReason.fromWire(null), OutreachReason.consecutiveAbsences);
     });
 
-    test('CallStatus (null + unknown → failed)', () {
+    test('CallStatus (null + unknown → unknown, never "failed")', () {
       expect(CallStatus.fromWire('no_answer'), CallStatus.noAnswer);
-      expect(CallStatus.fromWire('ringing'), CallStatus.failed);
-      expect(CallStatus.fromWire(null), CallStatus.failed);
+      expect(CallStatus.fromWire('ringing'), CallStatus.unknown);
+      expect(CallStatus.fromWire(null), CallStatus.unknown);
+      expect(CallStatus.fromWire(''), CallStatus.unknown);
+      // Not known is neither a failure nor a finish.
+      expect(CallStatus.unknown.isTerminalFailure, isFalse);
     });
 
     test('DeliveryMethod', () {
@@ -227,20 +235,22 @@ void main() {
 
     test('ParentSentiment', () {
       expect(ParentSentiment.fromWire('upset'), ParentSentiment.upset);
-      expect(ParentSentiment.fromWire('meh'), ParentSentiment.indifferent);
+      expect(ParentSentiment.fromWire('meh'), isNull);
+      expect(ParentSentiment.fromWire(null), isNull);
     });
 
     test('CallQuality', () {
       expect(CallQuality.fromWire('difficult'), CallQuality.difficult);
-      expect(CallQuality.fromWire('epic'), CallQuality.brief);
+      expect(CallQuality.fromWire('epic'), isNull);
     });
 
     test(
-      'TranscriptRole (unknown → agent, never mis-attributes to parent)',
+      'TranscriptRole (unknown → null: never attributed to either side)',
       () {
         expect(TranscriptRole.fromWire('parent'), TranscriptRole.parent);
-        expect(TranscriptRole.fromWire('system'), TranscriptRole.agent);
-        expect(TranscriptRole.fromWire(null), TranscriptRole.agent);
+        expect(TranscriptRole.fromWire('agent'), TranscriptRole.agent);
+        expect(TranscriptRole.fromWire('system'), isNull);
+        expect(TranscriptRole.fromWire(null), isNull);
       },
     );
 
@@ -258,6 +268,8 @@ void main() {
         'no_answer',
         'busy',
         'manual',
+        // [CallStatus.unknown]: a decode-only "not known", never sent.
+        '',
       ]);
       expect(DeliveryMethod.values.map((m) => m.wire).toList(), [
         'twilio_call',

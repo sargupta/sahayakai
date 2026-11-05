@@ -26,6 +26,7 @@ import '../../features/library/presentation/library_detail_screen.dart';
 import '../../features/library/presentation/library_screen.dart';
 import '../../features/onboarding/presentation/login_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/parent_hotline/domain/hotline_launch.dart';
 import '../../features/parent_hotline/presentation/parent_hotline_screen.dart';
 import '../../features/parent_message/presentation/parent_message_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -171,17 +172,14 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => const ParentMessageScreen(),
       ),
       GoRoute(
-        // The standalone Parent Hotline (U-PH3). A plain open lands on the
-        // student picker; the U12 attendance hand-off will push with launch
-        // context (studentId/classId/parentLanguage) once it lands.
+        // The Parent Hotline (U-PH3). A plain open lands on the student
+        // picker; the attendance register pushes a HotlineLaunch (the class
+        // and who was just marked absent), and a deep link or VIDYA may pass
+        // the same fields as a map. Anything else opens the plain picker.
         path: Routes.parentHotline,
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return ParentHotlineScreen(
-            classId: extra?['classId'] as String?,
-            className: extra?['className'] as String?,
-          );
-        },
+        builder: (context, state) => ParentHotlineScreen.fromLaunch(
+          HotlineLaunch.fromExtra(state.extra),
+        ),
       ),
       GoRoute(
         // Attendance (U12) — the class list. Reads are ungated, so this lands

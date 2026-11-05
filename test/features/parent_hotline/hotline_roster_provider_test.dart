@@ -4,6 +4,7 @@ import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/features/attendance/data/attendance_errors.dart';
+import 'package:sahayakai/features/parent_hotline/domain/hotline_roster.dart';
 import 'package:sahayakai/features/parent_hotline/domain/hotline_student.dart';
 import 'package:sahayakai/features/parent_hotline/presentation/hotline_roster_provider.dart';
 
@@ -23,6 +24,10 @@ import '../../support/fake_api_client.dart';
 ///  3. **An empty roster and an unavailable roster are different answers.** One
 ///     is data, the other is an error; collapsing them would tell a teacher with
 ///     40 students that they have none.
+///  4. **Per class.** One class that cannot be read is reported ON that class
+///     (the picker shows it in place, never as a complete list), and the other
+///     classes stay callable. Only a sign-out, or every class failing closed,
+///     fails the whole picker.
 void main() {
   const classesPath = '/api/attendance/classes';
   const studentsPath = '/api/attendance/classes/c1/students';
@@ -84,7 +89,7 @@ void main() {
     return container;
   }
 
-  Future<List<HotlineStudent>> read(ProviderContainer container) =>
+  Future<List<HotlineClassRoster>> read(ProviderContainer container) =>
       container.read(hotlineRosterProvider.future);
 
   test('decodes the masked projection into HotlineStudents, carrying the class '
@@ -104,7 +109,15 @@ void main() {
         ],
       },
     );
-    final roster = await read(makeContainer(client: client));
+    final classes = await read(makeContainer(client: client));
+    expect(classes, hasLength(1));
+    expect(classes.single.classId, 'c1');
+    expect(classes.single.className, 'Class 6A');
+    // The class's subject travels with it: the message draft requires one.
+    expect(classes.single.subject, 'Science');
+    expect(classes.single.failed, isFalse);
+    expect(classes.single.reachableCount, 1);
+    final roster = classes.single.students;
 
     expect(roster, hasLength(2));
     expect(roster.first.id, 's1');
@@ -194,12 +207,55 @@ void main() {
     },
   );
 
-  test('one unreadable class fails the WHOLE roster — a partial list would be '
-      'acted on as if it were complete', () async {
+  test('one class failing closed is reported ON that class, with no '
+      'students decoded; the other class stays callable', () async {
     final client = FakeApiClient(
       getResponsesByPath: <String, Object?>{
         classesPath: [classJson(), classJson(id: 'c2', name: 'Class 7B')],
         studentsPath: [maskedStudent()],
+        otherStudentsPath: [unmaskedStudent()],
+      },
+    );
+
+    final classes = await read(makeContainer(client: client));
+
+    expect(classes.map((c) => c.classId), ['c1', 'c2']);
+    expect(classes.first.failed, isFalse);
+    expect(classes.first.students.single.id, 's1');
+    expect(classes.last.failed, isTrue);
+    expect(classes.last.students, isEmpty);
+    expect(classes.last.error, isA<RosterProjectionUnavailableException>());
+    expect(classes.last.error.toString(), isNot(contains('9876543210')));
+  });
+
+  test(
+    'a network failure on one class is reported on that class only',
+    () async {
+      final client = FakeApiClient(
+        getResponsesByPath: <String, Object?>{
+          classesPath: [classJson(), classJson(id: 'c2', name: 'Class 7B')],
+          studentsPath: [maskedStudent()],
+        },
+        getErrorsByPath: <String, Object>{
+          otherStudentsPath: const ApiException(
+            ApiErrorKind.network,
+            'No connection.',
+          ),
+        },
+      );
+
+      final classes = await read(makeContainer(client: client));
+
+      expect(classes.first.failed, isFalse);
+      expect(classes.last.error, isA<ApiException>());
+    },
+  );
+
+  test('every class failing closed fails the WHOLE picker', () async {
+    final client = FakeApiClient(
+      getResponsesByPath: <String, Object?>{
+        classesPath: [classJson(), classJson(id: 'c2', name: 'Class 7B')],
+        studentsPath: [unmaskedStudent()],
         otherStudentsPath: [unmaskedStudent()],
       },
     );
@@ -211,24 +267,25 @@ void main() {
   });
 
   test(
-    'the reads stop at the first refusal instead of asking every class',
+    'a 401 on any class read fails the whole picker as signed out',
     () async {
       final client = FakeApiClient(
         getResponsesByPath: <String, Object?>{
           classesPath: [classJson(), classJson(id: 'c2', name: 'Class 7B')],
-          studentsPath: [unmaskedStudent()],
-          otherStudentsPath: [maskedStudent()],
+          studentsPath: [maskedStudent()],
+        },
+        getErrorsByPath: <String, Object>{
+          otherStudentsPath: const ApiException(
+            ApiErrorKind.unauthorized,
+            'Please sign in again.',
+            statusCode: 401,
+          ),
         },
       );
 
       await expectLater(
         read(makeContainer(client: client)),
-        throwsA(isA<RosterProjectionUnavailableException>()),
-      );
-      expect(
-        client.gets.where((g) => g.path == otherStudentsPath),
-        isEmpty,
-        reason: 'the second class was never asked',
+        throwsA(isA<ApiException>().having((e) => e.isAuth, 'isAuth', isTrue)),
       );
     },
   );
@@ -283,7 +340,9 @@ void main() {
       makeContainer(client: client, supplied: supplied),
     );
 
-    expect(roster, supplied);
+    expect(roster.single.classId, 'c9');
+    expect(roster.single.className, 'Class 9C');
+    expect(roster.single.students, supplied);
     expect(client.gets, isEmpty);
   });
 

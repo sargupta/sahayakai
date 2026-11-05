@@ -7,6 +7,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
+import 'package:sahayakai/core/platform/clock.dart';
 import 'package:sahayakai/features/parent_hotline/data/parent_hotline_errors.dart';
 import 'package:sahayakai/features/parent_hotline/data/parent_hotline_repository.dart';
 import 'package:sahayakai/features/parent_hotline/domain/call_summary.dart';
@@ -90,8 +91,21 @@ void main() {
     FakeParentMessageRepository? messages,
     CallabilityPolicy? policy,
   }) {
+    // Calling is only allowed 09:00-21:00 IST, so the clock is pinned inside
+    // that window (11:00 IST today) while still advancing in real time —
+    // otherwise these tests would fail whenever the suite runs at night.
+    final realNow = DateTime.now();
+    final ist = realNow.toUtc().add(const Duration(hours: 5, minutes: 30));
+    final elevenIst = DateTime.utc(
+      ist.year,
+      ist.month,
+      ist.day,
+      11,
+    ).subtract(const Duration(hours: 5, minutes: 30));
+    final shift = elevenIst.difference(realNow.toUtc());
     final container = ProviderContainer(
       overrides: [
+        nowProvider.overrideWithValue(() => DateTime.now().add(shift)),
         parentHotlineRepositoryProvider.overrideWithValue(hotline),
         parentMessageRepositoryProvider.overrideWithValue(
           messages ?? FakeParentMessageRepository(),
@@ -1043,6 +1057,113 @@ void main() {
         container.read(parentHotlineControllerProvider).canAutoCall,
         isFalse,
         reason: 'Kannada is not in the injected callable set',
+      );
+    });
+  });
+
+  // ── Returning to a call, and opening one from Updates ──
+
+  test('a plain re-open while a call is running returns to the call and '
+      'resumes polling (no reset to the picker)', () {
+    fakeAsync((async) {
+      final hotline = FakeParentHotlineRepository();
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      driveToReview(async, container);
+      unawaited(ctrl.createAndCall());
+      async.flushMicrotasks();
+      async.elapse(const Duration(seconds: 3)); // poll #1
+      ctrl.leaveCalling();
+      async.elapse(const Duration(seconds: 30));
+      expect(hotline.pollCount, 1);
+      final lookups = hotline.latestQueries.length;
+
+      unawaited(ctrl.init()); // Home row / Call parents tile: no student
+      async.flushMicrotasks();
+      final state = container.read(parentHotlineControllerProvider);
+      expect(state.stage, HotlineStage.calling);
+      expect(state.studentName, 'Asha');
+      expect(state.outreachId, 'o-1');
+      expect(
+        hotline.latestQueries.length,
+        lookups,
+        reason: 'returning needs no new lookup',
+      );
+
+      async.elapse(const Duration(seconds: 3));
+      expect(hotline.pollCount, 2, reason: 'polling resumed');
+    });
+  });
+
+  test('openOutreach on a finished call lands on its summary', () {
+    fakeAsync((async) {
+      final hotline = FakeParentHotlineRepository(
+        pollResults: [completedWithSummary()],
+      );
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      unawaited(ctrl.openOutreach(outreachId: 'o-9', studentName: 'Ravi'));
+      async.flushMicrotasks();
+      final state = container.read(parentHotlineControllerProvider);
+      expect(state.stage, HotlineStage.summary);
+      expect(state.summaryOutcome, HotlineSummaryOutcome.summary);
+      expect(state.outreachId, 'o-9');
+      expect(state.studentName, 'Ravi');
+      expect(state.launchedWithStudent, isTrue);
+    });
+  });
+
+  test('openOutreach on a call still running goes to calling and polls', () {
+    fakeAsync((async) {
+      final hotline = FakeParentHotlineRepository(pollResults: [initiated()]);
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      unawaited(ctrl.openOutreach(outreachId: 'o-9', studentName: 'Ravi'));
+      async.flushMicrotasks();
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.calling,
+      );
+      expect(hotline.pollCount, 1);
+      async.elapse(const Duration(seconds: 3));
+      expect(hotline.pollCount, 2);
+      ctrl.leaveCalling();
+    });
+  });
+
+  test("openOutreach whose status can't be read says so, with Check again", () {
+    fakeAsync((async) {
+      final hotline = FakeParentHotlineRepository()
+        ..pollError = const ApiException(ApiErrorKind.network, 'offline');
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      unawaited(ctrl.openOutreach(outreachId: 'o-9', studentName: 'Ravi'));
+      async.flushMicrotasks();
+      final state = container.read(parentHotlineControllerProvider);
+      expect(state.stage, HotlineStage.summary);
+      expect(state.summaryOutcome, HotlineSummaryOutcome.checkFailed);
+    });
+  });
+
+  test('Start a new message after a call opened from Updates goes to the '
+      'student list (there is no student to start over for)', () {
+    fakeAsync((async) {
+      final hotline = FakeParentHotlineRepository(
+        pollResults: [completedWithSummary()],
+      );
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      unawaited(ctrl.openOutreach(outreachId: 'o-9', studentName: 'Ravi'));
+      async.flushMicrotasks();
+      ctrl.startNewMessage();
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.pickStudent,
       );
     });
   });

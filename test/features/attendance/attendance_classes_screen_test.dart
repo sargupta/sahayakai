@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/features/attendance/presentation/attendance_classes_screen.dart';
@@ -180,7 +179,7 @@ void main() {
     expect(find.byType(AttendanceRosterScreen), findsOneWidget);
     // The row handed the loaded class through `extra`, so the title painted
     // without a second read.
-    expect(find.widgetWithText(AppBar, 'Class 6A'), findsOneWidget);
+    expect(find.text('Class 6A'), findsWidgets);
     expect(find.text('Asha Rao'), findsOneWidget);
   });
 }

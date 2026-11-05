@@ -4,120 +4,140 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/network/api_exception.dart';
+import '../../attendance/data/attendance_errors.dart';
 import '../../attendance/data/attendance_repository.dart';
+import '../../attendance/domain/attendance_class.dart';
+import '../domain/hotline_roster.dart';
 import '../domain/hotline_student.dart';
 
 /// An explicitly SUPPLIED roster, or null when nothing was supplied.
 ///
-/// This is the injection seam, not the data source. Two callers use it:
-///   • the attendance hand-off, which already holds the masked roster it just
-///     read and should not make the hotline read it a second time;
-///   • widget tests, which stand a fixed list behind the picker to exercise the
-///     rows, the no-parent-phone disabled row, and the last-4 mask.
-///
-/// `null` (the default) means "nothing was supplied — go and read it", which is
-/// what [hotlineRosterProvider] does. An empty LIST is therefore a real answer
-/// ("this teacher has no students"), distinct from "nobody supplied one", which
-/// is exactly the distinction a sentinel of `const []` used to destroy.
+/// This is the injection seam, not the data source. Widget tests stand a fixed
+/// list behind the picker with it to exercise the rows, the no-parent-phone
+/// disabled row, and the last-4 mask. `null` (the default) means "nothing was
+/// supplied — go and read it", which is what [hotlineRosterProvider] does. An
+/// empty LIST is a real answer ("this teacher has no students").
 final hotlineStudentRosterProvider = Provider<List<HotlineStudent>?>(
   (ref) => null,
 );
 
-/// The teacher's roster for the Parent Hotline `pickStudent` stage (SPEC §B.1
-/// stage 1) — supplied if something supplied it, otherwise read from the real
-/// students endpoint.
+/// The teacher's classes and their students for the Parent Hotline picker —
+/// supplied if something supplied it, otherwise read from the real routes.
 ///
-/// WHAT IT READS, AND WHAT IT REFUSES TO READ
+/// WHAT IT READS
 ///
-/// It reads the **masked** projection and only the masked projection:
-/// `GET /api/attendance/classes/{classId}/students?projection=roster`, the
-/// six-field shape `{ id, name, rollNumber, parentLanguage, hasParentPhone,
-/// parentPhoneLast4 }`, decoded by `RosterStudentDto.decodeList` and bridged to
-/// [HotlineStudent] by `RosterStudent.toHotlineStudent`. Both already exist in
-/// `features/attendance` and are reused verbatim; there is deliberately no
-/// second roster DTO here.
+/// `GET /api/attendance/classes`, then for every class the **masked**
+/// projection `GET /api/attendance/classes/{classId}/students?projection=roster`
+/// — the six-field shape `{ id, name, rollNumber, parentLanguage,
+/// hasParentPhone, parentPhoneLast4 }` built server-side by `getStudentRoster`.
+/// It is decoded by `RosterStudentDto.decodeList`, which still fails closed if
+/// a deployment ever answers with the unmasked documents.
 ///
-/// That projection ships in draft PR #124 and is **not merged**. Against
-/// `origin/main` today the route is `getStudents(userId, classId)`, which
-/// ignores the unknown `projection` parameter and returns the whole student
-/// document — every parent's full E.164 `parentPhone`, for every student in the
-/// class. The decoder validates the shape it got and throws
-/// [RosterProjectionUnavailableException] rather than decode that, so this
-/// provider is in an ERROR state on production today, not an empty one. The
-/// screen renders it as "the roster needs a server change", which is true;
-/// rendering an empty list instead would read as "this teacher has no
-/// students", which is a lie the teacher would act on.
+/// The client never needs the parent phone (F9-001): `POST .../outreach` reads
+/// it from the student record and `POST .../call` from the outreach record.
 ///
-/// THE CLIENT NEVER NEEDS THE PARENT PHONE (F9-001)
+/// IN PARALLEL, AND PER CLASS
 ///
-/// The masked projection withholds the number, and the hotline does not need
-/// it. Both call-path routes resolve it server-side from the ids the client
-/// does send, verified against `origin/main`:
+/// The class reads run concurrently, and each one settles on its own: a class
+/// whose read fails is returned with its [HotlineClassRoster.error] instead of
+/// failing the picker. Two failures are still whole-picker answers, because
+/// they are about the teacher or the deployment rather than one class: a 401
+/// (signed out), and every class failing closed on the masked projection.
 ///
-///   • `POST /api/attendance/outreach` reads
-///     `classes/{classId}/students/{studentId}.parentPhone` itself and stores it
-///     on the outreach doc — the comment there is explicit that a `parentPhone`
-///     in the request body is IGNORED, because trusting it would let a caller
-///     dial an arbitrary number through the project's Twilio account.
-///   • `POST /api/attendance/call` re-reads `parent_outreach/{id}.parentPhone`
-///     off that doc and dials it, after checking `outreach.teacherUid`.
-///
-/// So the client's whole contribution to placing a call is `{ studentId }` on
-/// create and `{ outreachId, parentLanguage }` on dial. There is no path on
-/// which the handset needs the number, and therefore no reason to un-mask —
-/// this is not a limitation to work around, it is the design.
-///
-/// WHY THE READS ARE SEQUENTIAL
-///
-/// The picker filters across all of the teacher's classes, so the roster is the
-/// concatenation of one read per class. They run in order rather than in
-/// parallel because the first failure is the answer: on production the first
-/// class already fails closed, and issuing four more requests to be refused
-/// four more times costs a rural connection something and buys nothing. One
-/// class failing fails the whole read for the same reason `decodeList` refuses a
-/// partial list — a roster missing the students it could not load is a roster
-/// the teacher would act on as if it were complete.
-final hotlineRosterProvider = FutureProvider<List<HotlineStudent>>((ref) {
+/// Each class's `subject` travels with its students, because the message draft
+/// requires a subject and a class name is not one.
+final hotlineRosterProvider = FutureProvider<List<HotlineClassRoster>>((ref) {
   final supplied = ref.watch(hotlineStudentRosterProvider);
   // Returned synchronously (FutureOr), so a supplied roster lands as AsyncData
-  // on the first frame instead of flashing a skeleton. A supplied roster also
-  // skips the sign-in guard below: it is data the app already holds, not a
-  // request that needs a token.
-  if (supplied != null) return supplied;
+  // on the first frame instead of flashing a skeleton.
+  if (supplied != null) return groupSuppliedRoster(supplied);
 
-  // A signed-out teacher has nothing to fetch. Refusing here rather than
-  // spending a round trip to be told 401 costs a rural connection nothing and
-  // reaches the screen as the same auth error the route would have produced —
-  // which the screen renders as the sign-in prompt, not as a load failure.
+  // A signed-out teacher has nothing to fetch; the screen renders this as the
+  // sign-in prompt, never as a load failure (and never shows its text).
   if (!ref.watch(isSignedInProvider)) {
     throw const ApiException(
       ApiErrorKind.unauthorized,
-      'Please sign in again.',
+      'signed-out',
       statusCode: 401,
     );
   }
 
-  return _readMaskedRoster(ref.watch(attendanceRepositoryProvider));
+  return _readRosters(ref.watch(attendanceRepositoryProvider));
 });
 
-Future<List<HotlineStudent>> _readMaskedRoster(
-  AttendanceRepository repo,
-) async {
-  final classes = await repo.listClasses();
-  if (classes.isEmpty) return const <HotlineStudent>[];
-
-  final students = <HotlineStudent>[];
-  for (final klass in classes) {
-    // Throws RosterProjectionUnavailableException when the reply is not the
-    // masked shape. Deliberately NOT caught: see the fail-closed note above.
-    final roster = await repo.listRoster(klass.id);
-    for (final student in roster) {
-      students.add(
-        // The class identity comes from the class record because the roster
-        // projection does not repeat it per student.
-        student.toHotlineStudent(classId: klass.id, className: klass.name),
-      );
+/// A supplied flat list, grouped by class in first-seen order.
+List<HotlineClassRoster> groupSuppliedRoster(List<HotlineStudent> students) {
+  final order = <String>[];
+  final byClass = <String, List<HotlineStudent>>{};
+  final names = <String, String>{};
+  final subjects = <String, String?>{};
+  for (final s in students) {
+    if (!byClass.containsKey(s.classId)) {
+      order.add(s.classId);
+      byClass[s.classId] = <HotlineStudent>[];
+      names[s.classId] = s.className;
+      subjects[s.classId] = s.subject;
     }
+    byClass[s.classId]!.add(s);
   }
-  return List<HotlineStudent>.unmodifiable(students);
+  return [
+    for (final id in order)
+      HotlineClassRoster(
+        classId: id,
+        className: names[id]!,
+        subject: subjects[id],
+        students: List<HotlineStudent>.unmodifiable(byClass[id]!),
+      ),
+  ];
+}
+
+Future<List<HotlineClassRoster>> _readRosters(AttendanceRepository repo) async {
+  final classes = await repo.listClasses();
+  if (classes.isEmpty) return const <HotlineClassRoster>[];
+
+  final rosters = await Future.wait([
+    for (final klass in classes) _readClass(repo, klass),
+  ]);
+
+  // Whole-picker answers (see the provider doc).
+  for (final r in rosters) {
+    final e = r.error;
+    if (e is ApiException && e.isAuth) throw e;
+  }
+  if (rosters.every((r) => r.error is RosterProjectionUnavailableException)) {
+    throw rosters.first.error!;
+  }
+  return List<HotlineClassRoster>.unmodifiable(rosters);
+}
+
+Future<HotlineClassRoster> _readClass(
+  AttendanceRepository repo,
+  AttendanceClass klass,
+) async {
+  final subject = klass.subject.trim().isEmpty ? null : klass.subject.trim();
+  try {
+    final roster = await repo.listRoster(klass.id);
+    return HotlineClassRoster(
+      classId: klass.id,
+      className: klass.name,
+      subject: subject,
+      students: List<HotlineStudent>.unmodifiable([
+        for (final student in roster)
+          // The class identity and subject come from the class record: the
+          // roster projection does not repeat them per student.
+          student.toHotlineStudent(
+            classId: klass.id,
+            className: klass.name,
+            subject: subject,
+          ),
+      ]),
+    );
+  } catch (error) {
+    return HotlineClassRoster(
+      classId: klass.id,
+      className: klass.name,
+      subject: subject,
+      error: error,
+    );
+  }
 }

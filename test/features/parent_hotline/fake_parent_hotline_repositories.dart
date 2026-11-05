@@ -48,6 +48,9 @@ class FakeParentHotlineRepository extends ParentHotlineRepository {
   /// Thrown by `latestForStudent` when set.
   Object? latestError;
 
+  /// Thrown by `pollSummary` when set (a status read that fails).
+  Object? pollError;
+
   /// When set, the NEXT `pollSummary` awaits this gate before returning — so a
   /// test can hold exactly one poll IN FLIGHT (suspended after `pollCount` was
   /// bumped, before the result resolves) while it disposes the container. This
@@ -85,6 +88,8 @@ class FakeParentHotlineRepository extends ParentHotlineRepository {
   Future<CallResult> pollSummary(String outreachId) async {
     final index = pollCount;
     pollCount++; // "a poll started" — observable even while gated in flight
+    final pollFailure = pollError;
+    if (pollFailure != null) throw pollFailure;
     final gate = pollGate;
     if (gate != null) {
       pollGate = null; // gate only this one poll

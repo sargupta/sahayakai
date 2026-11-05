@@ -8,10 +8,9 @@ import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/ai_text.dart';
-import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
-import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/map_card.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/call_summary.dart';
@@ -51,6 +50,10 @@ class SummarySheet extends StatelessWidget {
     required this.onCallAgain,
     required this.onRetry,
     required this.onCopyForWhatsApp,
+    required this.onStartNew,
+    required this.onCheckAgain,
+    this.isBusy = false,
+    this.hasDraft = true,
   });
 
   /// Which terminal branch to render (the controller's derived discriminator).
@@ -87,6 +90,20 @@ class SummarySheet extends StatelessWidget {
   /// Terminal / footer "Copy for WhatsApp" — the universal fallback.
   final VoidCallback onCopyForWhatsApp;
 
+  /// "Start a new message" — back to step 1 for the same student. The way
+  /// out of a resumed outreach that has no message left to send.
+  final VoidCallback onStartNew;
+
+  /// "Check again" — re-polls an outreach whose outcome is not known yet.
+  final VoidCallback onCheckAgain;
+
+  /// A call is being placed: every action that could place another waits.
+  final bool isBusy;
+
+  /// Whether a message is in hand to copy for WhatsApp. A resumed outreach
+  /// may have none.
+  final bool hasDraft;
+
   @override
   Widget build(BuildContext context) {
     switch (outcome) {
@@ -98,30 +115,53 @@ class SummarySheet extends StatelessWidget {
           isDedupBlocked: isDedupBlocked,
           dedupRetryAfterSeconds: dedupRetryAfterSeconds,
           onDone: onDone,
-          onCallAgain: onCallAgain,
+          onCallAgain: isBusy ? null : onCallAgain,
         );
       case HotlineSummaryOutcome.manual:
-        return _ManualTerminal(onCopyForWhatsApp: onCopyForWhatsApp);
+        return _ManualTerminal(
+          onCopyForWhatsApp: hasDraft && !isBusy ? onCopyForWhatsApp : null,
+          onStartNew: isBusy ? null : onStartNew,
+        );
       case HotlineSummaryOutcome.callFailed:
         return _CallFailedTerminal(
-          status: callResult?.callStatus ?? CallStatus.failed,
-          onRetry: onRetry,
-          onCopyForWhatsApp: onCopyForWhatsApp,
+          status: callResult?.callStatus,
+          onRetry: isBusy ? null : onRetry,
+          onCopyForWhatsApp: hasDraft && !isBusy ? onCopyForWhatsApp : null,
+          onStartNew: isBusy ? null : onStartNew,
         );
       case HotlineSummaryOutcome.endedNoConversation:
         return _NoConversationTerminal(
-          onRetry: onRetry,
-          onCopyForWhatsApp: onCopyForWhatsApp,
+          onRetry: isBusy ? null : onRetry,
+          onCopyForWhatsApp: hasDraft && !isBusy ? onCopyForWhatsApp : null,
+          onStartNew: isBusy ? null : onStartNew,
         );
       case HotlineSummaryOutcome.summaryUnavailable:
         return _SummaryUnavailableTerminal(
           transcript: callResult?.transcript ?? const [],
+          onDone: onDone,
+          onStartNew: isBusy ? null : onStartNew,
+        );
+      case HotlineSummaryOutcome.stillInProgress:
+        return _UnknownOutcomeTerminal(
+          icon: LucideIcons.phoneCall,
+          title: context.l10n.parentHotlineStillInProgressTitle,
+          body: context.l10n.parentHotlineStillInProgressBody,
+          onCheckAgain: isBusy ? null : onCheckAgain,
+          onDone: onDone,
+        );
+      case HotlineSummaryOutcome.checkFailed:
+        return _UnknownOutcomeTerminal(
+          icon: LucideIcons.wifiOff,
+          title: context.l10n.parentHotlineCheckFailedTitle,
+          body: context.l10n.parentHotlineCheckFailedBody,
+          onCheckAgain: isBusy ? null : onCheckAgain,
+          onDone: onDone,
         );
     }
   }
 }
 
-// ─── The full summary — the DocumentSheet payoff ─────────────────────────────
+// ─── The full summary — the map's tinted cards ────────────────────────────────
 
 class _FullSummary extends StatelessWidget {
   const _FullSummary({
@@ -140,7 +180,7 @@ class _FullSummary extends StatelessWidget {
   final bool isDedupBlocked;
   final int? dedupRetryAfterSeconds;
   final VoidCallback onDone;
-  final VoidCallback onCallAgain;
+  final VoidCallback? onCallAgain;
 
   @override
   Widget build(BuildContext context) {
@@ -151,72 +191,178 @@ class _FullSummary extends StatelessWidget {
     if (summary == null) {
       return _NoConversationTerminal(
         onRetry: onDone,
-        onCopyForWhatsApp: onDone,
+        onCopyForWhatsApp: null,
+        onStartNew: onDone,
       );
     }
 
-    // The document blocks, in reading order (SPEC §B.1 stage 6). Empty
-    // concern / commitment / guidance sections are omitted entirely, and
-    // follow-up appears only when the AI flagged it.
+    final text = Theme.of(context).textTheme;
+    final minutes = _durationMinutes(result?.callDurationSeconds);
+    final turns = result?.turnCount ?? 0;
+    final facts = [
+      if (minutes != null) l10n.parentHotlineSummaryDurationMin(minutes),
+      if (turns > 1) l10n.parentHotlineCallingExchanges(turns),
+    ].join(' · ');
+
+    // The map's call summary, in reading order: the green "Call completed"
+    // banner, what the parent said, then each section in its own tint.
+    // Empty sections are left out, and follow-up appears only when the AI
+    // flagged it — nothing is shown that the summary did not say.
     final blocks = <Widget>[
-      DocumentSheetSection(
-        title: l10n.parentHotlineSummarySaidHeader,
-        child: AiText(summary.parentResponse),
+      _TintCard(
+        fill: AppColors.tileLeafBg,
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: const BoxDecoration(
+                color: AppColors.leaf500,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.check,
+                size: 20,
+                color: AppColors.textOnAccent,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.parentHotlineCallCompleted,
+                    style: text.titleSmall?.copyWith(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.leaf700,
+                    ),
+                  ),
+                  if (facts.isNotEmpty)
+                    Text(
+                      facts,
+                      style: text.bodySmall?.copyWith(
+                        color: AppColors.textBody,
+                      ),
+                    ),
+                  // A sentiment the server did not give is not shown.
+                  if (summary.parentSentiment case final sentiment?) ...[
+                    const SizedBox(height: AppSpacing.space2),
+                    _SentimentBadge(sentiment: sentiment),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      MapCard(
+        child: _Section(
+          title: l10n.parentHotlineSummarySaidHeader,
+          ink: AppColors.textMuted,
+          child: AiText(summary.parentResponse),
+        ),
       ),
       if (summary.parentConcerns.isNotEmpty)
-        DocumentSheetSection(
-          title: l10n.parentHotlineSummaryConcernsHeader,
-          child: _ConcernList(items: summary.parentConcerns),
+        _TintCard(
+          fill: AppColors.mapStrategyBg,
+          child: _Section(
+            title: l10n.parentHotlineSummaryConcernsHeader,
+            ink: AppColors.saffron700,
+            child: _Lines(
+              items: summary.parentConcerns,
+              icon: LucideIcons.alertCircle,
+              ink: AppColors.saffron700,
+            ),
+          ),
         ),
       if (summary.parentCommitments.isNotEmpty)
-        DocumentSheetSection(
-          title: l10n.parentHotlineSummaryCommitmentsHeader,
-          child: _GlyphList(
-            items: summary.parentCommitments,
-            icon: LucideIcons.check,
+        _TintCard(
+          fill: AppColors.tileIndigoBg,
+          child: _Section(
+            title: l10n.parentHotlineSummaryCommitmentsHeader,
+            ink: AppColors.tileIndigoInk,
+            child: _Lines(
+              items: summary.parentCommitments,
+              icon: LucideIcons.check,
+              ink: AppColors.tileIndigoInk,
+            ),
           ),
         ),
       if (summary.actionItemsForTeacher.isNotEmpty)
-        DocumentSheetSection(
-          title: l10n.parentHotlineSummaryActionsHeader,
-          child: _ActionItems(items: summary.actionItemsForTeacher),
-        ),
-      if (summary.guidanceGiven.isNotEmpty)
-        DocumentSheetSection(
-          title: l10n.parentHotlineSummaryGuidanceHeader,
-          child: _GlyphList(
-            items: summary.guidanceGiven,
-            icon: LucideIcons.lightbulb,
+        _TintCard(
+          fill: AppColors.surfaceCard,
+          ring: AppColors.mapOptOnRing,
+          child: _Section(
+            title: l10n.parentHotlineSummaryActionsHeader,
+            ink: AppColors.saffron600,
+            child: _Lines(
+              items: summary.actionItemsForTeacher,
+              icon: LucideIcons.arrowRight,
+              ink: AppColors.saffron600,
+            ),
           ),
         ),
-      if (summary.followUpNeeded && (summary.followUpSuggestion?.isNotEmpty ?? false))
-        DocumentSheetSection(
-          title: l10n.parentHotlineSummaryFollowUpHeader,
-          child: _FollowUpInset(text: summary.followUpSuggestion!),
+      if (summary.guidanceGiven.isNotEmpty)
+        MapCard(
+          child: _Section(
+            title: l10n.parentHotlineSummaryGuidanceHeader,
+            ink: AppColors.textMuted,
+            child: _Lines(
+              items: summary.guidanceGiven,
+              icon: LucideIcons.lightbulb,
+              ink: AppColors.textMuted,
+            ),
+          ),
+        ),
+      if (summary.followUpNeeded &&
+          (summary.followUpSuggestion?.isNotEmpty ?? false))
+        _TintCard(
+          fill: AppColors.mapRequiredBg,
+          child: _Section(
+            title: l10n.parentHotlineSummaryFollowUpHeader,
+            ink: AppColors.red700,
+            child: _Lines(
+              items: [summary.followUpSuggestion!],
+              icon: LucideIcons.calendarClock,
+              ink: AppColors.red700,
+            ),
+          ),
         ),
       if ((result?.transcript ?? const []).isNotEmpty)
         _TranscriptTile(turns: result!.transcript),
     ];
 
-    // Ink-settle: each block fades + rises in turn so the document assembles
-    // itself; degrades to the composed frame under reduce-motion. Identical
-    // mechanism to LessonPlanResultView.
-    final revealed = <Widget>[
-      for (var i = 0; i < blocks.length; i++)
-        inkSettle(context, blocks[i], index: i),
-    ];
-
-    return DocumentSheet(
-      docType: _eyebrow(l10n, reason),
-      title: l10n.parentHotlineSummaryTitle(studentName),
-      meta: _meta(context, summary, result),
-      footer: _SummaryFooter(
-        isDedupBlocked: isDedupBlocked,
-        dedupRetryAfterSeconds: dedupRetryAfterSeconds,
-        onDone: onDone,
-        onCallAgain: onCallAgain,
-      ),
-      children: revealed,
+    // Ink-settle: each block fades + rises in turn; degrades to the composed
+    // frame under reduce-motion.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        MapOverline(_eyebrow(l10n, reason), color: AppColors.textEyebrow),
+        const SizedBox(height: AppSpacing.space1),
+        Text(
+          l10n.parentHotlineSummaryTitle(studentName),
+          style: text.displayLarge?.copyWith(
+            fontSize: 22,
+            color: AppColors.textStrong,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.space4),
+        for (var i = 0; i < blocks.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.space3),
+          inkSettle(context, blocks[i], index: i),
+        ],
+        const SizedBox(height: AppSpacing.space5),
+        _SummaryFooter(
+          isDedupBlocked: isDedupBlocked,
+          dedupRetryAfterSeconds: dedupRetryAfterSeconds,
+          onDone: onDone,
+          onCallAgain: onCallAgain,
+        ),
+      ],
     );
   }
 
@@ -239,31 +385,6 @@ class _FullSummary extends StatelessWidget {
       case OutreachReason.positiveFeedback:
         return l10n.parentHotlineSummaryReasonPositive;
     }
-  }
-
-  /// The masthead meta badges: a toned sentiment pill, then (when known) the
-  /// duration and the exchange count — all AppBadge-grammar stadium pills.
-  List<Widget> _meta(
-    BuildContext context,
-    CallSummary summary,
-    CallResult? result,
-  ) {
-    final l10n = context.l10n;
-    final minutes = _durationMinutes(result?.callDurationSeconds);
-    final turns = result?.turnCount ?? 0;
-    return [
-      _SentimentBadge(sentiment: summary.parentSentiment),
-      if (minutes != null)
-        AppBadge(
-          icon: LucideIcons.clock,
-          label: l10n.parentHotlineSummaryDurationMin(minutes),
-        ),
-      if (turns > 1)
-        AppBadge(
-          icon: LucideIcons.messagesSquare,
-          label: l10n.parentHotlineCallingExchanges(turns),
-        ),
-    ];
   }
 
   /// Whole minutes, floored at 1 for any non-zero call so a 40-second call never
@@ -309,29 +430,29 @@ class _SentimentBadge extends StatelessWidget {
 
     final (Color fill, Color ink, IconData icon) = switch (sentiment) {
       ParentSentiment.grateful || ParentSentiment.cooperative => (
-          scheme.secondaryContainer,
-          scheme.onSecondaryContainer,
-          sentiment == ParentSentiment.grateful
-              ? LucideIcons.heartHandshake
-              : LucideIcons.smile,
-        ),
+        scheme.secondaryContainer,
+        scheme.onSecondaryContainer,
+        sentiment == ParentSentiment.grateful
+            ? LucideIcons.heartHandshake
+            : LucideIcons.smile,
+      ),
       ParentSentiment.concerned || ParentSentiment.confused => (
-          scheme.primaryContainer,
-          scheme.onPrimaryContainer,
-          sentiment == ParentSentiment.confused
-              ? LucideIcons.helpCircle
-              : LucideIcons.alertCircle,
-        ),
+        scheme.primaryContainer,
+        scheme.onPrimaryContainer,
+        sentiment == ParentSentiment.confused
+            ? LucideIcons.helpCircle
+            : LucideIcons.alertCircle,
+      ),
       ParentSentiment.upset => (
-          scheme.error.withValues(alpha: isDark ? 0.22 : 0.12),
-          scheme.onSurface,
-          LucideIcons.frown,
-        ),
+        scheme.error.withValues(alpha: isDark ? 0.22 : 0.12),
+        scheme.onSurface,
+        LucideIcons.frown,
+      ),
       ParentSentiment.indifferent => (
-          scheme.surfaceContainerHigh,
-          scheme.onSurface,
-          LucideIcons.meh,
-        ),
+        scheme.surfaceContainerHigh,
+        scheme.onSurface,
+        LucideIcons.meh,
+      ),
     };
 
     return Container(
@@ -348,8 +469,10 @@ class _SentimentBadge extends StatelessWidget {
           Flexible(
             child: Text(
               _label(context.l10n, sentiment),
-              style: text.labelMedium
-                  ?.copyWith(color: ink, fontWeight: FontWeight.w600),
+              style: text.labelMedium?.copyWith(
+                color: ink,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -377,160 +500,79 @@ class _SentimentBadge extends StatelessWidget {
 
 // ─── Section bodies ──────────────────────────────────────────────────────────
 
-/// Concerns raised — an `AppCard(inset)` list of AiText lines (SPEC §B.1).
-class _ConcernList extends StatelessWidget {
-  const _ConcernList({required this.items});
+/// A rounded section card in one of the map's tints, with an optional ring.
+class _TintCard extends StatelessWidget {
+  const _TintCard({required this.fill, required this.child, this.ring});
 
-  final List<String> items;
+  final Color fill;
+  final Color? ring;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return AppCard(
-      variant: AppCardVariant.inset,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.space3),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Icon(
-                    LucideIcons.alertCircle,
-                    size: AppIconSize.inline,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.space3),
-                Expanded(child: AiText(items[i])),
-              ],
-            ),
-          ],
-        ],
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: AppRadius.rCard,
+        border: ring == null ? null : Border.all(color: ring!, width: 1.5),
       ),
+      child: child,
     );
   }
 }
 
-/// A list of AiText lines, each led by a shared [icon] glyph — commitments
-/// (`check`) and guidance (`arrow-right`).
-class _GlyphList extends StatelessWidget {
-  const _GlyphList({required this.items, required this.icon});
+/// An overline title in the section's ink over its content.
+class _Section extends StatelessWidget {
+  const _Section({required this.title, required this.ink, required this.child});
 
-  final List<String> items;
-  final IconData icon;
+  final String title;
+  final Color ink;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (var i = 0; i < items.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.space3),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Icon(
-                  icon,
-                  size: AppIconSize.inline,
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.space3),
-              Expanded(child: AiText(items[i])),
-            ],
-          ),
-        ],
+        MapOverline(title, color: ink),
+        const SizedBox(height: AppSpacing.space2),
+        child,
       ],
     );
   }
 }
 
-/// Your action items — the ONE primary-toned block (SPEC §B.1). A saffron
-/// `primaryContainer` panel with an `arrow-right` glyph per to-do; the AiText
-/// prose stays full-ink `onSurface` (which clears AA on the light-saffron tint)
-/// so the block reads as the teacher's call-to-act without a raw hex in sight.
-class _ActionItems extends StatelessWidget {
-  const _ActionItems({required this.items});
+/// AiText lines, each led by the section's glyph in its ink.
+class _Lines extends StatelessWidget {
+  const _Lines({required this.items, required this.icon, required this.ink});
 
   final List<String> items;
+  final IconData icon;
+  final Color ink;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer,
-        borderRadius: AppRadius.rMd,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.space3),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Icon(
-                    LucideIcons.arrowRight,
-                    size: AppIconSize.inline,
-                    color: scheme.onPrimaryContainer,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.space3),
-                Expanded(child: AiText(items[i])),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Follow-up — a pine/green-toned inset (SPEC §B.1), shown only when the AI
-/// flagged `followUpNeeded`.
-class _FollowUpInset extends StatelessWidget {
-  const _FollowUpInset({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: scheme.secondaryContainer,
-        borderRadius: AppRadius.rMd,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(
-              LucideIcons.calendarClock,
-              size: AppIconSize.inline,
-              color: scheme.onSecondaryContainer,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.space2),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(icon, size: AppIconSize.inline, color: ink),
+              ),
+              const SizedBox(width: AppSpacing.space2),
+              Expanded(child: AiText(items[i])),
+            ],
           ),
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(child: AiText(text)),
         ],
-      ),
+      ],
     );
   }
 }
@@ -649,7 +691,7 @@ class _SummaryFooter extends StatelessWidget {
   final bool isDedupBlocked;
   final int? dedupRetryAfterSeconds;
   final VoidCallback onDone;
-  final VoidCallback onCallAgain;
+  final VoidCallback? onCallAgain;
 
   @override
   Widget build(BuildContext context) {
@@ -661,7 +703,8 @@ class _SummaryFooter extends StatelessWidget {
 
     final callAgainLabel = isDedupBlocked
         ? l10n.parentHotlineCallAgainIn(
-            _formatCountdown(dedupRetryAfterSeconds ?? 0))
+            _formatCountdown(dedupRetryAfterSeconds ?? 0),
+          )
         : l10n.parentHotlineSummaryCallAgain;
 
     return Column(
@@ -674,8 +717,10 @@ class _SummaryFooter extends StatelessWidget {
           onPressed: onDone,
         ),
         const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
+        ConstrainedBox(
+          // A minimum, not a fixed height: "Call again in m:ss" wraps at
+          // large text rather than clipping.
+          constraints: const BoxConstraints(minHeight: 48),
           child: TextButton.icon(
             onPressed: isDedupBlocked ? null : onCallAgain,
             icon: Icon(
@@ -706,10 +751,16 @@ class _SummaryFooter extends StatelessWidget {
 // ─── Terminal panels (never a spinner) ───────────────────────────────────────
 
 /// `manual` — the WhatsApp-copy path: the message was copied, no call placed.
+/// Copy is offered only while a message is in hand; "Start a new message" is
+/// always the way on.
 class _ManualTerminal extends StatelessWidget {
-  const _ManualTerminal({required this.onCopyForWhatsApp});
+  const _ManualTerminal({
+    required this.onCopyForWhatsApp,
+    required this.onStartNew,
+  });
 
-  final VoidCallback onCopyForWhatsApp;
+  final VoidCallback? onCopyForWhatsApp;
+  final VoidCallback? onStartNew;
 
   @override
   Widget build(BuildContext context) {
@@ -718,27 +769,40 @@ class _ManualTerminal extends StatelessWidget {
       icon: LucideIcons.messageCircle,
       title: l10n.parentHotlineSummaryManualTitle,
       message: l10n.parentHotlineSummaryManualBody,
-      action: SecondaryButton(
-        label: l10n.parentHotlineWhatsApp,
-        icon: LucideIcons.copy,
-        onPressed: onCopyForWhatsApp,
+      action: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (onCopyForWhatsApp != null) ...[
+            SecondaryButton(
+              label: l10n.parentHotlineWhatsApp,
+              icon: LucideIcons.copy,
+              onPressed: onCopyForWhatsApp,
+            ),
+            const SizedBox(height: AppSpacing.space2),
+          ],
+          _StartNewButton(onPressed: onStartNew),
+        ],
       ),
     );
   }
 }
 
 /// `failed / no_answer / busy` — a warm, retryable phone-off state. The line is
-/// derived from the terminal [status] (SPEC §B.1).
+/// derived from the terminal [status]; an unknown status reads as the plain
+/// "couldn't connect", never as a guessed reason.
 class _CallFailedTerminal extends StatelessWidget {
   const _CallFailedTerminal({
     required this.status,
     required this.onRetry,
     required this.onCopyForWhatsApp,
+    required this.onStartNew,
   });
 
-  final CallStatus status;
-  final VoidCallback onRetry;
-  final VoidCallback onCopyForWhatsApp;
+  final CallStatus? status;
+  final VoidCallback? onRetry;
+  final VoidCallback? onCopyForWhatsApp;
+  final VoidCallback? onStartNew;
 
   @override
   Widget build(BuildContext context) {
@@ -755,21 +819,23 @@ class _CallFailedTerminal extends StatelessWidget {
       action: _RetryOrWhatsApp(
         onRetry: onRetry,
         onCopyForWhatsApp: onCopyForWhatsApp,
+        onStartNew: onStartNew,
       ),
     );
   }
 }
 
-/// Poll exhausted with no real conversation (turnCount < 2) — "Call ended before
-/// a conversation could happen."
+/// The call ended with no real conversation (turnCount < 2).
 class _NoConversationTerminal extends StatelessWidget {
   const _NoConversationTerminal({
     required this.onRetry,
     required this.onCopyForWhatsApp,
+    required this.onStartNew,
   });
 
-  final VoidCallback onRetry;
-  final VoidCallback onCopyForWhatsApp;
+  final VoidCallback? onRetry;
+  final VoidCallback? onCopyForWhatsApp;
+  final VoidCallback? onStartNew;
 
   @override
   Widget build(BuildContext context) {
@@ -781,17 +847,24 @@ class _NoConversationTerminal extends StatelessWidget {
       action: _RetryOrWhatsApp(
         onRetry: onRetry,
         onCopyForWhatsApp: onCopyForWhatsApp,
+        onStartNew: onStartNew,
       ),
     );
   }
 }
 
-/// Poll exhausted, summary absent but a transcript exists — show the transcript
-/// under "Summary isn't available for this call."
+/// A conversation happened but its summary never generated: the transcript,
+/// then Done and "Start a new message", so the panel is never a dead end.
 class _SummaryUnavailableTerminal extends StatelessWidget {
-  const _SummaryUnavailableTerminal({required this.transcript});
+  const _SummaryUnavailableTerminal({
+    required this.transcript,
+    required this.onDone,
+    required this.onStartNew,
+  });
 
   final List<TranscriptTurn> transcript;
+  final VoidCallback onDone;
+  final VoidCallback? onStartNew;
 
   @override
   Widget build(BuildContext context) {
@@ -809,21 +882,73 @@ class _SummaryUnavailableTerminal extends StatelessWidget {
           const SizedBox(height: AppSpacing.space6),
           _TranscriptTile(turns: transcript),
         ],
+        const SizedBox(height: AppSpacing.space6),
+        PrimaryButton(label: l10n.parentHotlineSummaryDone, onPressed: onDone),
+        const SizedBox(height: AppSpacing.space2),
+        _StartNewButton(onPressed: onStartNew),
       ],
     );
   }
 }
 
-/// The shared retry / WhatsApp affordance pair used by the failed and
-/// no-conversation terminals.
+/// The outcome is not known: the call may still be running past the poll
+/// window, or its status could not be read. Says only that, and offers a
+/// fresh check — never an invented ending.
+class _UnknownOutcomeTerminal extends StatelessWidget {
+  const _UnknownOutcomeTerminal({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.onCheckAgain,
+    required this.onDone,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final VoidCallback? onCheckAgain;
+  final VoidCallback onDone;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return EmptyView(
+      icon: icon,
+      title: title,
+      message: body,
+      action: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PrimaryButton(
+            label: l10n.parentHotlineCheckAgain,
+            icon: LucideIcons.refreshCw,
+            onPressed: onCheckAgain,
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          SecondaryButton(
+            label: l10n.parentHotlineSummaryDone,
+            onPressed: onDone,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The shared retry / WhatsApp / start-new set used by the failed and
+/// no-conversation terminals. A null handler hides (WhatsApp, with no
+/// message to copy) or disables (while a call is being placed) its button.
 class _RetryOrWhatsApp extends StatelessWidget {
   const _RetryOrWhatsApp({
     required this.onRetry,
     required this.onCopyForWhatsApp,
+    required this.onStartNew,
   });
 
-  final VoidCallback onRetry;
-  final VoidCallback onCopyForWhatsApp;
+  final VoidCallback? onRetry;
+  final VoidCallback? onCopyForWhatsApp;
+  final VoidCallback? onStartNew;
 
   @override
   Widget build(BuildContext context) {
@@ -837,13 +962,36 @@ class _RetryOrWhatsApp extends StatelessWidget {
           icon: LucideIcons.refreshCw,
           onPressed: onRetry,
         ),
+        if (onCopyForWhatsApp != null) ...[
+          const SizedBox(height: AppSpacing.space2),
+          SecondaryButton(
+            label: l10n.parentHotlineWhatsApp,
+            icon: LucideIcons.messageCircle,
+            onPressed: onCopyForWhatsApp,
+          ),
+        ],
         const SizedBox(height: AppSpacing.space2),
-        SecondaryButton(
-          label: l10n.parentHotlineWhatsApp,
-          icon: LucideIcons.messageCircle,
-          onPressed: onCopyForWhatsApp,
-        ),
+        _StartNewButton(onPressed: onStartNew),
       ],
+    );
+  }
+}
+
+/// "Start a new message": back to step 1 for the same student.
+class _StartNewButton extends StatelessWidget {
+  const _StartNewButton({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.textLink,
+        minimumSize: const Size(48, 48),
+      ),
+      child: Text(context.l10n.parentHotlineStartNew),
     );
   }
 }

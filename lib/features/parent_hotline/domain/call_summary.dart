@@ -8,9 +8,10 @@ import 'package:flutter/foundation.dart';
 ///   'confused'
 ///
 /// The value is model-generated, so [fromWire] is tolerant: an unrecognised or
-/// null token resolves to a safe neutral default ([indifferent]) rather than
-/// throwing — the summary must never fail to render because the model coined a
-/// new adjective. Mirrors the `VidyaFlow.fromWire` guard discipline.
+/// null token resolves to NULL — "not known" — rather than throwing or being
+/// silently relabelled. The summary must never fail to render because the model
+/// coined a new adjective, and it must never tell the teacher a parent was
+/// "reserved" when nothing said so; an unknown sentiment is simply not shown.
 enum ParentSentiment {
   cooperative('cooperative'),
   concerned('concerned'),
@@ -24,13 +25,12 @@ enum ParentSentiment {
   /// The exact token the backend writes for this sentiment.
   final String wire;
 
-  /// Tolerant decode: null / unknown → [indifferent] (neutral, muted tone).
-  /// Never throws.
-  static ParentSentiment fromWire(String? wire) {
+  /// Tolerant decode: null / unknown → null (not known; hidden). Never throws.
+  static ParentSentiment? fromWire(String? wire) {
     for (final s in ParentSentiment.values) {
       if (s.wire == wire) return s;
     }
-    return ParentSentiment.indifferent;
+    return null;
   }
 }
 
@@ -39,8 +39,8 @@ enum ParentSentiment {
 ///
 ///   'productive' | 'brief' | 'difficult' | 'unanswered'
 ///
-/// Tolerant [fromWire]: null / unknown → [brief] (the least judgemental
-/// fallback — "a short call" — never over-claims a productive conversation).
+/// Tolerant [fromWire]: null / unknown → null. An unrecognised quality is not
+/// known, so it is not reported — not even as the mildest member.
 enum CallQuality {
   productive('productive'),
   brief('brief'),
@@ -51,12 +51,12 @@ enum CallQuality {
 
   final String wire;
 
-  /// Tolerant decode: null / unknown → [brief]. Never throws.
-  static CallQuality fromWire(String? wire) {
+  /// Tolerant decode: null / unknown → null. Never throws.
+  static CallQuality? fromWire(String? wire) {
     for (final q in CallQuality.values) {
       if (q.wire == wire) return q;
     }
-    return CallQuality.brief;
+    return null;
   }
 }
 
@@ -71,14 +71,15 @@ enum TranscriptRole {
 
   final String wire;
 
-  /// Tolerant decode: null / unknown → [agent]. An unattributable line is
-  /// credited to the automated side rather than putting words in the parent's
-  /// mouth (dignity). Never throws.
-  static TranscriptRole fromWire(String? wire) {
+  /// Tolerant decode: null / unknown → null. An unattributable line is shown
+  /// without a speaker rather than credited to either side: crediting it to the
+  /// AI would misreport what the school said, and to the parent would put
+  /// words in their mouth. Never throws.
+  static TranscriptRole? fromWire(String? wire) {
     for (final r in TranscriptRole.values) {
       if (r.wire == wire) return r;
     }
-    return TranscriptRole.agent;
+    return null;
   }
 }
 
@@ -92,7 +93,8 @@ class TranscriptTurn {
     required this.timestamp,
   });
 
-  final TranscriptRole role;
+  /// Who spoke, or null when the transcript did not say.
+  final TranscriptRole? role;
   final String text;
 
   /// ISO-8601 timestamp string, as written server-side. Kept as the raw string
@@ -128,8 +130,8 @@ class CallSummary {
     this.parentCommitments = const [],
     this.actionItemsForTeacher = const [],
     this.guidanceGiven = const [],
-    required this.parentSentiment,
-    required this.callQuality,
+    this.parentSentiment,
+    this.callQuality,
     this.followUpNeeded = false,
     this.followUpSuggestion,
     this.generatedAt,
@@ -143,8 +145,13 @@ class CallSummary {
   /// The teacher's to-dos. The server guarantees ≥1; the client tolerates 0.
   final List<String> actionItemsForTeacher;
   final List<String> guidanceGiven;
-  final ParentSentiment parentSentiment;
-  final CallQuality callQuality;
+
+  /// How the parent came across, or null when the summary did not say (or used
+  /// a word the app does not know). Null is hidden, never guessed.
+  final ParentSentiment? parentSentiment;
+
+  /// The texture of the call, or null when not known.
+  final CallQuality? callQuality;
   final bool followUpNeeded;
   final String? followUpSuggestion;
 

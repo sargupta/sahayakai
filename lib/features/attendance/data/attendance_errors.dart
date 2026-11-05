@@ -244,12 +244,12 @@ final class AttendanceValidationException extends AttendanceException {
 /// not available, so the roster read was abandoned rather than falling back to
 /// the unmasked student documents.
 ///
-/// The masked projection ships in draft PR #124 and is NOT merged. Until it is,
-/// `GET .../students?projection=roster` on production simply ignores the
-/// unknown query parameter and returns the FULL student documents — every
-/// parent's E.164 number, for every student in the class. A client that decoded
+/// The masked projection is live (`GET .../students?projection=roster`,
+/// `getStudentRoster` in `src/server/attendance.ts`). The guard stays because
+/// an older deployment ignores the unknown parameter and returns the FULL
+/// student documents — every parent's E.164 number. A client that decoded
 /// whatever arrived would leak exactly the data the projection exists to
-/// withhold, and would do it silently, on the first run against production.
+/// withhold, and would do it silently.
 ///
 /// So the decoder verifies the shape it got is the masked one and raises this
 /// instead when it is not — for an unmasked or unrecognised body, and for the

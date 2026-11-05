@@ -22,10 +22,9 @@ import 'widgets/attendance_failure_view.dart';
 
 /// One class's students, in the masked projection, plus the way to add one.
 ///
-/// **The list is expected to be unavailable today, and that is not a bug.**
-/// `listRoster` refuses to decode an unmasked reply, so until the masked
-/// `?projection=roster` endpoint (draft PR #124) merges this screen renders
-/// [RosterUnavailableView] — a specific, calm notice that names what is
+/// **An unavailable list is not a bug.** `listRoster` refuses to decode an
+/// unmasked reply, so on a deployment without the masked `?projection=roster`
+/// shape this screen renders [RosterUnavailableView] — a specific, calm notice that names what is
 /// happening, says nothing is wrong with the class, and points out that the
 /// register and the monthly view are unaffected. It is emphatically NOT an
 /// error panel: see that widget for the whole argument.

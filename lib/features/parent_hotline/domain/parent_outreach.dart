@@ -46,32 +46,41 @@ enum OutreachReason {
 /// - `failed` / `no_answer` / `busy` — terminal, no conversation.
 /// - `manual`     — WhatsApp-copy path; no call was placed.
 ///
-/// [fromWire] is tolerant: null / unknown → [failed]. A safe *terminal*
-/// default is deliberate — an unrecognised status must never leave the calling
-/// stage spinning forever, and a real in-flight call always carries the exact
-/// `'initiated'` token, so it is never the value that gets defaulted.
+/// [fromWire] is tolerant: null / unknown → [unknown]. It is deliberately NOT
+/// mapped to `failed`: telling a teacher "the call couldn't connect" when the
+/// record simply did not say would be inventing an outcome. [unknown] is
+/// neither in flight nor terminal; the controller polls it within the same
+/// ceiling as a live call and, if it never resolves, says it could not check
+/// the call — it never claims a result.
 enum CallStatus {
   initiated('initiated'),
   completed('completed'),
   failed('failed'),
   noAnswer('no_answer'),
   busy('busy'),
-  manual('manual');
+  manual('manual'),
+
+  /// The record carried no status, or one this app does not know. Never sent.
+  unknown('');
 
   const CallStatus(this.wire);
 
   final String wire;
 
-  /// Tolerant decode: null / unknown → [failed] (safe terminal). Never throws.
+  /// Tolerant decode: null / unknown → [unknown]. Never throws.
   static CallStatus fromWire(String? wire) {
+    if (wire == null || wire.isEmpty) return CallStatus.unknown;
     for (final s in CallStatus.values) {
       if (s.wire == wire) return s;
     }
-    return CallStatus.failed;
+    return CallStatus.unknown;
   }
 
   /// The call is still running; the controller keeps polling `call-summary`.
   bool get isInFlight => this == CallStatus.initiated;
+
+  /// The record does not say where the call is.
+  bool get isUnknown => this == CallStatus.unknown;
 
   /// The WhatsApp-copy path — no phone call was ever placed.
   bool get isManual => this == CallStatus.manual;
@@ -211,8 +220,8 @@ class CallResult {
     this.callSummary,
   });
 
-  /// The current lifecycle status. Defaulted via [CallStatus.fromWire], so it
-  /// is never null even if the wire omitted it.
+  /// The current lifecycle status. [CallStatus.unknown] when the wire omitted
+  /// it or sent a token this app does not know.
   final CallStatus callStatus;
   final int? callDurationSeconds;
   final String? answeredBy;
@@ -225,9 +234,9 @@ class CallResult {
   /// or if the summary never generated.
   final CallSummary? callSummary;
 
-  /// The call has reached a terminal state (nothing more to poll for on
-  /// status). `initiated` is the only non-terminal value.
-  bool get isTerminal => !callStatus.isInFlight;
+  /// The call has reached a known terminal state (nothing more to poll for on
+  /// status). `initiated` is in flight and `unknown` is not known to be over.
+  bool get isTerminal => !callStatus.isInFlight && !callStatus.isUnknown;
 
   /// A conversation actually happened (used to distinguish "call ended before a
   /// conversation could happen" from a real summary-worthy call).

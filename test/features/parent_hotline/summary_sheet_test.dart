@@ -112,6 +112,10 @@ Future<void> _pump(
   VoidCallback? onCallAgain,
   VoidCallback? onRetry,
   VoidCallback? onCopyForWhatsApp,
+  VoidCallback? onStartNew,
+  VoidCallback? onCheckAgain,
+  bool isBusy = false,
+  bool hasDraft = true,
   Brightness brightness = Brightness.light,
   double textScale = 1.0,
   Locale locale = const Locale('en'),
@@ -151,6 +155,10 @@ Future<void> _pump(
                 onCallAgain: onCallAgain ?? () {},
                 onRetry: onRetry ?? () {},
                 onCopyForWhatsApp: onCopyForWhatsApp ?? () {},
+                onStartNew: onStartNew ?? () {},
+                onCheckAgain: onCheckAgain ?? () {},
+                isBusy: isBusy,
+                hasDraft: hasDraft,
               ),
             ),
           ),
@@ -206,7 +214,8 @@ void main() {
       );
 
       // Masthead: saffron eyebrow (uppercased Latin), Fraunces title, meta.
-      expect(find.byType(DocumentSheet), findsOneWidget);
+      // The map's green banner heads the summary.
+      expect(find.text('Call completed'), findsOneWidget);
       expect(find.text('PARENT CALL · ABSENCES'), findsOneWidget);
       expect(find.text("Asha Rao's parent"), findsOneWidget);
 
@@ -236,8 +245,8 @@ void main() {
           durationSeconds: 180,
         ),
       );
-      expect(find.text('3 min'), findsOneWidget); // 180s → 3 min
-      expect(find.text('4 exchanges'), findsOneWidget);
+      // 180s → 3 min, on the banner's facts line.
+      expect(find.text('3 min · 4 exchanges'), findsOneWidget);
     });
 
     testWidgets('empty concerns / commitments / guidance sections are HIDDEN', (
@@ -288,7 +297,7 @@ void main() {
     });
 
     testWidgets(
-      'the action-items block is the ONE primary-toned block (saffron)',
+      'the action-items block is the saffron-ringed card (the map)',
       (tester) async {
         const action = 'Share this week revision sheet with the parent.';
         await _pump(
@@ -296,18 +305,16 @@ void main() {
           outcome: HotlineSummaryOutcome.summary,
           callResult: _summaryResult(_summary(actions: const [action])),
         );
-        final scheme = AppTheme.light().colorScheme;
-
-        // The action item prose sits inside a Container tinted with
-        // primaryContainer — the saffron block the teacher must act on.
+        // The action item prose sits inside the card ringed in the map's
+        // saffron — the block the teacher must act on.
         final tonedBox = find.ancestor(
           of: find.text(action),
           matching: find.byWidgetPredicate(
             (w) =>
                 w is Container &&
                 w.decoration is BoxDecoration &&
-                (w.decoration as BoxDecoration).color ==
-                    scheme.primaryContainer,
+                (w.decoration as BoxDecoration).border ==
+                    Border.all(color: AppColors.mapOptOnRing, width: 1.5),
           ),
         );
         expect(tonedBox, findsOneWidget);
@@ -750,6 +757,75 @@ void main() {
           },
         );
       }
+    }
+  });
+
+  group('terminal panels: never a dead end, never an invented ending', () {
+    testWidgets('a failed call offers Try again, WhatsApp and Start a new '
+        'message, and each one fires', (tester) async {
+      var retried = 0, copied = 0, startedNew = 0;
+      await _pump(
+        tester,
+        outcome: HotlineSummaryOutcome.callFailed,
+        callResult: null,
+        onRetry: () => retried++,
+        onCopyForWhatsApp: () => copied++,
+        onStartNew: () => startedNew++,
+      );
+
+      await tester.tap(find.text('Try again'));
+      await tester.tap(find.text('Copy for WhatsApp'));
+      await tester.tap(find.text('Start a new message'));
+      expect((retried, copied, startedNew), (1, 1, 1));
+    });
+
+    testWidgets('with no message in hand, WhatsApp is not offered', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        outcome: HotlineSummaryOutcome.endedNoConversation,
+        callResult: null,
+        hasDraft: false,
+      );
+      expect(find.text('Copy for WhatsApp'), findsNothing);
+      expect(find.text('Start a new message'), findsOneWidget);
+    });
+
+    testWidgets('while a call is being placed, Try again is disabled and '
+        'WhatsApp hidden', (tester) async {
+      var retried = 0;
+      await _pump(
+        tester,
+        outcome: HotlineSummaryOutcome.callFailed,
+        callResult: null,
+        isBusy: true,
+        onRetry: () => retried++,
+      );
+      await tester.tap(find.text('Try again'), warnIfMissed: false);
+      expect(retried, 0);
+      expect(find.text('Copy for WhatsApp'), findsNothing);
+    });
+
+    for (final outcome in [
+      HotlineSummaryOutcome.stillInProgress,
+      HotlineSummaryOutcome.checkFailed,
+    ]) {
+      testWidgets('${outcome.name}: offers Check again and Done, and no '
+          'outcome it does not know', (tester) async {
+        var checked = 0, done = 0;
+        await _pump(
+          tester,
+          outcome: outcome,
+          callResult: null,
+          onCheckAgain: () => checked++,
+          onDone: () => done++,
+        );
+        expect(find.text('Try again'), findsNothing);
+        await tester.tap(find.text('Check again'));
+        await tester.tap(find.text('Done'));
+        expect((checked, done), (1, 1));
+      });
     }
   });
 }

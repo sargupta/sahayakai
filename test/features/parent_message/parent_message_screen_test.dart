@@ -15,6 +15,7 @@ import 'package:sahayakai/features/parent_message/presentation/widgets/parent_me
 import 'package:sahayakai/features/parent_message/presentation/widgets/parent_message_result_view.dart';
 import 'package:sahayakai/features/parent_message/presentation/widgets/parent_message_skeleton.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/inline_field_mic.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/labeled_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -35,7 +36,9 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -52,7 +55,10 @@ Widget _host({
 
 /// The TextFormField inside the [LabeledField] carrying [label].
 Finder _fieldFor(String label) => find.descendant(
-  of: find.ancestor(of: find.text(label), matching: find.byType(LabeledField)),
+  of: find.ancestor(
+    of: find.text(label.toUpperCase()),
+    matching: find.byType(LabeledField),
+  ),
   matching: find.byType(TextFormField),
 );
 
@@ -78,10 +84,8 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('a caring message home will be drafted'),
-        findsOneWidget,
-      );
+      // The map's tool pages show no prompt before the first result.
+      expect(find.byType(EmptyView), findsNothing);
     });
 
     testWidgets('loading shows the message-shaped skeleton', (tester) async {
@@ -95,7 +99,9 @@ void main() {
         ),
       );
       await tester.pump(); // don't settle: the loading future never completes
-      await tester.pump(const Duration(milliseconds: 300)); // settle entrance animations
+      await tester.pump(
+        const Duration(milliseconds: 300),
+      ); // settle entrance animations
 
       expect(find.byType(ParentMessageSkeleton), findsOneWidget);
     });
@@ -174,11 +180,11 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.text('Student name'), findsOneWidget);
-      expect(find.text('Class'), findsOneWidget);
-      expect(find.text('Subject'), findsOneWidget);
-      expect(find.text('Reason for the message'), findsOneWidget);
-      expect(find.text("Parent's language"), findsOneWidget);
+      expect(find.text('STUDENT NAME'), findsOneWidget);
+      expect(find.text('CLASS'), findsOneWidget);
+      expect(find.text('SUBJECT'), findsOneWidget);
+      expect(find.text('REASON FOR THE MESSAGE'), findsOneWidget);
+      expect(find.text("PARENT'S LANGUAGE"), findsOneWidget);
 
       // Open the reason dropdown; all four options must be present.
       await tester.ensureVisible(_reasonDropdown);
@@ -198,11 +204,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // Not shown until a reason is chosen.
-      expect(find.text('Days absent'), findsNothing);
+      expect(find.text('DAYS ABSENT'), findsNothing);
 
       await _selectDropdown(tester, _reasonDropdown, 'Repeated absences');
 
-      expect(find.text('Days absent'), findsOneWidget);
+      expect(find.text('DAYS ABSENT'), findsOneWidget);
     });
   });
 
@@ -320,8 +326,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Student name'), findsOneWidget);
-            expect(find.text("Parent's language"), findsOneWidget);
+            expect(find.text('STUDENT NAME'), findsOneWidget);
+            expect(find.text("PARENT'S LANGUAGE"), findsOneWidget);
           },
         );
       }
@@ -354,7 +360,7 @@ void main() {
     /// The InlineFieldMic nested inside the LabeledField carrying [label].
     Finder micFor(String label) => find.descendant(
       of: find.ancestor(
-        of: find.text(label),
+        of: find.text(label.toUpperCase()),
         matching: find.byType(LabeledField),
       ),
       matching: find.byType(InlineFieldMic),
@@ -385,7 +391,7 @@ void main() {
       // narrative content, not sprayed onto every field.
       final classMic = find.descendant(
         of: find.ancestor(
-          of: find.text('Class'),
+          of: find.text('CLASS'),
           matching: find.byType(LabeledField),
         ),
         matching: find.byType(InlineFieldMic),

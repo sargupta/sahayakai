@@ -4,12 +4,18 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/platform/clock.dart';
 import '../../parent_message/data/parent_message_repository.dart';
 import '../../parent_message/domain/parent_message.dart';
+import '../../profile/data/usage_repository.dart';
 import '../data/dto/outreach_dtos.dart';
+import '../data/hotline_evidence_repository.dart';
 import '../data/parent_hotline_errors.dart';
 import '../data/parent_hotline_repository.dart';
+import '../domain/calling_window.dart';
+import '../domain/hotline_evidence.dart';
 import '../domain/parent_outreach.dart';
 
 part 'parent_hotline_controller.g.dart';
@@ -24,7 +30,8 @@ const Duration kFirstPollDelay = Duration(seconds: 3);
 const Duration kPollInterval = Duration(seconds: 5);
 
 /// Ceiling on the `initiated` phase — 3s + 59×5s ≈ 5min, matching the web
-/// modal's "~5 min" cap. Past it, the call is treated as exhausted.
+/// modal's "~5 min" cap. Past it the call is reported as still in progress
+/// ("check back"), never as over.
 const int kMaxPolls = 60;
 
 /// Once the status is terminal but the AI `callSummary` has not landed yet, the
@@ -35,9 +42,24 @@ const Duration kSummaryWaitInterval = Duration(seconds: 3);
 /// "poll every 3s for ~24s then give up gracefully".
 const int kMaxSummaryWaits = 8;
 
+/// Consecutive failed polls (offline, 5xx, timeout) after which the screen
+/// says it could not check the call. Below it, the calling stage keeps going
+/// and says it is having trouble checking.
+const int kMaxPollFailures = 4;
+
+/// Consecutive failed polls after which the calling stage shows its
+/// "having trouble checking" line.
+const int kPollTroubleAfter = 2;
+
 /// The dedup window the outreach route enforces when a 429 arrives with no
 /// numeric `retryAfterSeconds` hint (it always should carry one).
 const int kDefaultDedupSeconds = 5 * 60;
+
+/// The subject sent with a draft when the class record has none. `General` is
+/// a member of the backend's own `Subject` list meaning "not subject-specific";
+/// it is NOT a guess at the class's subject, and a class name is never sent in
+/// its place.
+const String kFallbackSubject = 'General';
 
 // ─── Callability (SPEC §B.5.2, F9-001) ───────────────────────────────────────
 
@@ -47,10 +69,7 @@ const int kDefaultDedupSeconds = 5 * 60;
 /// The app cannot see the server's `TWILIO_LANGUAGE_MAP`, so **the server stays
 /// the source of truth** (SPEC §A.5 / §B.5.2): this set is only the opening
 /// guess. A `422 UnsupportedCallLanguageException` from `placeCall` flips the
-/// offending language off at runtime (belt-and-suspenders). All 11 supported
-/// languages are seeded callable here — including Odia, which the SPEC notes is
-/// voiced via a Hindi fallback server-side and IS callable — so the UI never
-/// wrongly hides "Call parent" for a language the server can in fact dial.
+/// offending language off at runtime (belt-and-suspenders).
 const Set<String> kDefaultCallableLanguages = {
   'english',
   'hindi',
@@ -66,9 +85,7 @@ const Set<String> kDefaultCallableLanguages = {
 };
 
 /// A small injectable predicate deciding whether a parent language can be
-/// auto-called. Injected (via [callabilityPolicyProvider]) rather than hardcoded
-/// so a test can pin the callable set and so the runtime 422 override composes
-/// cleanly on top of it. The server remains authoritative; this is the client's
+/// auto-called. The server remains authoritative; this is the client's
 /// optimistic mirror.
 @immutable
 class CallabilityPolicy {
@@ -92,70 +109,86 @@ class CallabilityPolicy {
 @riverpod
 CallabilityPolicy callabilityPolicy(Ref ref) => CallabilityPolicy.standard;
 
+/// Whether the teacher's plan can use parent messaging at all, read cheaply
+/// from `GET /api/usage` (`canUseParentMessaging`) when the screen opens.
+///
+/// Only a definite `false` is acted on: a plan without parent messaging can
+/// neither draft (the draft route is plan-checked) nor call, so showing the
+/// plan card up front saves the teacher a wasted walk through the flow. A
+/// `true` proves nothing about calling — the outreach route additionally
+/// requires an advanced plan — and a failed read proves nothing at all, so
+/// both leave the server to decide as before. Injectable so tests never reach
+/// the network.
+final hotlinePlanCheckProvider = Provider<Future<bool?> Function()>((ref) {
+  return () async {
+    if (!ref.read(isSignedInProvider)) return null;
+    try {
+      final usage = await ref.read(usageRepositoryProvider).fetchUsage();
+      return usage.canUseParentMessaging;
+    } catch (_) {
+      return null;
+    }
+  };
+});
+
 // ─── Stages & terminal-outcome model ─────────────────────────────────────────
 
 /// The staged flow inside the one Parent Hotline screen (SPEC §B.1). The happy
 /// path is `pickStudent → reason → compose → review → calling → summary`; the
 /// terminal branches all resolve INSIDE [HotlineStage.summary] via
-/// [ParentHotlineState.summaryOutcome] (see below), never as extra stages.
+/// [ParentHotlineState.summaryOutcome], never as extra stages.
 enum HotlineStage {
   /// Choose the student (skipped when launched from a student row).
   pickStudent,
 
-  /// Choose why the teacher is calling.
+  /// Step 1 of 3 — choose why the teacher is calling.
   reason,
 
-  /// The evidence panel + teacher note; drafts the message.
+  /// Step 2 of 3 — the evidence + teacher note; drafts the message.
   compose,
 
-  /// Read the drafted message; decide Call vs WhatsApp copy.
+  /// Step 3 of 3 — read the drafted message; decide Call vs WhatsApp copy.
   review,
 
-  /// The signature waiting state while the call is polled.
+  /// The waiting state while the call is polled.
   calling,
 
-  /// The payoff: the summary DocumentSheet — or one of the terminal branches
-  /// resolved by [ParentHotlineState.summaryOutcome].
+  /// The payoff — or one of the terminal branches.
   summary,
 }
 
-/// How the `summary` stage renders. Terminal call outcomes are modelled here —
-/// as *data* on the one `summary` stage — rather than as separate [HotlineStage]
-/// members. Rationale: every one of these is "the call flow has concluded, show
-/// the teacher the outcome", they share the same masthead/footer scaffolding
-/// (SPEC §B.1 stage 6), and the discriminator is a pure function of the polled
-/// [CallResult]. Folding them into the stage keeps the stage machine small and
-/// the branch exhaustively switchable off a single derived enum, which the
-/// U-PH5 screen consumes directly. Keeping them as stages would duplicate the
-/// masthead per branch and make "did the flow finish?" ambiguous.
+/// How the `summary` stage renders, resolved from the polled [CallResult] and
+/// the poll's own outcome.
 enum HotlineSummaryOutcome {
-  /// The AI `callSummary` landed — the full DocumentSheet (the money shot).
+  /// The AI `callSummary` landed.
   summary,
 
-  /// WhatsApp-copy path (`callStatus == manual`): "Message copied — paste in
-  /// WhatsApp to send." No call was placed.
+  /// WhatsApp-copy path (`callStatus == manual`). No call was placed.
   manual,
 
-  /// `failed / no_answer / busy` — a warm retryable "line was busy / no answer /
-  /// couldn't connect" with Try-again + WhatsApp copy.
+  /// `failed / no_answer / busy` — retryable.
   callFailed,
 
-  /// Poll exhausted with `turnCount < 2` and no transcript — "Call ended before
-  /// a conversation could happen."
+  /// The call completed with fewer than two turns.
   endedNoConversation,
 
-  /// Poll exhausted, summary absent but a transcript exists — show the
-  /// transcript with "Summary isn't available for this call."
+  /// A conversation happened but its summary never generated.
   summaryUnavailable,
+
+  /// The poll ceiling passed while the call still read `initiated`: it may
+  /// well still be going. "Check back", never "it ended".
+  stillInProgress,
+
+  /// The app could not find out how the call is going (repeated failed polls,
+  /// or a record with no known status). Nothing is claimed about the call.
+  checkFailed,
 }
 
-/// The controller's error / gate facet. A single enum the U-PH screen switches
-/// on: gates ([premiumRequired], [signedOut]) block the whole feature; the
-/// call-time facets ([noParentPhone], [unsupportedLanguage], [callFailed],
-/// [telephonyUnavailable]) steer toward retry / WhatsApp; [notFound] restarts;
-/// [generic] is the safe catch-all. Dedup is NOT modelled here — it is a
-/// countdown ([ParentHotlineState.dedupRetryAfterSeconds]), not a blocking
-/// error.
+/// Why polling stopped short of a known outcome.
+enum HotlinePollOutcome { none, stillInProgress, checkFailed }
+
+/// The controller's error / gate facet. Dedup is NOT modelled here — it is a
+/// countdown ([ParentHotlineState.dedupRetryAfterSeconds]).
 enum HotlineError {
   none,
   premiumRequired,
@@ -163,6 +196,9 @@ enum HotlineError {
   unsupportedLanguage,
   callFailed,
   telephonyUnavailable,
+
+  /// Outside 09:00–21:00 IST; see [ParentHotlineState.nextCallAllowedAt].
+  outsideCallingHours,
   notFound,
   signedOut,
   generic,
@@ -173,14 +209,6 @@ enum HotlineError {
 const Object _unset = Object();
 
 /// The single immutable store for the Parent Hotline flow.
-///
-/// Modelled as a rich [Notifier] state (mirroring `VidyaController`, the
-/// codebase's state-machine exemplar) rather than an `AsyncValue`: the flow is a
-/// staged machine whose errors are *facets of a stage* (a premium gate on the
-/// review step, a dedup countdown on the summary step) rather than a single
-/// scalar load, so an `AsyncValue<T>` would flatten distinctions the screen
-/// needs. `parent_message`'s trivial one-shot `AsyncValue` is the wrong shape
-/// here; Vidya's enum-status + error-facet state is the right one.
 @immutable
 class ParentHotlineState {
   const ParentHotlineState({
@@ -196,18 +224,25 @@ class ParentHotlineState {
     this.teacherNote = '',
     this.consecutiveAbsentDays,
     this.performanceContext,
+    this.evidence,
     this.draftedMessage,
+    this.spokenScript,
     this.canAutoCall = true,
     this.outreachId,
     this.deliveryMethod = DeliveryMethod.twilioCall,
     this.callResult,
+    this.callStartedAt,
+    this.pollOutcome = HotlinePollOutcome.none,
+    this.pollTrouble = false,
     this.dedupRetryAfterSeconds,
+    this.nextCallAllowedAt,
     this.error = HotlineError.none,
     this.errorMessage,
+    this.errorCause,
     this.isBusy = false,
+    this.launchedWithStudent = false,
   });
 
-  /// The current stage of the flow.
   final HotlineStage stage;
 
   // ── Selected student / class context ──
@@ -216,11 +251,10 @@ class ParentHotlineState {
   final String? classId;
   final String? className;
 
-  /// The parent's language as a full English name (e.g. `"Kannada"`) — drives
-  /// callability + the (server-side) TTS/STT/agent language. Empty until known.
+  /// The parent's language as a full English name (e.g. `"Kannada"`).
   final String parentLanguage;
 
-  /// Subject for the message-draft + greeting personalization (optional).
+  /// The class's subject token, or null when unknown.
   final String? subject;
 
   /// A reason passed in from the launch context, pre-selected on the reason
@@ -233,77 +267,108 @@ class ParentHotlineState {
   /// Free-text note the teacher added on the compose stage.
   final String teacherNote;
 
-  /// Consecutive absent days (only meaningful for an absence reason); feeds the
-  /// message draft.
+  /// The server's current absence run for this student; feeds the draft.
   final int? consecutiveAbsentDays;
 
-  /// Opaque recent-marks snapshot, passed through to `createOutreach`.
+  /// The recent-marks snapshot built from real results; feeds the draft and
+  /// the outreach.
   final Map<String, dynamic>? performanceContext;
 
-  /// The AI-drafted opening message (the review-stage payload).
+  /// The evidence read for the current student, or null before it starts.
+  final HotlineEvidence? evidence;
+
+  /// The AI-drafted written message (the review-stage payload).
   final String? draftedMessage;
 
-  /// Whether "Call parent" is offered. Derived from [CallabilityPolicy] for
-  /// [parentLanguage], and flipped false at runtime by a `422` unsupported
-  /// language. WhatsApp copy is ALWAYS available regardless.
+  /// The phone-call rendition the AI voice speaks instead of the letter.
+  final String? spokenScript;
+
+  /// Whether "Call parent" is offered for [parentLanguage].
   final bool canAutoCall;
 
-  /// The created outreach's id — the join key every call route needs.
+  /// The outreach for the CURRENT draft or call, once one exists. While no
+  /// call has been placed from it (a failed placement, or a WhatsApp copy),
+  /// "Call parent" re-dials THIS record instead of creating another — a second
+  /// create within five minutes is refused by the server's dedup.
   final String? outreachId;
 
-  /// How this outreach was delivered (`twilio_call` vs `whatsapp_copy`).
   final DeliveryMethod deliveryMethod;
 
-  /// The latest polled projection: live transcript, turnCount, status, and the
-  /// summary once it lands.
+  /// The latest polled projection.
   final CallResult? callResult;
 
-  /// Seconds remaining on the 5-min dedup cool-down after a `429`. Null when not
-  /// blocked. Renders as a disabled "Call again" countdown, never an error loop.
+  /// When this session placed the call, for the elapsed timer. Null for a call
+  /// resumed from the server (its start time is not known, so none is shown).
+  final DateTime? callStartedAt;
+
+  /// Why polling stopped short of a known outcome.
+  final HotlinePollOutcome pollOutcome;
+
+  /// Recent polls have failed; the call may still be going.
+  final bool pollTrouble;
+
+  /// Seconds remaining on the 5-min dedup cool-down after a `429`.
   final int? dedupRetryAfterSeconds;
 
-  /// The current error / gate facet.
+  /// When calling next opens (UTC), while [error] is
+  /// [HotlineError.outsideCallingHours]. Null when not known.
+  final DateTime? nextCallAllowedAt;
+
   final HotlineError error;
 
-  /// User-safe message for the current [error].
+  /// The server's own text for [error]. Diagnostic only — NEVER rendered: the
+  /// screen maps [errorCause] / [error] to translated copy.
   final String? errorMessage;
 
-  /// True while an outreach create / call placement / message draft is in
-  /// flight (drives skeletons + disables the CTA).
+  /// The exception behind a [HotlineError.generic] / [HotlineError.notFound],
+  /// for the screen to map to translated copy by kind and status.
+  final Object? errorCause;
+
+  /// True while a draft / create / call placement is in flight. Every action
+  /// method returns early while it is set, and every action button is
+  /// disabled.
   final bool isBusy;
 
-  /// The whole feature is premium-gated and the teacher is not on an advanced
-  /// plan.
+  /// The flow was opened for one student (no picker to step back to).
+  final bool launchedWithStudent;
+
   bool get isPremiumGated => error == HotlineError.premiumRequired;
-
-  /// The routes 401'd — show the signed-out `EmptyView`, never a faked identity.
   bool get isSignedOut => error == HotlineError.signedOut;
-
-  /// "Call again" is currently blocked by the dedup cool-down.
   bool get isDedupBlocked => (dedupRetryAfterSeconds ?? 0) > 0;
+  bool get isOutsideCallingHours => error == HotlineError.outsideCallingHours;
+  bool get hasDraft => draftedMessage?.trim().isNotEmpty ?? false;
 
-  /// How the `summary` stage should render, resolved purely from [callResult].
-  /// Null when not on the summary stage. Precedence: a real summary wins; then
-  /// the manual (WhatsApp) terminal; then a retryable call failure; then the two
-  /// poll-exhausted variants (no-conversation vs summary-absent-transcript).
   HotlineSummaryOutcome? get summaryOutcome {
     if (stage != HotlineStage.summary) return null;
     final r = callResult;
-    if (r == null) return HotlineSummaryOutcome.endedNoConversation;
-    if (r.callSummary != null) return HotlineSummaryOutcome.summary;
-    if (r.callStatus == CallStatus.manual) return HotlineSummaryOutcome.manual;
-    if (r.callStatus == CallStatus.failed ||
-        r.callStatus == CallStatus.noAnswer ||
-        r.callStatus == CallStatus.busy) {
-      return HotlineSummaryOutcome.callFailed;
+    if (r?.callSummary != null) return HotlineSummaryOutcome.summary;
+    switch (pollOutcome) {
+      case HotlinePollOutcome.stillInProgress:
+        return HotlineSummaryOutcome.stillInProgress;
+      case HotlinePollOutcome.checkFailed:
+        return HotlineSummaryOutcome.checkFailed;
+      case HotlinePollOutcome.none:
+        break;
     }
-    // SPEC §B.1 ordering: the turnCount<2 "no conversation" rule fires BEFORE
-    // the transcript-present rule, so a completed call with only the lone agent
-    // greeting (turnCount==1, transcript non-empty) reads as "ended before a
-    // conversation could happen", not "summary unavailable". Use the domain
-    // discriminator (`hadConversation` ⇒ turnCount >= 2).
-    if (!r.hadConversation) return HotlineSummaryOutcome.endedNoConversation;
-    return HotlineSummaryOutcome.summaryUnavailable;
+    if (r == null) return HotlineSummaryOutcome.checkFailed;
+    switch (r.callStatus) {
+      case CallStatus.manual:
+        return HotlineSummaryOutcome.manual;
+      case CallStatus.failed:
+      case CallStatus.noAnswer:
+      case CallStatus.busy:
+        return HotlineSummaryOutcome.callFailed;
+      case CallStatus.unknown:
+        return HotlineSummaryOutcome.checkFailed;
+      case CallStatus.initiated:
+        return HotlineSummaryOutcome.stillInProgress;
+      case CallStatus.completed:
+        // SPEC §B.1 ordering: turnCount<2 reads "no conversation" before the
+        // transcript-present rule.
+        return r.hadConversation
+            ? HotlineSummaryOutcome.summaryUnavailable
+            : HotlineSummaryOutcome.endedNoConversation;
+    }
   }
 
   ParentHotlineState copyWith({
@@ -319,64 +384,102 @@ class ParentHotlineState {
     String? teacherNote,
     Object? consecutiveAbsentDays = _unset,
     Object? performanceContext = _unset,
+    Object? evidence = _unset,
     Object? draftedMessage = _unset,
+    Object? spokenScript = _unset,
     bool? canAutoCall,
     Object? outreachId = _unset,
     DeliveryMethod? deliveryMethod,
     Object? callResult = _unset,
+    Object? callStartedAt = _unset,
+    HotlinePollOutcome? pollOutcome,
+    bool? pollTrouble,
     Object? dedupRetryAfterSeconds = _unset,
+    Object? nextCallAllowedAt = _unset,
     HotlineError? error,
     Object? errorMessage = _unset,
+    Object? errorCause = _unset,
     bool? isBusy,
+    bool? launchedWithStudent,
   }) {
+    T pick<T>(Object? v, T current) => identical(v, _unset) ? current : v as T;
     return ParentHotlineState(
       stage: stage ?? this.stage,
-      studentId: identical(studentId, _unset)
-          ? this.studentId
-          : studentId as String?,
-      studentName: identical(studentName, _unset)
-          ? this.studentName
-          : studentName as String?,
-      classId: identical(classId, _unset) ? this.classId : classId as String?,
-      className: identical(className, _unset)
-          ? this.className
-          : className as String?,
+      studentId: pick<String?>(studentId, this.studentId),
+      studentName: pick<String?>(studentName, this.studentName),
+      classId: pick<String?>(classId, this.classId),
+      className: pick<String?>(className, this.className),
       parentLanguage: parentLanguage ?? this.parentLanguage,
-      subject: identical(subject, _unset) ? this.subject : subject as String?,
-      suggestedReason: identical(suggestedReason, _unset)
-          ? this.suggestedReason
-          : suggestedReason as OutreachReason?,
-      selectedReason: identical(selectedReason, _unset)
-          ? this.selectedReason
-          : selectedReason as OutreachReason?,
+      subject: pick<String?>(subject, this.subject),
+      suggestedReason: pick<OutreachReason?>(
+        suggestedReason,
+        this.suggestedReason,
+      ),
+      selectedReason: pick<OutreachReason?>(
+        selectedReason,
+        this.selectedReason,
+      ),
       teacherNote: teacherNote ?? this.teacherNote,
-      consecutiveAbsentDays: identical(consecutiveAbsentDays, _unset)
-          ? this.consecutiveAbsentDays
-          : consecutiveAbsentDays as int?,
-      performanceContext: identical(performanceContext, _unset)
-          ? this.performanceContext
-          : performanceContext as Map<String, dynamic>?,
-      draftedMessage: identical(draftedMessage, _unset)
-          ? this.draftedMessage
-          : draftedMessage as String?,
+      consecutiveAbsentDays: pick<int?>(
+        consecutiveAbsentDays,
+        this.consecutiveAbsentDays,
+      ),
+      performanceContext: pick<Map<String, dynamic>?>(
+        performanceContext,
+        this.performanceContext,
+      ),
+      evidence: pick<HotlineEvidence?>(evidence, this.evidence),
+      draftedMessage: pick<String?>(draftedMessage, this.draftedMessage),
+      spokenScript: pick<String?>(spokenScript, this.spokenScript),
       canAutoCall: canAutoCall ?? this.canAutoCall,
-      outreachId: identical(outreachId, _unset)
-          ? this.outreachId
-          : outreachId as String?,
+      outreachId: pick<String?>(outreachId, this.outreachId),
       deliveryMethod: deliveryMethod ?? this.deliveryMethod,
-      callResult: identical(callResult, _unset)
-          ? this.callResult
-          : callResult as CallResult?,
-      dedupRetryAfterSeconds: identical(dedupRetryAfterSeconds, _unset)
-          ? this.dedupRetryAfterSeconds
-          : dedupRetryAfterSeconds as int?,
+      callResult: pick<CallResult?>(callResult, this.callResult),
+      callStartedAt: pick<DateTime?>(callStartedAt, this.callStartedAt),
+      pollOutcome: pollOutcome ?? this.pollOutcome,
+      pollTrouble: pollTrouble ?? this.pollTrouble,
+      dedupRetryAfterSeconds: pick<int?>(
+        dedupRetryAfterSeconds,
+        this.dedupRetryAfterSeconds,
+      ),
+      nextCallAllowedAt: pick<DateTime?>(
+        nextCallAllowedAt,
+        this.nextCallAllowedAt,
+      ),
       error: error ?? this.error,
-      errorMessage: identical(errorMessage, _unset)
-          ? this.errorMessage
-          : errorMessage as String?,
+      errorMessage: pick<String?>(errorMessage, this.errorMessage),
+      errorCause: pick<Object?>(errorCause, this.errorCause),
       isBusy: isBusy ?? this.isBusy,
+      launchedWithStudent: launchedWithStudent ?? this.launchedWithStudent,
     );
   }
+}
+
+/// What this session remembers about an outreach it created, so a resume can
+/// restore the draft (and, for one whose call never went out, re-dial it
+/// rather than pretend a call is ringing).
+@immutable
+class _OutreachMemo {
+  const _OutreachMemo({
+    required this.message,
+    required this.spokenScript,
+    required this.reason,
+    required this.callPlaced,
+  });
+
+  final String message;
+  final String? spokenScript;
+  final OutreachReason? reason;
+
+  /// A call was successfully placed from this outreach.
+  final bool callPlaced;
+
+  _OutreachMemo placed() => _OutreachMemo(
+    message: message,
+    spokenScript: spokenScript,
+    reason: reason,
+    callPlaced: true,
+  );
 }
 
 // ─── Controller ──────────────────────────────────────────────────────────────
@@ -384,18 +487,19 @@ class ParentHotlineState {
 /// The Parent Hotline brain (SPEC §B.3): the staged flow + the exact web poll
 /// discipline + resume.
 ///
-/// **Poll safety (the #1 correctness requirement).** Polling is a self-
-/// rescheduling [Timer] (not `Timer.periodic`) so the cadence can vary (3s → 5s
-/// → 3s). Two mechanisms guarantee no state is ever emitted after the flow moved
-/// on or the screen died:
-///   1. a generation counter [_pollGen] captured when a poll session starts and
-///      compared after every `await` — a `_stopPolling` / leave / re-bind bumps
-///      it, orphaning any in-flight poll continuation;
-///   2. a [_disposed] flag set in `ref.onDispose`, checked before every state
-///      write ([_set] is a no-op once disposed) and after every `await`.
-/// The timer is cancelled in `ref.onDispose` AND whenever the flow leaves
-/// `calling`. Leaving `calling` stops polling ONLY — it never cancels the
+/// **Poll safety.** Polling is a self-rescheduling [Timer] guarded by a
+/// generation counter ([_pollGen]) and a [_disposed] flag, both checked after
+/// every `await`. Leaving `calling` stops polling ONLY — it never cancels the
 /// server-side call (SPEC §B.5.5); re-opening resumes via `latestForStudent`.
+///
+/// **One action at a time.** Every action method returns early while
+/// [ParentHotlineState.isBusy] is set; the flag is raised synchronously, before
+/// the first `await`, so a double-tap in one frame places one call.
+///
+/// **Per-student state.** The controller is keepAlive, so every student
+/// switch (an [init], a [selectStudent]) resets EVERY per-student field — the
+/// note, evidence, draft, spoken script, outreach, call result — and bumps
+/// [_flowGen], which orphans any in-flight draft/create/call continuation.
 @Riverpod(keepAlive: true)
 class ParentHotlineController extends _$ParentHotlineController {
   bool _disposed = false;
@@ -405,20 +509,25 @@ class ParentHotlineController extends _$ParentHotlineController {
   String? _pollOutreachId;
   int _pollCount = 0;
   int _summaryWaitCount = 0;
+  int _pollFailures = 0;
+  CallStatus? _lastPolledStatus;
 
   Timer? _dedupTimer;
+  Timer? _callingWindowTimer;
 
-  /// Bumped every time the flow re-targets a student (an [init], a
-  /// [selectStudent]). A resume lookup captures it and abandons its continuation
-  /// if it changed — the same discipline [_pollGen] gives the poll loop. Without
-  /// it, a teacher who taps student A then quickly taps student B could have A's
-  /// in-flight `outreach-latest` reply land afterwards and drag the flow onto
-  /// A's call while B's name is on screen.
+  /// Bumped on every student re-target; a resume lookup abandons its
+  /// continuation if it changed.
   int _contextGen = 0;
 
-  /// Languages a runtime `422` proved uncallable this session (belt-and-
-  /// suspenders on top of [CallabilityPolicy]).
+  /// Bumped on every re-target AND every step back; an in-flight draft /
+  /// create / call abandons its continuation if it changed.
+  int _flowGen = 0;
+
+  /// Languages a runtime `422` proved uncallable this session.
   final Set<String> _runtimeUncallable = <String>{};
+
+  /// Outreaches this session created, by id.
+  final Map<String, _OutreachMemo> _memos = <String, _OutreachMemo>{};
 
   @override
   ParentHotlineState build() {
@@ -426,9 +535,11 @@ class ParentHotlineController extends _$ParentHotlineController {
       _disposed = true;
       _pollTimer?.cancel();
       _pollTimer = null;
-      _pollGen++; // orphan any in-flight poll continuation (belt on _disposed)
+      _pollGen++;
       _dedupTimer?.cancel();
       _dedupTimer = null;
+      _callingWindowTimer?.cancel();
+      _callingWindowTimer = null;
     });
     return const ParentHotlineState();
   }
@@ -437,15 +548,16 @@ class ParentHotlineController extends _$ParentHotlineController {
       ref.read(parentHotlineRepositoryProvider);
   ParentMessageRepository get _messages =>
       ref.read(parentMessageRepositoryProvider);
+  HotlineEvidenceRepository get _evidenceRepo =>
+      ref.read(hotlineEvidenceRepositoryProvider);
   CallabilityPolicy get _policy => ref.read(callabilityPolicyProvider);
+  DateTime _now() => ref.read(nowProvider)();
 
   // ── Open / resume (SPEC §B.3 cases a/b/c) ──────────────────────────────────
 
-  /// Called when the screen opens. Seeds the launch context, then — if a student
-  /// is already known (the attendance "Call parent" hand-off) — hands off to
-  /// [_resumeOrStart], which decides between resuming an outreach and starting a
-  /// fresh one. With no student the flow opens on `pickStudent`, and the resume
-  /// happens on the tap instead (see [selectStudent]).
+  /// Called when the screen opens. Resets the whole flow to the launch
+  /// context, checks the plan cheaply, and — if a student is already known —
+  /// resumes or starts their flow.
   Future<void> init({
     String? studentId,
     String? studentName,
@@ -456,56 +568,61 @@ class ParentHotlineController extends _$ParentHotlineController {
     OutreachReason? suggestedReason,
   }) async {
     final lang = parentLanguage?.trim() ?? '';
+    final hasStudent = studentId != null && studentId.isNotEmpty;
+
+    // A call the teacher left running carries on server-side; opening the
+    // hotline without naming a student returns to it (polling picks up where
+    // it stopped) rather than dropping it for the picker. Naming a student
+    // goes through the resume lookup below, which reads the server's state.
+    final running = state.outreachId;
+    if (state.stage == HotlineStage.calling &&
+        running != null &&
+        running.isNotEmpty &&
+        !hasStudent) {
+      _set(pollTrouble: false, pollOutcome: HotlinePollOutcome.none);
+      _beginPolling(running);
+      return;
+    }
+
     _runtimeUncallable.clear();
-    // A different student is a fresh dedup scope (the server dedups per
-    // (teacher, student)); never let student A's cool-down block student B.
-    if ((studentId ?? '') != (state.studentId ?? '')) _clearDedup();
+    _resetForStudent();
     _set(
+      stage: HotlineStage.pickStudent,
       studentId: studentId,
       studentName: studentName,
       classId: classId,
       className: className,
       parentLanguage: lang,
-      subject: subject,
+      subject: _cleanSubject(subject),
       suggestedReason: suggestedReason,
       selectedReason: suggestedReason,
       canAutoCall: _deriveCallable(lang),
-      error: HotlineError.none,
-      errorMessage: null,
+      launchedWithStudent: hasStudent,
     );
+    final gen = ++_contextGen;
 
-    if (studentId == null || studentId.isEmpty) {
-      _set(stage: HotlineStage.pickStudent);
-      return;
-    }
+    unawaited(_checkPlan(gen));
 
-    // The flow is still on `pickStudent` here, so the nothing-to-resume answer
-    // has to place it.
+    if (!hasStudent) return;
     await _resumeOrStart(
       studentId,
-      gen: ++_contextGen,
+      gen: gen,
       fallbackStage: HotlineStage.reason,
     );
   }
 
+  Future<void> _checkPlan(int gen) async {
+    final allowed = await ref.read(hotlinePlanCheckProvider)();
+    if (_disposed || gen != _contextGen) return;
+    if (allowed == false && state.error == HotlineError.none) {
+      _set(error: HotlineError.premiumRequired);
+    }
+  }
+
   // ── Stage intents ──────────────────────────────────────────────────────────
 
-  /// Pick a student (stage 1) → advances to the reason stage. Seeds the context
-  /// and (re)derives callability from the parent language.
-  ///
-  /// **Then it resumes, exactly as [init] does.** The screen only carries a
-  /// launch `studentId` when it was opened from an attendance row; the standalone
-  /// Dashboard entry opens on `pickStudent` with no student at all, so the resume
-  /// lookup in [init] never fires for it. A teacher whose call is in flight,
-  /// who backs out and re-opens the hotline from the Dashboard, therefore lands
-  /// on the picker — and without this, tapping the student they are already
-  /// calling would drop them at `reason` and lose the run. `outreach-latest` is
-  /// the same 24h (teacher, student) lookup either way; the entry point should
-  /// not decide whether the teacher gets their call back.
-  ///
-  /// The stage moves to `reason` SYNCHRONOUSLY so the tap is answered on the
-  /// frame it happened; the lookup only overrides it if there is genuinely
-  /// something to resume.
+  /// Pick a student (from the picker) → the reason stage, then resume exactly
+  /// as [init] does.
   Future<void> selectStudent({
     required String studentId,
     required String studentName,
@@ -517,9 +634,7 @@ class ParentHotlineController extends _$ParentHotlineController {
   }) async {
     final lang = parentLanguage.trim();
     _runtimeUncallable.clear();
-    // Switching students resets the (teacher, student)-scoped dedup cool-down so
-    // a never-contacted student is never silently blocked (SPEC §B.5.2/§B.5.3).
-    _clearDedup();
+    _resetForStudent();
     _set(
       stage: HotlineStage.reason,
       studentId: studentId,
@@ -527,43 +642,50 @@ class ParentHotlineController extends _$ParentHotlineController {
       classId: classId,
       className: className,
       parentLanguage: lang,
-      subject: subject,
+      subject: _cleanSubject(subject),
       suggestedReason: suggestedReason,
       selectedReason: suggestedReason,
       canAutoCall: _deriveCallable(lang),
-      draftedMessage: null,
-      outreachId: null,
-      callResult: null,
-      error: HotlineError.none,
-      errorMessage: null,
     );
-
-    // No fallback stage: `reason` is already set above, and the teacher may well
-    // have moved on to `compose` by the time the lookup answers. Re-asserting a
-    // stage they have left would yank them backwards for no reason.
     await _resumeOrStart(studentId, gen: ++_contextGen);
   }
 
-  /// Asks `GET /api/attendance/outreach-latest?studentId=…` whether this student
-  /// has a resumable outreach in the server's 24h window, and lands the flow on
-  /// the right stage (SPEC §B.3 cases a/b/c):
-  ///   (a) a terminal call with a `callSummary` → jump straight to `summary`;
-  ///   (b) an `initiated` call → resume `calling` and re-bind polling to it;
-  ///   (c) nothing (or `{ outreachId: null }`) → a fresh flow at `reason`.
-  /// A non-initiated, non-summary terminal (failed / no_answer / busy / manual,
-  /// or a completed call whose summary never generated) resolves to the `summary`
-  /// stage's matching terminal outcome.
-  ///
-  /// A `401` is the signed-out gate. Every other lookup failure degrades to a
-  /// fresh flow rather than blocking the teacher: resume is a courtesy, and a
-  /// flaky network must not stand between a teacher and a call they can still
-  /// place. [gen] is the [_contextGen] captured by the caller — a newer target
-  /// abandons this continuation.
-  ///
-  /// [fallbackStage] is where case (c) lands, and is null when the caller has
-  /// already placed the flow itself. That distinction matters: a teacher who
-  /// taps a student and picks a reason before a slow reply arrives must not be
-  /// dragged back to the reason stage by a lookup that found nothing.
+  /// Clears EVERY per-student field, stops polling and the per-student timers,
+  /// and orphans in-flight work. Keeps the premium gate (it is about the
+  /// teacher, not the student).
+  void _resetForStudent() {
+    _stopPolling();
+    _clearDedup();
+    _callingWindowTimer?.cancel();
+    _callingWindowTimer = null;
+    _flowGen++;
+    _set(
+      teacherNote: '',
+      consecutiveAbsentDays: null,
+      performanceContext: null,
+      evidence: null,
+      draftedMessage: null,
+      spokenScript: null,
+      outreachId: null,
+      deliveryMethod: DeliveryMethod.twilioCall,
+      callResult: null,
+      callStartedAt: null,
+      pollOutcome: HotlinePollOutcome.none,
+      pollTrouble: false,
+      nextCallAllowedAt: null,
+      error: state.isPremiumGated
+          ? HotlineError.premiumRequired
+          : HotlineError.none,
+      errorMessage: null,
+      errorCause: null,
+      isBusy: false,
+    );
+  }
+
+  /// Resume lookup (SPEC §B.3): (a) summary → summary; (b) a call in flight →
+  /// calling; (c) nothing → the fallback stage. An outreach this session knows
+  /// was never dialled lands back on review (Call re-dials it) instead of on a
+  /// "calling" screen for a call that does not exist.
   Future<void> _resumeOrStart(
     String studentId, {
     required int gen,
@@ -578,7 +700,7 @@ class ParentHotlineController extends _$ParentHotlineController {
         _set(error: HotlineError.signedOut, errorMessage: e.message);
         return;
       }
-      latest = null; // non-auth lookup failure → fall through to a fresh flow
+      latest = null;
     } catch (_) {
       if (_disposed || gen != _contextGen) return;
       latest = null;
@@ -586,124 +708,241 @@ class ParentHotlineController extends _$ParentHotlineController {
     if (_disposed || gen != _contextGen) return;
 
     if (latest == null) {
-      // Case (c): nothing to resume — a fresh flow, at the caller's fallback if
-      // it asked for one.
       if (fallbackStage != null) _set(stage: fallbackStage);
       return;
     }
 
     final result = latest.result;
-    if (result.isTerminal && result.callSummary != null) {
-      // Case (a): completed with a summary — jump straight to the payoff.
+    final memo = _memos[latest.outreachId];
+    if (memo != null) {
       _set(
-        stage: HotlineStage.summary,
-        outreachId: latest.outreachId,
-        callResult: result,
+        draftedMessage: memo.message,
+        spokenScript: memo.spokenScript,
+        selectedReason: memo.reason ?? state.selectedReason,
       );
+    }
+
+    if (result.callSummary == null &&
+        result.callStatus == CallStatus.initiated &&
+        memo != null &&
+        !memo.callPlaced) {
+      // Created here, never dialled (the placement failed). Not a call.
+      _set(stage: HotlineStage.review, outreachId: latest.outreachId);
+      _checkCallingWindow();
       return;
     }
-    if (result.callStatus == CallStatus.initiated) {
-      // Case (b): still in flight — resume calling and re-bind polling.
+    if (result.callSummary == null &&
+        result.callStatus == CallStatus.initiated) {
       _set(
         stage: HotlineStage.calling,
         outreachId: latest.outreachId,
         callResult: result,
+        callStartedAt: null,
       );
       _beginPolling(latest.outreachId);
       return;
     }
-    // Terminal without a summary → the summary stage resolves the right
-    // terminal outcome.
     _set(
       stage: HotlineStage.summary,
       outreachId: latest.outreachId,
       callResult: result,
+      deliveryMethod: result.callStatus == CallStatus.manual
+          ? DeliveryMethod.whatsappCopy
+          : DeliveryMethod.twilioCall,
+      pollOutcome: HotlinePollOutcome.none,
     );
   }
 
-  /// Choose the reason (stage 2) → advances to the compose stage.
+  /// Choose a reason on step 1 WITHOUT advancing (the teacher confirms with
+  /// Next).
+  void pickReason(OutreachReason reason) {
+    if (state.selectedReason != reason) {
+      // The evidence shown and the draft depend on the reason.
+      _set(draftedMessage: null, spokenScript: null, outreachId: null);
+    }
+    _set(selectedReason: reason, error: _clearedError(), errorCause: null);
+  }
+
+  /// Step 1 "Next": advance to the evidence stage with the picked reason.
+  void confirmReason() {
+    if (state.selectedReason == null) return;
+    _set(stage: HotlineStage.compose, error: _clearedError(), errorCause: null);
+    unawaited(loadEvidence());
+  }
+
+  /// Choose AND confirm a reason in one step.
   void selectReason(OutreachReason reason) {
-    _set(
-      stage: HotlineStage.compose,
-      selectedReason: reason,
-      error: HotlineError.none,
-      errorMessage: null,
-    );
+    pickReason(reason);
+    confirmReason();
   }
 
   /// Update the teacher note on the compose stage.
   void updateNote(String note) => _set(teacherNote: note);
 
-  /// Draft the opening message (stage 3) by delegating to the existing
-  /// `parent_message` repository — the SPEC forbids re-implementing it. On
-  /// success advances to the review stage. A `401` → signed-out; anything else →
-  /// the generic failed facet (the compose stage stays put so the teacher can
-  /// retry).
+  /// Reads the student's recent absences, current absence run and recent marks.
+  /// Each read settles independently; a failure shows as "could not load".
+  /// Already-loaded evidence for the same student is kept unless [force].
+  Future<void> loadEvidence({bool force = false}) async {
+    final studentId = state.studentId;
+    final classId = state.classId;
+    if (studentId == null || classId == null || classId.isEmpty) return;
+    final current = state.evidence;
+    if (!force &&
+        current != null &&
+        current.studentId == studentId &&
+        current.absences != EvidenceStatus.failed &&
+        current.marks != EvidenceStatus.failed) {
+      return;
+    }
+    final gen = _contextGen;
+    _set(evidence: HotlineEvidence(studentId: studentId));
+
+    bool stale() =>
+        _disposed ||
+        gen != _contextGen ||
+        state.evidence?.studentId != studentId;
+
+    Future<void> absences() async {
+      try {
+        final dates = await _evidenceRepo.absenceDates(classId, studentId);
+        int? streak;
+        try {
+          streak = await _evidenceRepo.currentAbsenceStreak(classId, studentId);
+        } catch (_) {
+          streak = null; // the dates still stand without the run length
+        }
+        if (stale()) return;
+        _set(
+          evidence: state.evidence!.copyWith(
+            absences: EvidenceStatus.loaded,
+            absenceDates: dates,
+            currentAbsenceStreak: streak,
+          ),
+          consecutiveAbsentDays: (streak != null && streak > 0) ? streak : null,
+        );
+      } catch (_) {
+        if (stale()) return;
+        _set(
+          evidence: state.evidence!.copyWith(absences: EvidenceStatus.failed),
+        );
+      }
+    }
+
+    Future<void> marks() async {
+      try {
+        final recent = await _evidenceRepo.recentAssessments(
+          classId,
+          studentId,
+        );
+        if (stale()) return;
+        final next = state.evidence!.copyWith(
+          marks: EvidenceStatus.loaded,
+          recentAssessments: recent,
+        );
+        _set(evidence: next, performanceContext: next.performanceContext);
+      } catch (_) {
+        if (stale()) return;
+        _set(evidence: state.evidence!.copyWith(marks: EvidenceStatus.failed));
+      }
+    }
+
+    await Future.wait([absences(), marks()]);
+  }
+
+  /// Draft the opening message (step 2 → 3) through the `parent_message`
+  /// repository. On success advances to review.
   Future<void> draftMessage({
     int? consecutiveAbsentDays,
     Map<String, dynamic>? performanceContext,
   }) async {
+    if (state.isBusy) return;
     final reason = state.selectedReason;
-    if (reason == null) return; // guarded by the reason stage in practice
+    if (reason == null) return;
 
+    final gen = _flowGen;
+    final absentDays = consecutiveAbsentDays ?? state.consecutiveAbsentDays;
+    final perf = performanceContext ?? state.performanceContext;
     _set(
       isBusy: true,
-      error: HotlineError.none,
+      error: _clearedError(),
       errorMessage: null,
-      consecutiveAbsentDays:
-          consecutiveAbsentDays ?? state.consecutiveAbsentDays,
-      performanceContext: performanceContext ?? state.performanceContext,
+      errorCause: null,
+      consecutiveAbsentDays: absentDays,
+      performanceContext: perf,
     );
 
+    final note = state.teacherNote.trim();
     final request = ParentMessageRequest(
       studentName: state.studentName ?? '',
       className: state.className ?? '',
-      subject: (state.subject?.trim().isNotEmpty ?? false)
-          ? state.subject!.trim()
-          : (state.className ?? ''),
+      subject: state.subject ?? kFallbackSubject,
       reason: _toMessageReason(reason),
       parentLanguage: state.parentLanguage,
-      teacherNote: state.teacherNote.trim().isEmpty
-          ? null
-          : state.teacherNote.trim(),
-      consecutiveAbsentDays:
-          consecutiveAbsentDays ?? state.consecutiveAbsentDays,
+      teacherNote: note.isEmpty ? null : note,
+      consecutiveAbsentDays: absentDays,
+      performanceContext: perf,
     );
 
     final ParentMessage message;
     try {
       message = await _messages.draft(request);
-    } on ApiException catch (e) {
-      if (_disposed) return;
-      _setAuthOrGeneric(e);
+    } catch (e) {
+      if (_disposed || gen != _flowGen) return;
+      _setFailure(e);
       _set(isBusy: false);
       return;
-    } catch (_) {
-      if (_disposed) return;
-      _set(isBusy: false, error: HotlineError.generic);
+    }
+    if (_disposed || gen != _flowGen) return;
+
+    if (message.isEmpty) {
+      _set(isBusy: false, error: HotlineError.generic, errorCause: null);
       return;
     }
-    if (_disposed) return;
-
     _set(
       isBusy: false,
       draftedMessage: message.message,
+      spokenScript: message.spokenScript,
+      // New words → a new outreach; an older one carries the old message.
+      outreachId: null,
+      deliveryMethod: DeliveryMethod.twilioCall,
       stage: HotlineStage.review,
     );
+    _checkCallingWindow();
   }
 
-  // ── Create + call (stage 4 → 5) ────────────────────────────────────────────
+  // ── Call ──────────────────────────────────────────────────────────────────
 
-  /// Persist the outreach then place the call, entering `calling` and starting
-  /// the poll loop. Blocked while a dedup countdown is active. Never sends the
-  /// parent phone (F9-001) — the DTO omits it and `placeCall` carries only
-  /// `{ outreachId, parentLanguage }`.
+  /// Review's "Call parent". Re-dials the outreach that already exists for
+  /// this draft (a failed placement, or a WhatsApp copy) — creating a second
+  /// one inside five minutes would be refused by the server's dedup. Creates
+  /// one otherwise.
+  Future<void> callParent() async {
+    if (state.isBusy) return;
+    final existing = state.outreachId;
+    if (existing != null && existing.isNotEmpty) {
+      if (!_checkCallingWindow()) return;
+      await _placeAndPoll(existing);
+    } else {
+      await createAndCall();
+    }
+  }
+
+  /// Persist the outreach then place the call. Blocked while busy, while a
+  /// dedup countdown is live, and outside calling hours. Never sends the
+  /// parent phone (F9-001).
   Future<void> createAndCall() async {
-    if (state.isDedupBlocked) return;
+    if (state.isBusy || state.isDedupBlocked) return;
     final drafted = state.draftedMessage;
     if (drafted == null || drafted.trim().isEmpty) return;
+    if (!_checkCallingWindow()) return;
 
-    _set(isBusy: true, error: HotlineError.none, errorMessage: null);
+    final gen = _flowGen;
+    _set(
+      isBusy: true,
+      error: HotlineError.none,
+      errorMessage: null,
+      errorCause: null,
+    );
 
     final String outreachId;
     try {
@@ -711,156 +950,318 @@ class ParentHotlineController extends _$ParentHotlineController {
         _buildCreateDto(DeliveryMethod.twilioCall),
       );
     } on ParentHotlineException catch (e) {
-      if (_disposed) return;
+      if (_disposed || gen != _flowGen) return;
       _mapCreateError(e);
       _set(isBusy: false);
       return;
-    } on ApiException catch (e) {
-      if (_disposed) return;
-      _setAuthOrGeneric(e);
+    } catch (e) {
+      if (_disposed || gen != _flowGen) return;
+      _setFailure(e);
       _set(isBusy: false);
       return;
-    } catch (_) {
-      if (_disposed) return;
-      _set(isBusy: false, error: HotlineError.generic);
-      return;
     }
-    if (_disposed) return;
+    if (_disposed || gen != _flowGen) return;
 
+    _remember(outreachId, callPlaced: false);
     _set(outreachId: outreachId, deliveryMethod: DeliveryMethod.twilioCall);
-    await _placeAndPoll(outreachId);
+    await _placeAndPoll(outreachId, gen: gen);
   }
 
-  /// Places the call for an already-created [outreachId] and, on success, enters
-  /// `calling` + starts polling. Factored out so [retryCall] can re-dial the
-  /// same outreach without minting a new one (which would trip the dedup).
-  Future<void> _placeAndPoll(String outreachId) async {
-    _set(isBusy: true, error: HotlineError.none, errorMessage: null);
+  /// Places the call for an existing [outreachId] and, on success, enters
+  /// `calling` + starts polling. On failure the flow returns to review when a
+  /// draft exists, else stays where it is with the error showing.
+  Future<void> _placeAndPoll(String outreachId, {int? gen}) async {
+    final flow = gen ?? _flowGen;
+    _set(
+      isBusy: true,
+      error: HotlineError.none,
+      errorMessage: null,
+      errorCause: null,
+    );
+    final failStage = state.hasDraft ? HotlineStage.review : state.stage;
     try {
       await _repo.placeCall(
         outreachId: outreachId,
         parentLanguage: state.parentLanguage,
       );
-    } on UnsupportedCallLanguageException catch (e) {
-      if (_disposed) return;
-      _runtimeUncallable.add(e.language.trim().toLowerCase());
-      _set(
-        isBusy: false,
-        canAutoCall: false,
-        stage: HotlineStage.review,
-        error: HotlineError.unsupportedLanguage,
-        errorMessage: e.message,
-      );
-      return;
     } on ParentHotlineException catch (e) {
-      if (_disposed) return;
+      if (_disposed || flow != _flowGen) return;
       _mapPlaceCallError(e);
-      _set(isBusy: false, stage: HotlineStage.review);
+      _set(isBusy: false, stage: failStage);
       return;
-    } on ApiException catch (e) {
-      if (_disposed) return;
-      _setAuthOrGeneric(e);
-      _set(isBusy: false, stage: HotlineStage.review);
-      return;
-    } catch (_) {
-      if (_disposed) return;
-      _set(
-        isBusy: false,
-        stage: HotlineStage.review,
-        error: HotlineError.generic,
-      );
+    } catch (e) {
+      if (_disposed || flow != _flowGen) return;
+      _setFailure(e);
+      _set(isBusy: false, stage: failStage);
       return;
     }
-    if (_disposed) return;
+    if (_disposed || flow != _flowGen) return;
 
+    final memo = _memos[outreachId];
+    if (memo != null) _memos[outreachId] = memo.placed();
     _set(
       isBusy: false,
       stage: HotlineStage.calling,
+      outreachId: outreachId,
+      deliveryMethod: DeliveryMethod.twilioCall,
       callResult: const CallResult(callStatus: CallStatus.initiated),
+      callStartedAt: _now(),
+      pollOutcome: HotlinePollOutcome.none,
+      pollTrouble: false,
       error: HotlineError.none,
       errorMessage: null,
+      errorCause: null,
     );
     _beginPolling(outreachId);
   }
 
-  /// Retry after a failed / no-answer / busy call, or a failed placement. Re-
-  /// dials the EXISTING outreach when one exists (avoiding the create-side
-  /// dedup); otherwise runs the full create+call.
+  /// "Try again" after a failed / no-answer / busy call or a failed
+  /// placement: re-dials the EXISTING outreach (no new record, no dedup).
   Future<void> retryCall() async {
+    if (state.isBusy) return;
     final existing = state.outreachId;
     if (existing != null && existing.isNotEmpty) {
+      if (!_checkCallingWindow()) return;
       await _placeAndPoll(existing);
     } else {
       await createAndCall();
     }
   }
 
-  /// "Call again later" from the summary stage — a genuinely NEW outreach,
-  /// subject to the 5-min dedup. Blocked (no-op) while the countdown is live; a
-  /// fresh `429` re-arms it.
+  /// "Call again later" from a finished call — a genuinely NEW outreach with
+  /// the same draft, subject to the 5-min dedup. With no draft in hand (a
+  /// resumed call), it starts a new message instead of landing on a review
+  /// stage with nothing to send.
   Future<void> callAgain() async {
-    if (state.isDedupBlocked) return;
+    if (state.isBusy || state.isDedupBlocked) return;
+    if (!state.hasDraft) {
+      startNewMessage();
+      return;
+    }
+    _stopPolling();
     _set(
       outreachId: null,
       callResult: null,
+      callStartedAt: null,
+      pollOutcome: HotlinePollOutcome.none,
       stage: HotlineStage.review,
       error: HotlineError.none,
       errorMessage: null,
+      errorCause: null,
     );
     await createAndCall();
   }
 
-  /// WhatsApp-copy fallback (SPEC §A.2): persist the outreach with
-  /// `deliveryMethod: whatsapp_copy` and land on the manual terminal. **No call
-  /// is ever placed.**
+  /// Opens one known call by its [outreachId] — what tapping a call row in
+  /// Updates does. Reads its current status once: a call still running goes
+  /// to the calling stage and polls; anything else lands on its summary or
+  /// honest terminal panel. A failed read is "we couldn't check this call",
+  /// with Check again — never an invented ending.
+  Future<void> openOutreach({
+    required String outreachId,
+    required String studentName,
+  }) async {
+    _runtimeUncallable.clear();
+    _resetForStudent();
+    _set(
+      stage: HotlineStage.calling,
+      studentId: null,
+      studentName: studentName,
+      classId: null,
+      className: null,
+      parentLanguage: '',
+      subject: null,
+      suggestedReason: null,
+      selectedReason: null,
+      canAutoCall: false,
+      launchedWithStudent: true,
+      outreachId: outreachId,
+    );
+    final gen = ++_contextGen;
+    CallResult result;
+    try {
+      result = await _repo.pollSummary(outreachId);
+    } on ApiException catch (e) {
+      if (_disposed || gen != _contextGen) return;
+      if (e.isAuth) {
+        _set(error: HotlineError.signedOut, errorMessage: e.message);
+        return;
+      }
+      _set(
+        stage: HotlineStage.summary,
+        pollOutcome: HotlinePollOutcome.checkFailed,
+      );
+      return;
+    } catch (_) {
+      if (_disposed || gen != _contextGen) return;
+      _set(
+        stage: HotlineStage.summary,
+        pollOutcome: HotlinePollOutcome.checkFailed,
+      );
+      return;
+    }
+    if (_disposed || gen != _contextGen) return;
+    if (result.callSummary == null &&
+        result.callStatus == CallStatus.initiated) {
+      _set(callResult: result, callStartedAt: null);
+      _beginPolling(outreachId);
+      return;
+    }
+    _set(
+      stage: HotlineStage.summary,
+      callResult: result,
+      deliveryMethod: result.callStatus == CallStatus.manual
+          ? DeliveryMethod.whatsappCopy
+          : DeliveryMethod.twilioCall,
+      pollOutcome: HotlinePollOutcome.none,
+    );
+  }
+
+  /// Start over for the same student: back to step 1 with no draft and no
+  /// outreach. The way out of every terminal panel.
+  void startNewMessage() {
+    if (state.isBusy) return;
+    _stopPolling();
+    _flowGen++;
+    final hasStudent = state.studentId?.isNotEmpty ?? false;
+    _set(
+      // A call opened from Updates (by its id) has no student to start over
+      // for: choose one.
+      stage: hasStudent ? HotlineStage.reason : HotlineStage.pickStudent,
+      selectedReason: state.suggestedReason,
+      teacherNote: '',
+      draftedMessage: null,
+      spokenScript: null,
+      outreachId: null,
+      deliveryMethod: DeliveryMethod.twilioCall,
+      callResult: null,
+      callStartedAt: null,
+      pollOutcome: HotlinePollOutcome.none,
+      pollTrouble: false,
+      error: _clearedError(),
+      errorMessage: null,
+      errorCause: null,
+    );
+  }
+
+  /// WhatsApp-copy fallback (SPEC §A.2): record the outreach once with
+  /// `deliveryMethod: whatsapp_copy` and land on the manual panel. If an
+  /// outreach already exists for this draft it is reused, never duplicated —
+  /// a second record would block "Call parent" through the dedup. No call is
+  /// ever placed.
   Future<void> copyForWhatsApp() async {
-    // NOT dedup-gated: WhatsApp copy is the universal fallback and must stay
-    // available even inside the call cool-down (SPEC §B.5.2 "always available").
+    if (state.isBusy) return;
     final drafted = state.draftedMessage;
     if (drafted == null || drafted.trim().isEmpty) return;
 
-    _set(isBusy: true, error: HotlineError.none, errorMessage: null);
+    void landManual(String outreachId) => _set(
+      isBusy: false,
+      outreachId: outreachId,
+      deliveryMethod: DeliveryMethod.whatsappCopy,
+      callResult: const CallResult(callStatus: CallStatus.manual),
+      pollOutcome: HotlinePollOutcome.none,
+      stage: HotlineStage.summary,
+      error: HotlineError.none,
+      errorMessage: null,
+      errorCause: null,
+    );
+
+    final existing = state.outreachId;
+    if (existing != null && existing.isNotEmpty) {
+      landManual(existing);
+      return;
+    }
+
+    final gen = _flowGen;
+    _set(
+      isBusy: true,
+      error: HotlineError.none,
+      errorMessage: null,
+      errorCause: null,
+    );
     final String outreachId;
     try {
       outreachId = await _repo.createOutreach(
         _buildCreateDto(DeliveryMethod.whatsappCopy),
       );
     } on ParentHotlineException catch (e) {
-      if (_disposed) return;
+      if (_disposed || gen != _flowGen) return;
       _mapCreateError(e);
       _set(isBusy: false);
       return;
-    } on ApiException catch (e) {
-      if (_disposed) return;
-      _setAuthOrGeneric(e);
+    } catch (e) {
+      if (_disposed || gen != _flowGen) return;
+      _setFailure(e);
       _set(isBusy: false);
       return;
-    } catch (_) {
-      if (_disposed) return;
-      _set(isBusy: false, error: HotlineError.generic);
-      return;
     }
-    if (_disposed) return;
-
-    _set(
-      isBusy: false,
-      outreachId: outreachId,
-      deliveryMethod: DeliveryMethod.whatsappCopy,
-      callResult: const CallResult(callStatus: CallStatus.manual),
-      stage: HotlineStage.summary,
-      error: HotlineError.none,
-      errorMessage: null,
-    );
+    if (_disposed || gen != _flowGen) return;
+    _remember(outreachId, callPlaced: false);
+    landManual(outreachId);
   }
 
-  /// The screen navigated away from `calling` (backgrounded / popped) — stop
-  /// polling ONLY. The server-side call keeps running; re-opening the screen
-  /// resumes it via [init] → `latestForStudent` (SPEC §B.5.5). State is left
-  /// intact so a re-bind has everything it needs.
+  /// "Check again" on the still-in-progress / could-not-check panels: re-poll
+  /// the same outreach.
+  void recheckCall() {
+    if (state.isBusy) return;
+    final id = state.outreachId;
+    if (id == null || id.isEmpty) return;
+    _set(
+      stage: HotlineStage.calling,
+      pollOutcome: HotlinePollOutcome.none,
+      pollTrouble: false,
+      error: _clearedError(),
+    );
+    _beginPolling(id);
+  }
+
+  /// System / header back: steps ONE stage back (review → compose → reason →
+  /// picker). Returns false when the screen should pop instead (the picker,
+  /// the calling stage — the call continues — and the summary). A draft in
+  /// flight is abandoned; a call being placed is not, so back waits on it.
+  bool stepBack() {
+    switch (state.stage) {
+      case HotlineStage.review:
+        if (state.isBusy) return true; // a create/call is in flight
+        _flowGen++;
+        _set(
+          stage: HotlineStage.compose,
+          error: _clearedError(),
+          errorCause: null,
+        );
+        return true;
+      case HotlineStage.compose:
+        _flowGen++;
+        _set(
+          stage: HotlineStage.reason,
+          isBusy: false,
+          error: _clearedError(),
+          errorCause: null,
+        );
+        return true;
+      case HotlineStage.reason:
+        if (state.launchedWithStudent) return false;
+        _flowGen++;
+        _contextGen++; // orphan the resume lookup for the student left behind
+        _set(
+          stage: HotlineStage.pickStudent,
+          error: _clearedError(),
+          errorCause: null,
+        );
+        return true;
+      case HotlineStage.pickStudent:
+      case HotlineStage.calling:
+      case HotlineStage.summary:
+        return false;
+    }
+  }
+
+  /// The screen left `calling` (popped / disposed) — stop polling ONLY. The
+  /// server-side call keeps running; re-opening resumes it (SPEC §B.5.5).
   void leaveCalling() {
     _pollTimer?.cancel();
     _pollTimer = null;
-    _pollGen++; // orphan any in-flight poll continuation
+    _pollGen++;
     _pollOutreachId = null;
   }
 
@@ -872,6 +1273,8 @@ class ParentHotlineController extends _$ParentHotlineController {
     _pollOutreachId = outreachId;
     _pollCount = 0;
     _summaryWaitCount = 0;
+    _pollFailures = 0;
+    _lastPolledStatus = state.callResult?.callStatus;
     _schedulePoll(kFirstPollDelay, gen);
   }
 
@@ -895,42 +1298,45 @@ class ParentHotlineController extends _$ParentHotlineController {
         _set(error: HotlineError.signedOut, errorMessage: e.message);
         return;
       }
-      // Transient — keep the waiting state and advance the cadence (counted
-      // toward the ceiling so a persistent failure still exhausts gracefully).
       result = null;
     } catch (_) {
       if (_disposed || gen != _pollGen) return;
       result = null;
     }
-    // Post-await guard (load-bearing — see the "poll in flight" dispose test):
-    // a dispose or a fresher poll generation abandons this continuation before
-    // it can touch state or schedule another poll.
     if (_disposed || gen != _pollGen) return;
 
-    if (result != null) {
-      _set(callResult: result);
+    if (result == null) {
+      // A failed check says nothing about the call. Count it; past the limit
+      // say so honestly — never "the call ended".
+      _pollFailures++;
+      if (_pollFailures >= kMaxPollFailures) {
+        _stopPolling();
+        _set(
+          stage: HotlineStage.summary,
+          pollOutcome: HotlinePollOutcome.checkFailed,
+          pollTrouble: false,
+        );
+        return;
+      }
+      if (_pollFailures >= kPollTroubleAfter) _set(pollTrouble: true);
+    } else {
+      _pollFailures = 0;
+      _lastPolledStatus = result.callStatus;
+      _set(callResult: result, pollTrouble: false);
       if (result.callSummary != null) {
         _stopPolling();
         _set(stage: HotlineStage.summary, error: HotlineError.none);
         return;
       }
-      // A terminal FAILURE (failed / no_answer / busy) can never produce a
-      // summary — the call never connected — so flip to the `summary` stage's
-      // honest `callFailed` outcome the INSTANT it lands, rather than sitting on
-      // the calling stage for the ~24s summary-wait window while it falsely reads
-      // "Conversation in progress". This mirrors the web modal, which leaves the
-      // calling view on any terminal status. A `completed` call (a real
-      // conversation whose AI summary may still be settling) is NOT a failure and
-      // keeps the short summary-wait below.
-      if (result.callStatus.isTerminalFailure) {
+      // A terminal FAILURE can never produce a summary — leave at once.
+      if (result.callStatus.isTerminalFailure ||
+          result.callStatus == CallStatus.manual) {
         _stopPolling();
         _set(stage: HotlineStage.summary);
         return;
       }
     }
 
-    // Terminal-without-summary tightens to the 3s summary-wait cadence; once in
-    // that phase we stay in it.
     final inSummaryWait =
         _summaryWaitCount > 0 || (result != null && result.isTerminal);
     if (inSummaryWait) {
@@ -944,8 +1350,15 @@ class ParentHotlineController extends _$ParentHotlineController {
     } else {
       _pollCount++;
       if (_pollCount >= kMaxPolls) {
+        final last = _lastPolledStatus;
         _stopPolling();
-        _set(stage: HotlineStage.summary);
+        _set(
+          stage: HotlineStage.summary,
+          pollOutcome: last == CallStatus.initiated
+              ? HotlinePollOutcome.stillInProgress
+              : HotlinePollOutcome.checkFailed,
+          pollTrouble: false,
+        );
         return;
       }
       _schedulePoll(kPollInterval, gen);
@@ -955,10 +1368,11 @@ class ParentHotlineController extends _$ParentHotlineController {
   void _stopPolling() {
     _pollTimer?.cancel();
     _pollTimer = null;
-    _pollGen++; // invalidate any scheduled / in-flight poll continuation
+    _pollGen++;
     _pollOutreachId = null;
     _pollCount = 0;
     _summaryWaitCount = 0;
+    _pollFailures = 0;
   }
 
   // ── Dedup countdown ────────────────────────────────────────────────────────
@@ -983,13 +1397,41 @@ class ParentHotlineController extends _$ParentHotlineController {
     });
   }
 
-  /// Cancel the dedup cool-down and clear its countdown. Called on any student-
-  /// context change so a dedup armed for one student never blocks another (the
-  /// dedup is server-scoped per (teacher, student), not global).
   void _clearDedup() {
     _dedupTimer?.cancel();
     _dedupTimer = null;
     _set(dedupRetryAfterSeconds: null);
+  }
+
+  // ── Calling hours ──────────────────────────────────────────────────────────
+
+  /// True when a call may be placed now. Otherwise raises the calling-hours
+  /// facet until the window opens and returns false.
+  bool _checkCallingWindow() {
+    final now = _now();
+    final next = CallingWindow.nextOpening(now);
+    if (next == null) {
+      if (state.isOutsideCallingHours) {
+        _set(error: HotlineError.none, nextCallAllowedAt: null);
+      }
+      return true;
+    }
+    _blockCallingUntil(next);
+    return false;
+  }
+
+  void _blockCallingUntil(DateTime? next) {
+    _callingWindowTimer?.cancel();
+    _callingWindowTimer = null;
+    _set(error: HotlineError.outsideCallingHours, nextCallAllowedAt: next);
+    if (next == null) return;
+    final wait = next.difference(_now());
+    if (wait <= Duration.zero) return;
+    _callingWindowTimer = Timer(wait, () {
+      _callingWindowTimer = null;
+      if (_disposed || !state.isOutsideCallingHours) return;
+      _set(error: HotlineError.none, nextCallAllowedAt: null);
+    });
   }
 
   // ── Error mapping ──────────────────────────────────────────────────────────
@@ -1003,12 +1445,21 @@ class ParentHotlineController extends _$ParentHotlineController {
       case OutreachDedupException(:final retryAfterSeconds):
         _startDedupCountdown(retryAfterSeconds);
       case OutreachTargetNotFoundException():
-        _set(error: HotlineError.notFound, errorMessage: e.message);
+        _set(
+          error: HotlineError.notFound,
+          errorMessage: e.message,
+          errorCause: e.cause,
+        );
       case UnsupportedCallLanguageException():
       case CallPlacementFailedException():
       case TwilioNotConfiguredException():
+      case OutsideCallingHoursException():
         // Not emitted by the create route; treat defensively as generic.
-        _set(error: HotlineError.generic, errorMessage: e.message);
+        _set(
+          error: HotlineError.generic,
+          errorMessage: e.message,
+          errorCause: e.cause,
+        );
     }
   }
 
@@ -1027,23 +1478,67 @@ class ParentHotlineController extends _$ParentHotlineController {
         _set(error: HotlineError.callFailed, errorMessage: e.message);
       case TwilioNotConfiguredException():
         _set(error: HotlineError.telephonyUnavailable, errorMessage: e.message);
+      case OutsideCallingHoursException(:final nextAllowedAt):
+        _blockCallingUntil(nextAllowedAt ?? CallingWindow.nextOpening(_now()));
+        _set(errorMessage: e.message);
       case OutreachTargetNotFoundException():
-        _set(error: HotlineError.notFound, errorMessage: e.message);
+        _set(
+          error: HotlineError.notFound,
+          errorMessage: e.message,
+          errorCause: e.cause,
+        );
       case PremiumRequiredException():
       case OutreachDedupException():
-        _set(error: HotlineError.generic, errorMessage: e.message);
+        _set(
+          error: HotlineError.generic,
+          errorMessage: e.message,
+          errorCause: e.cause,
+        );
     }
   }
 
-  void _setAuthOrGeneric(ApiException e) {
-    if (e.isAuth) {
+  /// A failure that is not a typed hotline case: 401 → signed out; anything
+  /// else → the generic facet carrying its cause for translated copy.
+  void _setFailure(Object e) {
+    if (e is ApiException && e.isAuth) {
       _set(error: HotlineError.signedOut, errorMessage: e.message);
-    } else {
-      _set(error: HotlineError.generic, errorMessage: e.message);
+      return;
     }
+    _set(
+      error: HotlineError.generic,
+      errorMessage: e is ApiException ? e.message : null,
+      errorCause: e,
+    );
+  }
+
+  /// The facet to fall back to when an intent clears the error: the premium
+  /// gate and the calling-hours block outlive a step.
+  HotlineError _clearedError() {
+    if (state.isPremiumGated) return HotlineError.premiumRequired;
+    if (state.isOutsideCallingHours) return HotlineError.outsideCallingHours;
+    if (state.error == HotlineError.unsupportedLanguage) {
+      return HotlineError.unsupportedLanguage;
+    }
+    return HotlineError.none;
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+
+  void _remember(String outreachId, {required bool callPlaced}) {
+    final message = state.draftedMessage;
+    if (message == null) return;
+    _memos[outreachId] = _OutreachMemo(
+      message: message,
+      spokenScript: state.spokenScript,
+      reason: state.selectedReason,
+      callPlaced: callPlaced,
+    );
+  }
+
+  static String? _cleanSubject(String? subject) {
+    final s = subject?.trim();
+    return (s == null || s.isEmpty) ? null : s;
+  }
 
   bool _deriveCallable(String language) {
     if (_runtimeUncallable.contains(language.trim().toLowerCase())) {
@@ -1053,6 +1548,7 @@ class ParentHotlineController extends _$ParentHotlineController {
   }
 
   CreateOutreachRequestDto _buildCreateDto(DeliveryMethod delivery) {
+    final note = state.teacherNote.trim();
     return CreateOutreachRequestDto.build(
       classId: state.classId ?? '',
       className: state.className ?? '',
@@ -1062,14 +1558,13 @@ class ParentHotlineController extends _$ParentHotlineController {
       reason: state.selectedReason ?? OutreachReason.consecutiveAbsences,
       generatedMessage: state.draftedMessage ?? '',
       deliveryMethod: delivery,
-      teacherNote: state.teacherNote.trim().isEmpty ? null : state.teacherNote,
+      teacherNote: note.isEmpty ? null : note,
+      spokenScript: state.spokenScript,
       subject: state.subject,
       performanceContext: state.performanceContext,
     );
   }
 
-  /// The reason enums are wire-identical; map by the shared wire token so the
-  /// `parent_message` request carries the same reason the outreach will.
   ParentMessageReason _toMessageReason(OutreachReason reason) {
     for (final r in ParentMessageReason.values) {
       if (r.wire == reason.wire) return r;
@@ -1090,15 +1585,23 @@ class ParentHotlineController extends _$ParentHotlineController {
     String? teacherNote,
     Object? consecutiveAbsentDays = _unset,
     Object? performanceContext = _unset,
+    Object? evidence = _unset,
     Object? draftedMessage = _unset,
+    Object? spokenScript = _unset,
     bool? canAutoCall,
     Object? outreachId = _unset,
     DeliveryMethod? deliveryMethod,
     Object? callResult = _unset,
+    Object? callStartedAt = _unset,
+    HotlinePollOutcome? pollOutcome,
+    bool? pollTrouble,
     Object? dedupRetryAfterSeconds = _unset,
+    Object? nextCallAllowedAt = _unset,
     HotlineError? error,
     Object? errorMessage = _unset,
+    Object? errorCause = _unset,
     bool? isBusy,
+    bool? launchedWithStudent,
   }) {
     if (_disposed) return; // never emit after dispose
     state = state.copyWith(
@@ -1114,15 +1617,23 @@ class ParentHotlineController extends _$ParentHotlineController {
       teacherNote: teacherNote,
       consecutiveAbsentDays: consecutiveAbsentDays,
       performanceContext: performanceContext,
+      evidence: evidence,
       draftedMessage: draftedMessage,
+      spokenScript: spokenScript,
       canAutoCall: canAutoCall,
       outreachId: outreachId,
       deliveryMethod: deliveryMethod,
       callResult: callResult,
+      callStartedAt: callStartedAt,
+      pollOutcome: pollOutcome,
+      pollTrouble: pollTrouble,
       dedupRetryAfterSeconds: dedupRetryAfterSeconds,
+      nextCallAllowedAt: nextCallAllowedAt,
       error: error,
       errorMessage: errorMessage,
+      errorCause: errorCause,
       isBusy: isBusy,
+      launchedWithStudent: launchedWithStudent,
     );
   }
 }

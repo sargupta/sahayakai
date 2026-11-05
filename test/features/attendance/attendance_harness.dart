@@ -14,6 +14,7 @@ import 'package:sahayakai/features/attendance/presentation/attendance_month_scre
 import 'package:sahayakai/features/attendance/presentation/attendance_roster_screen.dart';
 import 'package:sahayakai/features/attendance/presentation/class_form_screen.dart';
 import 'package:sahayakai/features/attendance/presentation/mark_attendance_screen.dart';
+import 'package:sahayakai/features/parent_hotline/domain/hotline_launch.dart';
 
 import '../../support/fake_api_client.dart';
 
@@ -209,6 +210,17 @@ Future<void> pumpRouted(
           classId: state.pathParameters['classId']!,
           attendanceClass: _classOf(state),
         ),
+      ),
+      GoRoute(
+        // A stand-in for the Parent Hotline that prints what it was handed.
+        path: Routes.parentHotline,
+        builder: (_, state) {
+          final launch = HotlineLaunch.fromExtra(state.extra);
+          final absent = launch.absentStudentIds.toList()..sort();
+          return Text(
+            'hotline:${launch.classId}:${launch.className}:${absent.join(',')}',
+          );
+        },
       ),
       GoRoute(
         path: Routes.attendanceMonthPattern,

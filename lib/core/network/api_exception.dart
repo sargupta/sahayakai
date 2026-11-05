@@ -25,6 +25,7 @@ class ApiException implements Exception {
     this.message, {
     this.statusCode,
     this.errorCode,
+    this.code,
     this.retryAfterSeconds,
     this.raw,
   });
@@ -40,7 +41,24 @@ class ApiException implements Exception {
   /// exam-paper screen needs 422 `exam_paper_unstructured` to read as
   /// "try fewer chapters", not a generic failure. Null when the body carried
   /// no `error` string (network/timeout/parse failures).
+  ///
+  /// When the body carries no `error` string but does carry a `code`, this
+  /// falls back to that `code`, so a caller branching on [errorCode] still sees
+  /// the body's only machine token.
   final String? errorCode;
+
+  /// The body's separate machine `code` field, when the route sends one beside
+  /// its `error` line — e.g. `POST /api/attendance/call` answers a quiet-hours
+  /// refusal with `{ error: '<human sentence>', code: 'OUTSIDE_CALLING_HOURS' }`
+  /// and its provider failures with `{ error, code: 'PROVIDER_REJECTED' }`.
+  /// Kept apart from [errorCode] rather than replacing it: some routes put the
+  /// branchable token in `error` and a different one in `code` (exam-paper's
+  /// 422 is `{ error: 'exam_paper_unstructured', code: 'SCHEMA_VALIDATION_FAILED' }`),
+  /// so preferring one field for every route would break the other.
+  final String? code;
+
+  /// Whether either machine field ([code] or [errorCode]) equals [token].
+  bool hasCode(String token) => code == token || errorCode == token;
 
   /// The retry cool-down, in seconds, parsed from a rate-limited (429)
   /// response. The attendance-outreach route returns a structured
@@ -73,24 +91,27 @@ class ApiException implements Exception {
       case DioExceptionType.badResponse:
         final code = e.response?.statusCode ?? 0;
         final serverMsg = _extractMessage(e.response?.data);
-        final errorCode = _extractErrorCode(e.response?.data);
+        final bodyCode = _extractCode(e.response?.data);
+        final errorCode = _extractErrorCode(e.response?.data) ?? bodyCode;
         return switch (code) {
           401 => ApiException(ApiErrorKind.unauthorized, 'Please sign in again.',
-              statusCode: 401, errorCode: errorCode, raw: e),
+              statusCode: 401, errorCode: errorCode, code: bodyCode, raw: e),
           403 => ApiException(
               ApiErrorKind.forbidden,
               serverMsg ?? 'You do not have access to this.',
               statusCode: 403,
               errorCode: errorCode,
+              code: bodyCode,
               raw: e,
             ),
           404 => ApiException(ApiErrorKind.notFound, 'Not found.',
-              statusCode: 404, errorCode: errorCode, raw: e),
+              statusCode: 404, errorCode: errorCode, code: bodyCode, raw: e),
           429 => ApiException(
               ApiErrorKind.rateLimited,
               serverMsg ?? 'You have reached your usage limit.',
               statusCode: 429,
               errorCode: errorCode,
+              code: bodyCode,
               retryAfterSeconds: _extractRetryAfter(e.response),
               raw: e,
             ),
@@ -99,6 +120,7 @@ class ApiException implements Exception {
               'Something went wrong on our side.',
               statusCode: code,
               errorCode: errorCode,
+              code: bodyCode,
               raw: e,
             ),
           _ => ApiException(
@@ -106,6 +128,7 @@ class ApiException implements Exception {
               serverMsg ?? 'Unexpected response.',
               statusCode: code,
               errorCode: errorCode,
+              code: bodyCode,
               raw: e,
             ),
         };
@@ -131,6 +154,13 @@ class ApiException implements Exception {
   static String? _extractErrorCode(dynamic data) {
     final json = _asJsonMap(data);
     if (json != null && json['error'] is String) return json['error'] as String;
+    return null;
+  }
+
+  /// The body's `code` field, when it is a string. Null otherwise.
+  static String? _extractCode(dynamic data) {
+    final json = _asJsonMap(data);
+    if (json != null && json['code'] is String) return json['code'] as String;
     return null;
   }
 

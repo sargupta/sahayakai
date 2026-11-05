@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
+import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/features/attendance/presentation/mark_attendance_screen.dart';
 import 'package:sahayakai/features/attendance/presentation/widgets/attendance_premium_card.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
@@ -270,5 +271,57 @@ void main() {
       find.widgetWithText(PrimaryButton, l10n.attendanceSaveRegister),
       findsNothing,
     );
+  });
+
+  group('Call parents hand-off (absent students first in the hotline)', () {
+    Map<String, Object?> savedAbsent() => classBody(
+      record: <String, dynamic>{
+        'classId': 'c1',
+        'date': '2026-08-19',
+        'records': <String, dynamic>{'s1': 'absent', 's2': 'present'},
+      },
+    );
+
+    testWidgets('hidden when the saved register has no absences', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        screen(),
+        client: FakeApiClient(getResponsesByPath: classBody()),
+      );
+      expect(find.byKey(const Key('attendanceCallParents')), findsNothing);
+    });
+
+    testWidgets('counts the SAVED absences and hands them to the hotline', (
+      tester,
+    ) async {
+      await pumpRouted(
+        tester,
+        client: FakeApiClient(getResponsesByPath: savedAbsent()),
+        initialLocation: Routes.attendanceMarkPath('c1'),
+      );
+      final l10n = strings(tester, MarkAttendanceScreen);
+      expect(find.text(l10n.attendanceCallParents(1)), findsOneWidget);
+
+      await tapVisible(tester, find.byKey(const Key('attendanceCallParents')));
+      expect(find.text('hotline:c1:null:s1'), findsOneWidget);
+    });
+
+    testWidgets('an UNSAVED change hides it — only posted absences are named', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        screen(),
+        client: FakeApiClient(getResponsesByPath: savedAbsent()),
+      );
+      final l10n = strings(tester, MarkAttendanceScreen);
+      expect(find.text(l10n.attendanceCallParents(1)), findsOneWidget);
+
+      // Mark the second student absent too, without saving.
+      await tapVisible(tester, find.text(l10n.attendanceStatusAbsent).last);
+      expect(find.byKey(const Key('attendanceCallParents')), findsNothing);
+    });
   });
 }

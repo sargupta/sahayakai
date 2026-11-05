@@ -11,9 +11,10 @@ part 'parent_message_dtos.g.dart';
 ///
 /// The five required keys (`studentName`, `className`, `subject`, `reason`,
 /// `parentLanguage`) are always present — the form validated them — so this
-/// body can never trip the route's 400 `Missing required fields`. `userId`,
-/// `performanceContext` and `performanceSummary` are server-injected and are
-/// never sent. Pinned against `ParentMessageInputSchema` in `sahayakai-main`.
+/// body can never trip the route's 400 `Missing required fields`. `userId` and
+/// `performanceSummary` are server-derived and are never sent;
+/// `performanceContext` is sent only when the caller holds real assessment
+/// records. Pinned against `ParentMessageInputSchema` in `sahayakai-main`.
 @JsonSerializable(includeIfNull: false, createFactory: false)
 class ParentMessageRequestDto {
   const ParentMessageRequestDto({
@@ -27,6 +28,7 @@ class ParentMessageRequestDto {
     this.consecutiveAbsentDays,
     this.teacherName,
     this.schoolName,
+    this.performanceContext,
   });
 
   factory ParentMessageRequestDto.fromDomain(ParentMessageRequest request) {
@@ -46,6 +48,10 @@ class ParentMessageRequestDto {
       consecutiveAbsentDays: absentDays,
       teacherName: _clean(request.teacherName),
       schoolName: _clean(request.schoolName),
+      performanceContext:
+          (request.performanceContext?.isNotEmpty ?? false)
+          ? request.performanceContext
+          : null,
     );
   }
 
@@ -59,17 +65,19 @@ class ParentMessageRequestDto {
   final int? consecutiveAbsentDays;
   final String? teacherName;
   final String? schoolName;
+  final Map<String, dynamic>? performanceContext;
 
   Map<String, dynamic> toJson() => _$ParentMessageRequestDtoToJson(this);
 }
 
-/// The `/api/ai/parent-message` 200 payload: `{ message, languageCode,
-/// wordCount }`. Every field is decoded defensively because the message body is
+/// The `/api/ai/parent-message` 200 payload: `{ message, spokenScript,
+/// languageCode, wordCount }`. Every field is decoded defensively because the message body is
 /// model-generated, so [toDomain] normalizes into the render model.
 @JsonSerializable(createToJson: false)
 class ParentMessageResponseDto {
   const ParentMessageResponseDto({
     this.message,
+    this.spokenScript,
     this.languageCode,
     this.wordCount,
   });
@@ -78,6 +86,9 @@ class ParentMessageResponseDto {
       _$ParentMessageResponseDtoFromJson(json);
 
   final String? message;
+
+  /// The phone-call rendition the voice call should speak.
+  final String? spokenScript;
   final String? languageCode;
 
   /// The backend types this as a `number`; a tolerant `num` read copes with a
@@ -87,6 +98,7 @@ class ParentMessageResponseDto {
   ParentMessage toDomain() {
     return ParentMessage(
       message: message?.trim() ?? '',
+      spokenScript: _clean(spokenScript),
       languageCode: _clean(languageCode),
       wordCount: wordCount?.toInt(),
     );

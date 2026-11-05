@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/icon_well.dart';
-import '../../../../shared/widgets/press_scale.dart';
+import '../../../../shared/widgets/map_icon_tile.dart';
 
-/// A selectable reason tile for the Parent Hotline `reason` stage (SPEC §B.1
-/// stage 2). NOT a radio: it is an `AppCard`-grammar tile that toggles into the
-/// selected state — `primaryContainer` fill + a 1.5px `primary` border (the Chip
-/// selected grammar, THEME_SPEC §5) — with a check glyph so selection reads
-/// without relying on colour alone (WCAG 1.4.1).
+/// One reason on step 1 of the Parent Hotline (the UX map's reason `.opt`
+/// row): an icon tile, the reason and a one-line description, and a check.
 ///
-/// Composition per the reused-widget map (§B.4): an [IconWell] glyph, a
-/// `titleMedium` label, and a muted `bodyMedium` description, pressed by
-/// [PressableScale]. The whole tile is the target, well past 48dp.
+/// Tapping SELECTS — it does not advance. The step's Next button confirms, so a
+/// mis-tap costs nothing and the teacher can read all four before choosing.
+///
+/// Selected, the row takes the map's saffron option tint and a stronger ring;
+/// the state is also carried by the glyph (an empty circle becomes a check),
+/// so it reads in greyscale (WCAG 1.4.1) and is announced as `selected`.
 class ReasonCard extends StatelessWidget {
   const ReasonCard({
     super.key,
@@ -32,67 +31,59 @@ class ReasonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-
-    final fill = selected ? scheme.primaryContainer : scheme.surface;
-    final border = selected
-        ? Border.all(color: scheme.primary, width: 1.5)
-        : Border.all(color: scheme.outline, width: 1);
-
-    final content = AnimatedContainer(
-      duration: reduce ? Duration.zero : AppMotion.micro,
-      curve: AppMotion.easeOutQuart,
-      decoration: BoxDecoration(
-        color: fill,
-        borderRadius: AppRadius.rCard,
-        border: border,
-        boxShadow: AppShadows.e1,
-      ),
-      child: ClipRRect(
-        borderRadius: AppRadius.rCard,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            focusColor: scheme.primary.withValues(alpha: 0.12),
-            hoverColor: scheme.primary.withValues(alpha: 0.04),
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$label. $description',
+      excludeSemantics: true,
+      onTap: onTap,
+      child: Material(
+        color: selected ? AppColors.mapOptOn : AppColors.surfaceMapCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.rField,
+          side: selected
+              ? const BorderSide(color: AppColors.mapOptOnRing, width: 1.5)
+              : const BorderSide(color: AppColors.borderHairline),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 56),
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.space4),
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 14, 12),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconWell(icon: icon),
-                  const SizedBox(width: AppSpacing.space4),
+                  MapIconTile(icon: icon),
+                  const SizedBox(width: AppSpacing.space3),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(label, style: text.titleMedium),
+                        Text(
+                          label,
+                          style: text.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textStrong,
+                          ),
+                        ),
                         const SizedBox(height: AppSpacing.space1),
                         Text(
                           description,
-                          style: text.bodyMedium
-                              ?.copyWith(color: scheme.onSurfaceVariant),
+                          style: text.bodySmall?.copyWith(
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.space3),
-                  // A colour-independent selection cue (WCAG 1.4.1): the checked
-                  // glyph appears only when selected, so the state is legible in
-                  // greyscale, not only by the saffron fill/border. On the
-                  // selected `primaryContainer` fill it uses `onPrimaryContainer`
-                  // (saffron-800, ~7.9:1) — the Chip-label treatment — not the
-                  // low-contrast `primary` fill tone.
+                  const SizedBox(width: AppSpacing.space2),
                   Icon(
                     selected ? LucideIcons.checkCircle2 : LucideIcons.circle,
-                    size: AppIconSize.inline,
-                    color: selected
-                        ? scheme.onPrimaryContainer
-                        : scheme.onSurfaceVariant,
+                    size: 18,
+                    color: selected ? AppColors.accent : AppColors.textFaint,
                   ),
                 ],
               ),
@@ -100,13 +91,6 @@ class ReasonCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: PressableScale(pressedScale: 0.96, child: content),
     );
   }
 }

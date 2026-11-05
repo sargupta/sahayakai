@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_config.dart';
@@ -94,6 +95,40 @@ class ParentMessageErrorView extends ConsumerWidget {
       case ApiErrorKind.unknown:
         return ErrorView(message: l10n.errorGeneric, onRetry: onRetry);
     }
+  }
+}
+
+/// The one-line, translated reason a parent-message request failed — the same
+/// mapping [ParentMessageErrorView] renders, as plain text, for a caller that
+/// has its own surface (the Parent Hotline's compose and review stages). It
+/// never returns the server's own text: route errors come back in English and
+/// sometimes as machine codes (`PLAN_UPGRADE_REQUIRED`, `DAILY_LIMIT_REACHED`).
+String parentMessageErrorText(AppLocalizations l10n, Object error) {
+  if (error is! ApiException) return l10n.errorGeneric;
+  switch (error.kind) {
+    case ApiErrorKind.network:
+      return l10n.parentHotlineErrorOffline;
+    case ApiErrorKind.unauthorized:
+      return l10n.parentMessageSignIn;
+    case ApiErrorKind.forbidden:
+      return l10n.parentMessageUpgradeBody;
+    case ApiErrorKind.rateLimited:
+      return l10n.parentMessageLimitBody;
+    case ApiErrorKind.timeout:
+      return l10n.parentMessageTimeout;
+    case ApiErrorKind.server:
+      final seconds = _retryAfterSeconds(error);
+      return seconds == null
+          ? l10n.parentMessageBusy
+          : l10n.parentMessageBusyRetryAfter(seconds);
+    case ApiErrorKind.badResponse:
+      return error.statusCode == 400
+          ? l10n.parentMessageMissingFields
+          : l10n.errorGeneric;
+    case ApiErrorKind.notFound:
+    case ApiErrorKind.cancelled:
+    case ApiErrorKind.unknown:
+      return l10n.errorGeneric;
   }
 }
 

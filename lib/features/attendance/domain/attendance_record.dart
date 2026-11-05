@@ -126,6 +126,7 @@ class StudentAttendanceSummary {
     this.lateDays = 0,
     this.attendanceRate = 100,
     this.consecutiveAbsences = 0,
+    this.currentAbsenceStreak,
   });
 
   final String studentId;
@@ -142,9 +143,16 @@ class StudentAttendanceSummary {
   /// (the server's own default), so an empty month never reads as 0% attended.
   final int attendanceRate;
 
-  /// The longest run of consecutive absent days inside the month — the signal
-  /// the parent-hotline `consecutive_absences` reason is raised on.
+  /// The longest run of consecutive absent days inside the month (the
+  /// server's `longestAbsenceStreak`). History, not status: it must never be
+  /// phrased to a parent as "has been absent for N days".
   final int consecutiveAbsences;
+
+  /// The unbroken run of absences the student is CURRENTLY on, ending on the
+  /// month's most recent marked day (the server's `currentAbsenceStreak`). The
+  /// only absence figure that may be spoken to a parent in the present tense.
+  /// Null when the server did not send it.
+  final int? currentAbsenceStreak;
 
   @override
   bool operator ==(Object other) =>
@@ -157,7 +165,8 @@ class StudentAttendanceSummary {
       other.absentDays == absentDays &&
       other.lateDays == lateDays &&
       other.attendanceRate == attendanceRate &&
-      other.consecutiveAbsences == consecutiveAbsences;
+      other.consecutiveAbsences == consecutiveAbsences &&
+      other.currentAbsenceStreak == currentAbsenceStreak;
 
   @override
   int get hashCode => Object.hash(
@@ -170,5 +179,6 @@ class StudentAttendanceSummary {
     lateDays,
     attendanceRate,
     consecutiveAbsences,
+    currentAbsenceStreak,
   );
 }

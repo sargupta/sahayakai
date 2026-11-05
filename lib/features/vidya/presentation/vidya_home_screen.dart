@@ -16,6 +16,8 @@ import '../../../shared/widgets/language_switcher.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import '../../notifications/data/notifications_store.dart';
+import '../../parent_hotline/presentation/hotline_copy.dart' show firstName;
+import '../../parent_hotline/presentation/parent_hotline_controller.dart';
 import '../../profile/presentation/profile_controller.dart';
 import '../domain/deliverable.dart';
 import 'deliver_tray.dart';
@@ -703,8 +705,25 @@ class _WaitingCard extends ConsumerWidget {
           orElse: () => 0,
         );
     final unreadUpdates = ref.watch(unreadNotificationCountProvider);
+    // A parent call the teacher left running (the hotline controller lives
+    // on; the call carries on server-side). Tapping returns to it.
+    final callingStudent = ref.watch(
+      parentHotlineControllerProvider.select(
+        (s) =>
+            s.stage == HotlineStage.calling &&
+                (s.outreachId?.isNotEmpty ?? false)
+            ? s.studentName?.trim()
+            : null,
+      ),
+    );
 
     final rows = <Widget>[
+      if (callingStudent != null && callingStudent.isNotEmpty)
+        _WaitingRow(
+          dot: AppColors.leaf500,
+          label: l10n.homeWaitingParentCall(firstName(callingStudent)),
+          onOpen: () => context.push(Routes.parentHotline),
+        ),
       for (final Deliverable item in ready.reversed.take(3))
         _WaitingRow(
           dot: AppColors.leaf500,

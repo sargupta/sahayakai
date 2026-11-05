@@ -18,6 +18,7 @@ Map<String, dynamic> _$CreateOutreachRequestDtoToJson(
   'generatedMessage': instance.generatedMessage,
   'deliveryMethod': instance.deliveryMethod,
   if (instance.teacherNote case final value?) 'teacherNote': value,
+  if (instance.spokenScript case final value?) 'spokenScript': value,
   if (instance.subject case final value?) 'subject': value,
   if (instance.performanceContext case final value?)
     'performanceContext': value,

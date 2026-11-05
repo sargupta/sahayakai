@@ -370,9 +370,21 @@ void main() {
       );
     });
 
-    test('a missing projection field is refused too', () {
+    test('a missing OPTIONAL projection field is tolerated (the route drops '
+        'undefined values), and reads as "no phone"', () {
       final body = maskedBody();
       body.first.remove('hasParentPhone');
+      body.first.remove('parentPhoneLast4');
+      body.first.remove('parentLanguage');
+
+      final roster = RosterStudentDto.decodeList(body);
+      expect(roster.first.hasParentPhone, isFalse);
+      expect(roster.first.parentPhoneLast4, isNull);
+    });
+
+    test('a row with no id is refused — there is no row without one', () {
+      final body = maskedBody();
+      body.first.remove('id');
 
       expect(
         () => RosterStudentDto.decodeList(body),

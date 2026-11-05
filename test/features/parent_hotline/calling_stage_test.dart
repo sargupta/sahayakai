@@ -3,28 +3,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
+import 'package:sahayakai/features/parent_hotline/domain/call_summary.dart';
 import 'package:sahayakai/features/parent_hotline/domain/parent_outreach.dart';
 import 'package:sahayakai/features/parent_hotline/presentation/widgets/calling_stage.dart';
 import 'package:sahayakai/shared/widgets/icon_well.dart';
 
-/// U-PH4 — the `calling` stage: the honest breathing waiting state (SPEC §B.1
-/// stage 5 + §B.5.4 "honest waiting"). Pins the status/turnCount → copy mapping,
-/// the exchanges-pill threshold, the reduce-motion still frame (no infinite
-/// ticker), the absence of ANY determinate progress affordance, and the §12
-/// Indic overflow floor against the REAL translated strings.
+/// U-PH4 — the `calling` stage as the UX map draws it: the "Call in progress ·
+/// m:ss" timer (only from a real placement time), the breathing glyph, the
+/// headline, "Speaking {language} · N exchanges so far", the live transcript
+/// (only turns the server returned, a speaker tag only when the server said
+/// who), the poll-trouble note, and the reassurance. Pins the absence of ANY
+/// determinate progress, the reduce-motion still frame, the single live
+/// region, and the §12 Indic overflow floor against the REAL translations.
 
-/// Mounts [CallingStage] the way the screen does — inside a padded, 640-capped
-/// scroll column — with localizations so `context.l10n` resolves. Animations are
-/// disabled so the breathe freezes at its still frame and `pumpAndSettle`
-/// returns (no infinite ticker).
+final _placedAt = DateTime(2026, 11, 4, 10);
+
+/// A clock the test moves by hand.
+class _Clock {
+  _Clock(this.now);
+  DateTime now;
+  DateTime call() => now;
+}
+
 Future<void> _pump(
   WidgetTester tester, {
-  required String parentName,
-  required CallResult? callResult,
-  Brightness brightness = Brightness.light,
+  String parentName = 'Asha Rao',
+  CallResult? callResult,
+  String? parentLanguage = 'Kannada',
+  DateTime? callStartedAt,
+  bool pollTrouble = false,
+  _Clock? clock,
   double textScale = 1.0,
   Locale locale = const Locale('en'),
-  Size surface = const Size(390, 1200),
+  Size surface = const Size(390, 1400),
 }) async {
   tester.view.physicalSize = surface;
   tester.view.devicePixelRatio = 1.0;
@@ -35,11 +46,10 @@ Future<void> _pump(
       const FakeAccessibilityFeatures(disableAnimations: true);
   addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 
+  final c = clock ?? _Clock(_placedAt);
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark
-          ? AppTheme.light()
-          : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -52,6 +62,10 @@ Future<void> _pump(
               child: CallingStage(
                 parentName: parentName,
                 callResult: callResult,
+                parentLanguage: parentLanguage,
+                callStartedAt: callStartedAt,
+                pollTrouble: pollTrouble,
+                now: c.call,
               ),
             ),
           ),
@@ -63,48 +77,81 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
-/// A CallResult on the calling stage (the only non-terminal status is
-/// `initiated`); [turnCount] drives the status line + the exchanges pill.
-CallResult _calling(int turnCount) =>
-    CallResult(callStatus: CallStatus.initiated, turnCount: turnCount);
+CallResult _calling(int turnCount, {List<TranscriptTurn>? transcript}) =>
+    CallResult(
+      callStatus: CallStatus.initiated,
+      turnCount: turnCount,
+      transcript: transcript ?? const [],
+    );
+
+TranscriptTurn _turn(TranscriptRole? role, String text) =>
+    TranscriptTurn(role: role, text: text, timestamp: '');
 
 void main() {
-  group('status line + headline', () {
-    testWidgets('ringing: initiated with no turns → headline + "Ringing…"', (
+  group('timer line', () {
+    testWidgets('counts from the real placement time and ticks each second', (
       tester,
     ) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(0));
+      final clock = _Clock(_placedAt.add(const Duration(seconds: 75)));
+      await _pump(
+        tester,
+        callResult: _calling(0),
+        callStartedAt: _placedAt,
+        clock: clock,
+      );
+      expect(find.text('CALL IN PROGRESS · 1:15'), findsOneWidget);
 
+      clock.now = clock.now.add(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('CALL IN PROGRESS · 1:16'), findsOneWidget);
+    });
+
+    testWidgets('a resumed call (no placement time) shows no invented timer', (
+      tester,
+    ) async {
+      await _pump(tester, callResult: _calling(0));
+      expect(find.text('CALL IN PROGRESS'), findsOneWidget);
+      expect(find.textContaining(':'), findsNothing);
+    });
+
+    testWidgets('a clock behind the placement time never shows negative', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        callResult: _calling(0),
+        callStartedAt: _placedAt,
+        clock: _Clock(_placedAt.subtract(const Duration(seconds: 5))),
+      );
+      expect(find.text('CALL IN PROGRESS · 0:00'), findsOneWidget);
+    });
+  });
+
+  group('headline + speaking line', () {
+    testWidgets('names the parent and the language in its own script', (
+      tester,
+    ) async {
+      await _pump(tester, callResult: _calling(0));
       expect(find.text("Calling Asha Rao's parent…"), findsOneWidget);
-      expect(find.text('Ringing…'), findsOneWidget);
-      expect(find.text('Conversation in progress'), findsNothing);
-      // The signature glyph is present (the composed still frame).
+      expect(find.text('Speaking ಕನ್ನಡ'), findsOneWidget);
       expect(find.byType(IconWell), findsOneWidget);
       expect(find.byIcon(LucideIcons.phoneCall), findsOneWidget);
     });
 
-    testWidgets('null result (just entered calling) reads as ringing', (
-      tester,
-    ) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: null);
-      expect(find.text('Ringing…'), findsOneWidget);
-      expect(find.text('Conversation in progress'), findsNothing);
+    testWidgets('counts the exchanges the server reported', (tester) async {
+      await _pump(tester, callResult: _calling(3));
+      expect(find.text('Speaking ಕನ್ನಡ · 3 exchanges so far'), findsOneWidget);
     });
 
-    testWidgets(
-      'in progress: initiated with turns → "Conversation in progress"',
-      (tester) async {
-        await _pump(tester, parentName: 'Asha Rao', callResult: _calling(3));
-
-        expect(find.text('Conversation in progress'), findsOneWidget);
-        expect(find.text('Ringing…'), findsNothing);
-      },
-    );
+    testWidgets('no language → no speaking line at all', (tester) async {
+      await _pump(tester, callResult: _calling(3), parentLanguage: null);
+      expect(find.textContaining('Speaking'), findsNothing);
+    });
 
     testWidgets('the reassurance backing the resume path is shown', (
       tester,
     ) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(0));
+      await _pump(tester, callResult: _calling(0));
       expect(
         find.text(
           'You can leave this screen — the summary will be waiting for you.',
@@ -114,157 +161,116 @@ void main() {
     });
   });
 
-  group('exchanges pill threshold (shown only when turnCount > 1)', () {
-    testWidgets('hidden at turnCount 0', (tester) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(0));
-      expect(find.textContaining('exchange'), findsNothing);
+  group('live transcript', () {
+    testWidgets('hidden until the server returns turns', (tester) async {
+      await _pump(tester, callResult: _calling(0));
+      expect(find.text('LIVE TRANSCRIPT'), findsNothing);
     });
 
-    testWidgets('hidden at turnCount 1 (a lone opening greeting)', (
-      tester,
-    ) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(1));
-      expect(find.textContaining('exchange'), findsNothing);
-    });
-
-    testWidgets('shown at turnCount 2', (tester) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(2));
-      expect(find.text('2 exchanges'), findsOneWidget);
-    });
-
-    testWidgets('shown at turnCount 5', (tester) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(5));
-      expect(find.text('5 exchanges'), findsOneWidget);
+    testWidgets('shows each returned turn with its speaker; an unattributed '
+        'turn gets no tag', (tester) async {
+      await _pump(
+        tester,
+        callResult: _calling(
+          3,
+          transcript: [
+            _turn(TranscriptRole.agent, 'Namaskara, this is Asha’s school.'),
+            _turn(TranscriptRole.parent, 'Yes, tell me.'),
+            _turn(null, 'unclear line'),
+          ],
+        ),
+      );
+      expect(find.text('LIVE TRANSCRIPT'), findsOneWidget);
+      expect(find.text('Namaskara, this is Asha’s school.'), findsOneWidget);
+      expect(find.text('Yes, tell me.'), findsOneWidget);
+      expect(find.text('unclear line'), findsOneWidget);
+      expect(find.text('AI'), findsOneWidget);
+      expect(find.text('Parent'), findsOneWidget);
     });
   });
 
-  group('honest waiting (SPEC §B.5.4)', () {
-    testWidgets(
-      'NO determinate progress indicator anywhere (breathe/shimmer only)',
-      (tester) async {
-        // Cover both ringing and in-progress so neither introduces a bar/spinner.
-        for (final turns in [0, 4]) {
-          await _pump(
-            tester,
-            parentName: 'Asha Rao',
-            callResult: _calling(turns),
-          );
-
-          // A determinate/percentage bar is an automatic FAIL.
-          expect(find.byType(LinearProgressIndicator), findsNothing);
-          // No spinner at all, and certainly no determinate (value != null) one.
-          expect(find.byType(CircularProgressIndicator), findsNothing);
-          for (final w in tester.widgetList<CircularProgressIndicator>(
-            find.byType(CircularProgressIndicator),
-          )) {
-            expect(
-              w.value,
-              isNull,
-              reason: 'no determinate progress — honest breathe only',
-            );
-          }
-        }
-      },
+  testWidgets('poll trouble says so plainly — the call may still be going', (
+    tester,
+  ) async {
+    await _pump(tester, callResult: _calling(0), pollTrouble: true);
+    expect(
+      find.text(
+        "We couldn't check on the call just now. It may still be going — "
+        'still trying.',
+      ),
+      findsOneWidget,
     );
+  });
+
+  group('honest waiting', () {
+    testWidgets('NO progress indicator anywhere (breathe only)', (
+      tester,
+    ) async {
+      for (final turns in [0, 4]) {
+        await _pump(tester, callResult: _calling(turns));
+        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      }
+    });
 
     testWidgets('reduce-motion renders a static frame — pumpAndSettle returns', (
       tester,
     ) async {
-      // _pump disables animations and calls pumpAndSettle; reaching here without
-      // a timeout proves the breathe froze (no infinite ticker). The glyph is
-      // still composed.
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(2));
+      await _pump(tester, callResult: _calling(2));
       expect(tester.takeException(), isNull);
       expect(find.byIcon(LucideIcons.phoneCall), findsOneWidget);
     });
   });
 
-  group('contrast + a11y', () {
-    testWidgets(
-      'exchanges pill count is full-ink onSurface (WCAG AA) with tabular '
-      'figures',
-      (tester) async {
-        await _pump(tester, parentName: 'Asha Rao', callResult: _calling(3));
-        final scheme = AppTheme.light().colorScheme;
+  testWidgets('the timer line is the one live region, not the headline', (
+    tester,
+  ) async {
+    await _pump(tester, callResult: _calling(0));
 
-        final pill = tester.widget<Text>(find.text('3 exchanges'));
-        // onSurface on the surfaceContainerHigh pill clears ~14.6:1; the muted
-        // onSurfaceVariant role would fail AA at 3.86:1 for this 15sp count.
-        expect(pill.style?.color, scheme.onSurface);
-        // The tabular figures survive the colour override, so the count never
-        // reflows as it grows.
-        expect(
-          pill.style?.fontFeatures,
-          contains(const FontFeature.tabularFigures()),
-        );
-      },
+    final liveRegion = find.byWidgetPredicate(
+      (w) => w is Semantics && (w.properties.liveRegion ?? false),
     );
-
-    testWidgets('the status line is a live region for screen readers', (
-      tester,
-    ) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(0));
-
-      final liveRegion = find.byWidgetPredicate(
-        (w) => w is Semantics && (w.properties.liveRegion ?? false),
-      );
-      expect(liveRegion, findsOneWidget);
-      // …and it wraps the status line (so the ringing → in-progress change is
-      // announced), not the headline.
-      expect(
-        find.descendant(of: liveRegion, matching: find.text('Ringing…')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: liveRegion,
-          matching: find.text("Calling Asha Rao's parent…"),
-        ),
-        findsNothing,
-      );
-    });
+    expect(liveRegion, findsOneWidget);
+    expect(
+      find.descendant(of: liveRegion, matching: find.text('CALL IN PROGRESS')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: liveRegion,
+        matching: find.text("Calling Asha Rao's parent…"),
+      ),
+      findsNothing,
+    );
   });
 
   group('overflow gates (DESIGN_RUBRIC §12) — real Indic translations', () {
-    // 360dp × textScale 1.3, light + dark, driving the REAL bn/ta strings
-    // (headline + status + the dataMedium exchanges pill) at the narrow floor.
-    const probes = <(String, Locale, String, String)>[
-      ('bn', Locale('bn'), 'রিং হচ্ছে…', 'অভিভাবক'),
-      ('ta', Locale('ta'), 'மணி ஒலிக்கிறது…', 'பெற்றோர'),
-    ];
-
-    for (final brightness in Brightness.values) {
-      for (final (code, locale, ringing, parentWord) in probes) {
-        testWidgets('calling stage at 360dp x 1.3 in $code (${brightness.name})', (
+    for (final code in ['bn', 'ta', 'ml']) {
+      testWidgets('calling stage at 360dp x 1.3 in $code', (tester) async {
+        final locale = Locale(code);
+        await _pump(
           tester,
-        ) async {
-          await _pump(
-            tester,
-            parentName: 'Asha Rao',
-            // Ringing frame; the in-progress + tabular pill floor is covered by
-            // the dedicated bn/dark probe below.
-            callResult: _calling(0),
-            brightness: brightness,
-            textScale: 1.3,
-            locale: locale,
-            surface: const Size(360, 1200),
-          );
-          expect(tester.takeException(), isNull);
-          // The REAL translated status + the real translated headline rendered.
-          expect(find.text(ringing), findsOneWidget);
-          // v3 adds the shared CallPlanCard under the headline, and one of its
-          // cover points also names the parent (e.g. bn "…অভিভাবকের ভাষায়
-          // উষ্ণভাবে শুরু…"), so the old loose `textContaining(parentWord)`
-          // probe matches twice. Pin the headline itself (the §12 intent: the
-          // real translated calling headline at the narrow floor) and keep the
-          // parent-word check on that exact string.
-          final headline = lookupAppLocalizations(
-            locale,
-          ).parentHotlineCallingTitle('Asha Rao');
-          expect(find.text(headline), findsOneWidget);
-          expect(headline, contains(parentWord));
-        });
-      }
+          callResult: _calling(
+            5,
+            transcript: [
+              _turn(TranscriptRole.agent, 'A long opening line ' * 6),
+              _turn(TranscriptRole.parent, 'A long reply ' * 8),
+            ],
+          ),
+          callStartedAt: _placedAt,
+          clock: _Clock(_placedAt.add(const Duration(minutes: 12))),
+          pollTrouble: true,
+          textScale: 1.3,
+          locale: locale,
+          surface: const Size(360, 2000),
+        );
+        expect(tester.takeException(), isNull);
+        final l10n = lookupAppLocalizations(locale);
+        expect(
+          find.text(l10n.parentHotlineCallingTitle('Asha Rao')),
+          findsOneWidget,
+        );
+      });
     }
   });
 }

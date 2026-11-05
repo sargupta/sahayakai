@@ -34,13 +34,13 @@ enum ParentMessageReason {
 /// before building this — so a request that reaches the wire can never trip the
 /// backend's 400 `Missing required fields`. The rest are optional.
 ///
-/// Server-injected fields are deliberately NOT modelled: the route reads
-/// `userId` from the verified token, and `performanceContext` /
-/// `performanceSummary` are populated by the web's Contact-Parent modal from a
-/// class's assessment records, not by this composer. A client that sent its own
-/// would be both wrong and a trust-boundary hole. Verified against
+/// `userId` is deliberately NOT modelled: the route reads it from the verified
+/// token. `performanceSummary` is not modelled either — the route derives it
+/// itself from [performanceContext]. [performanceContext] IS sent, but only by
+/// the Parent Hotline, which fills it from the student's real assessment
+/// records (the same snapshot the web's Contact-Parent modal sends); the
+/// standalone composer never invents one. Verified against
 /// `parent-message/route.ts` + `ParentMessageInputSchema` in `sahayakai-main`.
-/// See docs/flutter/HANDOFF.md.
 @immutable
 class ParentMessageRequest {
   const ParentMessageRequest({
@@ -54,6 +54,7 @@ class ParentMessageRequest {
     this.consecutiveAbsentDays,
     this.teacherName,
     this.schoolName,
+    this.performanceContext,
   });
 
   /// The student the message is about. Required.
@@ -97,11 +98,18 @@ class ParentMessageRequest {
 
   /// The school name for context. Optional: server back-fills from the profile.
   final String? schoolName;
+
+  /// The recent-assessment snapshot (`PerformanceContext` in
+  /// `src/types/attendance.ts`: `{ recentAssessmentIds?, latestPercentage?,
+  /// isAtRisk?, subjectBreakdown? }`) the route turns into the one-line
+  /// "Recent academic results" the prompt may cite. Only ever built from real
+  /// records; null when there are none.
+  final Map<String, dynamic>? performanceContext;
 }
 
 /// The fully-decoded `/api/ai/parent-message` result. Field names match the
-/// route handler's returned object exactly: `{ message, languageCode,
-/// wordCount }`. Verified against `parent-message/route.ts` +
+/// route handler's returned object exactly: `{ message, spokenScript,
+/// languageCode, wordCount }`. Verified against `parent-message/route.ts` +
 /// `ParentMessageOutputSchema` in `sahayakai-main`.
 ///
 /// The [message] is the parent-facing text, WRITTEN IN [languageCode]'s
@@ -111,12 +119,19 @@ class ParentMessageRequest {
 class ParentMessage {
   const ParentMessage({
     required this.message,
+    this.spokenScript,
     this.languageCode,
     this.wordCount,
   });
 
   /// The ready-to-send message body, in the parent's language (<= 250 words).
   final String message;
+
+  /// The phone-call rendition of [message] (<= 100 words, no salutation and no
+  /// sign-off), in the same language. The Parent Hotline sends it on the
+  /// outreach so the voice call speaks THIS rather than reading the written
+  /// letter aloud. Null when the route returned none.
+  final String? spokenScript;
 
   /// BCP-47 language code the model wrote in, e.g. `ta-IN`. May be absent.
   final String? languageCode;

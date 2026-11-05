@@ -20,12 +20,15 @@ Map<String, dynamic> _$ParentMessageRequestDtoToJson(
     'consecutiveAbsentDays': value,
   if (instance.teacherName case final value?) 'teacherName': value,
   if (instance.schoolName case final value?) 'schoolName': value,
+  if (instance.performanceContext case final value?)
+    'performanceContext': value,
 };
 
 ParentMessageResponseDto _$ParentMessageResponseDtoFromJson(
   Map<String, dynamic> json,
 ) => ParentMessageResponseDto(
   message: json['message'] as String?,
+  spokenScript: json['spokenScript'] as String?,
   languageCode: json['languageCode'] as String?,
   wordCount: json['wordCount'] as num?,
 );

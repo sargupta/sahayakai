@@ -9,6 +9,7 @@ import 'package:sahayakai/core/platform/clock.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
+import 'package:sahayakai/features/parent_hotline/presentation/parent_hotline_controller.dart';
 import 'package:sahayakai/features/profile/domain/teacher_profile.dart';
 import 'package:sahayakai/features/profile/presentation/profile_controller.dart';
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
@@ -153,7 +154,10 @@ class _Dest extends StatelessWidget {
   }
 }
 
-Future<void> _pumpHomeWithRouter(WidgetTester tester) async {
+Future<void> _pumpHomeWithRouter(
+  WidgetTester tester, {
+  List<Override> extraOverrides = const [],
+}) async {
   _phone(tester);
   GoRoute dest(String path, String id) =>
       GoRoute(path: path, builder: (_, state) => _Dest(id, state.extra));
@@ -177,6 +181,7 @@ Future<void> _pumpHomeWithRouter(WidgetTester tester) async {
           () => _FakeVidyaController(const VidyaState()),
         ),
         ..._homeSupportOverrides(),
+        ...extraOverrides,
       ],
       child: MaterialApp.router(
         routerConfig: router,
@@ -400,6 +405,51 @@ void main() {
       expect(find.textContaining('absentees'), findsNothing);
     });
 
+    testWidgets('a parent call left running waits here, and opens the call', (
+      tester,
+    ) async {
+      await _pumpHomeWithRouter(
+        tester,
+        extraOverrides: [
+          parentHotlineControllerProvider.overrideWith(
+            () => _FixedHotline(
+              const ParentHotlineState(
+                stage: HotlineStage.calling,
+                studentName: 'Asha Rao',
+                outreachId: 'o-1',
+              ),
+            ),
+          ),
+        ],
+      );
+
+      const row = "Call with Asha's parent · tap to return";
+      expect(find.text(row), findsOneWidget);
+      expect(find.text('Nothing is waiting for you right now'), findsNothing);
+      await _tapVisible(tester, find.text(row));
+      expect(find.byKey(const Key('dest-parent-hotline')), findsOneWidget);
+    });
+
+    testWidgets('a parent call that is not running does not wait here', (
+      tester,
+    ) async {
+      await _pumpHomeWithRouter(
+        tester,
+        extraOverrides: [
+          parentHotlineControllerProvider.overrideWith(
+            () => _FixedHotline(
+              const ParentHotlineState(
+                stage: HotlineStage.summary,
+                studentName: 'Asha Rao',
+                outreachId: 'o-1',
+              ),
+            ),
+          ),
+        ],
+      );
+      expect(find.textContaining("Asha's parent"), findsNothing);
+    });
+
     testWidgets('lists a ready result by its title', (tester) async {
       await _pumpHome(tester);
 
@@ -545,4 +595,14 @@ void main() {
       });
     }
   });
+}
+
+/// A hotline controller standing still in one state (no repositories touched).
+class _FixedHotline extends ParentHotlineController {
+  _FixedHotline(this._state);
+
+  final ParentHotlineState _state;
+
+  @override
+  ParentHotlineState build() => _state;
 }

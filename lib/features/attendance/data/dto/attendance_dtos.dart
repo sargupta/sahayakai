@@ -240,10 +240,9 @@ class AddStudentResponseDto {
 ///
 /// THE FAIL-CLOSED RULE
 ///
-/// The masked projection is draft PR #124 and is not merged. Against today's
-/// production route the `projection` query parameter is unknown and therefore
-/// ignored, so the reply is the FULL student document: `parentPhone` in E.164,
-/// for every student in the class. Decoding leniently — "take the fields I
+/// The masked projection is live on the route, but a deployment that predates
+/// it ignores the unknown `projection` parameter and replies with the FULL
+/// student document: `parentPhone` in E.164, for every student in the class. Decoding leniently — "take the fields I
 /// recognise, ignore the rest" — would put those numbers on the handset the
 /// first time this ran against production, silently, with nothing in the app to
 /// show for it.
@@ -320,20 +319,26 @@ class RosterStudentDto {
       }
       final map = entry.cast<String, dynamic>();
 
-      // Allowlist: exactly the six fields, no more and no fewer. An unmasked
-      // document fails on the extra keys (parentPhone, classId, createdAt…);
-      // a truncated one fails on the missing.
-      if (map.length != rosterFields.length ||
-          !rosterFields.containsAll(map.keys)) {
+      // Allowlist: nothing outside the six masked fields. An unmasked document
+      // fails on the extra keys (parentPhone, classId, createdAt…).
+      //
+      // A MISSING key is tolerated, because production produces one: the
+      // projection is built server-side as an object literal and
+      // `NextResponse.json` drops any field whose value is `undefined`, so a
+      // legacy student saved without a `parentLanguage` (or roll number)
+      // arrives with five keys. Refusing that row would fail the whole class
+      // for a field the masking has nothing to do with. Only `id` and `name`
+      // — without which there is no row — are required.
+      if (!rosterFields.containsAll(map.keys)) {
         throw RosterProjectionUnavailableException(reason: 'unmasked');
       }
 
       final id = map['id'];
       final name = map['name'];
-      final rollNumber = map['rollNumber'];
-      final parentLanguage = map['parentLanguage'];
-      final hasParentPhone = map['hasParentPhone'];
-      final last4 = map['parentPhoneLast4'];
+      final rollNumber = map['rollNumber'] ?? 0;
+      final parentLanguage = map['parentLanguage'] ?? '';
+      final hasParentPhone = map['hasParentPhone'] ?? false;
+      final last4 = map['parentPhoneLast4'] ?? '';
 
       if (id is! String ||
           name is! String ||
@@ -484,6 +489,7 @@ class StudentAttendanceSummaryDto {
     this.lateDays,
     this.attendanceRate,
     this.consecutiveAbsences,
+    this.currentAbsenceStreak,
   });
 
   factory StudentAttendanceSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -496,7 +502,13 @@ class StudentAttendanceSummaryDto {
       absentDays: json['absentDays'] as num?,
       lateDays: json['lateDays'] as num?,
       attendanceRate: json['attendanceRate'] as num?,
-      consecutiveAbsences: json['consecutiveAbsences'] as num?,
+      // The route sends `longestAbsenceStreak` (history) and
+      // `currentAbsenceStreak` (status); `consecutiveAbsences` is the older
+      // name for the first and is still honoured if a deployment sends it.
+      consecutiveAbsences:
+          (json['longestAbsenceStreak'] ?? json['consecutiveAbsences'])
+              as num?,
+      currentAbsenceStreak: json['currentAbsenceStreak'] as num?,
     );
   }
 
@@ -509,6 +521,7 @@ class StudentAttendanceSummaryDto {
   final num? lateDays;
   final num? attendanceRate;
   final num? consecutiveAbsences;
+  final num? currentAbsenceStreak;
 
   StudentAttendanceSummary toDomain() => StudentAttendanceSummary(
     studentId: studentId?.trim() ?? '',
@@ -522,6 +535,7 @@ class StudentAttendanceSummaryDto {
     // must not read as "nobody attended".
     attendanceRate: attendanceRate?.toInt() ?? 100,
     consecutiveAbsences: consecutiveAbsences?.toInt() ?? 0,
+    currentAbsenceStreak: currentAbsenceStreak?.toInt(),
   );
 
   static List<StudentAttendanceSummary> decodeList(dynamic json) {

@@ -73,8 +73,8 @@ class AttendanceRepository {
 
   static const String _classesPath = '/api/attendance/classes';
 
-  /// The masked projection this app is allowed to read (draft PR #124). Sent on
-  /// every roster read; the decoder fails closed if the reply is not masked.
+  /// The masked projection this app is allowed to read. Sent on every roster
+  /// read; the decoder fails closed if the reply is not masked.
   static const String _rosterProjection = 'roster';
 
   String _classPath(String classId) =>

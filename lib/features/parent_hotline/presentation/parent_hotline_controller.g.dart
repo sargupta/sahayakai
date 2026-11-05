@@ -25,23 +25,24 @@ final callabilityPolicyProvider =
 // ignore: unused_element
 typedef CallabilityPolicyRef = AutoDisposeProviderRef<CallabilityPolicy>;
 String _$parentHotlineControllerHash() =>
-    r'766f650871edec55742365cb4861400e4013e0ac';
+    r'e7957cf20e91eff43ce8cb6431c64b2099832192';
 
 /// The Parent Hotline brain (SPEC §B.3): the staged flow + the exact web poll
 /// discipline + resume.
 ///
-/// **Poll safety (the #1 correctness requirement).** Polling is a self-
-/// rescheduling [Timer] (not `Timer.periodic`) so the cadence can vary (3s → 5s
-/// → 3s). Two mechanisms guarantee no state is ever emitted after the flow moved
-/// on or the screen died:
-///   1. a generation counter [_pollGen] captured when a poll session starts and
-///      compared after every `await` — a `_stopPolling` / leave / re-bind bumps
-///      it, orphaning any in-flight poll continuation;
-///   2. a [_disposed] flag set in `ref.onDispose`, checked before every state
-///      write ([_set] is a no-op once disposed) and after every `await`.
-/// The timer is cancelled in `ref.onDispose` AND whenever the flow leaves
-/// `calling`. Leaving `calling` stops polling ONLY — it never cancels the
+/// **Poll safety.** Polling is a self-rescheduling [Timer] guarded by a
+/// generation counter ([_pollGen]) and a [_disposed] flag, both checked after
+/// every `await`. Leaving `calling` stops polling ONLY — it never cancels the
 /// server-side call (SPEC §B.5.5); re-opening resumes via `latestForStudent`.
+///
+/// **One action at a time.** Every action method returns early while
+/// [ParentHotlineState.isBusy] is set; the flag is raised synchronously, before
+/// the first `await`, so a double-tap in one frame places one call.
+///
+/// **Per-student state.** The controller is keepAlive, so every student
+/// switch (an [init], a [selectStudent]) resets EVERY per-student field — the
+/// note, evidence, draft, spoken script, outreach, call result — and bumps
+/// [_flowGen], which orphans any in-flight draft/create/call continuation.
 ///
 /// Copied from [ParentHotlineController].
 @ProviderFor(ParentHotlineController)

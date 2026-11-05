@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -18,6 +19,7 @@ import '../../../shared/widgets/inline_error.dart';
 import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../parent_hotline/domain/hotline_launch.dart';
 import '../data/attendance_repository.dart';
 import '../domain/attendance_class.dart';
 import '../domain/attendance_date.dart';
@@ -71,7 +73,7 @@ class MarkAttendanceScreen extends ConsumerStatefulWidget {
   /// The class handed through `extra`, for the title.
   final AttendanceClass? attendanceClass;
 
-  /// Optional task id. When set, a "From your task: ..." tag is shown.
+  /// Optional task id. When set, a "From your task" tag is shown.
   final String? taskId;
 
   @override
@@ -96,7 +98,6 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
   bool _isBusy = false;
   bool _blockedByPlan = false;
   String? _errorMessage;
-  int _absentCount = 0;
 
   @override
   void initState() {
@@ -184,12 +185,7 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
 
       switch (result) {
         case AttendanceWriteAccepted<AttendanceDate>():
-          setState(() {
-            _edits.remove(_date);
-            _absentCount = statuses.values
-                .where((s) => s == AttendanceStatus.absent)
-                .length;
-          });
+          setState(() => _edits.remove(_date));
           ref
             ..invalidate(dailyRegisterProvider(_registerKey(_date)))
             // The month's rollups are derived from the day just written.
@@ -258,7 +254,7 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'From your task: ${widget.taskId}',
+                  l10n.attendanceFromTask,
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
               ),
@@ -287,24 +283,46 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
               message: _errorMessage!,
             ),
           ],
-          if (_absentCount > 0) ...[
+          if (_savedAbsentIds(register) case final absent
+              when absent.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.space4),
-            FilledButton(
-              onPressed: () {
-                GoRouter.of(context).push(
-                  '/parent-hotline',
-                  extra: <String, dynamic>{
-                    'classId': widget.classId,
-                    'className': widget.attendanceClass?.name,
-                  },
-                );
-              },
-              child: Text('Call $_absentCount parents'),
+            SecondaryButton(
+              key: const Key('attendanceCallParents'),
+              label: l10n.attendanceCallParents(absent.length),
+              icon: LucideIcons.phone,
+              onPressed: () => unawaited(
+                context.push(
+                  Routes.parentHotline,
+                  extra: HotlineLaunch(
+                    classId: widget.classId,
+                    className: widget.attendanceClass?.name,
+                    absentStudentIds: absent,
+                  ),
+                ),
+              ),
             ),
           ],
         ],
       ),
     );
+  }
+
+  /// The students the SAVED register for the day on screen marks absent.
+  /// Empty while the day has unsaved changes (they are not on the register
+  /// yet) or while the register is loading, so the hand-off to the Parent
+  /// Hotline only ever names absences that were actually posted. Derived,
+  /// not stored: it follows a date change, a save and a reopen on its own.
+  Set<String> _savedAbsentIds(AsyncValue<DailyAttendance?> register) {
+    final record = register.valueOrNull;
+    if (record == null) return const <String>{};
+    final edits = _edits[_date] ?? const <String, AttendanceStatus?>{};
+    if (edits.entries.any((e) => record.statusFor(e.key) != e.value)) {
+      return const <String>{};
+    }
+    return {
+      for (final e in record.statuses.entries)
+        if (e.value == AttendanceStatus.absent) e.key,
+    };
   }
 
   /// Saving needs both reads to have landed: the student list decides who is
