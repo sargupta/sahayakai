@@ -1,0 +1,841 @@
+<title>SahayakAI Calling & Community</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Oriya:wght@400;600&display=swap">
+<style>
+/* Layout: a test bench (scenarios + request log) beside a phone running the app's own screens. Single light look, as the app is light-only. */
+:root {
+  color-scheme: light;
+  --milk: #FFFDF9; --card: rgba(255,255,255,.86); --ask: #FAF5ED; --hair: rgba(23,19,16,.08);
+  --ink: #171310; --ink6: #5C534A; --ink5: #6E655C; --ink4: #8A7F73;
+  --sf: #C96A28; --sf6: #A5551D; --sf7: #8A4A08; --sfTint: #F7E4D5; --sfInk: #A5541C; --optOn: #F9EEE4; --optRing: #E7B691;
+  --leaf: #2C5F2D; --leaf7: #234B24; --leafTint: #E1E8DC; --leafInk: #2B5E2D; --optLeaf: #EAEEE4; --leafRing: #A9C3A5;
+  --ind: #2A3B8F; --indTint: #E5E3F0; --indInk: #293B8F; --note: #E9E6F0; --noteRing: #D9D3E5;
+  --red: #C0392B; --red7: #8A1C1C; --redTint: #FCEDEA; --amb: #B45309; --ambTint: #FBEFDC;
+  --strategy: #FBF1E4;
+  --bench: #EFEAE2; --benchCard: #FFFDF9; --code: #2B2622; --codeInk: #F4EEE6;
+  --display: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --body: "Instrument Sans", "Noto Sans Kannada", "Noto Sans Devanagari", "Noto Sans Oriya", system-ui, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { background: var(--bench); color: var(--ink); font-family: var(--body); margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--sf6); outline-offset: 2px; }
+.wrap { display: grid; grid-template-columns: minmax(0, 1fr) 400px minmax(0, 1fr); gap: 24px; align-items: start;
+  padding-block: 24px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1320px; margin: 0 auto; }
+.bench { display: grid; gap: 14px; min-width: 0; }
+.bench h1 { font: 800 26px/1.1 var(--display); letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.bench p { margin: 0; color: var(--ink6); line-height: 1.5; font-size: 13.5px; }
+.panel { background: var(--benchCard); border-radius: 16px; padding: 14px; box-shadow: 0 0 0 1px var(--hair); display: grid; gap: 10px; min-width: 0; }
+.panel h2 { font: 700 11px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink5); margin: 0; }
+.field { display: grid; gap: 5px; }
+.field label { font-size: 12.5px; font-weight: 600; color: var(--ink6); }
+.field select { font: inherit; font-size: 13px; padding: 7px 9px; border-radius: 10px; border: 1px solid #E5DCCF; background: #fff; color: var(--ink); }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink6); }
+.check input { accent-color: var(--sf6); width: 16px; height: 16px; }
+.reset { justify-self: start; font-size: 12.5px; font-weight: 700; color: var(--sf6); padding: 6px 0; }
+.log { background: var(--code); color: var(--codeInk); border-radius: 12px; padding: 10px; font: 11.5px/1.5 var(--mono); max-height: 360px; overflow: auto; display: grid; gap: 6px; }
+.log .e { white-space: pre-wrap; word-break: break-word; }
+.log .m { color: #F0B27A; font-weight: 700; }
+.log .t { color: #9B918A; }
+.log .empty { color: #9B918A; }
+.tests { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink6); line-height: 1.55; display: grid; gap: 4px; }
+.tests li::marker { color: var(--sf6); }
+.badge-sample { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--sf7); background: var(--sfTint); border-radius: 99px; padding: 3px 9px; }
+
+/* ── Phone ── */
+.phone { width: 390px; height: 812px; border-radius: 40px; background: #1d1916; padding: 10px; box-shadow: 0 30px 60px rgba(60,40,20,.18); position: sticky; top: 16px; }
+.screen { position: relative; width: 100%; height: 100%; border-radius: 31px; overflow: hidden; display: flex; flex-direction: column;
+  background: linear-gradient(170deg, #FFF3E4 0%, #FDEFEE 38%, #EFF4EE 74%, #FFF7EC 100%); }
+.screen.sage { background: linear-gradient(170deg, #F1F5EE 0%, #EEF3EC 45%, #F6F3EC 100%); }
+.status { height: 34px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font: 600 12px var(--body); color: var(--ink); }
+.body { flex: 1; overflow-y: auto; padding: 4px 16px 20px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
+.body::-webkit-scrollbar { display: none; }
+.foot { flex: none; background: var(--milk); border-top: 1px solid var(--hair); padding: 10px 16px 14px; display: grid; gap: 10px; }
+.dock { flex: none; display: flex; justify-content: center; padding: 8px 0 12px; }
+.dock .bar { display: flex; gap: 4px; background: #fff; border-radius: 99px; padding: 6px; box-shadow: 0 0 0 1px var(--hair), 0 6px 18px rgba(60,40,20,.08); }
+.dock button { height: 40px; min-width: 44px; border-radius: 99px; padding: 0 14px; display: flex; gap: 6px; align-items: center; color: var(--ink6); font-weight: 600; font-size: 13px; }
+.dock button.on { background: var(--sf6); color: #fff; }
+.dock svg { width: 19px; height: 19px; }
+
+/* shared pieces */
+.ov { font: 700 11px/1.2 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink5); }
+.ov.eye { color: var(--sf6); }
+.h1 { font: 800 27px/1.08 var(--display); letter-spacing: -.025em; margin: 0; text-wrap: balance; }
+.h2 { font: 700 19px/1.2 var(--display); letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+.sub { font-size: 13px; color: var(--ink5); line-height: 1.45; }
+.muted { color: var(--ink5); }
+.sm { font-size: 12.5px; }
+.card { background: var(--card); border: 1px solid rgba(255,255,255,.95); border-radius: 18px; padding: 14px; box-shadow: 0 2px 10px rgba(60,40,20,.05), 0 0 0 1px var(--hair); }
+.row { display: flex; align-items: center; gap: 10px; }
+.grow { flex: 1; min-width: 0; }
+.stack { display: grid; gap: 8px; }
+.hdr { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.back { width: 40px; height: 40px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px var(--hair); display: grid; place-items: center; }
+.back svg { width: 18px; height: 18px; }
+.chip { height: 28px; padding: 0 11px; border-radius: 99px; background: #fff; box-shadow: 0 0 0 1px var(--hair); font-weight: 600; font-size: 12.5px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; }
+.chip.on { background: var(--sf6); color: #fff; box-shadow: none; }
+.chip.go { background: var(--leaf); color: #fff; box-shadow: none; }
+.chip.link { color: var(--sf6); }
+.chip[disabled] { opacity: .55; cursor: default; }
+.chips { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; padding: 2px 1px; }
+.chips::-webkit-scrollbar { display: none; }
+.t-res { background: #F6E1D1; color: #A5541C; box-shadow: none; }
+.t-tried { background: #F4DDCD; color: #8A4A08; box-shadow: none; }
+.t-cel { background: #E3E5D6; color: #234A24; box-shadow: none; }
+.t-help { background: #E6E1EC; color: #293B8F; box-shadow: none; }
+.btn { height: 52px; border-radius: 99px; background: var(--sf6); color: #fff; font-weight: 700; font-size: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 14px rgba(165,85,29,.25); }
+.btn[disabled] { background: #E7BC95; box-shadow: none; cursor: default; }
+.btn.call { background: var(--leaf); box-shadow: none; }
+.btn.call[disabled] { background: var(--leafRing); color: var(--leaf7); }
+.btn.sec { background: #fff; color: var(--ink); box-shadow: 0 0 0 1px #E5DCCF; }
+.btn.sec[disabled] { color: var(--ink4); }
+.btn.ink { background: var(--ink); box-shadow: none; }
+.btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.textbtn { color: var(--sf6); font-weight: 700; font-size: 13.5px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--body); flex: none; }
+.av.lg { width: 44px; height: 44px; font-size: 14px; }
+.tint0 { background: #F7E4D5; color: #A5541C; } .tint1 { background: #E1E8DC; color: #2B5E2D; } .tint2 { background: #E5E3F0; color: #293B8F; }
+.pill { height: 22px; padding: 0 9px; border-radius: 99px; font: 700 10.5px var(--body); letter-spacing: .06em; display: inline-flex; align-items: center; white-space: nowrap; flex: none; }
+.banner { border-radius: 14px; padding: 10px 12px; font-size: 12.5px; line-height: 1.45; display: flex; gap: 8px; align-items: flex-start; }
+.banner.note { background: var(--ambTint); color: var(--sf7); }
+.banner.err { background: var(--redTint); color: var(--red7); }
+.banner.info { background: var(--note); color: var(--ind); border: 1px solid var(--noteRing); }
+.banner svg { width: 15px; height: 15px; flex: none; margin-top: 1px; }
+.toast { position: absolute; left: 16px; right: 16px; bottom: 92px; background: var(--ink); color: #fff; border-radius: 14px; padding: 11px 14px; font-size: 13px; z-index: 5; box-shadow: 0 10px 24px rgba(0,0,0,.2); transition: opacity .2s; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: #fff; border-radius: 99px; padding: 4px; box-shadow: 0 0 0 1px var(--hair); }
+.seg button { height: 36px; border-radius: 99px; font-weight: 600; font-size: 13.5px; color: var(--ink6); position: relative; }
+.seg button.on { background: var(--sf6); color: #fff; }
+.seg .dot { position: absolute; top: 7px; right: 14px; width: 7px; height: 7px; border-radius: 50%; background: var(--red); }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { background: var(--card); border-radius: 16px; padding: 14px; text-align: left; box-shadow: 0 0 0 1px var(--hair), 0 2px 8px rgba(60,40,20,.04); display: grid; gap: 3px; }
+.tile b { font-size: 14.5px; } .tile span { font-size: 12px; color: var(--ink5); }
+.ask { display: flex; align-items: center; gap: 10px; background: var(--ask); border: 1px solid #EFE6D8; border-radius: 99px; padding: 12px 16px; color: var(--ink5); font-size: 13px; text-align: left; width: 100%; }
+.ask svg { width: 15px; height: 15px; }
+.icn { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none; }
+.icn svg { width: 18px; height: 18px; }
+textarea, .input { width: 100%; font: inherit; font-size: 14px; border-radius: 14px; border: 1px solid #EBE2D5; background: var(--ask); padding: 12px 14px; color: var(--ink); resize: none; }
+.lbl { font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink5); }
+.dotu { width: 8px; height: 8px; border-radius: 50%; background: var(--sf); flex: none; }
+
+/* hotline specifics */
+.reason { display: flex; gap: 12px; align-items: flex-start; text-align: left; width: 100%; background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 0 0 1px var(--hair); }
+.reason.on { background: var(--optLeaf); box-shadow: 0 0 0 1.5px var(--leafRing); }
+.reason .chk { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #D8CFC2; display: grid; place-items: center; flex: none; margin-left: auto; }
+.reason.on .chk { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+.reason .chk svg { width: 13px; height: 13px; }
+.ev-row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 3px 0; }
+.ev-row b { font-variant-numeric: tabular-nums; }
+.skel { height: 10px; border-radius: 6px; background: linear-gradient(90deg, #EFE8DE, #F7F2EA, #EFE8DE); background-size: 200% 100%; animation: sh 1.2s infinite linear; }
+@keyframes sh { to { background-position: -200% 0; } }
+.glyph { width: 96px; height: 96px; border-radius: 50%; background: var(--optLeaf); display: grid; place-items: center; margin: 0 auto; position: relative; }
+.glyph::before { content: ""; position: absolute; inset: -14px; border-radius: 50%; background: rgba(44,95,45,.10); animation: br 2.6s ease-in-out infinite; }
+.glyph svg { width: 36px; height: 36px; color: var(--leaf); position: relative; }
+@keyframes br { 50% { transform: scale(1.12); opacity: .55; } }
+.tline { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.45; animation: fin .35s ease-out; }
+@keyframes fin { from { opacity: 0; transform: translateY(4px); } }
+.who { font: 700 10.5px var(--body); border-radius: 99px; padding: 2px 7px; flex: none; margin-top: 1px; }
+.who.ai { background: var(--optLeaf); color: var(--leaf7); } .who.p { background: var(--sfTint); color: var(--sfInk); }
+.tint-card { border-radius: 18px; padding: 14px; display: grid; gap: 6px; }
+.lines { display: grid; gap: 5px; font-size: 13px; line-height: 1.45; }
+.lines div { display: flex; gap: 7px; } .lines svg { width: 14px; height: 14px; flex: none; margin-top: 2px; }
+
+/* chat */
+.bubble { max-width: 78%; padding: 9px 12px; border-radius: 16px; font-size: 13.5px; line-height: 1.45; }
+.bubble.me { align-self: flex-end; background: var(--sf6); color: #fff; border-bottom-right-radius: 5px; }
+.bubble.them { align-self: flex-start; background: #fff; box-shadow: 0 0 0 1px var(--hair); border-bottom-left-radius: 5px; }
+.bubble .meta { font-size: 10.5px; opacity: .75; margin-top: 3px; }
+.composer { display: flex; gap: 8px; align-items: center; }
+.composer input { flex: 1; min-width: 0; height: 44px; border-radius: 99px; border: 1px solid #EBE2D5; background: var(--ask); color: var(--ink); caret-color: var(--sf6); padding: 0 16px; font: inherit; font-size: 14px; }
+/* Every field sets its own ink, so typed text stays dark on the light field whatever the viewer's theme. */
+input, textarea, select { color: var(--ink); color-scheme: light; }
+input::placeholder, textarea::placeholder { color: var(--ink4); opacity: 1; }
+.send { width: 44px; height: 44px; border-radius: 50%; background: var(--sf6); color: #fff; display: grid; place-items: center; flex: none; }
+.send[disabled] { background: #E7BC95; }
+.send svg { width: 18px; height: 18px; }
+.overlay { position: absolute; inset: 0; background: rgba(23,19,16,.35); display: flex; align-items: flex-end; z-index: 4; }
+.sheet { background: var(--milk); width: 100%; border-radius: 26px 26px 0 0; padding: 16px; display: grid; gap: 12px; }
+.sheet select { font: inherit; font-size: 14px; padding: 10px 12px; border-radius: 12px; border: 1px solid #EBE2D5; background: #fff; color: var(--ink); width: 100%; }
+
+@media (max-width: 1100px) {
+  .wrap { grid-template-columns: 1fr; max-width: 520px; }
+  .phone { position: static; justify-self: center; }
+  .bench.right { order: 3; }
+}
+@media (max-width: 440px) {
+  .phone { width: 100%; height: 760px; padding: 0; border-radius: 26px; background: transparent; box-shadow: 0 0 0 1px var(--hair); }
+  .screen { border-radius: 26px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <section class="bench" aria-label="About this prototype">
+    <div class="stack" style="gap:10px">
+      <span class="badge-sample">Sample data · no real calls or messages</span>
+      <h1>Parent calling & Community, to try out</h1>
+      <p>The same screens, rules and copy as the app build. Use the switches to try the hard cases, and watch the log to see the request the real app would send at each step.</p>
+    </div>
+    <div class="panel">
+      <h2>Scenarios</h2>
+      <div class="field"><label for="s-hours">Time of day (IST)</label>
+        <select id="s-hours"><option value="in">11:00 · calling hours open</option><option value="out">22:30 · outside 9 am – 9 pm</option></select></div>
+      <div class="field"><label for="s-out">How the call ends</label>
+        <select id="s-out">
+          <option value="summary">Parent talks · summary ready</option>
+          <option value="noAnswer">No answer</option>
+          <option value="busy">Line busy</option>
+          <option value="short">Picked up, hung up at once</option>
+          <option value="unavailable">Talked, but no summary came back</option>
+          <option value="progress">Still going after the wait</option>
+          <option value="checkFailed">Status check fails</option>
+        </select></div>
+      <div class="field"><label for="s-ev">Student's record (evidence)</label>
+        <select id="s-ev"><option value="ok">Loads</option><option value="marksFail">Marks fail to load</option><option value="allFail">Both fail to load</option></select></div>
+      <label class="check"><input type="checkbox" id="s-cls"> Class 8B list fails to load</label>
+      <label class="check"><input type="checkbox" id="s-poll"> Status checks keep failing during the call</label>
+      <label class="check"><input type="checkbox" id="s-like"> Likes fail (offline)</label>
+      <label class="check"><input type="checkbox" id="s-send"> Next chat message fails to send</label>
+      <button class="reset" id="s-reset">Reset the demo</button>
+    </div>
+    <div class="panel">
+      <h2>Worth trying</h2>
+      <ol class="tests">
+        <li>Home → Roll call: mark two students absent, Save, then tap “call a parent”. They come first, flagged.</li>
+        <li>Call Asha's parent and leave mid-call. Home shows it under Waiting for you; tap to return.</li>
+        <li>Switch the time to 22:30 and try to call.</li>
+        <li>Pick Mitali (Odia): auto-call isn't offered, WhatsApp still is.</li>
+        <li>After a call, Updates gets a row and the bell shows a dot. Tapping it opens that call.</li>
+        <li>Turn on a failed send in chat, then Retry.</li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="phone" role="region" aria-label="App preview"><div class="screen" id="screen"></div></div>
+
+  <section class="bench right" aria-label="Request log">
+    <div class="panel">
+      <h2>What the app would send</h2>
+      <div class="log" id="log" aria-live="polite"><div class="empty">Requests appear here as you use the app.</div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+const IST = { in: [11, 0], out: [22, 30] };
+const ICON = {
+  back: '<path d="M15 18l-6-6 6-6"/>', chev: '<path d="M9 18l6-6-6-6"/>', check: '<path d="M20 6L9 17l-5-5"/>',
+  phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+  phoneOff: '<path d="M10.7 13.3a16 16 0 0 0 3.4 2.6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3.1 4.2 2 2 0 0 1 5.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L9 9.9"/><path d="M22 2L2 22"/>',
+  home: '<path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>',
+  heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>',
+  pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',
+  alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M10 14l4 4M14 14l-4 4"/>',
+  chart: '<path d="M18 20V10M12 20V4M6 20v-6"/>', help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
+  star: '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
+  arrow: '<path d="M5 12h14M12 5l7 7-7 7"/>', bulb: '<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>',
+  retry: '<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>',
+  wifi: '<path d="M1 1l22 22M16.7 11.1A11 11 0 0 1 19 12.6M5 12.6a11 11 0 0 1 5.2-2.5M10.7 5a16 16 0 0 1 12.3 3.6M1 8.6a16 16 0 0 1 4.7-2.9M8.5 16.1a5 5 0 0 1 7 0M12 20h.01"/>',
+  msg: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/>',
+};
+const ic = (n, s = 18, w = 2) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const initials = (n) => n.trim().split(/\s+/).slice(0, 2).map((w) => [...w][0]).join('').toUpperCase();
+const tint = (n) => { let h = 0; for (const c of n.trim()) h = (h * 31 + c.charCodeAt(0)) & 0x7fffffff; return 'tint' + (h % 3); };
+const av = (n, lg) => `<span class="av ${lg ? 'lg ' : ''}${tint(n)}" aria-hidden="true">${esc(initials(n))}</span>`;
+const first = (n) => n.trim().split(/\s+/)[0];
+
+/* ── Sample data ── */
+const NATIVE = { Kannada: 'ಕನ್ನಡ', Hindi: 'हिन्दी', Odia: 'ଓଡ଼ିଆ', Malayalam: 'മലയാളം' };
+const CALLABLE = new Set(['Kannada', 'Hindi', 'Malayalam']);
+function seedStudents() {
+  return {
+    c7: { name: 'Class 7A', subject: 'Maths', students: [
+      { id: 's1', name: 'Asha Rao', lang: 'Kannada', last4: '4821' },
+      { id: 's2', name: 'Ravi Kumar', lang: 'Hindi', last4: '3307' },
+      { id: 's3', name: 'Mitali Das', lang: 'Odia', last4: '9142' },
+      { id: 's4', name: 'Bhavya Nair', lang: 'Malayalam', last4: null },
+    ] },
+    c8: { name: 'Class 8B', subject: 'Science', students: [
+      { id: 's5', name: 'Dhruv Patil', lang: 'Hindi', last4: '6610' },
+      { id: 's6', name: 'Kavya Shetty', lang: 'Kannada', last4: '2205' },
+    ] },
+  };
+}
+const REASONS = [
+  { k: 'consecutive_absences', icon: 'cal', label: 'Repeated absences', desc: 'Missed several days in a row' },
+  { k: 'poor_performance', icon: 'chart', label: 'Slipping in a subject', desc: 'Marks have dropped recently' },
+  { k: 'behavioral_concern', icon: 'help', label: 'Behaviour in class', desc: 'Something to talk through together' },
+  { k: 'positive_feedback', icon: 'star', label: 'Good news to share', desc: 'Praise for effort or progress' },
+];
+// Sample drafts in the parent's language, per reason ({n} = the student's name in that script).
+const NAME_NATIVE = { s1: 'ಆಶಾ', s2: 'रवि', s3: 'ମିତାଲି', s4: 'ഭവ്യ', s5: 'ध्रुव', s6: 'ಕಾವ್ಯ' };
+const MSG = {
+  Kannada: {
+    consecutive_absences: 'ನಮಸ್ಕಾರ. ನಾನು {n} ಅವರ ಗಣಿತ ಶಿಕ್ಷಕಿ ಮೀನಾ. {n} ಈ ವಾರ ಮೂರು ದಿನ ಶಾಲೆಗೆ ಬಂದಿಲ್ಲ. ಎಲ್ಲವೂ ಸರಿಯಾಗಿದೆಯೇ? ತಪ್ಪಿಸಿಕೊಂಡ ಪಾಠಗಳನ್ನು ನಾನು ಹಂಚಿಕೊಳ್ಳುತ್ತೇನೆ.',
+    poor_performance: 'ನಮಸ್ಕಾರ. ನಾನು {n} ಅವರ ಗಣಿತ ಶಿಕ್ಷಕಿ ಮೀನಾ. ಕಳೆದ ಘಟಕ ಪರೀಕ್ಷೆಯಲ್ಲಿ {n} 50ರಲ್ಲಿ 16 ಅಂಕ ಪಡೆದಿದ್ದಾಳೆ. ಮನೆಯಲ್ಲಿ ಅಭ್ಯಾಸಕ್ಕೆ ಸಹಾಯ ಮಾಡಬಹುದೇ?',
+    behavioral_concern: 'ನಮಸ್ಕಾರ. ನಾನು {n} ಅವರ ತರಗತಿ ಶಿಕ್ಷಕಿ ಮೀನಾ. ಈ ವಾರ {n} ತರಗತಿಯಲ್ಲಿ ಗಮನ ಕೊಡುತ್ತಿಲ್ಲ. ಮನೆಯಲ್ಲಿ ಎಲ್ಲವೂ ಸರಿಯಾಗಿದೆಯೇ?',
+    positive_feedback: 'ನಮಸ್ಕಾರ. ನಾನು ಮೀನಾ. {n} ಈ ತಿಂಗಳು ಪ್ರತಿದಿನ ಶಾಲೆಗೆ ಬಂದಳು ಮತ್ತು ಗಣಿತದಲ್ಲಿ ತರಗತಿಗೆ ಮೊದಲಿಗಳಾದಳು. ಅಭಿನಂದನೆಗಳು!',
+  },
+  Hindi: {
+    consecutive_absences: 'नमस्ते। मैं मीना, {n} की गणित शिक्षिका। {n} इस हफ़्ते तीन दिन स्कूल नहीं आया। क्या सब ठीक है? छूटे हुए पाठ मैं साझा कर दूँगी।',
+    poor_performance: 'नमस्ते। मैं मीना, {n} की गणित शिक्षिका। पिछली इकाई परीक्षा में {n} के 50 में से 16 अंक आए। क्या हम मिलकर अभ्यास की योजना बना सकते हैं?',
+    behavioral_concern: 'नमस्ते। मैं मीना, {n} की कक्षा शिक्षिका। इस हफ़्ते {n} कक्षा में ध्यान नहीं दे पा रहा। क्या घर पर सब ठीक है?',
+    positive_feedback: 'नमस्ते। मैं मीना। {n} इस महीने हर दिन स्कूल आया और गणित में कक्षा में सबसे आगे रहा। बधाई!',
+  },
+  Odia: { consecutive_absences: 'ନମସ୍କାର। ମୁଁ ମୀନା, {n}ଙ୍କ ଗଣିତ ଶିକ୍ଷୟିତ୍ରୀ। ଏହି ସପ୍ତାହରେ {n} ତିନି ଦିନ ସ୍କୁଲକୁ ଆସିନାହାନ୍ତି। ସବୁ ଠିକ୍ ଅଛି କି?' },
+  Malayalam: { consecutive_absences: 'നമസ്കാരം. ഞാൻ {n}യുടെ ഗണിത അധ്യാപിക മീന.' },
+};
+const draftFor = (s, reason) => {
+  const byReason = MSG[s.lang] || {};
+  return (byReason[reason] || byReason.consecutive_absences || '').split('{n}').join(NAME_NATIVE[s.id] || first(s.name));
+};
+// Call script and summary per reason, so what the prototype says matches why the teacher called.
+const CALL = {
+  consecutive_absences: (n) => ({ tag: 'absences', mood: 'COOPERATIVE', lines: [
+    ['ai', `Namaste. This is SahayakAI calling for Meena ma’am, Class 7A. ${n} has missed three days this week. Is everything all right?`],
+    ['p', `${n} had a fever. We are better now, ma’am.`],
+    ['ai', `I’m glad to hear that. Could ${n} bring a note on Monday? Ma’am will share the work that was missed.`],
+    ['p', `Yes, ${n} will come on Monday with the note.`]],
+    said: `${n} had a fever and is better now, and will come to school on Monday with a note.`,
+    commit: `${n} comes back on Monday with a note.`, action: 'Share the work that was missed on Monday.', follow: 'Check attendance again next Friday.' }),
+  poor_performance: (n) => ({ tag: 'marks', mood: 'CONCERNED', lines: [
+    ['ai', `Namaste. This is SahayakAI calling for Meena ma’am, Class 7A maths. ${n} scored 16 out of 50 in the last unit test. Can we talk about how to help?`],
+    ['p', 'We didn’t know. Fractions are hard at home too.'],
+    ['ai', 'Ma’am will send a short practice sheet. Could someone sit with the practice for 20 minutes a day?'],
+    ['p', 'Yes, the elder sister can help in the evenings.']],
+    said: `The family didn’t know about the low mark. They say fractions are hard for ${n} at home too.`,
+    commit: `${n}’s elder sister will help with 20 minutes of practice each evening.`, action: 'Send the fractions practice sheet today.', follow: 'Re-test in 10 days, then call again.' }),
+  behavioral_concern: (n) => ({ tag: 'behaviour', mood: 'CONCERNED', lines: [
+    ['ai', `Namaste. This is SahayakAI calling for Meena ma’am, Class 7A. I’d like to talk about how ${n} is doing in class.`],
+    ['p', 'Is something wrong?'],
+    ['ai', `${n} has been distracted this week. Ma’am wanted to understand if anything is happening at home.`],
+    ['p', 'We moved house last week. I will talk to my child.']],
+    said: `The family moved house last week; they will talk with ${n}.`,
+    commit: `The parent will talk with ${n} this week.`, action: `Give ${n} a quiet seat near the front for two weeks.`, follow: 'Check in with the parent in two weeks.' }),
+  positive_feedback: (n) => ({ tag: 'good news', mood: 'GRATEFUL', lines: [
+    ['ai', `Namaste. This is SahayakAI calling for Meena ma’am. I have good news about ${n}.`],
+    ['p', 'Oh! Please tell me.'],
+    ['ai', `${n} came every day this month and topped the class in maths.`],
+    ['p', 'Thank you so much, we are very proud.']],
+    said: `The parent was delighted and thanked the teacher.`,
+    commit: 'The family will share the news at home.', action: `Mention ${n}’s progress in class tomorrow.`, follow: null }),
+};
+const SCRIPT = (n, reason) => (CALL[reason] || CALL.consecutive_absences)(n).lines;
+function seedCommunity() {
+  return {
+    posts: [
+      { id: 'p1', uid: 'u-sr', n: 'Suresh Reddy', g: 'Class 7 Maths', ago: '11h', type: 'Tried this', body: 'Taught fractions by cutting chapatis. The class finally understood halves and quarters.', likes: 38, c: 12, liked: false },
+      { id: 'p2', uid: 'u-di', n: 'Deepa Iyer', g: 'English · Karnataka', ago: '1d', type: 'Need help', body: 'Any ideas for students who won’t speak up in English class?', likes: 9, c: 21, liked: false },
+      { id: 'p3', uid: 'u-ak', n: 'Aisha Khan', g: 'Class 8 Science', ago: '2d', type: 'Celebrate', body: 'Our Class 8 won the district science fair with a water filter made from clay pots.', likes: 112, c: 30, liked: true },
+      { id: 'p4', uid: 'u-rk', n: 'Ravi Kulkarni', g: 'Class 7 Maths', ago: '3d', type: 'Resource', body: 'Shared a worksheet: Water cycle practice, 12 questions.', likes: 3, c: 0, liked: false },
+    ],
+    connected: new Set(['u-ak']), requested: new Set(),
+    requests: [{ uid: 'u-sd', n: 'Shalini Desai' }, { uid: 'u-mp', n: 'Mohan Patil' }],
+    convos: [
+      { id: 'cv1', n: 'Aisha Khan', unread: 2, msgs: [
+        { me: false, t: 'Hi Meena! Saw your fractions post.', at: '10:02' },
+        { me: false, t: 'Sent you the photosynthesis sheet', at: '10:04' } ] },
+    ],
+    staffChat: [
+      { n: 'Deepa Iyer', t: 'Good morning everyone! Exams start next week here.', at: '8:41' },
+      { n: 'Suresh Reddy', t: 'Same here. Revising decimals today.', at: '8:55' },
+    ],
+    updates: [
+      { id: 'n1', icon: 'cal', tint: 'tint0', t: 'Dhruv has missed 3 days in a row', s: 'Open Class 8B to see the days that were missed.', at: '2h', unread: true },
+      { id: 'n2', icon: 'phone', tint: 'tint1', t: 'Parent call finished for Kavya Shetty', s: 'The conversation summary is ready in the Parent Hotline.', at: '1d', unread: false },
+    ],
+    myGroups: [{ n: 'Daily Briefing', m: 44 }, { n: 'Karnataka Teachers', m: 3880 }],
+    suggested: [{ id: 'g3', n: '9 Mathematics · CBSE', m: 4, joined: false }, { id: 'g4', n: 'Education Updates', m: 15, joined: false }],
+    people: [
+      { uid: 'u-rs', n: 'Rakesh Singh', meta: 'Science · same school' },
+      { uid: 'u-ad', n: 'Anjali Deshmukh', meta: 'Maths · Pune' },
+      { uid: 'u-sr', n: 'Suresh Reddy', meta: 'Maths · Hyderabad' },
+    ],
+  };
+}
+
+/* ── State ── */
+let S;
+function reset() {
+  stopCall(true);
+  S = {
+    tab: 'home', view: 'home', hub: 'staff', filter: 'All', toast: null, sheet: null, threadId: null,
+    classes: seedStudents(),
+    roll: { s1: null, s2: null, s3: null, s4: null }, rollSaved: false, rollEdited: false,
+    hl: freshHotline(), call: null,
+    ...seedCommunity(),
+  };
+  logs.length = 0; renderLog(); render();
+}
+function freshHotline() {
+  return { stage: 'pick', cls: 'c7', student: null, reason: null, note: '', evidence: null, draft: null, busy: false,
+    error: null, dedupUntil: 0, absent: new Set(), launched: false, outcome: null, summaryAt: null };
+}
+const sc = () => ({
+  hours: document.getElementById('s-hours').value, outcome: document.getElementById('s-out').value,
+  ev: document.getElementById('s-ev').value, cls: document.getElementById('s-cls').checked,
+  poll: document.getElementById('s-poll').checked, like: document.getElementById('s-like').checked,
+  send: document.getElementById('s-send').checked,
+});
+const inHours = () => sc().hours === 'in';
+
+/* ── Request log ── */
+const logs = [];
+function log(method, path, body) {
+  const now = new Date(); const t = now.toTimeString().slice(0, 8);
+  logs.unshift({ method, path, body, t }); if (logs.length > 40) logs.pop(); renderLog();
+}
+function renderLog() {
+  const el = document.getElementById('log');
+  el.innerHTML = logs.length ? logs.map((l) => `<div class="e"><span class="t">${l.t}</span> <span class="m">${l.method}</span> ${esc(l.path)}${l.body ? '\n' + esc(JSON.stringify(l.body)) : ''}</div>`).join('')
+    : '<div class="empty">Requests appear here as you use the app.</div>';
+}
+
+/* ── Toast ── */
+let toastTimer;
+function toast(t) { S.toast = t; clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; render(); }, 2600); render(); }
+
+/* ── Render ── */
+const screen = document.getElementById('screen');
+function render() {
+  const v = S.view;
+  let html;
+  if (v === 'home') html = homeView();
+  else if (v === 'roll') html = rollView();
+  else if (v === 'hotline') html = hotlineView();
+  else if (v === 'hub') html = hubView();
+  else if (v === 'network') html = networkView();
+  else if (v === 'thread') html = threadView();
+  else if (v === 'staffchat') html = staffChatView();
+  const keep = screen.querySelector('.body')?.scrollTop ?? 0;
+  const sameView = screen.dataset.v === v + (S.hl.stage || '') + S.hub;
+  screen.className = 'screen' + (v === 'hotline' ? ' sage' : '');
+  screen.innerHTML = `<div class="status"><span>${IST[sc().hours].map((x) => String(x).padStart(2, '0')).join(':')}</span><span>● ● ▮</span></div>${html}${S.toast ? `<div class="toast" role="status">${esc(S.toast)}</div>` : ''}${S.sheet ? sheetView() : ''}`;
+  screen.dataset.v = v + (S.hl.stage || '') + S.hub;
+  const b = screen.querySelector('.body'); if (b && sameView) b.scrollTop = keep;
+  if (v === 'thread' || v === 'staffchat') { const bb = screen.querySelector('.body'); if (bb) bb.scrollTop = bb.scrollHeight; }
+}
+const dock = () => `<nav class="dock"><div class="bar">
+  <button class="${S.tab === 'home' ? 'on' : ''}" data-act="tab" data-arg="home" aria-label="Home">${ic('home')}${S.tab === 'home' ? 'Home' : ''}</button>
+  <button aria-label="My work" data-act="toast" data-arg="My work isn't part of this prototype">${ic('folder')}</button>
+  <button class="${S.tab === 'community' ? 'on' : ''}" data-act="tab" data-arg="community" aria-label="Community">${ic('users')}${S.tab === 'community' ? 'Community' : ''}</button>
+  <button aria-label="Me" data-act="toast" data-arg="Me isn't part of this prototype">${ic('user')}</button></div></nav>`;
+const header = (back, trailing = '') => `<div class="hdr">${back ? `<button class="back" data-act="${back}" aria-label="Back">${ic('back')}</button>` : '<span></span>'}${trailing}</div>`;
+
+/* Home */
+function homeView() {
+  const left = S.call || S.endedAway;
+  const callBanner = left ? `<button class="card stack" style="text-align:left;gap:6px" data-act="resume"><span class="ov eye">Waiting for you</span><span class="row sm"><span style="width:8px;height:8px;border-radius:50%;background:var(--leaf)"></span><span class="grow">Call with ${esc(first(left.student.name))}’s parent · tap to return</span>${ic('chev', 16)}</span></button>` : '';
+  return `<div class="body"><div class="row" style="padding-top:6px">${av('Meena Kulkarni', true)}<span class="grow"><span class="sm muted">Thu, 5 Nov</span><b style="display:block">Meena Kulkarni</b></span></div>
+  <span class="ov eye">Your tools</span>${callBanner}
+  <div class="tiles"><button class="tile" data-act="open" data-arg="roll"><b>Roll call</b><span>Class 7A register</span></button>
+  <button class="tile" data-act="open" data-arg="hotline"><b>Call parents</b><span>AI calls in their language</span></button></div>
+  <p class="sub">Prototype home: only the tools you can test here are shown.</p></div>${dock()}`;
+}
+
+/* Roll call → hand-off */
+function rollView() {
+  const st = S.classes.c7.students;
+  const absent = S.rollSaved && !S.rollEdited ? st.filter((s) => S.roll[s.id] === 'absent') : [];
+  return `<div class="body">${header('home')}<h1 class="h1">Class 7A</h1><span class="sub">Today · tap Absent for anyone not here, then Save</span>
+  <div class="card stack" style="gap:2px">${st.map((s) => `<div class="row" style="min-height:52px">${av(s.name)}<b class="grow">${esc(s.name)}</b>
+    <button class="chip ${S.roll[s.id] === 'present' ? 'go' : ''}" data-act="mark" data-arg="${s.id}|present">Present</button>
+    <button class="chip" style="${S.roll[s.id] === 'absent' ? 'background:var(--red);color:#fff;box-shadow:none' : ''}" data-act="mark" data-arg="${s.id}|absent">Absent</button></div>`).join('')}</div>
+  ${absent.length ? `<button class="btn sec" data-act="handoff">${ic('phone', 16)} ${absent.length} marked absent · call a parent</button>` : ''}
+  ${S.rollSaved && S.rollEdited ? '<span class="sub">You have unsaved changes. Save to update who is called.</span>' : ''}</div>
+  <div class="foot"><button class="btn" data-act="saveRoll" ${Object.values(S.roll).some((v) => v) ? '' : 'disabled'}>Save register</button></div>`;
+}
+
+/* ── Hotline ── */
+function hotlineView() {
+  const h = S.hl;
+  if (h.stage === 'pick') return pickView();
+  const s = h.student; const meta = [s.last4 ? '•••• ' + s.last4 : null, NATIVE[s.lang]].filter(Boolean).join(' · ');
+  const top = `${header('hlBack')}<div><h1 class="h1">Contact ${esc(first(s.name))}’s parent</h1><span class="sub">${esc(meta)}</span></div>`;
+  if (h.stage === 'reason') return `<div class="body">${top}<span class="ov eye">Step 1 of 3 · Reason for outreach</span>
+    ${REASONS.map((r) => `<button class="reason ${h.reason === r.k ? 'on' : ''}" data-act="reason" data-arg="${r.k}" aria-pressed="${h.reason === r.k}">
+      <span class="icn tint${REASONS.indexOf(r) % 3}">${ic(r.icon)}</span><span class="grow"><b style="display:block">${r.label}</b><span class="sm muted">${r.desc}</span></span><span class="chk">${h.reason === r.k ? ic('check', 13, 3) : ''}</span></button>`).join('')}</div>
+    <div class="foot"><button class="btn" data-act="next" ${h.reason ? '' : 'disabled'}>Next</button></div>`;
+  if (h.stage === 'evidence') return evidenceView(top);
+  if (h.stage === 'review') return reviewView(top);
+  if (h.stage === 'calling') return callingView();
+  return summaryView(top);
+}
+function pickView() {
+  const h = S.hl; const cls = S.classes[h.cls]; const failed = h.cls === 'c8' && sc().cls;
+  const all = Object.entries(S.classes).filter(([k]) => !(k === 'c8' && sc().cls)).flatMap(([, c]) => c.students);
+  const reach = all.filter((s) => s.last4).length;
+  const studs = [...cls.students.filter((s) => h.absent.has(s.id)), ...cls.students.filter((s) => !h.absent.has(s.id))];
+  const resume = S.call ? `<button class="card row" style="text-align:left;background:var(--optLeaf)" data-act="resume">${ic('phone', 18)}<span class="grow"><b>Call in progress</b><span class="sm muted" style="display:block">${esc(first(S.call.student.name))}’s parent · the call carries on · tap to return</span></span>${ic('chev', 16)}</button>` : '';
+  return `<div class="body">${header('leave', `<button class="chip link" data-act="toast" data-arg="Opens the add-student form for ${cls.name}">+ Add student</button>`)}
+  <div><h1 class="h1">Parent outreach</h1><span class="sub">${reach} of ${all.length} students have a parent phone on file</span></div>${resume}
+  <div class="seg" role="tablist">${Object.entries(S.classes).map(([k, c]) => `<button role="tab" class="${h.cls === k ? 'on' : ''}" data-act="cls" data-arg="${k}" aria-selected="${h.cls === k}">${c.name}</button>`).join('')}</div>
+  ${failed ? `<div class="card row">${ic('alert')}<span class="grow"><b style="display:block">This class didn't load</b><span class="sm muted">That didn't go through. Please try again.</span></span><button class="chip link" data-act="retryCls">Try again</button></div>`
+  : studs.map((s) => `<div class="card row">${av(s.name)}<span class="grow"><b style="display:block">${esc(s.name)}</b>${h.absent.has(s.id) ? '<span class="sm" style="color:var(--red7);font-weight:600;display:block">Marked absent</span>' : ''}<span class="sm muted">${s.last4 ? esc(cls.name + ' · ' + NATIVE[s.lang]) : 'No parent number saved'}</span></span>${s.last4 ? `<button class="chip link" data-act="contact" data-arg="${s.id}">Contact</button>` : ''}</div>`).join('')}</div>`;
+}
+function evidenceView(top) {
+  const h = S.hl; const ev = h.evidence || { abs: 'loading', marks: 'loading' }; const loadingAny = ev.abs === 'loading' || ev.marks === 'loading';
+  const half = (state, body, label) => state === 'loading' ? '<div class="stack" style="gap:7px"><div class="skel" style="width:70%"></div><div class="skel" style="width:45%"></div></div>'
+    : state === 'failed' ? `<div class="row sm"><span class="grow muted">Couldn't load ${label}.</span><button class="textbtn" data-act="retryEv">Try again</button></div>` : body;
+  return `<div class="body">${top}<span class="ov eye">Step 2 of 3 · Evidence</span>
+  <div class="card stack" style="gap:6px"><span class="ov">Recent attendance</span>
+   ${half(ev.abs, `${['Tue, 3 Nov', 'Mon, 2 Nov', 'Fri, 30 Oct'].map((d) => `<div class="ev-row"><span class="muted">${d}</span><b style="color:var(--red7)">Absent</b></div>`).join('')}`, 'attendance')}
+   <div class="row" style="margin-top:10px"><span class="ov grow">Recent marks · AI cites these</span>${ev.marks === 'loaded' ? '<span class="pill" style="background:var(--redTint);color:var(--red7)">AT RISK</span>' : ''}</div>
+   ${half(ev.marks, `<div class="ev-row"><span class="muted">Maths · Unit test 2</span><b>16/50 · 32%</b></div><div class="ev-row"><span class="muted">Maths · Weekly quiz</span><b>4/10 · 40%</b></div>`, 'marks')}</div>
+  <span class="sm" style="color:var(--leaf7)">The message cites only this record. Nothing is invented.</span>
+  <label class="lbl" for="hl-note">Specific note · optional</label>
+  <textarea id="hl-note" rows="3" placeholder="e.g. She missed the unit test on Monday" data-input="note">${esc(h.note)}</textarea>
+  ${h.error ? `<div class="banner err">${ic('alert')}<span>${esc(h.error)}</span></div>` : ''}</div>
+  <div class="foot"><div class="btns" style="grid-template-columns:1fr 2fr"><button class="btn sec" data-act="hlBack" ${h.busy ? 'disabled' : ''}>Back</button>
+  <button class="btn" data-act="draft" ${h.busy || loadingAny ? 'disabled' : ''}>${h.busy ? 'Drafting…' : 'Draft the message'}</button></div></div>`;
+}
+function reviewView(top) {
+  const h = S.hl; const s = h.student; const callable = CALLABLE.has(s.lang);
+  const blockedFor = Math.max(0, Math.ceil((h.dedupUntil - Date.now()) / 1000));
+  const outside = !inHours();
+  let banner = '';
+  if (!callable) banner = `<div class="banner note">${ic('phoneOff')}<span>Auto-call isn't available for ${s.lang} yet. Copy the message to send on WhatsApp.</span></div>`;
+  else if (h.error === 'hours' || (outside && h.triedOutside)) banner = `<div class="banner note">${ic('clock')}<span>Parents are only called between 9 am and 9 pm. Calling opens at 9:00 AM.</span></div>`;
+  return `<div class="body">${top}<span class="ov eye">Step 3 of 3 · Review before sending</span>
+  <div class="card" style="font-size:14.5px;line-height:1.7">${esc(h.draft)}</div>
+  <span class="sm muted">Sample draft. In the app the AI writes it from the record above.</span>
+  <button class="btn sec" data-act="regen" style="height:44px;font-size:14px">${ic('retry', 15)} Regenerate</button>
+  <div class="card stack" style="gap:6px"><span class="ov">What this call covers</span><div class="lines">
+  <div>${ic('check', 14)}<span>Opens warmly in the parent’s language and says who is calling.</span></div>
+  <div>${ic('check', 14)}<span>Explains the reason, citing only the record above.</span></div>
+  <div>${ic('check', 14)}<span>Listens, answers simply, and agrees one next step.</span></div>
+  <div>${ic('check', 14)}<span>Afterwards it logs the outcome and drafts a follow-up.</span></div></div></div></div>
+  <div class="foot"><span class="sm muted row" style="align-items:flex-start">${ic('shield', 14)} The parent hears an automated AI voice notice at the start of the call.</span>${banner}
+  <div class="${callable ? 'btns' : ''}"><button class="btn sec" data-act="whatsapp" ${h.busy ? 'disabled' : ''}>Copy for WhatsApp</button>
+  ${callable ? `<button class="btn call" data-act="call" ${h.busy || blockedFor || h.error === 'hours' ? 'disabled' : ''}>${h.busy ? 'Calling…' : blockedFor ? `Call again in ${Math.floor(blockedFor / 60)}:${String(blockedFor % 60).padStart(2, '0')}` : `${ic('phone', 16)} Call parent`}</button>` : ''}</div></div>`;
+}
+function callingView() {
+  const c = S.call; const sec = Math.floor((Date.now() - c.start) / 1000);
+  return `<div class="body">${header('hlBack')}<div class="stack" style="justify-items:center;text-align:center;gap:14px;padding-top:6px">
+  <span class="ov" style="color:var(--leaf7)" aria-live="polite">Call in progress · ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}</span>
+  <div class="glyph">${ic('phone', 36)}</div>
+  <h2 class="h2" style="font-size:22px">Calling ${esc(c.student.name)}’s parent…</h2>
+  <span class="sub">Speaking ${NATIVE[c.student.lang]}${c.turns.length > 1 ? ` · ${c.turns.length} exchanges so far` : ''}</span>
+  ${sc().poll ? '<span class="sm" style="color:var(--amb)">We couldn’t check on the call just now. It may still be going. Still trying.</span>' : ''}</div>
+  ${c.turns.length ? `<div class="card stack"><span class="ov">Live transcript</span>${c.turns.map(([w, t]) => `<div class="tline"><span class="who ${w}">${w === 'ai' ? 'AI' : 'Parent'}</span><span>${esc(t)}</span></div>`).join('')}</div>` : ''}
+  <span class="sm muted" style="text-align:center">You can leave this screen. The summary will be waiting for you.</span></div>
+  <div class="foot"><button class="btn sec" data-act="leaveCall">Leave · the call continues</button></div>`;
+}
+function summaryView(top) {
+  const h = S.hl; const o = h.outcome; const s = h.student;
+  const startNew = `<button class="textbtn" data-act="startNew">Start a new message</button>`;
+  const empty = (icon, title, body, actions) => `<div class="stack" style="gap:12px;padding-top:6px"><span class="icn tint0" style="width:56px;height:56px;border-radius:50%">${ic(icon, 22)}</span><h2 class="h2">${title}</h2><span class="sub">${body}</span><div class="stack">${actions}</div></div>`;
+  let inner;
+  if (o === 'summary') {
+    const c = (CALL[h.reason] || CALL.consecutive_absences)(first(s.name));
+    inner = `<span class="ov eye">Parent call · ${c.tag}</span><h2 class="h2" style="font-size:22px">${esc(s.name)}’s parent</h2>
+    <div class="tint-card row" style="background:var(--leafTint)"><span style="width:38px;height:38px;border-radius:50%;background:var(--leaf);color:#fff;display:grid;place-items:center">${ic('check', 20, 2.6)}</span>
+      <span class="grow"><b style="color:var(--leaf7);font-size:15px">Call completed</b><span class="sm" style="display:block;color:var(--ink6)">2 min · 4 exchanges</span><span class="pill" style="${c.mood === 'CONCERNED' ? 'background:var(--sfTint);color:var(--sf7);box-shadow:0 0 0 1px var(--optRing)' : 'background:var(--leafTint);color:var(--leaf7);box-shadow:0 0 0 1px var(--leafRing)'};margin-top:6px">${c.mood}</span></span></div>
+    <div class="card stack" style="gap:6px"><span class="ov">What the parent said</span><span style="font-size:14px;line-height:1.55">${esc(c.said)}</span></div>
+    <div class="tint-card" style="background:var(--indTint);color:var(--indInk)"><span class="ov" style="color:inherit">Parent commitments</span><div class="lines"><div>${ic('check', 14)}<span>${esc(c.commit)}</span></div></div></div>
+    <div class="tint-card" style="background:#fff;box-shadow:0 0 0 1.5px var(--optRing)"><span class="ov" style="color:var(--sf6)">Your action items</span><div class="lines" style="color:var(--ink)"><div style="color:var(--sf6)">${ic('arrow', 14)}<span style="color:var(--ink)">${esc(c.action)}</span></div></div></div>
+    ${c.follow ? `<div class="tint-card" style="background:var(--redTint);color:var(--red7)"><span class="ov" style="color:inherit">Follow-up</span><div class="lines"><div>${ic('clock', 14)}<span>${esc(c.follow)}</span></div></div></div>` : ''}
+    <div class="btns" style="grid-template-columns:1fr"><button class="btn" data-act="done">Done</button>${callAgainBtn()}</div>`;
+  } else if (o === 'noAnswer' || o === 'busy') {
+    inner = empty('phoneOff', o === 'busy' ? 'The line was busy' : 'No one answered', "The call didn't go through. You can try again, or copy the message to send on WhatsApp.",
+      `<button class="btn" data-act="retryCall">${ic('retry', 16)} Try again</button><button class="btn sec" data-act="whatsapp">Copy for WhatsApp</button>${startNew}`);
+  } else if (o === 'short') {
+    inner = empty('phoneOff', 'The call ended too soon', 'The parent picked up but the call ended before a conversation. Try again later, or send the message on WhatsApp.',
+      `<button class="btn" data-act="retryCall">${ic('retry', 16)} Try again</button><button class="btn sec" data-act="whatsapp">Copy for WhatsApp</button>${startNew}`);
+  } else if (o === 'unavailable') {
+    inner = empty('msg', 'The summary isn’t ready', 'The call happened, but its summary didn’t come back. The transcript is below.',
+      `<div class="card stack">${SCRIPT(first(s.name), h.reason).map(([w, t]) => `<div class="tline"><span class="who ${w}">${w === 'ai' ? 'AI' : 'Parent'}</span><span>${esc(t)}</span></div>`).join('')}</div><button class="btn" data-act="done">Done</button>${startNew}`);
+  } else if (o === 'progress') {
+    inner = empty('phone', 'The call is still going', 'We stopped checking after a few minutes. It may still be in progress. Check again in a moment.',
+      `<button class="btn" data-act="recheck">${ic('retry', 16)} Check again</button><button class="btn sec" data-act="done">Done</button>`);
+  } else {
+    inner = empty('wifi', 'We couldn’t check this call', 'Its status couldn’t be read just now. The call itself may have finished. Check again in a moment.',
+      `<button class="btn" data-act="recheck">${ic('retry', 16)} Check again</button><button class="btn sec" data-act="done">Done</button>`);
+  }
+  return `<div class="body">${top}${inner}</div>`;
+}
+function callAgainBtn() {
+  const left = Math.max(0, Math.ceil((S.hl.dedupUntil - Date.now()) / 1000));
+  return `<button class="btn sec" data-act="callAgain" ${left ? 'disabled' : ''}>${left ? `Call again in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : 'Call again'}</button>`;
+}
+
+/* ── Community ── */
+const TYPES = ['All', 'Resource', 'Tried this', 'Celebrate', 'Need help'];
+const TCLS = { 'Resource': 't-res', 'Tried this': 't-tried', 'Celebrate': 't-cel', 'Need help': 't-help' };
+function hubView() {
+  const unreadUpd = S.updates.some((u) => u.unread);
+  const top = `<div class="row" style="padding-top:4px"><span class="grow"><h1 class="h1">Community</h1><span class="sub">Teachers across Bharat</span></span>
+  <button class="back" style="position:relative" data-act="hub" data-arg="upd" aria-label="Updates${unreadUpd ? ', unread' : ''}">${ic('bell')}${unreadUpd ? '<i style="position:absolute;top:6px;right:7px;width:9px;height:9px;border-radius:50%;background:var(--red);border:2px solid #fff"></i>' : ''}</button></div>
+  <div class="seg" role="tablist">${[['staff', 'Staffroom'], ['msg', 'Messages'], ['upd', 'Updates']].map(([k, l]) => `<button role="tab" class="${S.hub === k ? 'on' : ''}" aria-selected="${S.hub === k}" data-act="hub" data-arg="${k}">${l}</button>`).join('')}</div>`;
+  const pane = S.hub === 'staff' ? staffPane() : S.hub === 'msg' ? msgPane() : updPane();
+  return `<div class="body">${top}${pane}</div>${dock()}`;
+}
+function staffPane() {
+  const posts = S.posts.filter((p) => S.filter === 'All' || p.type === S.filter);
+  return `<div class="tiles"><button class="tile" data-act="open" data-arg="staffchat"><b>Staff room</b><span>Open chat</span></button><button class="tile" data-act="open" data-arg="network"><b>Your network</b><span>Groups and people</span></button></div>
+  <button class="ask" data-act="compose">${ic('pencil')} What did you do today?</button>
+  <div class="chips" role="group" aria-label="Filter posts">${TYPES.map((t) => `<button class="chip ${S.filter === t ? 'on' : TCLS[t] || ''}" data-act="filter" data-arg="${t}" aria-pressed="${S.filter === t}">${t}</button>`).join('')}</div>
+  ${posts.length ? posts.map(postCard).join('') : '<div class="card sub">No posts of this type yet.</div>'}`;
+}
+function postCard(p) {
+  const tc = TCLS[p.type];
+  const conn = p.uid === 'me' || S.connected.has(p.uid) ? '' : S.requested.has(p.uid) ? `<span class="chip link" style="box-shadow:0 0 0 1px var(--hair)">${ic('check', 13)} Requested</span>` : `<button class="chip link" data-act="connect" data-arg="${p.uid}|${esc(p.n)}">Connect</button>`;
+  return `<article class="card stack" style="gap:9px"><div class="row">${av(p.n)}<span class="grow"><b style="display:block;font-size:14px">${esc(p.n)}</b><span class="sm muted">${esc(p.g)} · ${p.ago}</span></span><span class="pill ${tc}">${p.type.toUpperCase()}</span></div>
+  <p style="margin:0;font-size:14px;line-height:1.55">${esc(p.body)}</p>
+  <div class="row" style="min-height:40px"><button class="row sm" style="gap:4px;min-height:44px;color:${p.liked ? 'var(--red)' : 'var(--ink5)'}" data-act="like" data-arg="${p.id}" aria-pressed="${p.liked}" aria-label="${p.liked ? 'Liked' : 'Like'}, ${p.likes}">
+  <span style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;${p.liked ? 'background:var(--redTint)' : ''}">${ic('heart', 15)}</span><b style="font-variant-numeric:tabular-nums;color:${p.liked ? 'var(--red7)' : 'var(--ink6)'}">${p.likes}</b></button>
+  ${p.c ? `<span class="sm muted grow">${p.c} comment${p.c === 1 ? '' : 's'}</span>` : '<span class="grow"></span>'}${conn}</div>
+  ${p.likeFailed ? '<span class="sm muted" style="font-style:italic">Couldn’t save your like. Check your connection.</span>' : ''}</article>`;
+}
+function msgPane() {
+  return `<div class="banner info">Chat opens only after a teacher accepts your connection request.</div>
+  ${S.requests.length ? `<span class="ov">Pending requests · ${S.requests.filter((r) => !r.accepted).length}</span>${S.requests.map((r) => r.accepted
+    ? `<div class="card row" style="background:var(--optLeaf)">${av(r.n)}<span class="grow"><b style="display:block;font-size:14px">${esc(r.n)}</b><span class="sm" style="color:var(--leaf7)">${ic('check', 12, 3)} Connected · you can chat now</span></span><button class="chip on" data-act="startChat" data-arg="${r.uid}">Message</button></div>`
+    : `<div class="card row">${av(r.n)}<span class="grow"><b style="display:block;font-size:14px">${esc(r.n)}</b><span class="sm muted">Wants to connect</span></span>
+  <button class="chip" style="color:var(--ink6)" data-act="decline" data-arg="${r.uid}">Decline</button><button class="chip go" data-act="accept" data-arg="${r.uid}">Accept</button></div>`).join('')}` : ''}
+  <span class="ov">Conversations · ${S.convos.length}</span>
+  ${S.convos.length ? S.convos.map((c) => { const last = c.msgs[c.msgs.length - 1]; return `<button class="card row" style="text-align:left" data-act="thread" data-arg="${c.id}">${av(c.n, true)}<span class="grow"><b style="display:block;font-size:14px">${esc(c.n)}</b><span class="sm ${c.unread ? '' : 'muted'}" style="${c.unread ? 'font-weight:600' : ''}">${esc(last ? (last.me ? 'You: ' : '') + last.t : 'Say hello')}</span></span>
+   <span class="stack" style="justify-items:end;gap:4px"><span class="sm muted">${last ? last.at : ''}</span>${c.unread ? `<span style="min-width:24px;height:24px;border-radius:99px;background:var(--sf6);color:#fff;font:700 12px var(--body);display:grid;place-items:center;padding:0 6px">${c.unread}</span>` : ''}</span></button>`; }).join('')
+  : '<div class="card sub">No conversations yet. When you connect with teachers, your conversations appear here.</div>'}
+  <div class="stack" style="justify-items:center;text-align:center;padding:10px 0"><span class="icn tint0" style="width:56px;height:56px;border-radius:50%">${ic('msg', 22)}</span><b class="muted">Find more teachers</b><span class="sm muted">See groups to join and teachers you may know.</span><button class="textbtn" data-act="open" data-arg="network">Find teachers</button></div>`;
+}
+function updPane() {
+  const unread = S.updates.some((u) => u.unread);
+  return `<div class="row" style="align-items:flex-start"><span class="sm muted grow">These appear when you open the app. SahayakAI cannot send phone notifications yet.</span>${unread ? '<button class="textbtn sm" style="min-height:32px" data-act="readAll">Mark all as read</button>' : ''}</div>
+  ${S.updates.length ? S.updates.map((u) => `<button class="card row" style="text-align:left;align-items:flex-start" data-act="upd" data-arg="${u.id}"><span class="icn ${u.tint}">${ic(u.icon)}</span><span class="grow"><b style="display:block;font-size:13.5px;font-weight:${u.unread ? 700 : 600}">${esc(u.t)}</b><span class="sm muted">${esc(u.s)}</span></span><span class="stack" style="justify-items:end;gap:8px"><span class="sm muted">${u.at}</span>${u.unread ? '<span class="dotu"></span>' : ''}</span></button>`).join('')
+  : '<div class="card sub">Nothing new yet. Call outcomes, attendance alerts and finished papers appear here as they happen.</div>'}`;
+}
+function networkView() {
+  const fmt = (n) => n.toLocaleString('en-IN');
+  return `<div class="body">${header('toHub')}<div><h1 class="h1">Your network</h1><span class="sub">Groups and people</span></div>
+  <span class="ov">My groups · ${S.myGroups.length}</span><div class="card stack" style="gap:12px">${S.myGroups.map((g) => `<div class="row"><span class="icn tint1">${ic('users')}</span><span class="grow"><b style="display:block;font-size:14px">${esc(g.n)}</b><span class="sm muted">${fmt(g.m)} member${g.m === 1 ? '' : 's'}</span></span></div>`).join('')}</div>
+  <span class="ov">Suggested groups</span><div class="card stack" style="gap:12px">${S.suggested.map((g) => `<div class="row"><span class="icn tint2">${ic('users')}</span><span class="grow"><b style="display:block;font-size:14px">${esc(g.n)}</b><span class="sm muted">${fmt(g.m + (g.joined ? 1 : 0))} members</span></span><button class="chip ${g.joined ? '' : 'on'}" data-act="join" data-arg="${g.id}">${g.joined ? 'Joined' : 'Join'}</button></div>`).join('')}</div>
+  <span class="ov">People you may know</span><div class="card stack" style="gap:12px">${S.people.map((p) => `<div class="row">${av(p.n)}<span class="grow"><b style="display:block;font-size:14px">${esc(p.n)}</b><span class="sm muted">${esc(p.meta)}</span></span>
+   ${S.connected.has(p.uid) ? '<span class="sm muted">Connected</span>' : S.requested.has(p.uid) ? `<span class="chip link">${ic('check', 13)} Requested</span>` : `<button class="chip on" data-act="connect" data-arg="${p.uid}|${esc(p.n)}">Connect</button>`}</div>`).join('')}</div></div>${dock()}`;
+}
+function threadView() {
+  const c = S.convos.find((x) => x.id === S.threadId);
+  return `<div class="body" style="gap:8px">${header('toHub', `<span class="row" style="gap:8px">${av(c.n)}<b>${esc(c.n)}</b></span>`)}
+  ${c.msgs.length ? '' : `<div class="card sub" style="text-align:center">You and ${esc(first(c.n))} are connected. Say hello.</div>`}
+  ${c.msgs.map((m) => `<div class="bubble ${m.me ? 'me' : 'them'}">${esc(m.t)}<div class="meta">${m.at}${m.me ? ' · ✓✓' : ''}</div></div>`).join('')}
+  ${c.failed ? `<div class="card stack" style="gap:6px;box-shadow:0 0 0 1px #E6A9A0"><span class="sm" style="color:var(--red7);font-weight:600">Couldn’t send · check your connection</span><span class="sm muted">“${esc(c.failed)}”</span><button class="chip link" style="justify-self:start" data-act="retrySend">${ic('retry', 13)} Retry</button></div>` : ''}</div>
+  <div class="foot"><form class="composer" data-form="send"><input id="msg-in" aria-label="Message" placeholder="Message ${esc(first(c.n))}" autocomplete="off"><button class="send" aria-label="Send">${ic('send')}</button></form></div>`;
+}
+function staffChatView() {
+  return `<div class="body" style="gap:8px">${header('toHub', '<b>Staff room</b>')}<span class="sm muted" style="text-align:center">Teachers from every group · be kind</span>
+  ${S.staffChat.map((m) => m.me ? `<div class="bubble me">${esc(m.t)}<div class="meta">${m.at}</div></div>` : `<div class="row" style="align-items:flex-end;gap:6px">${av(m.n)}<div class="bubble them"><b class="sm" style="display:block">${esc(m.n)}</b>${esc(m.t)}<div class="meta">${m.at}</div></div></div>`).join('')}</div>
+  <div class="foot"><form class="composer" data-form="staff"><input id="staff-in" aria-label="Message the staff room" placeholder="Message the staff room" autocomplete="off" maxlength="500"><button class="send" aria-label="Send">${ic('send')}</button></form></div>`;
+}
+function sheetView() {
+  return `<div class="overlay" data-act="closeSheet"><form class="sheet" data-form="post">
+  <h2 class="h2">What did you do today?</h2>
+  <label class="lbl" for="post-type">Type</label><select id="post-type">${TYPES.slice(1).map((t) => `<option${t === 'Tried this' ? ' selected' : ''}>${t}</option>`).join('')}</select>
+  <label class="lbl" for="post-group">Group</label><select id="post-group">${S.myGroups.map((g) => `<option>${esc(g.n)}</option>`).join('')}</select>
+  <textarea id="post-body" rows="4" placeholder="Share what worked, ask for help, or celebrate" maxlength="1000"></textarea>
+  <div class="btns"><button type="button" class="btn sec" data-act="closeSheet">Cancel</button><button class="btn">Post</button></div></form></div>`;
+}
+
+/* ── Hotline logic ── */
+function openHotline(absentIds) {
+  S.view = 'hotline'; S.tab = 'home';
+  if (S.call) { S.hl.stage = 'calling'; S.hl.student = S.call.student; render(); return; }
+  if (S.endedAway) { const e = S.endedAway; S.endedAway = null; S.hl.student = e.student; finishCall(e.outcome, e.student); render(); return; }
+  // A finished call keeps its summary until Done, however the teacher returns.
+  if (!absentIds && S.hl.stage === 'summary' && S.hl.outcome) { render(); return; }
+  S.hl = freshHotline(); if (absentIds) S.hl.absent = new Set(absentIds);
+  log('GET', '/api/attendance/classes');
+  log('GET', '/api/attendance/classes/c7/students?projection=roster');
+  log('GET', '/api/attendance/classes/c8/students?projection=roster');
+  render();
+}
+function pickStudent(id) {
+  const cls = S.classes[S.hl.cls]; const s = cls.students.find((x) => x.id === id);
+  Object.assign(S.hl, { stage: 'reason', student: s, cls: S.hl.cls, reason: S.hl.absent.has(id) ? 'consecutive_absences' : null, note: '', draft: null, error: null, evidence: null, triedOutside: false });
+  log('GET', `/api/attendance/outreach?studentId=${id}`, null);
+  render();
+}
+let evTimers = [];
+function loadEvidence() {
+  evTimers.forEach(clearTimeout); const mode = sc().ev; const s = S.hl.student;
+  S.hl.evidence = { abs: 'loading', marks: 'loading' }; render();
+  log('GET', `/api/attendance/classes/${S.hl.cls}/students/${s.id}/absences?limitDays=30`);
+  log('GET', `/api/performance/student/${s.id}?classId=${S.hl.cls}`);
+  evTimers.push(setTimeout(() => { if (!S.hl.evidence) return; S.hl.evidence.abs = mode === 'allFail' ? 'failed' : 'loaded'; render(); }, 700));
+  evTimers.push(setTimeout(() => { if (!S.hl.evidence) return; S.hl.evidence.marks = mode === 'ok' ? 'loaded' : 'failed'; render(); }, 1300));
+}
+function draft() {
+  const h = S.hl; h.busy = true; h.error = null; render();
+  log('POST', '/api/ai/parent-message', { studentName: h.student.name, className: S.classes[h.cls].name, subject: S.classes[h.cls].subject, reason: h.reason, parentLanguage: h.student.lang, teacherNote: h.note || undefined, consecutiveAbsentDays: 3 });
+  setTimeout(() => { h.busy = false; h.draft = draftFor(h.student, h.reason); h.stage = 'review'; render(); }, 1100);
+}
+function placeCall(isRetry) {
+  const h = S.hl;
+  if (!inHours()) { h.error = 'hours'; h.triedOutside = true; render(); return; }
+  if (h.busy) return;
+  h.busy = true; render();
+  if (!isRetry) log('POST', '/api/attendance/outreach', { classId: h.cls, studentId: h.student.id, studentName: h.student.name, parentLanguage: h.student.lang, reason: h.reason, generatedMessage: '…', deliveryMethod: 'twilio_call' });
+  setTimeout(() => {
+    log('POST', '/api/attendance/call', { outreachId: 'out_1042', studentName: h.student.name });
+    h.busy = false; h.dedupUntil = Date.now() + 5 * 60 * 1000; h.stage = 'calling';
+    startCall(h.student); render();
+  }, 900);
+}
+let callTick, turnTimer, pollTimer;
+function startCall(student) {
+  stopCall(true);
+  S.call = { student, start: Date.now(), turns: [], outcome: sc().outcome };
+  const lines = SCRIPT(first(student.name), S.hl.reason); const o = S.call.outcome;
+  const nTurns = o === 'summary' || o === 'unavailable' || o === 'progress' ? lines.length : o === 'short' ? 1 : 0;
+  let i = 0;
+  callTick = setInterval(() => { if (S.view === 'hotline' && S.hl.stage === 'calling') render(); }, 1000);
+  pollTimer = setInterval(() => log('GET', '/api/attendance/outreach/out_1042'), 3000);
+  const step = () => {
+    if (i < nTurns) { S.call.turns.push(lines[i++]); if (S.view === 'hotline' && S.hl.stage === 'calling') render(); turnTimer = setTimeout(step, 2200); }
+    else turnTimer = setTimeout(endCall, nTurns ? 2400 : 3200);
+  };
+  turnTimer = setTimeout(step, 1600);
+}
+function stopCall(silent) { clearInterval(callTick); clearTimeout(turnTimer); clearInterval(pollTimer); if (S && !silent) S.call = null; }
+function endCall() {
+  const c = S.call; stopCall(true); S.call = null;
+  // The app stops checking on a call when the teacher leaves it (it carries on
+  // server-side). So a call that ends while away is only seen, and recorded in
+  // Updates, when the teacher comes back to it.
+  if (S.view !== 'hotline' || S.hl.stage !== 'calling') { S.endedAway = { student: c.student, outcome: c.outcome }; render(); return; }
+  finishCall(c.outcome, c.student); render();
+}
+function finishCall(o, student) {
+  S.hl.outcome = o; S.hl.student = student; S.hl.stage = 'summary';
+  if (o === 'summary' || o === 'noAnswer' || o === 'busy' || o === 'short') {
+    S.updates.unshift({ id: 'n' + Date.now(), icon: o === 'summary' ? 'phone' : 'phoneOff', tint: o === 'summary' ? 'tint1' : 'tint0',
+      t: o === 'summary' ? `Parent call finished for ${student.name}` : `Parent call didn't connect for ${student.name}`,
+      s: o === 'summary' ? 'The conversation summary is ready in the Parent Hotline.' : 'Open the Parent Hotline to try again or send on WhatsApp.', at: 'now', unread: true });
+  }
+}
+function stepBack() {
+  const h = S.hl;
+  if (h.stage === 'review') { h.stage = 'evidence'; h.error = null; }
+  else if (h.stage === 'evidence') { if (h.busy) return; h.stage = 'reason'; }
+  else if (h.stage === 'reason') { if (h.launched) return leave(); h.stage = 'pick'; }
+  else if (h.stage === 'calling') { leaveCall(); return; }
+  else return leave();
+  render();
+}
+function leave() { S.view = 'home'; S.tab = 'home'; render(); }
+function leaveCall() { S.view = 'home'; S.tab = 'home'; toast('The call carries on. You can return to it from Home.'); }
+
+/* ── Events ── */
+screen.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
+  const a = el.dataset.act, arg = el.dataset.arg;
+  const h = S.hl;
+  switch (a) {
+    case 'tab': S.tab = arg; S.view = arg === 'home' ? 'home' : 'hub'; render(); break;
+    case 'toast': toast(arg); break;
+    case 'open':
+      if (arg === 'hotline') return openHotline();
+      if (arg === 'roll') { S.view = 'roll'; render(); log('GET', '/api/attendance/classes/c7/register?date=2026-11-05'); return; }
+      if (arg === 'network') { S.view = 'network'; render(); log('GET', '/api/groups'); log('GET', '/api/groups/discover'); log('GET', '/api/community/teachers/recommended'); return; }
+      if (arg === 'staffchat') { S.view = 'staffchat'; render(); return; }
+      break;
+    case 'home': leave(); break;
+    case 'mark': { const [id, v] = arg.split('|'); S.roll[id] = S.roll[id] === v ? null : v; if (S.rollSaved) S.rollEdited = true; render(); break; }
+    case 'saveRoll': S.rollSaved = true; S.rollEdited = false;
+      log('POST', '/api/attendance/classes/c7/register', { date: '2026-11-05', statuses: Object.fromEntries(Object.entries(S.roll).filter(([, v]) => v)) });
+      toast('Register saved'); break;
+    case 'handoff': openHotline(Object.entries(S.roll).filter(([, v]) => v === 'absent').map(([k]) => k)); break;
+    case 'resume': openHotline(); break;
+    case 'leave': leave(); break;
+    case 'cls': h.cls = arg; render(); break;
+    case 'retryCls': log('GET', '/api/attendance/classes/c8/students?projection=roster'); toast(sc().cls ? 'Still failing. Untick the scenario to let it load.' : 'Loaded'); render(); break;
+    case 'contact': pickStudent(arg); break;
+    case 'hlBack': stepBack(); break;
+    case 'reason': if (h.reason !== arg) { h.draft = null; } h.reason = arg; render(); break;
+    case 'next': h.stage = 'evidence'; loadEvidence(); break;
+    case 'retryEv': loadEvidence(); break;
+    case 'draft': draft(); break;
+    case 'regen': draft(); break;
+    case 'whatsapp': {
+      const text = h.draft || draftFor(h.student, h.reason);
+      try { navigator.clipboard.writeText(text).catch(() => {}); } catch (_) { /* clipboard refused */ }
+      log('POST', '/api/attendance/outreach', { studentId: h.student.id, deliveryMethod: 'whatsapp_copy' });
+      toast('Message copied. Paste it into WhatsApp.'); break;
+    }
+    case 'call': placeCall(false); break;
+    case 'retryCall': h.stage = 'review'; placeCall(true); break;
+    case 'callAgain': h.stage = 'review'; render(); break;
+    case 'startNew': Object.assign(h, { stage: 'reason', reason: null, note: '', draft: null, outcome: null }); render(); break;
+    case 'recheck': log('GET', '/api/attendance/outreach/out_1042');
+      h.outcome = h.outcome === 'progress' ? 'summary' : 'summary'; toast('Call finished. Summary loaded.'); break;
+    case 'done': S.hl = freshHotline(); openHotline(); break;
+    case 'leaveCall': leaveCall(); break;
+    case 'hub': if (arg !== 'msg') S.requests = S.requests.filter((x) => !x.accepted); S.hub = arg; S.view = 'hub'; S.tab = 'community';
+      if (arg === 'msg') { log('GET', '/api/connections/mine'); } render(); break;
+    case 'toHub': S.view = 'hub'; S.tab = 'community'; render(); break;
+    case 'filter': S.filter = arg; render(); break;
+    case 'like': {
+      const p = S.posts.find((x) => x.id === arg); const was = p.liked;
+      p.liked = !was; p.likes += was ? -1 : 1; p.likeFailed = false; render();
+      log('POST', `/api/groups/g1/posts/${p.id}/like`);
+      if (sc().like) setTimeout(() => { p.liked = was; p.likes += was ? 1 : -1; p.likeFailed = true; render(); }, 600);
+      break;
+    }
+    case 'connect': { const [uid, n] = arg.split('|'); S.requested.add(uid); log('POST', '/api/connections/request', { toUid: uid }); toast(`Request sent to ${n}`); break; }
+    case 'accept': { const r = S.requests.find((x) => x.uid === arg); r.accepted = true; S.connected.add(arg);
+      log('POST', '/api/connections/request/accept', { requestId: 'req_' + arg }); toast(`You're now connected with ${first(r.n)}`); break; }
+    case 'startChat': { const r = S.requests.find((x) => x.uid === arg); S.requests = S.requests.filter((x) => x.uid !== arg);
+      let c = S.convos.find((x) => x.uid === arg);
+      if (!c) { c = { id: 'cv-' + arg, uid: arg, n: r.n, unread: 0, msgs: [] }; S.convos.unshift(c);
+        log('POST', '/api/messages/conversations/direct', { myUid: 'u-me', otherUid: arg }); }
+      S.threadId = c.id; S.view = 'thread'; render(); document.getElementById('msg-in')?.focus(); break; }
+    case 'decline': S.requests = S.requests.filter((x) => x.uid !== arg); log('POST', '/api/connections/request/decline', { requestId: 'req_' + arg }); render(); break;
+    case 'thread': { S.threadId = arg; const c = S.convos.find((x) => x.id === arg); S.view = 'thread';
+      if (c.unread) { c.unread = 0; log('POST', '/api/messages/mark-read', { conversationId: arg, userId: 'u-me' }); } render(); break; }
+    case 'retrySend': { const c = S.convos.find((x) => x.id === S.threadId); const t = c.failed; c.failed = null; sendMsg(c, t, c.failedId); break; }
+    case 'readAll': S.updates.forEach((u) => (u.unread = false)); render(); break;
+    case 'upd': { const u = S.updates.find((x) => x.id === arg); u.unread = false;
+      if (u.icon === 'phone' || u.icon === 'phoneOff') return openHotline();
+      render(); break; }
+    case 'join': { const g = S.suggested.find((x) => x.id === arg); if (g.joined) return; g.joined = true; log('POST', `/api/groups/${g.id}/membership`); render(); break; }
+    case 'compose': S.sheet = 'post'; render(); setTimeout(() => document.getElementById('post-body')?.focus(), 30); break;
+    case 'closeSheet': if (e.target === el || el.tagName === 'BUTTON') { S.sheet = null; render(); } break;
+  }
+});
+screen.addEventListener('input', (e) => { if (e.target.dataset.input === 'note') S.hl.note = e.target.value; });
+let cmid = 1;
+function sendMsg(c, text, id) {
+  const clientMessageId = id || 'cmid-' + cmid++;
+  log('POST', '/api/messages/send', { conversationId: c.id, text, type: 'text', clientMessageId });
+  if (sc().send) { document.getElementById('s-send').checked = false; c.failed = text; c.failedId = clientMessageId; render(); return; }
+  c.msgs.push({ me: true, t: text, at: 'now' }); render();
+  document.getElementById('msg-in')?.focus();
+}
+screen.addEventListener('submit', (e) => {
+  e.preventDefault(); const f = e.target.dataset.form;
+  if (f === 'send') { const inp = document.getElementById('msg-in'); const t = inp.value.trim(); if (!t) return; sendMsg(S.convos.find((x) => x.id === S.threadId), t); }
+  if (f === 'staff') { const inp = document.getElementById('staff-in'); const t = inp.value.trim(); if (!t) return; S.staffChat.push({ me: true, n: 'Meena Kulkarni', t, at: 'now' }); log('POST', '/api/community/chat', { text: t }); render(); document.getElementById('staff-in')?.focus(); }
+  if (f === 'post') {
+    const body = document.getElementById('post-body').value.trim(); if (!body) { document.getElementById('post-body').focus(); return; }
+    const type = document.getElementById('post-type').value, g = document.getElementById('post-group').value;
+    S.posts.unshift({ id: 'p' + Date.now(), uid: 'me', n: 'Meena Kulkarni', g, ago: 'now', type, body, likes: 0, c: 0, liked: false });
+    log('POST', '/api/groups/g1/posts', { content: body, postType: type.toLowerCase().replace(' ', '_') });
+    S.sheet = null; S.filter = 'All'; toast('Posted to ' + g);
+  }
+});
+document.getElementById('s-reset').addEventListener('click', reset);
+['s-hours', 's-cls', 's-poll'].forEach((id) => document.getElementById(id).addEventListener('change', () => { if (id === 's-hours' && inHours() && S.hl.error === 'hours') { S.hl.error = null; S.hl.triedOutside = false; } render(); }));
+setInterval(() => { if (S.view === 'hotline' && (S.hl.stage === 'review' || S.hl.stage === 'summary') && S.hl.dedupUntil > Date.now()) render(); }, 1000);
+reset();
+})();
+</script>
