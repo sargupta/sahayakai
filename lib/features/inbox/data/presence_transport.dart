@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/firebase/firebase_init.dart';
 import '../domain/conversation_id.dart';
 import '../domain/presence_status.dart';
 
@@ -67,13 +66,12 @@ class DeferredPresenceTransport implements PresenceTransport {
   }
 }
 
+/// The bound presence transport. Always the best-effort
+/// [DeferredPresenceTransport] (unknown presence, no typing, no-op writes):
+/// there is no RTDB presence implementation yet. It previously THREW whenever
+/// Firebase was configured — i.e. on every real launch — which would crash the
+/// first widget to read it; presence is a nicety, so the safe default is the
+/// deferred seam until a live implementation is bound.
 @Riverpod(keepAlive: true)
-PresenceTransport presenceTransport(Ref ref) {
-  if (FirebaseInit.isConfigured) {
-    throw StateError(
-      'Firebase is configured but the live PresenceTransport (RTDB) is not '
-      'wired. Bind RtdbPresenceTransport as part of the Block C handoff (U-SI6).',
-    );
-  }
-  return const DeferredPresenceTransport();
-}
+PresenceTransport presenceTransport(Ref ref) =>
+    const DeferredPresenceTransport();

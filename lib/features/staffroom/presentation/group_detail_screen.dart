@@ -16,23 +16,28 @@ import '../domain/group.dart';
 import 'widgets/chat_entry_tile.dart';
 import 'widgets/feed_post_card.dart';
 import 'widgets/join_button.dart';
+import 'widgets/post_composer.dart';
 
-/// U-SI2 — the Group detail (SPEC §A3.3). A group header (name, member count,
-/// description, an optimistic join/joined control) over the group's posts (the
-/// same [FeedPostCard] grammar with optimistic likes).
+/// U-SI2 — the Group detail. A group header (name, member count, description,
+/// an optimistic join/joined control) over the group's posts (the same
+/// [FeedPostCard] grammar with optimistic likes), a "What did you do today?"
+/// composer for members, and the group-chat entry.
 ///
-/// States mirror the Staffroom home:
+/// States:
 ///   - null uid → the sign-in `EmptyView`;
 ///   - group `loading` → an `AppSkeleton`; group `error` → an `ErrorView`;
-///   - group `null` → a "group not found" `EmptyView`;
-///   - posts **member-gated**: `getGroupPosts` throws Forbidden for a non-member,
-///     which (for a teacher who is not in the group) surfaces the locked
-///     "members only" preview; a genuine load error for a member surfaces an
-///     `ErrorView`.
+///   - group `null` → a "group not found" `EmptyView`.
 ///
-/// The app bar paints instantly from the [group] handed through the route `extra`
-/// (a feed / strip tap); a cold deep link resolves it from
-/// [staffroomGroupProvider] by id.
+/// **Membership is tri-state, never guessed.** The posts route is the
+/// authority: posts that load prove membership; a 403 proves non-membership
+/// (→ the locked "members only" preview + Join). Until either answers, the
+/// teacher's own groups list is consulted; if neither has resolved the
+/// membership is UNKNOWN and the join control shows a placeholder rather than
+/// a "Join" that might be wrong. Any other posts error is a real failure →
+/// `ErrorView` + retry, not a lock.
+///
+/// The app bar paints instantly from the [group] handed through the route
+/// `extra`; a cold deep link resolves it from [staffroomGroupProvider] by id.
 class GroupDetailScreen extends ConsumerStatefulWidget {
   const GroupDetailScreen({super.key, required this.groupId, this.group});
 
@@ -47,9 +52,22 @@ class GroupDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
-  /// Optimistic member-count bump while a just-tapped join is in flight / settled
-  /// (reset to 0 on rollback), so the header count moves with the button.
+  /// Optimistic member-count bump while a just-tapped join is in flight /
+  /// settled, until a fresh group read carries the server's count (then 0).
   int _memberDelta = 0;
+
+  /// Membership derived from the posts route (authoritative) and the teacher's
+  /// groups list; null = not known yet.
+  bool? _membership(
+    AsyncValue<List<GroupPost>> posts,
+    AsyncValue<List<Group>> myGroups,
+  ) {
+    if (posts.hasError && isMembershipGate(posts.error)) return false;
+    if (posts.hasValue) return true;
+    final mine = myGroups.valueOrNull;
+    if (mine != null && mine.any((g) => g.id == widget.groupId)) return true;
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,17 +90,24 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
       );
     }
 
+    // A fresh group read carries the server's member count — drop the
+    // optimistic bump so the join is not counted twice.
+    ref.listen<AsyncValue<Group?>>(staffroomGroupProvider(widget.groupId), (
+      previous,
+      next,
+    ) {
+      if (next.hasValue && !next.isLoading && _memberDelta != 0) {
+        setState(() => _memberDelta = 0);
+      }
+    });
+
     final groupAsync = ref.watch(staffroomGroupProvider(widget.groupId));
-    // Prefer the route `extra` for instant paint; else the resolved async value.
-    final group = widget.group ?? groupAsync.valueOrNull;
+    // Prefer the freshest server read; the route `extra` paints until it lands.
+    final group = groupAsync.valueOrNull ?? widget.group;
 
     return Scaffold(
-      appBar: GlassAppBar(
-        title: Text(group?.name ?? l10n.staffroomTitle),
-      ),
-      body: SafeArea(
-        child: _body(context, groupAsync, group),
-      ),
+      appBar: GlassAppBar(title: Text(group?.name ?? l10n.staffroomTitle)),
+      body: SafeArea(child: _body(context, groupAsync, group)),
     );
   }
 
@@ -122,19 +147,21 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
       );
     }
 
-    final isMember =
-        ref.watch(myGroupsProvider).valueOrNull?.any((g) => g.id == group.id) ??
-            false;
     final postsAsync = ref.watch(groupPostsProvider(widget.groupId));
+    final myGroupsAsync = ref.watch(myGroupsProvider);
+    final isMember = _membership(postsAsync, myGroupsAsync);
+    final liked = ref.watch(likedItemIdsProvider).valueOrNull;
 
     return RefreshIndicator(
       onRefresh: () async {
         ref
           ..invalidate(groupPostsProvider(widget.groupId))
-          ..invalidate(staffroomGroupProvider(widget.groupId));
-        await ref.read(groupPostsProvider(widget.groupId).future).catchError(
-              (_) => const <GroupPost>[],
-            );
+          ..invalidate(staffroomGroupProvider(widget.groupId))
+          ..invalidate(myGroupsProvider)
+          ..invalidate(likedItemIdsProvider);
+        await ref
+            .read(groupPostsProvider(widget.groupId).future)
+            .catchError((Object _) => const <GroupPost>[]);
       },
       child: ListView(
         padding: AppSpacing.pagePadding,
@@ -142,16 +169,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
           _GroupHeader(
             group: group,
             memberDelta: _memberDelta,
-            initialJoined: isMember,
+            membership: isMember,
             onJoinedChanged: (joined) => setState(
-              () => _memberDelta = (joined && !isMember) ? 1 : 0,
+              () => _memberDelta = (joined && isMember != true) ? 1 : 0,
             ),
           ),
-          // The group's live chat — member-gated (non-members see the locked
-          // preview below and must join first, mirroring the chat's
-          // `firestore.rules` membership gate).
-          if (isMember) ...[
+          if (isMember == true) ...[
             const SizedBox(height: AppSpacing.space4),
+            // The group's live chat — member-gated, like its Firestore rule.
             ChatEntryTile(
               title: l10n.staffroomGroupChatEntry,
               onTap: () => context.push(
@@ -159,19 +184,22 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 extra: group.name,
               ),
             ),
+            const SizedBox(height: AppSpacing.space4),
+            PostComposer(groups: const <Group>[], fixedGroupId: group.id),
           ],
           const SizedBox(height: AppSpacing.space5),
           ...postsAsync.when(
+            skipLoadingOnRefresh: true,
             loading: () => const [
               Padding(
                 padding: EdgeInsets.only(top: AppSpacing.space2),
                 child: AppSkeleton(lines: 4),
               ),
             ],
-            error: (_, _) => [
-              // Non-member → the member-gated (Forbidden) locked preview; a
-              // member with a genuine load error → a real ErrorView + retry.
-              if (!isMember)
+            error: (error, _) => [
+              // A 403 is the membership gate → the locked preview. Anything
+              // else (offline, 5xx) is a real failure → error + retry.
+              if (isMembershipGate(error))
                 EmptyView(
                   icon: LucideIcons.users,
                   title: l10n.staffroomGroupLockedTitle,
@@ -195,16 +223,13 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 : [
                     for (final post in posts)
                       Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: AppSpacing.space3),
+                        padding: const EdgeInsets.only(
+                          bottom: AppSpacing.space3,
+                        ),
                         child: FeedPostCard(
                           key: ValueKey<String>('group-post-${post.id}'),
                           post: post,
-                          initialLiked: ref
-                                  .watch(likedItemIdsProvider)
-                                  .valueOrNull
-                                  ?.likedPost(post.id) ??
-                              false,
+                          initialLiked: liked?.likedPost(post.id) ?? false,
                         ),
                       ),
                   ],
@@ -216,18 +241,18 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
 }
 
 /// The group header: serif name, member count, description, and the optimistic
-/// join control.
+/// join control (a placeholder while membership is still unknown).
 class _GroupHeader extends StatelessWidget {
   const _GroupHeader({
     required this.group,
     required this.memberDelta,
-    required this.initialJoined,
+    required this.membership,
     required this.onJoinedChanged,
   });
 
   final Group group;
   final int memberDelta;
-  final bool initialJoined;
+  final bool? membership;
   final ValueChanged<bool> onJoinedChanged;
 
   @override
@@ -238,6 +263,7 @@ class _GroupHeader extends StatelessWidget {
     final text = theme.textTheme;
     final extras = AppTextExtras.of(context);
     final memberCount = group.memberCount + memberDelta;
+    final membership = this.membership;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,11 +282,15 @@ class _GroupHeader extends StatelessWidget {
           AiText(group.description),
         ],
         const SizedBox(height: AppSpacing.space4),
-        JoinButton(
-          groupId: group.id,
-          initialJoined: initialJoined,
-          onJoinedChanged: onJoinedChanged,
-        ),
+        if (membership == null)
+          const AppSkeleton(lines: 1)
+        else
+          JoinButton(
+            key: ValueKey<String>('join-${group.id}-$membership'),
+            groupId: group.id,
+            initialJoined: membership,
+            onJoinedChanged: onJoinedChanged,
+          ),
       ],
     );
   }

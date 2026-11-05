@@ -10,6 +10,7 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../inbox/data/block_c_transport.dart';
+import '../../vidya/presentation/vidya_cta_clearance.dart';
 import '../data/chat_stream_provider.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/chat_message.dart';
@@ -79,9 +80,10 @@ class _StaffRoomChatScreenState extends ConsumerState<StaffRoomChatScreen> {
         .send(text: text, knownServerIds: knownServerIds);
   }
 
-  Future<void> _retry(Set<String> knownServerIds) => ref
+  /// Re-sends one failed message; skipped when its echo already arrived.
+  Future<void> _retry(String clientMessageId, List<ChatMessage> server) => ref
       .read(chatSendControllerProvider(_room).notifier)
-      .retry(knownServerIds: knownServerIds);
+      .retry(clientMessageId, server: server);
 
   @override
   Widget build(BuildContext context) {
@@ -166,9 +168,19 @@ class _StaffRoomChatScreenState extends ConsumerState<StaffRoomChatScreen> {
                   },
                 ),
         ),
-        if (sendState.hasFailure)
-          _SendFailedBar(onRetry: () => _retry(knownServerIds)),
-        _Composer(controller: _composer, onSend: () => _send(knownServerIds)),
+        // One bar per message that failed, each with its own retry.
+        for (final failed in unresolvedFailures(server, sendState.failed))
+          _SendFailedBar(
+            message: failed.text,
+            onRetry: () => _retry(failed.clientMessageId, server),
+          ),
+        // The floating orb parks above the pinned composer.
+        VidyaCtaClearance(
+          child: _Composer(
+            controller: _composer,
+            onSend: () => _send(knownServerIds),
+          ),
+        ),
       ],
     );
   }
@@ -236,8 +248,10 @@ class _ChatError extends ConsumerWidget {
 /// not a crash: the message did not go through, and the teacher can retry it
 /// (same idempotent clientMessageId).
 class _SendFailedBar extends StatelessWidget {
-  const _SendFailedBar({required this.onRetry});
+  const _SendFailedBar({required this.message, required this.onRetry});
 
+  /// The text that did not send, so the teacher knows which one this is.
+  final String message;
   final VoidCallback onRetry;
 
   @override
@@ -262,9 +276,23 @@ class _SendFailedBar extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.space2),
           Expanded(
-            child: Text(
-              l10n.inboxSendFailed,
-              style: text.bodyMedium?.copyWith(color: scheme.onErrorContainer),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.inboxSendFailed,
+                  style: text.bodyMedium?.copyWith(
+                    color: scheme.onErrorContainer,
+                  ),
+                ),
+                Text(
+                  '“$message”',
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onErrorContainer,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: AppSpacing.space2),

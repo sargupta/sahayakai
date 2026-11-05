@@ -15,31 +15,25 @@ import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
 import '../../notifications/data/notifications_store.dart';
 import '../../notifications/presentation/notifications_view.dart';
+import '../data/staffroom_providers.dart';
+import '../data/teacher_profiles.dart';
+import '../domain/connection.dart';
+import '../domain/teacher.dart';
+import 'community_network_screen.dart';
 import 'staffroom_screen.dart';
+import 'widgets/connection_action.dart';
+import 'widgets/staffroom_avatar.dart';
 
-/// U-SI2 — the **Network** hub (the SPEC's "Network" surface = Staffroom (04) +
-/// Pro Inbox (05) + notifications). Given the 4-slot bottom nav
-/// (Home / Create / Library / Me), the Network surface is a hub screen reached
-/// from the voice-home app bar's network entry (next to the messages entry) —
-/// **option (a)**, not a 5th tab (a 5-slot floating nav on a 360dp screen would
-/// crowd, and the SPEC does not insist on a tab).
+/// The **Community** hub (UX map `community`, route `/network`): the title
+/// with the Updates bell, the deck line, and a segmented control over three
+/// panes that all stay mounted:
+///   - **Staffroom** → [StaffroomFeedView] (feed, composer, groups, people);
+///   - **Messages**  → connection requests + the Pro Inbox conversations;
+///   - **Updates**   → [NotificationsView], the per-teacher on-device record of
+///     call outcomes, absence runs and queued generations.
 ///
-/// It hosts an `AppSegmented [Staffroom | Messages]` over an [IndexedStack]:
-///   - **Staffroom** → [StaffroomFeedView] (the U-SI2 feed body, no nested app
-///     bar);
-///   - **Messages**  → the U-SI1 inbox list, reused via [inboxListProvider] +
-///     [ConversationRow] with the same state→surface mapping as `InboxScreen`.
-///
-/// The segmented control sits at the top of the body (not in a fixed-height app-
-/// bar bottom), so its chip fallback in Indic locales at textScale 1.3 wraps
-/// instead of clipping.
-///
-/// The reserved third tab is now filled: **Updates** → [NotificationsView], the
-/// on-device record of call outcomes, absence runs and queued generations. The
-/// app-bar slot the reservation kept for its bell holds [_NotificationsBell],
-/// which badges the unread count and selects that tab — so the count is visible
-/// from the other two panes, which is the only thing a bell buys once the
-/// surface itself is a tab.
+/// The bell badges the unread Updates count and selects that pane, so the
+/// count is visible from the other two.
 class NetworkHubScreen extends StatefulWidget {
   const NetworkHubScreen({super.key});
 
@@ -217,12 +211,17 @@ class _NotificationsBell extends ConsumerWidget {
   }
 }
 
-/// The Messages tab: the U-SI1 Pro Inbox list, reused. Same
-/// [TransportSnapshot]-state mapping as `InboxScreen` (sign-in / empty / error /
-/// rows) over [inboxListProvider] + [currentInboxUserId], routing a tap into the
-/// conversation thread. On-device the deferred inbox transport streams
-/// `awaitingFirebase`, so this shows the sign-in surface — verified by code +
-/// test, not live.
+/// The Messages pane (UX map `msgPane`), top to bottom:
+///
+///   - the indigo note: chat opens only once a teacher accepts a request;
+///   - **Pending requests · N** — the connection requests other teachers sent
+///     (`GET /api/connections/mine`, named via `POST /api/community/profiles`),
+///     each with Accept / Decline; accepting unlocks the DM;
+///   - **Conversations · N** — the live Pro Inbox list ([inboxListProvider]),
+///     a row opens the thread;
+///   - **Find more teachers** → the "Your network" screen.
+///
+/// Signed out → the sign-in note; an inbox stream error → `ErrorView` + retry.
 class _MessagesTab extends ConsumerWidget {
   const _MessagesTab();
 
@@ -263,9 +262,6 @@ class _MessagesTab extends ConsumerWidget {
                 action: SecondaryButton(
                   label: l10n.actionSignIn,
                   icon: LucideIcons.logIn,
-                  // Real auth landed — a plain push is correct now. See
-                  // inbox_screen.dart's _InboxSignIn for the Firestore-handoff
-                  // caveat this button still carries (same shape here).
                   onPressed: () =>
                       context.push(Routes.loginWithReturnTo(Routes.network)),
                 ),
@@ -274,42 +270,50 @@ class _MessagesTab extends ConsumerWidget {
           );
         }
         final conversations = snapshot.data;
-        if (conversations.isEmpty) {
-          return SingleChildScrollView(
-            padding: _panePadding,
-            child: MapCard(
-              child: MapEmptyNote(
-                icon: LucideIcons.messagesSquare,
-                title: l10n.inboxEmptyTitle,
-                message: l10n.inboxEmptyBody,
-              ),
-            ),
-          );
-        }
-        return ListView.separated(
-          padding: _panePadding,
-          // +1 leading slot for the map's "Conversations · N" label.
-          itemCount: conversations.length + 1,
-          separatorBuilder: (_, index) => SizedBox(
-            height: index == 0 ? AppSpacing.space2 : AppSpacing.space3,
-          ),
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return MapOverline(
-                l10n.communityConversationsCount(conversations.length),
-              );
-            }
-            final conversation = conversations[index - 1];
-            return ConversationRow(
-              key: ValueKey<String>('network-inbox-${conversation.id.value}'),
-              conversation: conversation,
-              myUid: myUid,
-              onTap: () => context.push(
-                Routes.conversationThreadPath(conversation.id.value),
-                extra: conversation,
-              ),
-            );
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(connectionsControllerProvider);
+            await ref
+                .read(connectionsControllerProvider.future)
+                .catchError((Object _) => const MyConnectionData());
           },
+          child: ListView(
+            padding: _panePadding,
+            children: [
+              const _DmGateNote(),
+              const SizedBox(height: AppSpacing.space3),
+              const _PendingRequests(),
+              MapOverline(
+                l10n.communityConversationsCount(conversations.length),
+              ),
+              const SizedBox(height: AppSpacing.space2),
+              if (conversations.isEmpty)
+                MapCard(
+                  child: MapEmptyNote(
+                    icon: LucideIcons.messagesSquare,
+                    title: l10n.inboxEmptyTitle,
+                    message: l10n.inboxEmptyBody,
+                  ),
+                )
+              else
+                for (final conversation in conversations)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+                    child: ConversationRow(
+                      key: ValueKey<String>(
+                        'network-inbox-${conversation.id.value}',
+                      ),
+                      conversation: conversation,
+                      myUid: myUid,
+                      onTap: () => context.push(
+                        Routes.conversationThreadPath(conversation.id.value),
+                        extra: conversation,
+                      ),
+                    ),
+                  ),
+              const _FindMoreTeachers(),
+            ],
+          ),
         );
       },
     );
@@ -324,6 +328,387 @@ class _MessagesTab extends ConsumerWidget {
           message: l10n.inboxErrorBody,
           onRetry: () => ref.invalidate(inboxListProvider),
         ),
+      ),
+    );
+  }
+}
+
+/// The map's indigo note: why a teacher cannot simply message anyone.
+class _DmGateNote extends StatelessWidget {
+  const _DmGateNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.space3),
+      decoration: BoxDecoration(
+        color: AppColors.mapNcertBg,
+        borderRadius: AppRadius.rTile,
+        border: Border.all(color: AppColors.mapNcertBorder),
+      ),
+      child: Text(
+        context.l10n.communityMessagesNote,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: AppColors.tileIndigoInk),
+      ),
+    );
+  }
+}
+
+/// "Pending requests · N": requests other teachers sent, with Accept and
+/// Decline. Renders nothing while loading or when there are none; a failed
+/// read gets its own retry so it never hides the conversations below.
+///
+/// Accepting is what opens chat (the UX map), so a teacher accepted here
+/// stays on screen under "Just connected" with a Message button, instead of
+/// vanishing from the list. The row goes once the chat is opened.
+class _PendingRequests extends ConsumerStatefulWidget {
+  const _PendingRequests();
+
+  @override
+  ConsumerState<_PendingRequests> createState() => _PendingRequestsState();
+}
+
+class _PendingRequestsState extends ConsumerState<_PendingRequests> {
+  /// Teachers accepted while this pane is open, in the order accepted, with
+  /// the profile they were shown with (it is no longer looked up once the
+  /// request is gone).
+  final Map<String, TeacherSuggestion?> _justConnected = {};
+
+  /// The last resolved profiles of the pending requests.
+  Map<String, TeacherSuggestion> _profiles = const {};
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    // A request that leaves the pending list AND joins the connections was
+    // accepted (a declined one just leaves).
+    ref.listen<AsyncValue<MyConnectionData>>(connectionsControllerProvider, (
+      previous,
+      next,
+    ) {
+      final before = previous?.valueOrNull;
+      final after = next.valueOrNull;
+      if (before == null || after == null) return;
+      final stillPending = {for (final r in after.receivedRequests) r.uid};
+      final accepted = [
+        for (final r in before.receivedRequests)
+          if (!stillPending.contains(r.uid) &&
+              after.connectedUids.contains(r.uid))
+            r.uid,
+      ];
+      if (accepted.isEmpty) return;
+      setState(() {
+        for (final uid in accepted) {
+          _justConnected[uid] = _profiles[uid];
+        }
+      });
+    });
+
+    final connections = ref.watch(connectionsControllerProvider);
+    if (connections.hasError && !connections.hasValue) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+        child: MapCard(
+          child: SectionRetry(
+            onRetry: () => ref.invalidate(connectionsControllerProvider),
+          ),
+        ),
+      );
+    }
+    final received =
+        connections.valueOrNull?.receivedRequests ??
+        const <ReceivedConnectionRequest>[];
+
+    final uids = [for (final r in received) r.uid];
+    final profiles = uids.isEmpty
+        ? const AsyncValue<Map<String, TeacherSuggestion>>.data({})
+        : ref.watch(teacherProfilesProvider(teacherProfilesKey(uids)));
+    final byUid = profiles.valueOrNull ?? const <String, TeacherSuggestion>{};
+    if (byUid.isNotEmpty) _profiles = {..._profiles, ...byUid};
+
+    if (received.isEmpty && _justConnected.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (received.isNotEmpty) ...[
+          MapOverline(l10n.communityPendingRequestsCount(received.length)),
+          const SizedBox(height: AppSpacing.space2),
+          for (final request in received)
+            Padding(
+              key: ValueKey<String>('pending-request-${request.uid}'),
+              padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+              child: _PendingRequestCard(
+                uid: request.uid,
+                profile: byUid[request.uid],
+                resolving: profiles.isLoading,
+              ),
+            ),
+        ],
+        if (_justConnected.isNotEmpty) ...[
+          MapOverline(l10n.communityJustConnected),
+          const SizedBox(height: AppSpacing.space2),
+          for (final entry in _justConnected.entries)
+            Padding(
+              key: ValueKey<String>('just-connected-${entry.key}'),
+              padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+              child: _JustConnectedCard(
+                uid: entry.key,
+                profile: entry.value,
+                onOpened: () =>
+                    setState(() => _justConnected.remove(entry.key)),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+/// A teacher just accepted: "Connected · you can chat now" and a Message
+/// button that opens (or creates) the direct chat.
+class _JustConnectedCard extends ConsumerStatefulWidget {
+  const _JustConnectedCard({
+    required this.uid,
+    required this.profile,
+    required this.onOpened,
+  });
+
+  final String uid;
+  final TeacherSuggestion? profile;
+  final VoidCallback onOpened;
+
+  @override
+  ConsumerState<_JustConnectedCard> createState() => _JustConnectedCardState();
+}
+
+class _JustConnectedCardState extends ConsumerState<_JustConnectedCard> {
+  bool _busy = false;
+
+  Future<void> _message(String name) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await openDirectMessage(
+        context,
+        ref,
+        otherUid: widget.uid,
+        displayName: name,
+        photoURL: widget.profile?.photoURL,
+      );
+      if (mounted) widget.onOpened();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)
+        ?..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.communityMessageFailed)),
+        );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final shown = widget.profile?.displayName.trim() ?? '';
+    final name = shown.isNotEmpty ? shown : l10n.communityUnknownTeacher;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.mapOptLeaf,
+        borderRadius: AppRadius.rCard,
+        border: Border.all(color: AppColors.mapOptLeafRing),
+      ),
+      child: Row(
+        children: [
+          StaffroomAvatar(
+            name: name,
+            photoUrl: widget.profile?.photoURL,
+            size: 36,
+          ),
+          const SizedBox(width: AppSpacing.space3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: text.bodyLarge?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textStrong,
+                  ),
+                ),
+                Text(
+                  l10n.communityConnectedCanChat,
+                  style: text.bodyMedium?.copyWith(color: AppColors.leaf700),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.space2),
+          Semantics(
+            button: true,
+            enabled: !_busy,
+            label: l10n.staffroomMessage,
+            excludeSemantics: true,
+            child: GestureDetector(
+              key: ValueKey<String>('just-connected-message-${widget.uid}'),
+              behavior: HitTestBehavior.opaque,
+              onTap: _busy ? null : () => _message(name),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+                child: Center(
+                  widthFactor: 1,
+                  child: Opacity(
+                    opacity: _busy ? 0.55 : 1,
+                    child: Container(
+                      height: 28,
+                      padding: const EdgeInsets.symmetric(horizontal: 11),
+                      decoration: const ShapeDecoration(
+                        color: AppColors.accentFill,
+                        shape: StadiumBorder(),
+                      ),
+                      child: Center(
+                        widthFactor: 1,
+                        child: Text(
+                          l10n.staffroomMessage,
+                          style: text.labelMedium?.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textOnAccent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingRequestCard extends StatelessWidget {
+  const _PendingRequestCard({
+    required this.uid,
+    required this.profile,
+    required this.resolving,
+  });
+
+  final String uid;
+  final TeacherSuggestion? profile;
+  final bool resolving;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final name = profile?.displayName.trim().isNotEmpty == true
+        ? profile!.displayName.trim()
+        : l10n.communityUnknownTeacher;
+    return MapCard(
+      child: Row(
+        children: [
+          StaffroomAvatar(name: name, photoUrl: profile?.photoURL, size: 36),
+          const SizedBox(width: AppSpacing.space3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (resolving && profile == null)
+                  const AppSkeleton(lines: 0)
+                else
+                  Text(
+                    name,
+                    style: text.bodyLarge?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textStrong,
+                    ),
+                  ),
+                Text(
+                  l10n.staffroomConnectionWants,
+                  style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.space2),
+          TeacherConnectionAction(
+            uid: uid,
+            displayName: profile?.displayName ?? '',
+            photoURL: profile?.photoURL,
+            compact: true,
+            respond: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The map's closing block: a way to grow the network.
+class _FindMoreTeachers extends StatelessWidget {
+  const _FindMoreTeachers();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.space4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const ExcludeSemantics(
+            child: CircleAvatar(
+              radius: 28,
+              backgroundColor: AppColors.tileSaffronBg,
+              child: Icon(
+                LucideIcons.messageCircle,
+                size: 22,
+                color: AppColors.tileSaffronInk,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            l10n.communityFindMoreTitle,
+            textAlign: TextAlign.center,
+            style: text.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted,
+            ),
+          ),
+          Text(
+            l10n.communityFindMoreBody,
+            textAlign: TextAlign.center,
+            style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
+          ),
+          TextButton(
+            onPressed: () => openCommunityNetwork(context),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textLink,
+              minimumSize: const Size(48, 48),
+            ),
+            child: Text(l10n.communityFindMoreAction),
+          ),
+        ],
       ),
     );
   }

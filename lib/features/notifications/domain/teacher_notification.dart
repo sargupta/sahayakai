@@ -98,6 +98,26 @@ class TeacherNotification {
 
   final bool isRead;
 
+  /// The Parent Hotline outreach a call row is about, when the row is one.
+  ///
+  /// Call rows are keyed `hotline:{outreachId}:{kind}` by the hotline screen
+  /// (the id is the stable dedupe identity), so the outreach travels with the
+  /// row without a second persisted field — and rows written before this
+  /// getter existed carry it too. Null for every other kind, or for an id that
+  /// does not follow that shape.
+  String? get outreachId {
+    if (kind != TeacherNotificationKind.callCompleted &&
+        kind != TeacherNotificationKind.callFailed) {
+      return null;
+    }
+    const prefix = 'hotline:';
+    if (!id.startsWith(prefix)) return null;
+    final rest = id.substring(prefix.length);
+    final cut = rest.lastIndexOf(':');
+    if (cut <= 0) return null;
+    return rest.substring(0, cut);
+  }
+
   TeacherNotification markRead() => TeacherNotification(
     id: id,
     kind: kind,

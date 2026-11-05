@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/inbox/data/block_c_transport.dart';
@@ -160,23 +161,32 @@ void main() {
     expect(find.text(l10n.staffroomGroupPostsEmptyTitle), findsOneWidget);
   });
 
-  testWidgets('member-gated: a Forbidden posts read → the locked preview', (
+  testWidgets('member-gated: a 403 posts read → the locked preview + Join', (
     tester,
   ) async {
     final fake = FakeStaffroomTransport()
       ..group = _group()
-      ..myGroups = const []; // NOT a member
-    await _pump(
-      tester,
-      fake: fake,
-      extraOverrides: [
-        groupPostsProvider('g1').overrideWith(
-          (ref) => Future<List<GroupPost>>.error(StateError('Forbidden')),
-        ),
-      ],
-    );
+      ..myGroups =
+          const [] // NOT a member
+      ..groupPostsError = _forbidden;
+    await _pump(tester, fake: fake);
     expect(find.text(l10n.staffroomGroupLockedTitle), findsOneWidget);
     expect(find.byType(EmptyView), findsOneWidget);
+    expect(find.text(l10n.staffroomJoin), findsOneWidget);
+  });
+
+  testWidgets('any OTHER posts failure is a real error, not a lock', (
+    tester,
+  ) async {
+    final fake = FakeStaffroomTransport()
+      ..group = _group()
+      ..myGroups = const []
+      ..groupPostsError = const ApiException(
+        ApiErrorKind.network,
+        'No connection.',
+      );
+    await _pump(tester, fake: fake);
+    expect(find.text(l10n.staffroomGroupLockedTitle), findsNothing);
   });
 
   group('optimistic join', () {
@@ -188,7 +198,7 @@ void main() {
         ..group = _group(members: 42)
         ..myGroups =
             const [] // not a member
-        ..groupPosts = const []
+        ..groupPostsError = _forbidden
         ..joinResult = true
         ..joinGate = gate;
       await _pump(tester, fake: fake);
@@ -214,7 +224,7 @@ void main() {
       final fake = FakeStaffroomTransport()
         ..group = _group(members: 42)
         ..myGroups = const []
-        ..groupPosts = const []
+        ..groupPostsError = _forbidden
         ..joinError = const TransportUnavailable.awaitingFirebase('joinGroup');
       await _pump(tester, fake: fake);
 
@@ -248,3 +258,10 @@ void main() {
     },
   );
 }
+
+/// The posts route's answer to a teacher who is not in the group.
+const _forbidden = ApiException(
+  ApiErrorKind.forbidden,
+  'Not a member',
+  statusCode: 403,
+);

@@ -1,21 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sahayakai/features/inbox/data/block_c_transport.dart';
+import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/features/inbox/data/inbox_transport.dart';
 import 'package:sahayakai/features/inbox/domain/conversation_id.dart';
 import 'package:sahayakai/features/inbox/domain/inbox_models.dart';
 
-/// T1-U4 — [FirestoreInboxTransport] against an in-memory
-/// [FakeFirebaseFirestore] (test-only; no live project, no emulator). Proves
-/// the three load-bearing behaviors the unit's gate requires:
+import '../../support/fake_api_client.dart';
+
+/// T1-U4 — [FirestoreInboxTransport]: live reads against an in-memory
+/// [FakeFirebaseFirestore], every write against a [FakeApiClient] (no live
+/// project, no network). Proves:
 ///
 ///   1. `watchInbox` returns the right conversations for the right uid,
 ///      ordered `lastMessageAt desc`.
-///   2. `sendMessage` writes a message with the correct `senderId` (and
-///      bumps the parent conversation's preview/unread fields).
-///   3. `getOrCreateDirectConversation` is idempotent — two calls resolve to
-///      the same id and never create a second document.
+///   2. Every write is one REST call whose body matches the route's zod
+///      schema, with the caller's uid wherever the route checks it, and a
+///      failure propagates rather than passing silently.
+///   3. A retried send carries the same `clientMessageId`, so the server
+///      dedupes it.
 ///
 /// `firestore.rules` itself is NOT exercised here (`fake_cloud_firestore`
 /// does not evaluate security rules) — these tests pin the *query/write
@@ -58,7 +61,11 @@ void main() {
           'unreadCount': {'u4': 0, 'u5': 0},
         });
 
-        final transport = FirestoreInboxTransport(firestore, 'u1');
+        final transport = FirestoreInboxTransport(
+          firestore,
+          'u1',
+          FakeApiClient(),
+        );
         final snapshot = await transport.watchInbox().first;
 
         expect(snapshot.isReady, isTrue);
@@ -72,185 +79,244 @@ void main() {
   });
 
   group('FirestoreInboxTransport.sendMessage', () {
-    test(
-      'writes senderId == caller uid and bumps the conversation preview',
-      () async {
-        final firestore = FakeFirebaseFirestore();
-        await firestore.collection('conversations').doc('u1_u2').set({
-          'type': 'direct',
-          'participantIds': ['u1', 'u2'],
-          'participants': {
-            'u1': {'displayName': 'Asha Rao', 'photoURL': 'https://img/1'},
-            'u2': {'displayName': 'Bina Das', 'photoURL': null},
-          },
-          'lastMessage': '',
-          'lastMessageAt': null,
-          'lastMessageSenderId': '',
-          'unreadCount': {'u1': 0, 'u2': 0},
-        });
+    test('POSTs the zod body to /api/messages/send and returns the server '
+        'messageId — the server owns sender, preview and unread', () async {
+      final firestore = FakeFirebaseFirestore();
+      final api = FakeApiClient(
+        postResponsesByPath: const {
+          '/api/messages/send': {'messageId': 'cmid-1'},
+        },
+      );
+      final transport = FirestoreInboxTransport(firestore, 'u1', api);
 
-        final transport = FirestoreInboxTransport(firestore, 'u1');
-        final messageId = await transport.sendMessage(
+      final messageId = await transport.sendMessage(
+        const SendMessageInput(
+          conversationId: ConversationId('u1_u2'),
+          type: MessageType.text,
+          text: '  Hello Bina  ',
+          clientMessageId: 'cmid-1',
+        ),
+      );
+
+      expect(messageId, 'cmid-1');
+      expect(api.posts.single.path, '/api/messages/send');
+      expect(api.posts.single.data, {
+        'conversationId': 'u1_u2',
+        'text': 'Hello Bina',
+        'type': 'text',
+        'clientMessageId': 'cmid-1',
+      });
+      // No client-side Firestore write at all.
+      final conversations = await firestore.collection('conversations').get();
+      expect(conversations.docs, isEmpty);
+    });
+
+    test('a retry re-sends the SAME clientMessageId, so the server dedupes '
+        'it (no double message, unread bump or notification)', () async {
+      final api = FakeApiClient(
+        postResponsesByPath: const {
+          '/api/messages/send': {'messageId': 'cmid-retry'},
+        },
+      );
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u1',
+        api,
+      );
+      const input = SendMessageInput(
+        conversationId: ConversationId('u1_u2'),
+        type: MessageType.text,
+        text: 'retry me',
+        clientMessageId: 'cmid-retry',
+      );
+
+      await transport.sendMessage(input);
+      await transport.sendMessage(input);
+
+      expect(api.posts, hasLength(2));
+      expect(api.posts.map((p) => (p.data! as Map)['clientMessageId']), [
+        'cmid-retry',
+        'cmid-retry',
+      ]);
+    });
+
+    test('a failed send propagates, never a silent success', () async {
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u1',
+        FakeApiClient(
+          postErrorsByPath: const {
+            '/api/messages/send': ApiException(
+              ApiErrorKind.network,
+              'No connection.',
+            ),
+          },
+        ),
+      );
+      await expectLater(
+        () => transport.sendMessage(
           const SendMessageInput(
             conversationId: ConversationId('u1_u2'),
             type: MessageType.text,
-            text: 'Hello Bina',
-            clientMessageId: 'cmid-1',
+            text: 'hi',
           ),
-        );
+        ),
+        throwsA(isA<ApiException>()),
+      );
+    });
+  });
 
-        // The message doc: correct id (== clientMessageId), correct sender,
-        // denormalized senderName pulled from the conversation's own snapshot.
-        expect(messageId, 'cmid-1');
-        final msgSnap = await firestore
-            .collection('conversations')
-            .doc('u1_u2')
-            .collection('messages')
-            .doc('cmid-1')
-            .get();
-        expect(msgSnap.exists, isTrue);
-        final msg = msgSnap.data()!;
-        expect(msg['senderId'], 'u1');
-        expect(msg['senderName'], 'Asha Rao');
-        expect(msg['text'], 'Hello Bina');
-        expect(msg['readBy'], ['u1']);
-        expect(msg['clientMessageId'], 'cmid-1');
+  group('FirestoreInboxTransport.getOrCreateDirectConversation', () {
+    test('POSTs { myUid, otherUid } with myUid == the bound caller', () async {
+      final api = FakeApiClient(
+        postResponsesByPath: const {
+          '/api/messages/conversations/direct': {'conversationId': 'u1_u2'},
+        },
+      );
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u1',
+        api,
+      );
 
-        // The parent conversation: preview + unread bumped for the OTHER
-        // participant only, never the sender.
-        final convSnap = await firestore
-            .collection('conversations')
-            .doc('u1_u2')
-            .get();
-        final conv = convSnap.data()!;
-        expect(conv['lastMessage'], 'Hello Bina');
-        expect(conv['lastMessageSenderId'], 'u1');
-        expect(conv['unreadCount']['u2'], 1);
-        expect(conv['unreadCount']['u1'], 0);
-      },
-    );
+      final id = await transport.getOrCreateDirectConversation('u2');
 
+      expect(id, const ConversationId('u1_u2'));
+      expect(api.posts.single.path, '/api/messages/conversations/direct');
+      expect(api.posts.single.data, {'myUid': 'u1', 'otherUid': 'u2'});
+    });
+
+    test('falls back to the deterministic sorted pair if a reply omits the '
+        'id', () async {
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u2',
+        FakeApiClient(
+          postResponsesByPath: const {
+            '/api/messages/conversations/direct': <String, dynamic>{},
+          },
+        ),
+      );
+      expect(
+        await transport.getOrCreateDirectConversation('u1'),
+        ConversationId.direct('u1', 'u2'),
+      );
+    });
+  });
+
+  group('FirestoreInboxTransport.createGroupConversation', () {
+    test('POSTs the creator, the de-duplicated members and the trimmed '
+        'name', () async {
+      final api = FakeApiClient(
+        postResponsesByPath: const {
+          '/api/messages/conversations/group': {'conversationId': 'grp-1'},
+        },
+      );
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u1',
+        api,
+      );
+
+      final id = await transport.createGroupConversation(
+        participantUids: const ['u1', 'u2', 'u3'],
+        name: '  Grade 5 Teachers ',
+      );
+
+      expect(id, const ConversationId('grp-1'));
+      final body = api.posts.single.data! as Map;
+      expect(body['creatorUid'], 'u1');
+      expect(body['participantUids'], ['u1', 'u2', 'u3']);
+      expect(body['name'], 'Grade 5 Teachers');
+    });
+
+    test('a reply with no conversationId fails loudly', () async {
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u1',
+        FakeApiClient(
+          postResponsesByPath: const {
+            '/api/messages/conversations/group': <String, dynamic>{},
+          },
+        ),
+      );
+      await expectLater(
+        () => transport.createGroupConversation(
+          participantUids: const ['u2'],
+          name: 'x',
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
+
+  group('FirestoreInboxTransport.markConversationRead', () {
     test(
-      'a retry with the same clientMessageId is idempotent (no double send)',
+      'POSTs { conversationId, userId } with userId == the caller',
       () async {
-        final firestore = FakeFirebaseFirestore();
-        await firestore.collection('conversations').doc('u1_u2').set({
-          'type': 'direct',
-          'participantIds': ['u1', 'u2'],
-          'participants': <String, dynamic>{},
-          'lastMessage': '',
-          'lastMessageAt': null,
-          'lastMessageSenderId': '',
-          'unreadCount': {'u1': 0, 'u2': 0},
-        });
-        final transport = FirestoreInboxTransport(firestore, 'u1');
-        const input = SendMessageInput(
-          conversationId: ConversationId('u1_u2'),
-          type: MessageType.text,
-          text: 'retry me',
-          clientMessageId: 'cmid-retry',
+        final api = FakeApiClient(
+          postResponsesByPath: const {
+            '/api/messages/mark-read': {'success': true},
+          },
+        );
+        final transport = FirestoreInboxTransport(
+          FakeFirebaseFirestore(),
+          'u1',
+          api,
         );
 
-        final first = await transport.sendMessage(input);
-        final second = await transport.sendMessage(input);
-        expect(first, second);
+        await transport.markConversationRead(const ConversationId('u1_u2'));
 
-        final messages = await firestore
-            .collection('conversations')
-            .doc('u1_u2')
-            .collection('messages')
-            .get();
-        expect(messages.docs, hasLength(1));
-
-        // The retry must NOT double-increment the other participant's unread
-        // count — the transaction returns early once it sees the id exists.
-        final convSnap = await firestore
-            .collection('conversations')
-            .doc('u1_u2')
-            .get();
-        expect(convSnap.data()!['unreadCount']['u2'], 1);
+        expect(api.posts.single.path, '/api/messages/mark-read');
+        expect(api.posts.single.data, {
+          'conversationId': 'u1_u2',
+          'userId': 'u1',
+        });
       },
     );
   });
 
-  group('FirestoreInboxTransport.getOrCreateDirectConversation', () {
-    test(
-      'is idempotent — two calls resolve to the same id, one document',
-      () async {
-        final firestore = FakeFirebaseFirestore();
-        final transport = FirestoreInboxTransport(
-          firestore,
-          'u1',
-          myDisplayName: 'Asha Rao',
-          myPhotoURL: 'https://img/asha',
-        );
-
-        final first = await transport.getOrCreateDirectConversation('u2');
-        final second = await transport.getOrCreateDirectConversation('u2');
-
-        expect(first, second);
-        expect(first, ConversationId.direct('u1', 'u2'));
-
-        final docs = await firestore.collection('conversations').get();
-        expect(docs.docs, hasLength(1));
-        final data = docs.docs.single.data();
-        expect(data['type'], 'direct');
-        expect((data['participantIds'] as List).cast<String>()..sort(), [
-          'u1',
-          'u2',
-        ]);
-        expect(data['unreadCount'], {'u1': 0, 'u2': 0});
-        // My own snapshot is seeded from the injected auth profile; the other
-        // participant's is intentionally absent (users/{otherUid} isn't
-        // client-readable — see the class doc).
-        final participants = data['participants'] as Map;
-        expect(participants['u1']['displayName'], 'Asha Rao');
-        expect(participants['u1']['photoURL'], 'https://img/asha');
-        expect(participants.containsKey('u2'), isFalse);
-      },
-    );
-
-    test(
-      'is symmetric — direct(a, b) resolves the same doc as direct(b, a)',
-      () async {
-        final firestore = FakeFirebaseFirestore();
-        final asU1 = FirestoreInboxTransport(firestore, 'u1');
-        final asU2 = FirestoreInboxTransport(firestore, 'u2');
-
-        final fromU1 = await asU1.getOrCreateDirectConversation('u2');
-        final fromU2 = await asU2.getOrCreateDirectConversation('u1');
-
-        expect(fromU1, fromU2);
-        final docs = await firestore.collection('conversations').get();
-        expect(docs.docs, hasLength(1));
-      },
-    );
-
-    test('does not overwrite an already-existing conversation', () async {
-      final firestore = FakeFirebaseFirestore();
-      final id = ConversationId.direct('u1', 'u2');
-      await firestore.collection('conversations').doc(id.value).set({
-        'type': 'direct',
-        'participantIds': ['u1', 'u2'],
-        'participants': {
-          'u2': {'displayName': 'Bina Das', 'photoURL': null},
+  group('FirestoreInboxTransport.acknowledgeDelivery', () {
+    test('POSTs the ids in chunks of 50, dropping blanks, so none are '
+        'lost', () async {
+      final api = FakeApiClient(
+        postResponsesByPath: const {
+          '/api/messages/ack-delivery': {'success': true},
         },
-        'lastMessage': 'already talking',
-        'lastMessageAt': Timestamp.fromMillisecondsSinceEpoch(42),
-        'lastMessageSenderId': 'u2',
-        'unreadCount': {'u1': 3, 'u2': 0},
-      });
+      );
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u2',
+        api,
+      );
+      final ids = [for (var i = 0; i < 120; i++) 'm$i', ''];
 
-      final transport = FirestoreInboxTransport(firestore, 'u1');
-      final resolved = await transport.getOrCreateDirectConversation('u2');
+      await transport.acknowledgeDelivery(const ConversationId('u1_u2'), ids);
 
-      expect(resolved, id);
-      final data =
-          (await firestore.collection('conversations').doc(id.value).get())
-              .data()!;
-      // Untouched — the pre-existing preview/unread state survives.
-      expect(data['lastMessage'], 'already talking');
-      expect(data['unreadCount']['u1'], 3);
+      expect(api.posts, hasLength(3));
+      final chunks = [
+        for (final p in api.posts) ((p.data! as Map)['messageIds'] as List),
+      ];
+      expect(chunks.map((c) => c.length), [50, 50, 20]);
+      expect(chunks.expand((c) => c), [for (var i = 0; i < 120; i++) 'm$i']);
+      expect(
+        api.posts.every((p) => (p.data! as Map)['conversationId'] == 'u1_u2'),
+        isTrue,
+      );
+    });
+
+    test('nothing to acknowledge makes no request', () async {
+      final api = FakeApiClient();
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u2',
+        api,
+      );
+      await transport.acknowledgeDelivery(
+        const ConversationId('u1_u2'),
+        const [],
+      );
+      expect(api.posts, isEmpty);
     });
   });
 
@@ -272,83 +338,22 @@ void main() {
         'unreadCount': {'u2': 9, 'u3': 9},
       });
 
-      final transport = FirestoreInboxTransport(firestore, 'u1');
+      final transport = FirestoreInboxTransport(
+        firestore,
+        'u1',
+        FakeApiClient(),
+      );
       expect(await transport.getTotalUnreadCount(), 7);
     });
 
     test('returns 0 when the caller has no conversations', () async {
-      final transport = FirestoreInboxTransport(FakeFirebaseFirestore(), 'u1');
+      final transport = FirestoreInboxTransport(
+        FakeFirebaseFirestore(),
+        'u1',
+        FakeApiClient(),
+      );
       expect(await transport.getTotalUnreadCount(), 0);
     });
-  });
-
-  group('FirestoreInboxTransport — methods left TransportUnavailable', () {
-    test('createGroupConversation throws restWrapperMissing', () async {
-      final transport = FirestoreInboxTransport(FakeFirebaseFirestore(), 'u1');
-      await expectLater(
-        () => transport.createGroupConversation(
-          participantUids: const ['u1', 'u2', 'u3'],
-          name: 'Grade 5 Teachers',
-        ),
-        throwsA(
-          isA<TransportUnavailable>().having(
-            (e) => e.kind,
-            'kind',
-            TransportUnavailableKind.restWrapperMissing,
-          ),
-        ),
-      );
-    });
-  });
-
-  group('FirestoreInboxTransport.markConversationRead', () {
-    test('resets only unreadCount for the caller uid', () async {
-      final firestore = FakeFirebaseFirestore();
-      await firestore.collection('conversations').doc('u1_u2').set({
-        'type': 'direct',
-        'participantIds': ['u1', 'u2'],
-        'participants': <String, dynamic>{},
-        'lastMessage': 'hi',
-        'lastMessageAt': Timestamp.fromMillisecondsSinceEpoch(1),
-        'lastMessageSenderId': 'u2',
-        'unreadCount': {'u1': 5, 'u2': 2},
-      });
-
-      final transport = FirestoreInboxTransport(firestore, 'u1');
-      await transport.markConversationRead(const ConversationId('u1_u2'));
-
-      final data =
-          (await firestore.collection('conversations').doc('u1_u2').get())
-              .data()!;
-      expect(data['unreadCount']['u1'], 0);
-      expect(data['unreadCount']['u2'], 2); // untouched
-    });
-  });
-
-  group('FirestoreInboxTransport.acknowledgeDelivery', () {
-    test(
-      'stamps deliveredTo with the caller uid on every given message',
-      () async {
-        final firestore = FakeFirebaseFirestore();
-        final messages = firestore
-            .collection('conversations')
-            .doc('u1_u2')
-            .collection('messages');
-        await messages.doc('m1').set({'text': 'a', 'deliveredTo': <String>[]});
-        await messages.doc('m2').set({'text': 'b'});
-
-        final transport = FirestoreInboxTransport(firestore, 'u2');
-        await transport.acknowledgeDelivery(
-          const ConversationId('u1_u2'),
-          const ['m1', 'm2'],
-        );
-
-        final m1 = (await messages.doc('m1').get()).data()!;
-        final m2 = (await messages.doc('m2').get()).data()!;
-        expect(m1['deliveredTo'], ['u2']);
-        expect(m2['deliveredTo'], ['u2']);
-      },
-    );
   });
 
   group('FirestoreInboxTransport.watchThread + loadOlderMessages', () {
@@ -369,7 +374,11 @@ void main() {
         });
       }
 
-      final transport = FirestoreInboxTransport(firestore, 'u1');
+      final transport = FirestoreInboxTransport(
+        firestore,
+        'u1',
+        FakeApiClient(),
+      );
       final snapshot = await transport
           .watchThread(const ConversationId('u1_u2'), tailLimit: 2)
           .first;
@@ -395,7 +404,11 @@ void main() {
         });
       }
 
-      final transport = FirestoreInboxTransport(firestore, 'u1');
+      final transport = FirestoreInboxTransport(
+        firestore,
+        'u1',
+        FakeApiClient(),
+      );
       final older = await transport.loadOlderMessages(
         const ConversationId('u1_u2'),
         beforeMessageId: 'm3',
@@ -423,7 +436,11 @@ void main() {
         'unreadCount': {'u4': 9, 'u5': 9},
       });
 
-      final transport = FirestoreInboxTransport(firestore, 'u1');
+      final transport = FirestoreInboxTransport(
+        firestore,
+        'u1',
+        FakeApiClient(),
+      );
       final snapshot = await transport.watchUnreadConversations().first;
 
       expect(snapshot.isReady, isTrue);

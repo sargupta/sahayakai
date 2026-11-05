@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/auth/auth_providers.dart';
+import '../../../core/firebase/firebase_init.dart';
 import '../domain/teacher_notification.dart';
 
 /// The device's own record of things worth telling the teacher about.
@@ -36,7 +39,8 @@ import '../domain/teacher_notification.dart';
 ///
 /// WHAT THAT COSTS, HONESTLY
 ///
-/// The feed is per-device and does not sync with the web app; an event that
+/// The feed is per-teacher on this device (keyed by uid, cleared on sign-out)
+/// and does not sync with the web app; an event that
 /// happens while the app is closed is not recorded (there is no push — see
 /// `notificationsLocalNote`, which says exactly this on screen); and the
 /// exam-paper row can only say the paper is QUEUED, because the 202 carries no
@@ -62,21 +66,48 @@ final unreadNotificationCountProvider = Provider<int>(
   (ref) => ref.watch(notificationsProvider).where((n) => !n.isRead).length,
 );
 
-/// The prefs key. Versioned, so a future shape change starts clean rather than
-/// trying to migrate rows whose meaning moved.
+/// Whose Updates these are: the signed-in teacher's Firebase uid, or null
+/// when signed out. A thin overridable seam (tests pin a uid) that watches the
+/// same [authControllerProvider] the router and every Block-C surface use, so
+/// the store rebuilds — and re-reads the right teacher's rows — on every
+/// sign-in / sign-out.
+final notificationsUserIdProvider = Provider<String?>((ref) {
+  final status = ref.watch(authControllerProvider);
+  if (status != AuthStatus.signedIn || !FirebaseInit.isConfigured) return null;
+  return FirebaseAuth.instance.currentUser?.uid;
+});
+
+/// The legacy, DEVICE-WIDE prefs key. Rows under it could belong to any
+/// teacher who ever used this phone, so they are deleted on first hydrate and
+/// never shown (privacy: one teacher's call outcomes must not surface for the
+/// next teacher on a shared phone).
 const String kNotificationsPrefsKey = 'notifications_feed_v1';
+
+/// The per-teacher prefs key. Versioned, so a future shape change starts clean
+/// rather than trying to migrate rows whose meaning moved.
+String notificationsPrefsKeyFor(String uid) => 'notifications_feed_v2_$uid';
 
 /// Rows kept, newest first. A teacher who never opens the tab must not grow an
 /// unbounded blob in shared_preferences.
 const int kMaxStoredNotifications = 50;
 
 class NotificationsStore extends Notifier<List<TeacherNotification>> {
+  /// The teacher whose rows this instance holds; null while signed out (rows
+  /// are then kept in memory only, never persisted under anyone's key).
+  String? _uid;
+
+  /// Bumped on every rebuild so a hydrate started for a previous teacher can
+  /// never land in the next teacher's list.
+  int _generation = 0;
+
   @override
   List<TeacherNotification> build() {
+    _uid = ref.watch(notificationsUserIdProvider);
+    final generation = ++_generation;
     // Start empty and hydrate asynchronously — the same contract
     // `ThemeModeController` / `LocaleController` use. Anything recorded during
     // that gap is preserved: `_hydrate` MERGES, it does not overwrite.
-    unawaited(_hydrate());
+    unawaited(_hydrate(generation));
     return const <TeacherNotification>[];
   }
 
@@ -117,8 +148,29 @@ class NotificationsStore extends Notifier<List<TeacherNotification>> {
     unawaited(_persist());
   }
 
-  Future<void> _hydrate() async {
-    final stored = await _read();
+  /// Sign-out: forget this teacher's Updates — in memory AND on disk — so the
+  /// next person to sign in on this phone never sees them. Called by
+  /// `AuthController.signOut` BEFORE Firebase drops the uid (the key needs it).
+  Future<void> clearForSignOut() async {
+    final uid = _uid;
+    _generation++;
+    state = const <TeacherNotification>[];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(kNotificationsPrefsKey);
+      if (uid != null) await prefs.remove(notificationsPrefsKeyFor(uid));
+    } catch (_) {
+      // A missing plugin (widget tests) or unwritable prefs must not block
+      // signing out; the in-memory rows are already gone.
+    }
+  }
+
+  Future<void> _hydrate(int generation) async {
+    final uid = _uid;
+    final stored = await _read(uid);
+    // A rebuild (sign-in / sign-out) since this started: these rows belong to
+    // the previous teacher — drop them.
+    if (generation != _generation || uid != _uid) return;
     if (stored.isEmpty) return;
     // Merge rather than assign: `record` may have fired while this was in
     // flight, and the live row is the one with the fresher read state.
@@ -129,10 +181,16 @@ class NotificationsStore extends Notifier<List<TeacherNotification>> {
     state = _capped(byId.values.toList());
   }
 
-  Future<List<TeacherNotification>> _read() async {
+  Future<List<TeacherNotification>> _read(String? uid) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(kNotificationsPrefsKey);
+      // The pre-v2 device-wide blob cannot be attributed to a teacher, so it
+      // is never read — only removed.
+      if (prefs.containsKey(kNotificationsPrefsKey)) {
+        await prefs.remove(kNotificationsPrefsKey);
+      }
+      if (uid == null) return const <TeacherNotification>[];
+      final raw = prefs.getString(notificationsPrefsKeyFor(uid));
       if (raw == null || raw.isEmpty) return const <TeacherNotification>[];
       final decoded = jsonDecode(raw);
       if (decoded is! List) return const <TeacherNotification>[];
@@ -149,11 +207,18 @@ class NotificationsStore extends Notifier<List<TeacherNotification>> {
   }
 
   Future<void> _persist() async {
+    final uid = _uid;
+    // Signed out: nothing is persisted, so no row can outlive the session
+    // under a key the next teacher would read.
+    if (uid == null) return;
+    final snapshot = state;
     try {
       final prefs = await SharedPreferences.getInstance();
+      // The teacher may have signed out while prefs resolved.
+      if (uid != _uid) return;
       await prefs.setString(
-        kNotificationsPrefsKey,
-        jsonEncode(state.map((n) => n.toJson()).toList(growable: false)),
+        notificationsPrefsKeyFor(uid),
+        jsonEncode(snapshot.map((n) => n.toJson()).toList(growable: false)),
       );
     } catch (_) {
       // Same reasoning as _read: losing the write is survivable, throwing out

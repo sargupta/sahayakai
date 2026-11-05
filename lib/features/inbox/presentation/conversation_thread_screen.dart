@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,7 +12,7 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
-import '../../vidya/presentation/vidya_sheet.dart';
+import '../../vidya/presentation/vidya_cta_clearance.dart';
 import '../data/block_c_transport.dart';
 import '../data/inbox_transport.dart';
 import '../data/messages_stream_provider.dart';
@@ -252,10 +254,26 @@ class _ConversationThreadScreenState
     final async = ref.watch(conversationThreadProvider(widget.conversationId));
     final myUid = ref.watch(currentInboxUserIdProvider);
 
+    // A message that arrives while the thread is open has been seen: mark the
+    // thread read again, so it does not come back as unread on the inbox and
+    // the bell. Only for a NEW latest message from the other side (the thread
+    // is oldest-first), and only after the on-open mark has fired.
+    ref.listen<AsyncValue<TransportSnapshot<List<Message>>>>(
+      conversationThreadProvider(widget.conversationId),
+      (previous, next) {
+        final latest = next.valueOrNull?.data.lastOrNull;
+        // The first load is covered by the on-open mark.
+        final before = previous?.valueOrNull;
+        if (!_markReadFired || latest == null || before == null) return;
+        if (latest.id == before.data.lastOrNull?.id) return;
+        if (latest.senderId == ref.read(currentInboxUserIdProvider)) return;
+        unawaited(_markRead());
+      },
+    );
+
     return Scaffold(
       appBar: GlassAppBar(
         title: _ThreadTitle(conversation: widget.conversation, myUid: myUid),
-        actions: const [VidyaAppBarAction()],
       ),
       body: SafeArea(
         child: async.when(
@@ -352,7 +370,10 @@ class _ConversationThreadScreenState
                 ),
         ),
         if (_sendFailed) _SendFailedBar(onRetry: _retry),
-        _Composer(controller: _composer, onSend: _send),
+        // The floating orb parks above the pinned composer.
+        VidyaCtaClearance(
+          child: _Composer(controller: _composer, onSend: _send),
+        ),
       ],
     );
   }

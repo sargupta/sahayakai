@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/notifications/data/notifications_store.dart';
 import '../../features/vidya/presentation/vidya_controller.dart';
 import '../firebase/firebase_init.dart';
 
@@ -87,6 +88,10 @@ class AuthController extends _$AuthController {
     // build can still have accumulated a local conversation) — hence it sits
     // before, not after, the [FirebaseInit.isConfigured] guard below.
     ref.invalidate(vidyaControllerProvider);
+    // Same shared-device leak for the Community "Updates" rows (call outcomes
+    // name students): forget them in memory and on disk while the outgoing
+    // uid is still known — the store keys its rows by that uid.
+    await ref.read(notificationsProvider.notifier).clearForSignOut();
     if (!FirebaseInit.isConfigured) return;
     await ref.read(googleSignInProvider).signOut();
     await FirebaseAuth.instance.signOut();

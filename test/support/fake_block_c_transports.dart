@@ -300,6 +300,11 @@ class FakeStaffroomTransport implements StaffroomTransport {
   List<Group> discoverableGroups = const <Group>[];
   Group? group;
   List<GroupPost> groupPosts = const <GroupPost>[];
+
+  /// Thrown from [getGroupPosts] instead of returning [groupPosts] — e.g. the
+  /// route's 403 for a teacher who is not a member. A successful [joinGroup]
+  /// clears it, as joining does on the server.
+  Object? groupPostsError;
   List<FeedItem> feed = const <FeedItem>[];
   List<TeacherSuggestion> recommended = const <TeacherSuggestion>[];
   List<TeacherSuggestion> allTeachers = const <TeacherSuggestion>[];
@@ -415,7 +420,10 @@ class FakeStaffroomTransport implements StaffroomTransport {
     String groupId, {
     int limit = 20,
     String? startAfterPostId,
-  }) async => groupPosts;
+  }) async {
+    if (groupPostsError != null) throw groupPostsError!;
+    return groupPosts;
+  }
 
   @override
   Future<List<FeedItem>> getUnifiedFeed({
@@ -443,6 +451,7 @@ class FakeStaffroomTransport implements StaffroomTransport {
     joinedGroups.add(groupId);
     if (joinGate != null) await joinGate!.future;
     if (joinError != null) throw joinError!;
+    if (joinResult) groupPostsError = null;
     return joinResult;
   }
 

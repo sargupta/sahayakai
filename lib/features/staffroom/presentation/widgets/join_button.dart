@@ -5,20 +5,25 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
-import '../../../inbox/data/block_c_transport.dart';
+import '../../data/staffroom_providers.dart';
 import '../../data/staffroom_transport.dart';
+import '../community_errors.dart';
 
-/// The optimistic **join** control for a group header (SPEC §A3.3).
+/// The optimistic **join** control for a group header.
 ///
 /// Tapping "Join" flips to the settled "Joined" indicator **immediately** and
-/// calls `joinGroup`; on success it reconciles against the returned membership
-/// flag, and on a [TransportUnavailable] / any typed error it **rolls back** to
-/// "Join" with a quiet inline hint (on-device the deferred transport throws every
-/// write, so the tap simply reverts — never a crash).
+/// calls `POST /api/groups/{id}/membership`. The route is idempotent and
+/// answers `{ joined }` — `false` only means "already a member" — so any
+/// successful reply settles on "Joined". On success every read a membership
+/// change affects is invalidated (the teacher's groups, suggestions, the feed,
+/// this group's header and posts), so the posts unlock and the feed fills
+/// without a manual refresh. On any error it **rolls back** to "Join" with a
+/// translated inline reason.
 ///
-/// A one-way Join → Joined (leaving a group is U-SI4). [onJoinedChanged] fires
-/// only from the tap handler (never during build) with the current membership so
-/// a parent can optimistically bump its displayed member count.
+/// One-way Join → Joined: leaving needs `DELETE .../membership`, which the
+/// app's HTTP client does not expose yet. [onJoinedChanged] fires only from the
+/// tap handler (never during build) with the current membership so a parent can
+/// optimistically bump its displayed member count.
 class JoinButton extends ConsumerStatefulWidget {
   const JoinButton({
     super.key,
@@ -39,7 +44,7 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
   /// `null` → use `widget.initialJoined`; non-null → a local optimistic override.
   bool? _joined;
   bool _busy = false;
-  bool _failed = false;
+  Object? _error;
 
   bool get _isJoined => _joined ?? widget.initialJoined;
 
@@ -47,32 +52,32 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
     if (_busy || _isJoined) return;
     setState(() {
       _busy = true;
-      _failed = false;
+      _error = null;
       _joined = true; // optimistic
     });
     widget.onJoinedChanged?.call(true);
     try {
-      final joined =
+      final newlyJoined =
           await ref.read(staffroomTransportProvider).joinGroup(widget.groupId);
       if (!mounted) return;
+      // `joined: false` = "already a member" (idempotent) — still a member.
       setState(() {
-        _joined = joined;
+        _joined = true;
         _busy = false;
       });
-      widget.onJoinedChanged?.call(joined);
-    } on TransportUnavailable {
-      _rollback();
-    } catch (_) {
-      _rollback();
+      if (!newlyJoined) widget.onJoinedChanged?.call(false);
+      invalidateAfterMembershipChange(ref, widget.groupId);
+    } catch (error) {
+      _rollback(error);
     }
   }
 
-  void _rollback() {
+  void _rollback(Object error) {
     if (!mounted) return;
     setState(() {
       _joined = false;
       _busy = false;
-      _failed = true;
+      _error = error;
     });
     widget.onJoinedChanged?.call(false);
   }
@@ -95,7 +100,8 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
         label: l10n.staffroomJoined,
         child: Container(
           width: double.infinity,
-          height: 52,
+          constraints: const BoxConstraints(minHeight: 52),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.space2),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: scheme.primary.withValues(alpha: 0.12),
@@ -106,11 +112,14 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
             children: [
               Icon(LucideIcons.check, size: AppIconSize.inline, color: saffronText),
               const SizedBox(width: AppSpacing.space2),
-              Text(
-                l10n.staffroomJoined,
-                style: text.labelLarge?.copyWith(
-                  color: saffronText,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  l10n.staffroomJoined,
+                  textAlign: TextAlign.center,
+                  style: text.labelLarge?.copyWith(
+                    color: saffronText,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -128,10 +137,14 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
           isBusy: _busy,
           onPressed: _join,
         ),
-        if (_failed) ...[
+        if (_error != null) ...[
           const SizedBox(height: AppSpacing.space2),
           Text(
-            l10n.staffroomJoinFailed,
+            communityErrorText(
+              l10n,
+              _error,
+              fallback: l10n.staffroomJoinFailed,
+            ),
             style: text.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
               fontStyle: FontStyle.italic,

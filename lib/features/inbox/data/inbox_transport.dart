@@ -5,6 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/firebase/firebase_init.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_providers.dart';
 import '../domain/conversation_id.dart';
 import '../domain/inbox_models.dart';
 import 'block_c_transport.dart';
@@ -21,13 +23,13 @@ part 'inbox_transport.g.dart';
 ///   - **live-read streams** = the `onSnapshot` equivalents (Firebase-gated,
 ///     `cloud_firestore`), typed `Stream<TransportSnapshot<...>>` so the deferred
 ///     seam can emit `awaitingFirebase` and the real impl can emit `ready`/`error`;
-///   - **write / one-shot futures** = the server-action equivalents, reached via
-///     Dio REST wrappers (backend task) — reusing the action authz verbatim.
+///   - **write futures** = REST calls over the app's `ApiClient` to the
+///     `/api/messages/**` route handlers (server-side authz and fan-out).
 ///
 /// Every method's doc states the exact Firestore query / REST route the real
 /// implementation must satisfy. Two implementations bind to [inboxTransportProvider]:
-/// [DeferredInboxTransport] now (keeps the APK green, no Firebase import), and a
-/// `FirestoreInboxTransport` after the handoff (see `firebase_init.dart`).
+/// [DeferredInboxTransport] (signed out / Firebase not configured) and
+/// [FirestoreInboxTransport] (a signed-in teacher).
 abstract interface class InboxTransport {
   /// **LIVE.** The inbox list. Real impl:
   /// `onSnapshot(collection('conversations')
@@ -64,37 +66,38 @@ abstract interface class InboxTransport {
   /// `sum(unreadCount[myUid])`.
   Stream<TransportSnapshot<int>> watchUnreadConversations();
 
-  /// **ONE-SHOT.** The sidebar badge count (capped 500 convos). REST wrapper of
-  /// `getTotalUnreadCountAction(userId)`.
+  /// **ONE-SHOT.** The sidebar badge count (capped 500 convos server-side as
+  /// `GET /api/messages/unread-count`; the live impl reads the same
+  /// conversations query once).
   Future<int> getTotalUnreadCount();
 
-  /// **WRITE.** Get-or-create the deterministic DM doc. REST wrapper of
-  /// `getOrCreateDirectConversationAction(myUid, otherUid)` →
+  /// **WRITE.** Get-or-create the deterministic DM doc. `POST
+  /// /api/messages/conversations/direct {myUid, otherUid}` →
   /// `{ conversationId }`. `myUid` is server-derived; the returned id equals
   /// [ConversationId.direct]`(myUid, otherUid)`.
   Future<ConversationId> getOrCreateDirectConversation(String otherUid);
 
-  /// **WRITE.** Create a group conversation (2–50 members). REST wrapper of
-  /// `createGroupConversationAction(creatorUid, participantUids, name)`.
+  /// **WRITE.** Create a group conversation (2–50 members). `POST
+  /// /api/messages/conversations/group {creatorUid, participantUids, name}`.
   Future<ConversationId> createGroupConversation({
     required List<String> participantUids,
     required String name,
   });
 
-  /// **WRITE.** Send a message. REST wrapper of `sendMessageAction(...)` →
+  /// **WRITE.** Send a message. `POST /api/messages/send` →
   /// `{ messageId }`. Pass a client-generated `clientMessageId` (UUID) for an
   /// **idempotent**, offline-safe send: a retry with the same id transactionally
   /// dedups server-side (no double message, no double unread increment).
   Future<String> sendMessage(SendMessageInput input);
 
-  /// **WRITE.** Clear unread + the bell badge on open. REST wrapper of
-  /// `markConversationReadAction(conversationId, userId)`: resets
+  /// **WRITE.** Clear unread + the bell badge on open. `POST
+  /// /api/messages/mark-read {conversationId, userId}`: resets
   /// `unreadCount[me]=0`, `arrayUnion(readBy)` on the last 50, and pages the
   /// matching `MESSAGE` notifications read.
   Future<void> markConversationRead(ConversationId conversationId);
 
-  /// **WRITE.** Stamp delivery receipts (≤50 ids/batch). REST wrapper of
-  /// `acknowledgeDeliveryAction(conversationId, messageIds)`.
+  /// **WRITE.** Stamp delivery receipts (≤50 ids/batch). `POST
+  /// /api/messages/ack-delivery {conversationId, messageIds}`.
   Future<void> acknowledgeDelivery(
     ConversationId conversationId,
     List<String> messageIds,
@@ -208,91 +211,34 @@ class DeferredInboxTransport implements InboxTransport {
       throw const TransportUnavailable.awaitingFirebase('acknowledgeDelivery');
 }
 
-/// The live Pro Inbox transport (T1-U4): direct `cloud_firestore` reads/writes
-/// against `conversations` + `conversations/{id}/messages`, checked
-/// individually against `firestore.rules` (not assumed — see each override's
-/// doc comment for the exact clause it relies on) rather than blocked on the
-/// backend REST wrappers the interface's own doc comments describe.
+/// The live Pro Inbox transport for a signed-in teacher.
 ///
-/// Bound only for a real signed-in teacher ([inboxTransportProvider] falls
-/// back to [DeferredInboxTransport] otherwise), so `_uid` is always the
-/// verified Firebase Auth uid — matching `request.auth.uid` in every rule
-/// below, never a client-supplied value (same discipline as
-/// `FirestoreProfileDocSource`).
+/// **Live reads are Firestore** (`firestore.rules` grants a participant read on
+/// `conversations` and their `messages`): [watchInbox], [watchThread],
+/// [loadOlderMessages], [watchUnreadConversations], [getTotalUnreadCount].
 ///
-/// **What got a real implementation vs. what stayed [TransportUnavailable],
-/// and why** (checked against `firestore.rules:109-136`, quoted per-method):
-///   - [watchInbox], [watchThread], [loadOlderMessages],
-///     [watchUnreadConversations] — direct reads. `conversations` grants
-///     `read` to any participant; `messages` grants `read` to any participant
-///     of the parent conversation. Both are unconditional for a participant,
-///     so all four read shapes the interface documents are safe as-is.
-///   - [sendMessage] — direct write. `messages` grants `create` when the
-///     caller is a participant, `senderId == request.auth.uid`, and
-///     `text.size() <= 1000`; the same transaction also updates the parent
-///     conversation's preview/unread fields, covered by that document's
-///     `update` rule (unconditional for any current participant — no
-///     `affectedKeys` restriction, unlike the message-level rule). The
-///     payload shape (message-id-equals-`clientMessageId`, `readBy:
-///     [senderId]`, `unreadCount` incremented for every OTHER participant)
-///     mirrors `sendMessageAction` in `sahayakai-main/src/app/actions/messages.ts`
-///     field-for-field, so a Flutter-authored message interoperates with the
-///     web client on the same documents.
-///   - [getOrCreateDirectConversation] — direct write. `create` only requires
-///     the caller's uid to be in `participantIds` — satisfied by writing
-///     `[myUid, otherUid]`. The denormalized `participants` map is populated
-///     for **my own** uid only, from the signed-in Firebase Auth profile:
-///     `users/{otherUid}` cannot be read from this client at all
-///     (`firestore.rules`'s `users/{userId}` block grants `read` only to
-///     `isOwner(userId)`), so the other participant's name/photo stay unset
-///     here until their own client (web or Flutter) opens the thread and
-///     fills theirs in the same way.
-///   - [markConversationRead] — direct write, but **partial**: resets only
-///     `unreadCount.$myUid` to `0` on the conversation doc (covered
-///     unconditionally by that doc's `update` rule for any participant). It
-///     does not also sweep `readBy` across recent messages or page matching
-///     `notifications` docs the way `markConversationReadAction` does
-///     server-side — a materially bigger write (N message updates + a
-///     notifications query) out of scope here; the badge — the actual
-///     "silent nothing" this unit fixes — is what this covers.
-///   - [acknowledgeDelivery] — direct write. The `messages` `update` rule
-///     explicitly allow-lists `deliveredTo` (alongside `readBy`/`readAt`/
-///     `deliveredAt`/`lastReadAt`) as client-mutable for any participant, so
-///     this batches `deliveredTo: arrayUnion(myUid)` across the given ids.
-///   - [getTotalUnreadCount] — direct read. A one-shot `.get()` on the exact
-///     same query [watchUnreadConversations] streams; the interface doc's
-///     "capped 500 convos" server-side reduction isn't reproduced (no cap
-///     here), but the one real UI need (the app-shell badge) is already
-///     served live by [watchUnreadConversations] — this is a fallback
-///     one-shot read, not a distinct code path worth its own limit.
-///   - [createGroupConversation] stays [TransportUnavailable]
-///     (`restWrapperMissing`): the raw `create` rule doesn't forbid a group
-///     doc, but a *correct* one needs member-count/name validation and a
-///     `participants` snapshot for every member this client is NOT — the same
-///     "cannot read other users' profiles directly" wall as the DM path
-///     above, but for an unbounded member list with no client-side
-///     workaround (unlike the DM path, which can at least seed its own
-///     entry).
+/// **Every write is a REST call** over [ApiClient] (Firebase bearer token
+/// attached) to the `sahayakai-main` handlers, matching each zod body exactly,
+/// so the server owns sender identity, the unread fan-out, notifications,
+/// block enforcement and idempotency:
+///
+/// | method | route |
+/// |---|---|
+/// | [getOrCreateDirectConversation] | `POST /api/messages/conversations/direct {myUid, otherUid}` → `{conversationId}` |
+/// | [createGroupConversation] | `POST /api/messages/conversations/group {creatorUid, participantUids, name}` → `{conversationId}` |
+/// | [sendMessage] | `POST /api/messages/send {conversationId, text, type, resource?, audioUrl?, audioDuration?, clientMessageId?}` → `{messageId}` |
+/// | [markConversationRead] | `POST /api/messages/mark-read {conversationId, userId}` |
+/// | [acknowledgeDelivery] | `POST /api/messages/ack-delivery {conversationId, messageIds}` |
+///
+/// `myUid` / `userId` / `creatorUid` must equal the verified caller (the
+/// services reject anything else with 403), so they are always [_uid] — the
+/// Firebase Auth uid the provider bound this instance to.
 class FirestoreInboxTransport implements InboxTransport {
-  /// [myDisplayName] / [myPhotoURL] are the caller's own Firebase Auth
-  /// profile, resolved once by [inboxTransportProvider] at bind time and
-  /// passed in — rather than this class reaching for `FirebaseAuth.instance`
-  /// itself — so it needs nothing but a uid + a `FirebaseFirestore` to run
-  /// (including under `fake_cloud_firestore`, which has no Firebase Auth
-  /// counterpart to fake against).
-  FirestoreInboxTransport(
-    this._firestore,
-    this._uid, {
-    String? myDisplayName,
-    this.myPhotoURL,
-  }) : myDisplayName = (myDisplayName?.trim().isNotEmpty ?? false)
-            ? myDisplayName!.trim()
-            : 'Teacher';
+  FirestoreInboxTransport(this._firestore, this._uid, this._apiClient);
 
   final FirebaseFirestore _firestore;
   final String _uid;
-  final String myDisplayName;
-  final String? myPhotoURL;
+  final ApiClient _apiClient;
 
   CollectionReference<Map<String, dynamic>> get _conversations =>
       _firestore.collection('conversations');
@@ -378,7 +324,7 @@ class FirestoreInboxTransport implements InboxTransport {
   Future<int> getTotalUnreadCount() async {
     // A one-shot `.get()` on the exact query `watchUnreadConversations` keeps
     // live — not a distinct server-side reduction, just that same read taken
-    // once instead of streamed. No REST wrapper needed for this one.
+    // once instead of streamed.
     final snapshot = await _conversations
         .where('participantIds', arrayContains: _uid)
         .get();
@@ -397,170 +343,90 @@ class FirestoreInboxTransport implements InboxTransport {
   Future<ConversationId> getOrCreateDirectConversation(
     String otherUid,
   ) async {
-    final id = ConversationId.direct(_uid, otherUid);
-    final doc = _conversations.doc(id.value);
-    final existing = await doc.get();
-    if (existing.exists) return id;
-
-    await doc.set(<String, dynamic>{
-      'type': 'direct',
-      'participantIds': <String>[_uid, otherUid],
-      // Only my own snapshot — users/{otherUid} is not client-readable at
-      // all (see the class doc); the other participant's client fills theirs
-      // in the same way whenever they open this doc.
-      'participants': <String, dynamic>{
-        _uid: <String, dynamic>{
-          'displayName': myDisplayName,
-          'photoURL': myPhotoURL,
-        },
-      },
-      'lastMessage': '',
-      'lastMessageAt': null,
-      'lastMessageSenderId': '',
-      'unreadCount': <String, int>{_uid: 0, otherUid: 0},
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-      // merge:true guards the narrow race where the other side creates the
-      // same deterministic doc concurrently — Firestore deep-merges nested
-      // map fields, so neither side's `participants` entry is clobbered.
-    }, SetOptions(merge: true));
-    return id;
+    final id = await _apiClient.post<String>(
+      '/api/messages/conversations/direct',
+      data: <String, dynamic>{'myUid': _uid, 'otherUid': otherUid},
+      decode: (json) => (json['conversationId'] as String?)?.trim() ?? '',
+    );
+    // The server id is the deterministic sorted pair; fall back to computing
+    // it only if a reply ever omits it.
+    return id.isEmpty ? ConversationId.direct(_uid, otherUid) : ConversationId(id);
   }
 
   @override
   Future<ConversationId> createGroupConversation({
     required List<String> participantUids,
     required String name,
-  }) async =>
-      throw const TransportUnavailable(
-        TransportUnavailableKind.restWrapperMissing,
-        surface: 'createGroupConversation',
-        message: 'No REST wrapper for createGroupConversationAction yet: '
-            'member-count/name validation and per-member participant-snapshot '
-            'construction both need users/{uid} reads this client cannot do '
-            'directly for anyone but itself.',
+  }) async {
+    final id = await _apiClient.post<String>(
+      '/api/messages/conversations/group',
+      data: <String, dynamic>{
+        'creatorUid': _uid,
+        'participantUids': <String>{_uid, ...participantUids}.toList(),
+        'name': name.trim(),
+      },
+      decode: (json) => (json['conversationId'] as String?)?.trim() ?? '',
+    );
+    if (id.isEmpty) {
+      throw const FormatException(
+        'POST /api/messages/conversations/group: no conversationId',
       );
+    }
+    return ConversationId(id);
+  }
 
   @override
-  Future<String> sendMessage(SendMessageInput input) async {
-    final convRef = _conversations.doc(input.conversationId.value);
+  Future<String> sendMessage(SendMessageInput input) {
     final clientId = input.clientMessageId?.trim();
-    final hasClientId = clientId != null && clientId.isNotEmpty;
-    final msgRef = hasClientId
-        ? _messages(input.conversationId).doc(clientId)
-        : _messages(input.conversationId).doc();
-
-    return _firestore.runTransaction<String>((tx) async {
-      final convSnap = await tx.get(convRef);
-      if (!convSnap.exists) {
-        throw StateError(
-          'Conversation ${input.conversationId} does not exist',
-        );
-      }
-      if (hasClientId) {
-        // Idempotent retry: the first attempt already landed under this id.
-        final existing = await tx.get(msgRef);
-        if (existing.exists) return msgRef.id;
-      }
-
-      final convData = convSnap.data()!;
-      final participants = convData['participants'];
-      final senderSnap = participants is Map ? participants[_uid] : null;
-      final senderDisplayName =
-          senderSnap is Map ? senderSnap['displayName'] : null;
-      final senderPhoto = senderSnap is Map ? senderSnap['photoURL'] : null;
-
-      tx.set(msgRef, <String, dynamic>{
-        'type': input.type.wire,
+    return _apiClient.post<String>(
+      '/api/messages/send',
+      data: <String, dynamic>{
+        'conversationId': input.conversationId.value,
         'text': input.text.trim(),
-        'senderId': _uid,
-        'senderName':
-            senderDisplayName is String && senderDisplayName.isNotEmpty
-                ? senderDisplayName
-                : 'Teacher',
-        'senderPhotoURL': senderPhoto is String ? senderPhoto : null,
-        'readBy': <String>[_uid],
-        'createdAt': FieldValue.serverTimestamp(),
-        if (hasClientId) 'clientMessageId': clientId,
+        'type': input.type.wire,
         if (input.type == MessageType.resource && input.resource != null)
           'resource': input.resource,
-        if (input.type == MessageType.audio && input.audioUrl != null) ...{
+        if (input.type == MessageType.audio && input.audioUrl != null)
           'audioUrl': input.audioUrl,
-          if (input.audioDuration != null)
-            'audioDuration': input.audioDuration,
-        },
-      });
-
-      final participantIds = convData['participantIds'];
-      final unreadUpdates = <String, dynamic>{
-        if (participantIds is List)
-          for (final p in participantIds)
-            if (p is String && p != _uid)
-              'unreadCount.$p': FieldValue.increment(1),
-      };
-      tx.update(convRef, <String, dynamic>{
-        'lastMessage': _preview(input),
-        'lastMessageAt': FieldValue.serverTimestamp(),
-        'lastMessageSenderId': _uid,
-        'updatedAt': FieldValue.serverTimestamp(),
-        ...unreadUpdates,
-      });
-
-      return msgRef.id;
-    });
-  }
-
-  /// Mirrors `sendMessageAction`'s preview truncation exactly (text: first 80
-  /// chars; resource: the paperclip emoji + `{title}`; audio: the literal
-  /// `'Voice message'`). The paperclip is a `\u{}` escape, not a literal
-  /// source-file emoji byte sequence — this is stored/interop data (the
-  /// preview snippet `sendMessageAction` itself writes, matched here for
-  /// cross-client consistency), never a UI glyph, so it stays out of
-  /// `token_guard.sh`'s "Lucide icons only" scan on principle, not just on
-  /// the scan's literal reach.
-  static String _preview(SendMessageInput input) {
-    switch (input.type) {
-      case MessageType.resource:
-        final title = input.resource?['title'];
-        final label = title is String && title.trim().isNotEmpty
-            ? title.trim()
-            : 'Shared a resource';
-        return '\u{1F4CE} $label';
-      case MessageType.audio:
-        return 'Voice message';
-      case MessageType.text:
-        final text = input.text.trim();
-        return text.length <= 80 ? text : text.substring(0, 80);
-    }
+        if (input.type == MessageType.audio && input.audioDuration != null)
+          'audioDuration': input.audioDuration,
+        // The server writes the message under this id inside a transaction,
+        // so a retry with the same id is deduped (no double message, no double
+        // unread increment, no second notification).
+        if (clientId != null && clientId.isNotEmpty) 'clientMessageId': clientId,
+      },
+      decode: (json) => (json['messageId'] as String?)?.trim() ?? '',
+    );
   }
 
   @override
-  Future<void> markConversationRead(ConversationId conversationId) async {
-    await _conversations
-        .doc(conversationId.value)
-        .update(<String, dynamic>{'unreadCount.$_uid': 0});
-  }
+  Future<void> markConversationRead(ConversationId conversationId) =>
+      _apiClient.post<void>(
+        '/api/messages/mark-read',
+        data: <String, dynamic>{
+          'conversationId': conversationId.value,
+          'userId': _uid,
+        },
+        decode: (_) {},
+      );
 
   @override
   Future<void> acknowledgeDelivery(
     ConversationId conversationId,
     List<String> messageIds,
   ) async {
-    if (messageIds.isEmpty) return;
-    final col = _messages(conversationId);
-    // Firestore batches cap at 500 ops; the interface's own ≤50/batch
-    // contract keeps one caller-supplied list well under that, but chunk
-    // defensively rather than trust every caller.
-    for (var i = 0; i < messageIds.length; i += 500) {
-      final end =
-          (i + 500 > messageIds.length) ? messageIds.length : i + 500;
-      final batch = _firestore.batch();
-      for (final id in messageIds.sublist(i, end)) {
-        batch.update(col.doc(id), <String, dynamic>{
-          'deliveredTo': FieldValue.arrayUnion(<String>[_uid]),
-        });
-      }
-      await batch.commit();
+    final ids = messageIds.where((id) => id.isNotEmpty).toList();
+    // The service stamps at most 50 per call; chunk so none are dropped.
+    for (var i = 0; i < ids.length; i += 50) {
+      final end = (i + 50 > ids.length) ? ids.length : i + 50;
+      await _apiClient.post<void>(
+        '/api/messages/ack-delivery',
+        data: <String, dynamic>{
+          'conversationId': conversationId.value,
+          'messageIds': ids.sublist(i, end),
+        },
+        decode: (_) {},
+      );
     }
   }
 
@@ -610,7 +476,6 @@ InboxTransport inboxTransport(Ref ref) {
   return FirestoreInboxTransport(
     FirebaseFirestore.instance,
     user.uid,
-    myDisplayName: user.displayName,
-    myPhotoURL: user.photoURL,
+    ref.watch(apiClientProvider),
   );
 }

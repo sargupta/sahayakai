@@ -199,7 +199,7 @@ class _GroupChatProviderElement
 }
 
 String _$chatSendControllerHash() =>
-    r'8dd2ead9adfb0ffbf349705f1c0d54bef428b4bf';
+    r'251c7460872fc380c4973f28704f4538a5c67cc5';
 
 abstract class _$ChatSendController
     extends BuildlessAutoDisposeNotifier<ChatSendState> {
@@ -208,70 +208,82 @@ abstract class _$ChatSendController
   ChatSendState build(ChatRoom room);
 }
 
-/// The optimistic chat-send controller (SPEC §A3.2), one per [ChatRoom].
+/// The optimistic chat-send controller, one per [ChatRoom].
 ///
-/// [send] appends a pending bubble and fires the REST-wrapper write
-/// (`sendCommunityChatMessage` / `sendGroupChatMessage`) with a client-generated
-/// [PendingChatSend.clientMessageId]; on success the bubble is marked `sent` and
-/// the live stream reconciles it via [mergeChatForDisplay] (community_chat does
-/// not echo a client id, so the reconcile matches on author + text + novelty). On
-/// a typed [TransportUnavailable] / any error the bubble **rolls back** and the
-/// screen shows a dignified inline retry; [retry] re-sends with the SAME
-/// clientMessageId so it stays a single logical message (no double pending).
+/// [send] appends a pending bubble and posts it (`POST /api/community/chat` or
+/// `POST /api/groups/{id}/chat`); on success the bubble is marked `sent` and
+/// the live stream reconciles it via [mergeChatForDisplay]. On any error the
+/// bubble **rolls back** into [ChatSendState.failed], each with its own retry.
 ///
-/// autoDispose per room: the pending list lives only while the chat screen is
-/// open, matching the U-SI1 composer's widget-scoped optimistic state.
+/// **No duplicates on retry.** Neither chat route accepts a client message id,
+/// so the server cannot dedupe a retry of a send that actually landed (e.g. a
+/// timeout after the write). [retry] therefore checks the live stream FIRST:
+/// if a matching echo (same author + text, not present when the original send
+/// began) has already arrived, the failure is simply cleared instead of
+/// re-posted. [unresolvedFailures] applies the same rule for display, so a
+/// "failed" send whose echo shows up never lingers as a false failure.
+///
+/// autoDispose per room: the state lives only while the chat screen is open.
 ///
 /// Copied from [ChatSendController].
 @ProviderFor(ChatSendController)
 const chatSendControllerProvider = ChatSendControllerFamily();
 
-/// The optimistic chat-send controller (SPEC §A3.2), one per [ChatRoom].
+/// The optimistic chat-send controller, one per [ChatRoom].
 ///
-/// [send] appends a pending bubble and fires the REST-wrapper write
-/// (`sendCommunityChatMessage` / `sendGroupChatMessage`) with a client-generated
-/// [PendingChatSend.clientMessageId]; on success the bubble is marked `sent` and
-/// the live stream reconciles it via [mergeChatForDisplay] (community_chat does
-/// not echo a client id, so the reconcile matches on author + text + novelty). On
-/// a typed [TransportUnavailable] / any error the bubble **rolls back** and the
-/// screen shows a dignified inline retry; [retry] re-sends with the SAME
-/// clientMessageId so it stays a single logical message (no double pending).
+/// [send] appends a pending bubble and posts it (`POST /api/community/chat` or
+/// `POST /api/groups/{id}/chat`); on success the bubble is marked `sent` and
+/// the live stream reconciles it via [mergeChatForDisplay]. On any error the
+/// bubble **rolls back** into [ChatSendState.failed], each with its own retry.
 ///
-/// autoDispose per room: the pending list lives only while the chat screen is
-/// open, matching the U-SI1 composer's widget-scoped optimistic state.
+/// **No duplicates on retry.** Neither chat route accepts a client message id,
+/// so the server cannot dedupe a retry of a send that actually landed (e.g. a
+/// timeout after the write). [retry] therefore checks the live stream FIRST:
+/// if a matching echo (same author + text, not present when the original send
+/// began) has already arrived, the failure is simply cleared instead of
+/// re-posted. [unresolvedFailures] applies the same rule for display, so a
+/// "failed" send whose echo shows up never lingers as a false failure.
+///
+/// autoDispose per room: the state lives only while the chat screen is open.
 ///
 /// Copied from [ChatSendController].
 class ChatSendControllerFamily extends Family<ChatSendState> {
-  /// The optimistic chat-send controller (SPEC §A3.2), one per [ChatRoom].
+  /// The optimistic chat-send controller, one per [ChatRoom].
   ///
-  /// [send] appends a pending bubble and fires the REST-wrapper write
-  /// (`sendCommunityChatMessage` / `sendGroupChatMessage`) with a client-generated
-  /// [PendingChatSend.clientMessageId]; on success the bubble is marked `sent` and
-  /// the live stream reconciles it via [mergeChatForDisplay] (community_chat does
-  /// not echo a client id, so the reconcile matches on author + text + novelty). On
-  /// a typed [TransportUnavailable] / any error the bubble **rolls back** and the
-  /// screen shows a dignified inline retry; [retry] re-sends with the SAME
-  /// clientMessageId so it stays a single logical message (no double pending).
+  /// [send] appends a pending bubble and posts it (`POST /api/community/chat` or
+  /// `POST /api/groups/{id}/chat`); on success the bubble is marked `sent` and
+  /// the live stream reconciles it via [mergeChatForDisplay]. On any error the
+  /// bubble **rolls back** into [ChatSendState.failed], each with its own retry.
   ///
-  /// autoDispose per room: the pending list lives only while the chat screen is
-  /// open, matching the U-SI1 composer's widget-scoped optimistic state.
+  /// **No duplicates on retry.** Neither chat route accepts a client message id,
+  /// so the server cannot dedupe a retry of a send that actually landed (e.g. a
+  /// timeout after the write). [retry] therefore checks the live stream FIRST:
+  /// if a matching echo (same author + text, not present when the original send
+  /// began) has already arrived, the failure is simply cleared instead of
+  /// re-posted. [unresolvedFailures] applies the same rule for display, so a
+  /// "failed" send whose echo shows up never lingers as a false failure.
+  ///
+  /// autoDispose per room: the state lives only while the chat screen is open.
   ///
   /// Copied from [ChatSendController].
   const ChatSendControllerFamily();
 
-  /// The optimistic chat-send controller (SPEC §A3.2), one per [ChatRoom].
+  /// The optimistic chat-send controller, one per [ChatRoom].
   ///
-  /// [send] appends a pending bubble and fires the REST-wrapper write
-  /// (`sendCommunityChatMessage` / `sendGroupChatMessage`) with a client-generated
-  /// [PendingChatSend.clientMessageId]; on success the bubble is marked `sent` and
-  /// the live stream reconciles it via [mergeChatForDisplay] (community_chat does
-  /// not echo a client id, so the reconcile matches on author + text + novelty). On
-  /// a typed [TransportUnavailable] / any error the bubble **rolls back** and the
-  /// screen shows a dignified inline retry; [retry] re-sends with the SAME
-  /// clientMessageId so it stays a single logical message (no double pending).
+  /// [send] appends a pending bubble and posts it (`POST /api/community/chat` or
+  /// `POST /api/groups/{id}/chat`); on success the bubble is marked `sent` and
+  /// the live stream reconciles it via [mergeChatForDisplay]. On any error the
+  /// bubble **rolls back** into [ChatSendState.failed], each with its own retry.
   ///
-  /// autoDispose per room: the pending list lives only while the chat screen is
-  /// open, matching the U-SI1 composer's widget-scoped optimistic state.
+  /// **No duplicates on retry.** Neither chat route accepts a client message id,
+  /// so the server cannot dedupe a retry of a send that actually landed (e.g. a
+  /// timeout after the write). [retry] therefore checks the live stream FIRST:
+  /// if a matching echo (same author + text, not present when the original send
+  /// began) has already arrived, the failure is simply cleared instead of
+  /// re-posted. [unresolvedFailures] applies the same rule for display, so a
+  /// "failed" send whose echo shows up never lingers as a false failure.
+  ///
+  /// autoDispose per room: the state lives only while the chat screen is open.
   ///
   /// Copied from [ChatSendController].
   ChatSendControllerProvider call(ChatRoom room) {
@@ -300,36 +312,42 @@ class ChatSendControllerFamily extends Family<ChatSendState> {
   String? get name => r'chatSendControllerProvider';
 }
 
-/// The optimistic chat-send controller (SPEC §A3.2), one per [ChatRoom].
+/// The optimistic chat-send controller, one per [ChatRoom].
 ///
-/// [send] appends a pending bubble and fires the REST-wrapper write
-/// (`sendCommunityChatMessage` / `sendGroupChatMessage`) with a client-generated
-/// [PendingChatSend.clientMessageId]; on success the bubble is marked `sent` and
-/// the live stream reconciles it via [mergeChatForDisplay] (community_chat does
-/// not echo a client id, so the reconcile matches on author + text + novelty). On
-/// a typed [TransportUnavailable] / any error the bubble **rolls back** and the
-/// screen shows a dignified inline retry; [retry] re-sends with the SAME
-/// clientMessageId so it stays a single logical message (no double pending).
+/// [send] appends a pending bubble and posts it (`POST /api/community/chat` or
+/// `POST /api/groups/{id}/chat`); on success the bubble is marked `sent` and
+/// the live stream reconciles it via [mergeChatForDisplay]. On any error the
+/// bubble **rolls back** into [ChatSendState.failed], each with its own retry.
 ///
-/// autoDispose per room: the pending list lives only while the chat screen is
-/// open, matching the U-SI1 composer's widget-scoped optimistic state.
+/// **No duplicates on retry.** Neither chat route accepts a client message id,
+/// so the server cannot dedupe a retry of a send that actually landed (e.g. a
+/// timeout after the write). [retry] therefore checks the live stream FIRST:
+/// if a matching echo (same author + text, not present when the original send
+/// began) has already arrived, the failure is simply cleared instead of
+/// re-posted. [unresolvedFailures] applies the same rule for display, so a
+/// "failed" send whose echo shows up never lingers as a false failure.
+///
+/// autoDispose per room: the state lives only while the chat screen is open.
 ///
 /// Copied from [ChatSendController].
 class ChatSendControllerProvider
     extends AutoDisposeNotifierProviderImpl<ChatSendController, ChatSendState> {
-  /// The optimistic chat-send controller (SPEC §A3.2), one per [ChatRoom].
+  /// The optimistic chat-send controller, one per [ChatRoom].
   ///
-  /// [send] appends a pending bubble and fires the REST-wrapper write
-  /// (`sendCommunityChatMessage` / `sendGroupChatMessage`) with a client-generated
-  /// [PendingChatSend.clientMessageId]; on success the bubble is marked `sent` and
-  /// the live stream reconciles it via [mergeChatForDisplay] (community_chat does
-  /// not echo a client id, so the reconcile matches on author + text + novelty). On
-  /// a typed [TransportUnavailable] / any error the bubble **rolls back** and the
-  /// screen shows a dignified inline retry; [retry] re-sends with the SAME
-  /// clientMessageId so it stays a single logical message (no double pending).
+  /// [send] appends a pending bubble and posts it (`POST /api/community/chat` or
+  /// `POST /api/groups/{id}/chat`); on success the bubble is marked `sent` and
+  /// the live stream reconciles it via [mergeChatForDisplay]. On any error the
+  /// bubble **rolls back** into [ChatSendState.failed], each with its own retry.
   ///
-  /// autoDispose per room: the pending list lives only while the chat screen is
-  /// open, matching the U-SI1 composer's widget-scoped optimistic state.
+  /// **No duplicates on retry.** Neither chat route accepts a client message id,
+  /// so the server cannot dedupe a retry of a send that actually landed (e.g. a
+  /// timeout after the write). [retry] therefore checks the live stream FIRST:
+  /// if a matching echo (same author + text, not present when the original send
+  /// began) has already arrived, the failure is simply cleared instead of
+  /// re-posted. [unresolvedFailures] applies the same rule for display, so a
+  /// "failed" send whose echo shows up never lingers as a false failure.
+  ///
+  /// autoDispose per room: the state lives only while the chat screen is open.
   ///
   /// Copied from [ChatSendController].
   ChatSendControllerProvider(ChatRoom room)

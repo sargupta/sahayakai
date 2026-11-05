@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/avatar_initials.dart';
 
 /// A staffroom author / teacher avatar: the photo when it loads, and a dignified
 /// saffron-tint initial (or a neutral user glyph) as the fallback — **never** a
@@ -20,7 +21,8 @@ class StaffroomAvatar extends StatelessWidget {
     super.key,
     required this.name,
     this.photoUrl,
-    this.size = AppIconSize.wellBox, // 48dp — floors the row past the 48dp target
+    this.size =
+        AppIconSize.wellBox, // 48dp — floors the row past the 48dp target
   });
 
   final String name;
@@ -62,38 +64,23 @@ class _InitialFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
-
-    final trimmed = name.trim();
-    final initial = trimmed.isEmpty
-        ? null
-        : String.fromCharCode(trimmed.runes.first).toUpperCase();
-
-    // Glyph size scales with the well so a 36dp inline avatar and the 48dp row
-    // avatar both read correctly.
-    final glyph = size * 0.42;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            scheme.primary.withValues(alpha: 0.16),
-            scheme.primary.withValues(alpha: 0.06),
-          ],
-        ),
-      ),
+    final text = avatarInitials(name);
+    final (fill, ink) = avatarTint(name);
+    return ColoredBox(
+      color: fill,
       child: Center(
-        child: initial == null
-            ? Icon(LucideIcons.user, size: glyph, color: scheme.primary)
+        child: text == null
+            ? Icon(LucideIcons.user, size: size * 0.42, color: ink)
             : Text(
-                initial,
-                style: theme.textTheme.titleMedium?.copyWith(color: saffronText),
+                text,
+                maxLines: 1,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  // 12px on the map's 36px avatar, scaled with the size.
+                  fontSize: size / 3,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                  color: ink,
+                ),
               ),
       ),
     );

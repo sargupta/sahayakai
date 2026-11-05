@@ -8,8 +8,10 @@ import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/map_card.dart';
 import '../../../inbox/data/block_c_transport.dart';
 import '../../../inbox/presentation/inbox_time.dart';
+import '../../data/staffroom_providers.dart';
 import '../../data/staffroom_transport.dart';
 import '../../domain/group.dart';
+import 'connection_action.dart';
 import 'post_type_style.dart';
 import 'staffroom_avatar.dart';
 
@@ -115,6 +117,7 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
     final post = widget.post;
+    final myUid = ref.watch(currentStaffroomUserIdProvider);
 
     final group = widget.groupName?.trim() ?? '';
     final timestamp = inboxRelativeTime(post.createdAt, DateTime.now(), l10n);
@@ -169,15 +172,35 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
           const SizedBox(height: 9),
           // Body: server-authored prose (full ink, matra-safe).
           AiText(post.content),
-          const SizedBox(height: AppSpacing.space1),
-          // Footer: the optimistic like, leading, as in the map.
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: _LikeButton(
-              liked: _isLiked,
-              count: _likeCount,
-              onTap: _toggle,
-            ),
+          const SizedBox(height: 2),
+          // Footer, as in the map: the like, the comment count when there is
+          // one, and Connect on another teacher's post.
+          Row(
+            children: [
+              _LikeButton(liked: _isLiked, count: _likeCount, onTap: _toggle),
+              // The comment count takes the free width, so Connect sits flush
+              // right; with no comments a spacer does the same.
+              if (post.commentsCount > 0) ...[
+                const SizedBox(width: AppSpacing.space3),
+                Expanded(
+                  child: Text(
+                    l10n.staffroomCommentsCount(post.commentsCount),
+                    style: text.bodySmall?.copyWith(
+                      fontSize: 12.5,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              ] else
+                const Spacer(),
+              if (post.authorUid.isNotEmpty && post.authorUid != myUid)
+                TeacherConnectionAction(
+                  uid: post.authorUid,
+                  displayName: post.authorName,
+                  photoURL: post.authorPhotoURL,
+                  compact: true,
+                ),
+            ],
           ),
           if (_failed) ...[
             const SizedBox(height: AppSpacing.space1),
@@ -221,8 +244,9 @@ class _TypePill extends StatelessWidget {
         child: Text(
           latin ? label.toUpperCase() : label,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontSize: latin ? 10.5 : 12,
             fontWeight: FontWeight.w700,
-            letterSpacing: latin ? 0.7 : 0,
+            letterSpacing: latin ? 0.6 : 0,
             color: tint.ink,
           ),
         ),
@@ -231,20 +255,12 @@ class _TypePill extends StatelessWidget {
   }
 }
 
-/// The like affordance: a heart + a tabular count in a ≥48dp tap target.
+/// The like affordance, as in the map: a heart and the count, compact.
 ///
-/// **Liked** = the outline heart in the saffron-text token inside a tinted
-/// `primary@0.12` circle (a genuine FILL treatment: the tinted disc is a shape
-/// difference the outline state lacks — Lucide ships no solid heart, so the disc
-/// carries the "filled" read). **Not liked** = the bare outline heart in
-/// `onSurfaceVariant`. The state is therefore **not colour-only**: the disc
-/// appears/disappears, and `Semantics(toggled:)` announces on/off with a
-/// distinct "Liked"/"Like" label.
-///
-/// WCAG AA on the white flat card: the saffron-text heart on the `primary@0.12`
-/// disc is ~5.14:1 (matches `AppBadge.accent`); the muted outline heart on white
-/// is 4.70:1 (clears the 3:1 non-text floor comfortably); the count is full-ink
-/// `onSurface` (~16:1).
+/// **Liked** = a red heart on a soft red disc; **not liked** = the muted
+/// outline heart with no disc. The disc is a shape difference, so the state is
+/// not colour-only, and `Semantics(toggled:)` announces on/off with a distinct
+/// "Liked"/"Like" label. The touch target is 44dp tall.
 class _LikeButton extends StatelessWidget {
   const _LikeButton({
     required this.liked,
@@ -256,65 +272,50 @@ class _LikeButton extends StatelessWidget {
   final int count;
   final VoidCallback onTap;
 
-  static const double _disc = 32;
+  static const double _disc = 28;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final extras = AppTextExtras.of(context);
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
-
-    final heart = Container(
-      width: _disc,
-      height: _disc,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: liked ? scheme.primary.withValues(alpha: 0.12) : null,
-      ),
-      child: Icon(
-        LucideIcons.heart,
-        size: AppIconSize.inline,
-        color: liked ? saffronText : scheme.onSurfaceVariant,
-      ),
-    );
+    final text = Theme.of(context).textTheme;
+    final ink = liked ? AppColors.red500 : AppColors.textMuted;
 
     return Semantics(
       button: true,
       toggled: liked,
       label: liked ? l10n.staffroomLiked : l10n.staffroomLike,
       value: l10n.staffroomLikeCountLabel(count),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          focusColor: scheme.primary.withValues(alpha: 0.12),
-          hoverColor: scheme.primary.withValues(alpha: 0.04),
-          borderRadius: AppRadius.rControl,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.space2,
-                vertical: AppSpacing.space2,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadius.rControl,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: _disc,
+                height: _disc,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: liked ? AppColors.mapRequiredBg : null,
+                ),
+                child: Icon(LucideIcons.heart, size: 15, color: ink),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  heart,
-                  const SizedBox(width: AppSpacing.space1),
-                  Text(
-                    '$count',
-                    style: extras.dataMedium.copyWith(color: scheme.onSurface),
-                  ),
-                ],
+              const SizedBox(width: 2),
+              Text(
+                '$count',
+                style: text.bodySmall?.copyWith(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: liked ? AppColors.red700 : AppColors.textBody,
+                ),
               ),
-            ),
+              const SizedBox(width: AppSpacing.space1),
+            ],
           ),
         ),
       ),

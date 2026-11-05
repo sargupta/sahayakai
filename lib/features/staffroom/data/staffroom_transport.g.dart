@@ -7,17 +7,13 @@ part of 'staffroom_transport.dart';
 // **************************************************************************
 
 String _$staffroomTransportHash() =>
-    r'0d5afe05ee8b4cd9b24816e8dcd5aa399cabb8ba';
+    r'829dc8807e134ea9a2b0ddcf171e40369bd05e1b';
 
 /// The Staffroom transport. [FirestoreStaffroomTransport] once Firebase is
 /// configured **and** a real teacher is signed in; [DeferredStaffroomTransport]
 /// otherwise — including a genuinely signed-out teacher, so the signed-out UI
-/// (the "sign in to join the staffroom" `EmptyView`) renders exactly as it
-/// does today. Mirrors `inboxTransportProvider`'s branch on
-/// [authControllerProvider] (`core/auth/auth_providers.dart`) for consistency:
-/// the same provider both the router and every other Block-C-adjacent surface
-/// already agree is the source of truth for "is this a real signed-in
-/// teacher."
+/// renders. Mirrors `inboxTransportProvider`'s branch on
+/// [authControllerProvider] (`core/auth/auth_providers.dart`).
 ///
 /// Copied from [staffroomTransport].
 @ProviderFor(staffroomTransport)

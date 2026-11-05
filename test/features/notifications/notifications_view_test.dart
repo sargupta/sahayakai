@@ -9,6 +9,7 @@ import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/notifications/data/notifications_store.dart';
 import 'package:sahayakai/features/notifications/domain/teacher_notification.dart';
 import 'package:sahayakai/features/notifications/presentation/notifications_view.dart';
+import 'package:sahayakai/features/parent_hotline/domain/hotline_launch.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// U-SI5 — the Network hub's **Updates** pane.
@@ -90,8 +91,14 @@ Future<ProviderContainer> _pumpView(
         builder: (_, _) => Scaffold(body: NotificationsView(now: _now)),
       ),
       GoRoute(
+        // Prints the call it was asked to open.
         path: Routes.parentHotline,
-        builder: (_, _) => const _DestMarker('hotline'),
+        builder: (_, state) {
+          final launch = HotlineLaunch.fromExtra(state.extra);
+          return _DestMarker(
+            'hotline-${launch.outreachId}-${launch.studentName}',
+          );
+        },
       ),
       GoRoute(
         path: Routes.attendanceMonthPattern,
@@ -237,13 +244,30 @@ void main() {
   });
 
   group('every row leads somewhere that can keep its promise', () {
-    testWidgets('a call outcome opens the Parent Hotline', (tester) async {
+    testWidgets('a call outcome opens that exact call in the Parent Hotline', (
+      tester,
+    ) async {
       await _pumpView(tester, seed: [_callFailed()]);
       await tester.tap(
         find.text(l10n.notificationCallFailedTitle('Ravi Kumar')),
       );
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('dest-hotline')), findsOneWidget);
+      expect(
+        find.byKey(const Key('dest-hotline-o2-Ravi Kumar')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a finished call opens its own summary', (tester) async {
+      await _pumpView(tester, seed: [_callCompleted()]);
+      await tester.tap(
+        find.text(l10n.notificationCallCompletedTitle('Asha Devi')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('dest-hotline-o1-Asha Devi')),
+        findsOneWidget,
+      );
     });
 
     testWidgets("an absence run opens that class's month view", (tester) async {

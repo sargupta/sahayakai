@@ -13,36 +13,33 @@ import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/map_card.dart';
 import '../../../shared/widgets/map_chip.dart';
 import '../../../shared/widgets/secondary_button.dart';
-import '../../vidya/presentation/vidya_sheet.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/community_post.dart';
 import '../domain/group.dart';
 import '../domain/staffroom_results.dart';
 import '../domain/teacher.dart';
+import 'community_network_screen.dart';
 import 'widgets/feed_item_view.dart';
 import 'widgets/group_chip.dart';
+import 'widgets/post_composer.dart';
 import 'widgets/post_type_style.dart';
 import 'widgets/teacher_suggestion_card.dart';
 
-/// U-SI2 — the Staffroom home (SPEC §A3.1). A scroll of editorial registers: a
-/// hero masthead, the "Your groups" strip, "Discover groups", the unified feed
-/// ("From your groups"), and "People you may know".
+/// The Staffroom home: the two hub tiles (the live staff room, and "Your
+/// network"), the "What did you do today?" composer, the typed feed with its
+/// filter chips, and the teacher's groups / suggestions / people below.
 ///
-/// State mapping mirrors the U-SI1 inbox, driven by [unifiedFeedProvider] (the
-/// primary surface) + [currentStaffroomUserId]:
+/// State mapping, driven by [unifiedFeedProvider] (the primary surface) +
+/// [currentStaffroomUserId]:
 ///
-///   - null uid (signed-out / awaiting Firebase) → the sign-in `EmptyView`
-///     ("Sign in to join the staffroom") — what the deferred transport shows
-///     on-device;
+///   - null uid (signed out) → the sign-in note;
 ///   - `loading`  → an `AppSkeleton` feed;
 ///   - `error`    → an `ErrorView` + retry (never a hang);
-///   - `ready` empty → the "Your feed is quiet" `EmptyView`;
+///   - `ready` empty → the "Your feed is quiet" note;
 ///   - `ready` non-empty → the feed cards + the group / people sections.
 ///
-/// **Firebase-gated:** on-device the bound transport is deferred (empty reads)
-/// and the uid is null, so this always resolves to the sign-in surface (verified
-/// by code + test, not live). [StaffroomFeedView] is the body, so the Network hub
-/// can host it under its own chrome without a nested app bar.
+/// [StaffroomFeedView] is the body, so the Network hub can host it under its
+/// own chrome without a nested app bar.
 class StaffroomScreen extends StatelessWidget {
   const StaffroomScreen({super.key});
 
@@ -50,10 +47,7 @@ class StaffroomScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
-      appBar: GlassAppBar(
-        title: Text(l10n.staffroomTitle),
-        actions: const [VidyaAppBarAction()],
-      ),
+      appBar: GlassAppBar(title: Text(l10n.staffroomTitle)),
       body: const SafeArea(child: StaffroomFeedView()),
     );
   }
@@ -104,9 +98,6 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
   /// null = "All". Otherwise the one post type the chips have narrowed to.
   PostType? _filter;
 
-  /// The "Your network" tile scrolls here.
-  final GlobalKey _networkKey = GlobalKey();
-
   /// The chips, in the map's order: All, Resource, Tried this, Celebrate,
   /// Need help. Each is a real [PostType] the feed carries.
   static const _chips = <PostType?>[
@@ -124,17 +115,31 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
       ..invalidate(discoverGroupsProvider)
       ..invalidate(recommendedTeachersProvider)
       ..invalidate(likedItemIdsProvider);
-    await ref.read(unifiedFeedProvider.future);
+    // A failed refresh must settle the indicator, not throw out of it: the
+    // feed provider itself carries the error into the error surface.
+    await ref
+        .read(unifiedFeedProvider.future)
+        .catchError((Object _) => const <FeedItem>[]);
   }
 
-  void _showNetwork() {
-    final target = _networkKey.currentContext;
-    if (target == null) return;
-    Scrollable.ensureVisible(
-      target,
-      duration: context.motionEnabled ? AppMotion.medium : Duration.zero,
-      curve: AppMotion.emphasized,
-    );
+  /// Whether [item] belongs under the chip [filter] (null = All).
+  ///
+  /// A post matches its own type; a shared resource (`resource_share`) is a
+  /// Resource whether it arrives as a post or as a resource card. Discovery
+  /// cards (a connection or group suggestion, a chat highlight) carry no post
+  /// type at all, so a post-type chip does not filter them out.
+  static bool matchesFilter(FeedItem item, PostType? filter) {
+    if (filter == null) return true;
+    switch (item.type) {
+      case FeedItemType.groupPost:
+        return item.post?.postType == filter;
+      case FeedItemType.resourceShare:
+        return filter == PostType.resource;
+      case FeedItemType.connectionSuggestion:
+      case FeedItemType.chatHighlight:
+      case FeedItemType.groupSuggestion:
+        return true;
+    }
   }
 
   @override
@@ -150,12 +155,10 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
         ref.watch(recommendedTeachersProvider).valueOrNull ??
         const <TeacherSuggestion>[];
 
-    final shown = _filter == null
-        ? feed
-        : [
-            for (final item in feed)
-              if (item.post?.postType == _filter) item,
-          ];
+    final shown = [
+      for (final item in feed)
+        if (matchesFilter(item, _filter)) item,
+    ];
 
     return RefreshIndicator(
       onRefresh: _refresh,
@@ -185,7 +188,7 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
                   child: _HubTile(
                     title: l10n.communityYourNetwork,
                     subtitle: l10n.communityGroupsAndPeople,
-                    onTap: _showNetwork,
+                    onTap: () => openCommunityNetwork(context),
                   ),
                 ),
               ],
@@ -193,24 +196,38 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
           ),
           const SizedBox(height: AppSpacing.space3),
 
+          // "What did you do today?" — every post belongs to a group, so the
+          // composer only appears once the teacher has one to post to.
+          if (myGroups.isNotEmpty) ...[
+            PostComposer(groups: myGroups),
+            const SizedBox(height: AppSpacing.space3),
+          ],
+
           if (feed.isEmpty)
             const MapCard(child: _FeedEmpty())
           else ...[
-            Wrap(
-              spacing: 7,
-              children: [
-                for (final type in _chips)
-                  MapChip(
-                    label: postTypeLabel(l10n, type),
-                    selected: _filter == type,
-                    selectedFill: AppColors.accentFill,
-                    idleFill: type == null ? null : postTypeTint(type).fill,
-                    idleInk: type == null
-                        ? AppColors.textStrong
-                        : postTypeTint(type).ink,
-                    onTap: () => setState(() => _filter = type),
-                  ),
-              ],
+            // One row that scrolls sideways, so a long translation never
+            // drops a chip onto a second line.
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              child: Row(
+                children: [
+                  for (final (i, type) in _chips.indexed) ...[
+                    if (i > 0) const SizedBox(width: 7),
+                    MapChip(
+                      label: postTypeLabel(l10n, type),
+                      selected: _filter == type,
+                      selectedFill: AppColors.accentFill,
+                      idleFill: type == null ? null : postTypeTint(type).fill,
+                      idleInk: type == null
+                          ? AppColors.textStrong
+                          : postTypeTint(type).ink,
+                      onTap: () => setState(() => _filter = type),
+                    ),
+                  ],
+                ],
+              ),
             ),
             const SizedBox(height: AppSpacing.space1),
             if (shown.isEmpty)
@@ -234,10 +251,7 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
 
           // Your network: groups, groups to discover, people you may know.
           const SizedBox(height: AppSpacing.space3),
-          KeyedSubtree(
-            key: _networkKey,
-            child: MapOverline(l10n.staffroomSectionGroups),
-          ),
+          MapOverline(l10n.staffroomSectionGroups),
           const SizedBox(height: AppSpacing.space2),
           if (myGroups.isEmpty)
             const MapCard(child: _GroupsEmpty())
@@ -362,7 +376,10 @@ class _GroupStrip extends StatelessWidget {
               GroupChip(
                 key: ValueKey<String>('group-chip-${group.id}'),
                 group: group,
-                onTap: () => context.push(Routes.groupDetailPath(group.id)),
+                onTap: () => context.push(
+                  Routes.groupDetailPath(group.id),
+                  extra: group,
+                ),
               ),
           ],
         ),
@@ -374,16 +391,8 @@ class _GroupStrip extends StatelessWidget {
 /// The compact "Your groups" empty prompt (not a full halo — the feed owns the
 /// prominent empty state below).
 ///
-/// It carries NO "Browse groups" button. The button used to scroll to the
-/// inline "Discover groups" section, but that section only renders when
-/// `discoverGroups()` returns suggestions — and the shipping Firestore transport
-/// hardcodes it empty (a real backend gap, not a client bug; the Groups /
-/// Directory / Feed reads land in a later tranche). With nothing to discover,
-/// the button silently scrolled the page down to the "Your feed is quiet"
-/// region — an affordance that led nowhere. An honest empty prompt (a plain
-/// statement that you haven't joined a group yet) beats a button that lies about
-/// having a destination; the browse affordance returns with the backend that
-/// gives it somewhere real to go.
+/// Browsing for groups lives behind the "Your network" tile (suggested groups
+/// with Join), so this stays a plain statement rather than a second button.
 class _GroupsEmpty extends StatelessWidget {
   const _GroupsEmpty();
 
@@ -413,8 +422,7 @@ class _FeedEmpty extends StatelessWidget {
   }
 }
 
-/// The signed-out / awaiting-Firebase surface — what the Staffroom shows
-/// on-device (deferred reads + null uid). The DM-gate equivalent for Pillar 04.
+/// The signed-out surface (null uid).
 class _StaffroomSignIn extends StatelessWidget {
   const _StaffroomSignIn();
 

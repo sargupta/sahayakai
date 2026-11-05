@@ -13,7 +13,6 @@ import 'package:sahayakai/features/inbox/domain/conversation_id.dart';
 import 'package:sahayakai/features/inbox/domain/inbox_models.dart';
 import 'package:sahayakai/features/inbox/presentation/conversation_thread_screen.dart';
 import 'package:sahayakai/features/inbox/presentation/inbox_screen.dart';
-import 'package:sahayakai/shared/widgets/app_badge.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
 
@@ -267,9 +266,12 @@ void main() {
       );
       expect(find.text('Bina Devi'), findsOneWidget);
       expect(find.text('Notes ready'), findsOneWidget);
-      // The AA-fixed unread pill.
-      expect(find.byType(AppBadge), findsOneWidget);
-      expect(find.text('3'), findsOneWidget);
+      // The map's saffron unread badge (white on saffron-600 clears AA).
+      expect(_unreadBadge, findsOneWidget);
+      expect(
+        find.descendant(of: _unreadBadge, matching: find.text('3')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('no unread badge when unread==0', (tester) async {
@@ -277,7 +279,7 @@ void main() {
         tester,
         inbox: TransportSnapshot<List<Conversation>>.ready([_convo(unread: 0)]),
       );
-      expect(find.byType(AppBadge), findsNothing);
+      expect(_unreadBadge, findsNothing);
     });
 
     testWidgets('tapping a row opens the thread', (tester) async {
@@ -323,3 +325,11 @@ void main() {
     }
   });
 }
+
+/// The conversation row's unread badge: the saffron stadium.
+final _unreadBadge = find.byWidgetPredicate(
+  (w) =>
+      w is Container &&
+      w.decoration is ShapeDecoration &&
+      (w.decoration! as ShapeDecoration).color == AppColors.accentFill,
+);

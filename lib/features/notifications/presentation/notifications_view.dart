@@ -7,6 +7,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/map_card.dart';
+import '../../parent_hotline/domain/hotline_launch.dart';
 import '../data/notifications_store.dart';
 import '../domain/teacher_notification.dart';
 import 'widgets/notification_row.dart';
@@ -85,6 +86,19 @@ class NotificationsView extends ConsumerWidget {
           now: now,
           onTap: () {
             ref.read(notificationsProvider.notifier).markRead(notification.id);
+            // A call row opens that exact call (its summary, or the call if
+            // it is still running); everything else opens its screen.
+            final outreach = notification.outreachId;
+            if (outreach != null && outreach.isNotEmpty) {
+              context.push(
+                Routes.parentHotline,
+                extra: HotlineLaunch(
+                  outreachId: outreach,
+                  studentName: notification.label,
+                ),
+              );
+              return;
+            }
             context.push(_destination(notification));
           },
         );

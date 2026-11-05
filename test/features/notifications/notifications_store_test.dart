@@ -29,8 +29,12 @@ TeacherNotification _call({
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
-  ProviderContainer makeContainer() {
-    final container = ProviderContainer();
+  /// A container with [uid] signed in (null = signed out). Updates are kept
+  /// per teacher, so persistence needs someone signed in.
+  ProviderContainer makeContainer({String? uid = 'u1'}) {
+    final container = ProviderContainer(
+      overrides: [notificationsUserIdProvider.overrideWithValue(uid)],
+    );
     addTearDown(container.dispose);
     return container;
   }
@@ -188,7 +192,7 @@ void main() {
 
     test('a corrupt blob costs the history, not the screen', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
-        kNotificationsPrefsKey: 'not json at all',
+        notificationsPrefsKeyFor('u1'): 'not json at all',
       });
       final container = makeContainer();
       await hydrate(container);
@@ -197,7 +201,7 @@ void main() {
 
     test('one unusable row is dropped; its siblings survive', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
-        kNotificationsPrefsKey: jsonEncode(<Object>[
+        notificationsPrefsKeyFor('u1'): jsonEncode(<Object>[
           // An unknown kind: a row the app cannot render must be dropped, never
           // defaulted into some other kind.
           <String, Object>{
@@ -220,6 +224,54 @@ void main() {
       final rows = container.read(notificationsProvider);
       expect(rows, hasLength(1));
       expect(rows.single.id, 'good');
+    });
+  });
+
+  group('privacy: Updates are per teacher', () {
+    test("another teacher's rows on this phone are never shown", () async {
+      final asha = makeContainer(uid: 'asha');
+      asha.read(notificationsProvider.notifier).record(_call(id: 'a'));
+      await pumpEventQueue();
+
+      final ravi = makeContainer(uid: 'ravi');
+      await hydrate(ravi);
+      expect(ravi.read(notificationsProvider), isEmpty);
+    });
+
+    test('the old device-wide blob is deleted unread', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        kNotificationsPrefsKey: jsonEncode(<Object>[_call(id: 'old').toJson()]),
+      });
+      final container = makeContainer();
+      await hydrate(container);
+      expect(container.read(notificationsProvider), isEmpty);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.containsKey(kNotificationsPrefsKey), isFalse);
+    });
+
+    test('signed out, nothing is written under any key', () async {
+      final container = makeContainer(uid: null);
+      container.read(notificationsProvider.notifier).record(_call(id: 'a'));
+      await pumpEventQueue();
+      final prefs = await SharedPreferences.getInstance();
+      expect(
+        prefs.getKeys().where((k) => k.startsWith('notifications_feed')),
+        isEmpty,
+      );
+    });
+
+    test('sign-out clears the rows in memory and on disk', () async {
+      final container = makeContainer();
+      final store = container.read(notificationsProvider.notifier)
+        ..record(_call(id: 'a'));
+      await pumpEventQueue();
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.containsKey(notificationsPrefsKeyFor('u1')), isTrue);
+
+      await store.clearForSignOut();
+
+      expect(container.read(notificationsProvider), isEmpty);
+      expect(prefs.containsKey(notificationsPrefsKeyFor('u1')), isFalse);
     });
   });
 

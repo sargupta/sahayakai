@@ -16,6 +16,7 @@ import 'package:sahayakai/features/notifications/domain/teacher_notification.dar
 import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_transport.dart';
 import 'package:sahayakai/features/staffroom/domain/community_post.dart';
+import 'package:sahayakai/features/staffroom/domain/connection.dart';
 import 'package:sahayakai/features/staffroom/domain/group.dart';
 import 'package:sahayakai/features/staffroom/presentation/network_hub_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -116,6 +117,11 @@ Future<ProviderContainer> _pumpHub(
         GoRoute(
           path: Routes.login,
           builder: (_, _) => const _DestMarker('login'),
+        ),
+        GoRoute(
+          path: Routes.conversationThreadPattern,
+          builder: (_, state) =>
+              _DestMarker('thread-${state.pathParameters['id']}'),
         ),
       ],
     );
@@ -381,5 +387,88 @@ void main() {
         findsNothing,
       );
     });
+  });
+
+  testWidgets('a pending request sits in Messages with Decline and Accept on '
+      'the right; Accept answers it', (tester) async {
+    final staffroom = FakeStaffroomTransport()
+      ..connectionData = const MyConnectionData(
+        receivedRequests: [
+          ReceivedConnectionRequest(uid: 'u-sr', requestId: 'r1'),
+        ],
+      );
+    await _pumpHub(tester, staffroom: staffroom, inbox: FakeInboxTransport());
+    await tester.tap(find.text(l10n.networkTabMessages));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.staffroomConnectionWants), findsOneWidget);
+    expect(find.text(l10n.staffroomConnectionDecline), findsOneWidget);
+    await tester.tap(find.text(l10n.staffroomConnectionAccept));
+    await tester.pumpAndSettle();
+    expect(staffroom.accepted, ['r1']);
+
+    // Accepting opens chat, so the teacher stays, under "Just connected",
+    // with a Message button, and is no longer a pending request.
+    // Section headings render in capitals.
+    expect(
+      find.text(l10n.communityPendingRequestsCount(1).toUpperCase()),
+      findsNothing,
+    );
+    expect(
+      find.text(l10n.communityJustConnected.toUpperCase()),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.communityConnectedCanChat), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('just-connected-message-u-sr')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a declined request leaves no "Just connected" row', (
+    tester,
+  ) async {
+    final staffroom = FakeStaffroomTransport()
+      ..connectionData = const MyConnectionData(
+        receivedRequests: [
+          ReceivedConnectionRequest(uid: 'u-sr', requestId: 'r1'),
+        ],
+      );
+    await _pumpHub(tester, staffroom: staffroom, inbox: FakeInboxTransport());
+    await tester.tap(find.text(l10n.networkTabMessages));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.staffroomConnectionDecline));
+    await tester.pumpAndSettle();
+    expect(staffroom.declined, ['r1']);
+    expect(find.text(l10n.communityJustConnected.toUpperCase()), findsNothing);
+  });
+
+  testWidgets('Message on a just-connected teacher opens the chat and the '
+      'row goes', (tester) async {
+    final staffroom = FakeStaffroomTransport()
+      ..connectionData = const MyConnectionData(
+        receivedRequests: [
+          ReceivedConnectionRequest(uid: 'u-sr', requestId: 'r1'),
+        ],
+      );
+    final inbox = FakeInboxTransport();
+    await _pumpHub(tester, staffroom: staffroom, inbox: inbox, router: true);
+    await tester.tap(find.text(l10n.networkTabMessages));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.staffroomConnectionAccept));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('just-connected-message-u-sr')),
+    );
+    await tester.pumpAndSettle();
+    expect(inbox.directConversationRequests, ['u-sr']);
+    expect(find.byKey(const Key('dest-thread-a_b')), findsOneWidget);
+  });
+
+  test('member counts are digit-grouped', () {
+    expect(l10n.staffroomMemberCount(3880), '3,880 members');
+    expect(l10n.staffroomMemberCount(1), '1 member');
   });
 }

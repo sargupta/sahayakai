@@ -7,9 +7,17 @@ part of 'notifications_transport.dart';
 // **************************************************************************
 
 String _$notificationsTransportHash() =>
-    r'9da0a7b085e67d2f8623bb3b0a33628f071e5bbf';
+    r'42ced0e16b3f2963132bc97baf42d0c74de89065';
 
-/// See also [notificationsTransport].
+/// The bound notifications transport. Always the Firebase-free
+/// [DeferredNotificationsTransport]: no screen reads the server's social
+/// notification feed yet (the Updates tab is the on-device
+/// `notificationsProvider`), and a live binding must not be half-wired. It
+/// previously THREW whenever Firebase was configured — i.e. on every real
+/// launch — which would crash the first widget to read it; returning the
+/// deferred seam keeps any reader safe until a live implementation exists.
+///
+/// Copied from [notificationsTransport].
 @ProviderFor(notificationsTransport)
 final notificationsTransportProvider =
     Provider<NotificationsTransport>.internal(

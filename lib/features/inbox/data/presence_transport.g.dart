@@ -6,9 +6,16 @@ part of 'presence_transport.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$presenceTransportHash() => r'0fa4d5e33e9d2eef9daade078aec0b49f9af008f';
+String _$presenceTransportHash() => r'fd12bff83755d6328858b2985f8cd6394523af02';
 
-/// See also [presenceTransport].
+/// The bound presence transport. Always the best-effort
+/// [DeferredPresenceTransport] (unknown presence, no typing, no-op writes):
+/// there is no RTDB presence implementation yet. It previously THREW whenever
+/// Firebase was configured — i.e. on every real launch — which would crash the
+/// first widget to read it; presence is a nicety, so the safe default is the
+/// deferred seam until a live implementation is bound.
+///
+/// Copied from [presenceTransport].
 @ProviderFor(presenceTransport)
 final presenceTransportProvider = Provider<PresenceTransport>.internal(
   presenceTransport,

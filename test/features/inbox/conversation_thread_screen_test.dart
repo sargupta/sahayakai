@@ -121,8 +121,8 @@ void main() {
     expect(find.text('Thank you Bina'), findsOneWidget); // mine
     // My message carries a read receipt (double check); their message has none.
     expect(find.byIcon(LucideIcons.checkCheck), findsOneWidget);
-    // P1.2 launcher ubiquity: the co-teacher action rides the thread app bar too.
-    expect(find.byType(VidyaAppBarAction), findsOneWidget);
+    // No app-bar VIDYA button: the floating orb is VIDYA on this screen.
+    expect(find.byType(VidyaAppBarAction), findsNothing);
   });
 
   testWidgets('markConversationRead fires once on open', (tester) async {
@@ -131,6 +131,39 @@ void main() {
       thread: const TransportSnapshot<List<Message>>.ready(<Message>[]),
     );
     expect(fake.markedRead, [_id]);
+  });
+
+  testWidgets('a new message from the other side while open marks the thread '
+      'read again; my own message does not', (tester) async {
+    final first = _msg(id: 'm1', text: 'Hello', senderId: _other);
+    final fake = await _pump(
+      tester,
+      thread: TransportSnapshot<List<Message>>.ready([first]),
+    );
+    expect(fake.markedRead, [_id]);
+
+    // My own message arriving is not "something unread".
+    final mine = _msg(id: 'm2', text: 'Hi Bina', senderId: _me);
+    fake.emitThread(_id, TransportSnapshot<List<Message>>.ready([first, mine]));
+    await tester.pumpAndSettle();
+    expect(fake.markedRead, [_id]);
+
+    // Theirs is.
+    final theirs = _msg(id: 'm3', text: 'See you tomorrow', senderId: _other);
+    fake.emitThread(
+      _id,
+      TransportSnapshot<List<Message>>.ready([first, mine, theirs]),
+    );
+    await tester.pumpAndSettle();
+    expect(fake.markedRead, [_id, _id]);
+
+    // The same snapshot again changes nothing.
+    fake.emitThread(
+      _id,
+      TransportSnapshot<List<Message>>.ready([first, mine, theirs]),
+    );
+    await tester.pumpAndSettle();
+    expect(fake.markedRead, [_id, _id]);
   });
 
   testWidgets('awaitingFirebase → sign-in, composer hidden', (tester) async {

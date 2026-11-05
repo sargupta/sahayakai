@@ -12,20 +12,19 @@ import 'staffroom_transport.dart';
 
 part 'chat_stream_provider.g.dart';
 
-/// # Staff Room chat providers (U-SI3)
+/// # Staff Room chat providers
 ///
-/// The two live chat rooms (SPEC §A3.2) + the optimistic send controller + the
-/// honest persona-pulse keep-warm controller (pillar 04). Same Block-C split as
-/// the Pro Inbox: the chat **reads** are live Firestore `onSnapshot`s (typed
-/// `Stream<TransportSnapshot<...>>` so the deferred seam emits `awaitingFirebase`
-/// and the screen renders sign-in on-device), the **send** is a REST wrapper, and
-/// the persona pulse is the one already-deployed REST route.
+/// The two live chat rooms + the optimistic send controller + the honest
+/// persona-pulse keep-warm controller (pillar 04). The chat **reads** are live
+/// Firestore `onSnapshot`s (typed `Stream<TransportSnapshot<...>>`), the
+/// **sends** are REST (`POST /api/community/chat`, `POST
+/// /api/groups/{id}/chat`), and the persona pulse is `POST
+/// /api/community/persona-pulse`.
 ///
-/// While Firebase is gated the bound transport is [DeferredStaffroomTransport]:
-/// both streams emit a single `awaitingFirebase` snapshot, every send throws a
-/// typed [TransportUnavailable], and `triggerPersonaPulse` returns `null` — so
-/// the persona timer never arms on-device. Verified by code + widget/unit test,
-/// not live.
+/// Signed out the bound transport is [DeferredStaffroomTransport]: both
+/// streams emit a single `awaitingFirebase` snapshot (the screen shows sign-in),
+/// every send throws a typed [TransportUnavailable], and `triggerPersonaPulse`
+/// returns `null`, so the persona timer never arms.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Room key
@@ -154,56 +153,57 @@ class PendingChatSend {
 }
 
 /// The optimistic-send state for one room: the [pending] sends (in flight or
-/// sent-awaiting-echo) plus the most-recent [failed] (rolled-back) send, which
-/// drives the inline "couldn't send · retry" bar.
+/// sent-awaiting-echo) plus EVERY [failed] (rolled-back) send — each one keeps
+/// its own inline "not sent · retry" row, so a second failure never hides the
+/// first.
 @immutable
 class ChatSendState {
   const ChatSendState({
     this.pending = const <PendingChatSend>[],
-    this.failed,
+    this.failed = const <PendingChatSend>[],
+    this.lastError,
   });
 
   final List<PendingChatSend> pending;
 
-  /// The last send that rolled back on a [TransportUnavailable] / error, held so
-  /// a retry re-sends it with the SAME [PendingChatSend.clientMessageId].
-  final PendingChatSend? failed;
+  /// The rolled-back sends, oldest first. A retry re-sends one by its
+  /// [PendingChatSend.clientMessageId].
+  final List<PendingChatSend> failed;
 
-  bool get hasFailure => failed != null;
+  /// The error behind the most recent rollback (a 429 rate limit, a 403
+  /// non-member, offline …), so the screen can say WHY in translated copy.
+  final Object? lastError;
 
-  ChatSendState copyWith({
-    List<PendingChatSend>? pending,
-    PendingChatSend? failed,
-    bool clearFailed = false,
-  }) =>
-      ChatSendState(
-        pending: pending ?? this.pending,
-        failed: clearFailed ? null : (failed ?? this.failed),
-      );
+  bool get hasFailure => failed.isNotEmpty;
 
   @override
   bool operator ==(Object other) =>
       other is ChatSendState &&
       listEquals(other.pending, pending) &&
-      other.failed == failed;
+      listEquals(other.failed, failed) &&
+      other.lastError == lastError;
 
   @override
-  int get hashCode => Object.hash(Object.hashAll(pending), failed);
+  int get hashCode =>
+      Object.hash(Object.hashAll(pending), Object.hashAll(failed), lastError);
 }
 
-/// The optimistic chat-send controller (SPEC §A3.2), one per [ChatRoom].
+/// The optimistic chat-send controller, one per [ChatRoom].
 ///
-/// [send] appends a pending bubble and fires the REST-wrapper write
-/// (`sendCommunityChatMessage` / `sendGroupChatMessage`) with a client-generated
-/// [PendingChatSend.clientMessageId]; on success the bubble is marked `sent` and
-/// the live stream reconciles it via [mergeChatForDisplay] (community_chat does
-/// not echo a client id, so the reconcile matches on author + text + novelty). On
-/// a typed [TransportUnavailable] / any error the bubble **rolls back** and the
-/// screen shows a dignified inline retry; [retry] re-sends with the SAME
-/// clientMessageId so it stays a single logical message (no double pending).
+/// [send] appends a pending bubble and posts it (`POST /api/community/chat` or
+/// `POST /api/groups/{id}/chat`); on success the bubble is marked `sent` and
+/// the live stream reconciles it via [mergeChatForDisplay]. On any error the
+/// bubble **rolls back** into [ChatSendState.failed], each with its own retry.
 ///
-/// autoDispose per room: the pending list lives only while the chat screen is
-/// open, matching the U-SI1 composer's widget-scoped optimistic state.
+/// **No duplicates on retry.** Neither chat route accepts a client message id,
+/// so the server cannot dedupe a retry of a send that actually landed (e.g. a
+/// timeout after the write). [retry] therefore checks the live stream FIRST:
+/// if a matching echo (same author + text, not present when the original send
+/// began) has already arrived, the failure is simply cleared instead of
+/// re-posted. [unresolvedFailures] applies the same rule for display, so a
+/// "failed" send whose echo shows up never lingers as a false failure.
+///
+/// autoDispose per room: the state lives only while the chat screen is open.
 @riverpod
 class ChatSendController extends _$ChatSendController {
   int _counter = 0;
@@ -230,31 +230,58 @@ class ChatSendController extends _$ChatSendController {
       authorId: authorId,
       knownServerIds: knownServerIds,
     );
-    state = state.copyWith(
+    state = ChatSendState(
       pending: <PendingChatSend>[...state.pending, pending],
-      clearFailed: true,
+      failed: state.failed,
+      lastError: state.lastError,
     );
     await _dispatch(pending);
   }
 
-  /// Re-send the last rolled-back message with the SAME clientMessageId, so a
-  /// server that received the first attempt treats it as one message.
-  Future<void> retry({required Set<String> knownServerIds}) async {
-    final failed = state.failed;
-    final authorId = ref.read(currentStaffroomUserIdProvider);
-    if (failed == null || authorId == null) return;
-
-    final pending = PendingChatSend(
-      clientMessageId: failed.clientMessageId,
-      text: failed.text,
-      authorId: authorId,
-      knownServerIds: knownServerIds,
-    );
-    state = state.copyWith(
+  /// Re-send the failed message [clientMessageId]. [server] is the live room
+  /// as currently on screen: when it already carries this send's echo, the
+  /// failure is dropped instead of posted again (see the class doc).
+  Future<void> retry(
+    String clientMessageId, {
+    required List<ChatMessage> server,
+  }) async {
+    final failed = _failedById(clientMessageId);
+    if (failed == null) return;
+    final remaining = <PendingChatSend>[
+      for (final f in state.failed)
+        if (f.clientMessageId != clientMessageId) f,
+    ];
+    if (_hasEcho(failed, server)) {
+      state = ChatSendState(pending: state.pending, failed: remaining);
+      return;
+    }
+    // Keep the ORIGINAL novelty baseline, so an echo of the first attempt that
+    // arrives late still reconciles this bubble instead of doubling it.
+    final pending = failed.copyWith(status: ChatSendStatus.sending);
+    state = ChatSendState(
       pending: <PendingChatSend>[...state.pending, pending],
-      clearFailed: true,
+      failed: remaining,
     );
     await _dispatch(pending);
+  }
+
+  /// Drop a failed send the teacher no longer wants to retry.
+  void discard(String clientMessageId) {
+    state = ChatSendState(
+      pending: state.pending,
+      failed: <PendingChatSend>[
+        for (final f in state.failed)
+          if (f.clientMessageId != clientMessageId) f,
+      ],
+      lastError: state.failed.length > 1 ? state.lastError : null,
+    );
+  }
+
+  PendingChatSend? _failedById(String clientMessageId) {
+    for (final f in state.failed) {
+      if (f.clientMessageId == clientMessageId) return f;
+    }
+    return null;
   }
 
   Future<void> _dispatch(PendingChatSend pending) async {
@@ -266,15 +293,13 @@ class ChatSendController extends _$ChatSendController {
         await transport.sendGroupChatMessage(room.groupId!, text: pending.text);
       }
       _mark(pending.clientMessageId, ChatSendStatus.sent);
-    } on TransportUnavailable {
-      _rollback(pending);
-    } catch (_) {
-      _rollback(pending);
+    } catch (error) {
+      _rollback(pending, error);
     }
   }
 
   void _mark(String clientMessageId, ChatSendStatus status) {
-    state = state.copyWith(
+    state = ChatSendState(
       pending: <PendingChatSend>[
         for (final p in state.pending)
           if (p.clientMessageId == clientMessageId)
@@ -282,19 +307,42 @@ class ChatSendController extends _$ChatSendController {
           else
             p,
       ],
+      failed: state.failed,
+      lastError: state.lastError,
     );
   }
 
-  void _rollback(PendingChatSend pending) {
-    state = state.copyWith(
+  void _rollback(PendingChatSend pending, Object error) {
+    state = ChatSendState(
       pending: <PendingChatSend>[
         for (final p in state.pending)
           if (p.clientMessageId != pending.clientMessageId) p,
       ],
-      failed: pending,
+      failed: <PendingChatSend>[...state.failed, pending],
+      lastError: error,
     );
   }
 }
+
+/// Whether [server] already carries the echo of [send]: a message by the same
+/// author with the same text that was NOT on screen when the send began.
+bool _hasEcho(PendingChatSend send, List<ChatMessage> server) => server.any(
+      (s) =>
+          s.authorId == send.authorId &&
+          s.text == send.text &&
+          !send.knownServerIds.contains(s.id),
+    );
+
+/// The failed sends still worth showing: those whose echo has NOT arrived on
+/// the live stream (a timed-out send that actually landed is not a failure).
+List<PendingChatSend> unresolvedFailures(
+  List<ChatMessage> server,
+  List<PendingChatSend> failed,
+) =>
+    <PendingChatSend>[
+      for (final f in failed)
+        if (!_hasEcho(f, server)) f,
+    ];
 
 /// Merge the live server messages (oldest→newest) with the still-unreconciled
 /// optimistic [pending] sends, for display.
@@ -303,9 +351,8 @@ class ChatSendController extends _$ChatSendController {
 /// from the same author with the same text that was **not** already present when
 /// the send began ([PendingChatSend.knownServerIds]) — so a *later* identical
 /// message does not wrongly cancel a fresh optimistic send. Each fresh server
-/// echo reconciles at most one pending, oldest-first. This is the chat analogue
-/// of U-SI1's dedup-by-`clientMessageId`; `community_chat` does not echo a client
-/// id, so we match on author + text + novelty.
+/// echo reconciles at most one pending, oldest-first. Neither chat route echoes
+/// a client id, so we match on author + text + novelty.
 List<ChatMessage> mergeChatForDisplay(
   List<ChatMessage> server,
   List<PendingChatSend> pending,

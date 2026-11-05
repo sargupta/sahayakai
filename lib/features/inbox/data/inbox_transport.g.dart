@@ -6,7 +6,7 @@ part of 'inbox_transport.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$inboxTransportHash() => r'4f68ad9b12b4e741c9596dc3a87cabc14f687d82';
+String _$inboxTransportHash() => r'e78be13e39229039d6648cea792451b7cc1d6771';
 
 /// The Pro-Inbox transport. [FirestoreInboxTransport] once Firebase is
 /// configured **and** a real teacher is signed in; [DeferredInboxTransport]

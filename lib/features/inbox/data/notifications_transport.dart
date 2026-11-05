@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/firebase/firebase_init.dart';
 import '../domain/notification_item.dart';
 import 'block_c_transport.dart';
 
@@ -74,13 +73,13 @@ class DeferredNotificationsTransport implements NotificationsTransport {
       );
 }
 
+/// The bound notifications transport. Always the Firebase-free
+/// [DeferredNotificationsTransport]: no screen reads the server's social
+/// notification feed yet (the Updates tab is the on-device
+/// `notificationsProvider`), and a live binding must not be half-wired. It
+/// previously THREW whenever Firebase was configured — i.e. on every real
+/// launch — which would crash the first widget to read it; returning the
+/// deferred seam keeps any reader safe until a live implementation exists.
 @Riverpod(keepAlive: true)
-NotificationsTransport notificationsTransport(Ref ref) {
-  if (FirebaseInit.isConfigured) {
-    throw StateError(
-      'Firebase is configured but the live NotificationsTransport is not wired. '
-      'Bind FirestoreNotificationsTransport as part of the Block C handoff.',
-    );
-  }
-  return const DeferredNotificationsTransport();
-}
+NotificationsTransport notificationsTransport(Ref ref) =>
+    const DeferredNotificationsTransport();

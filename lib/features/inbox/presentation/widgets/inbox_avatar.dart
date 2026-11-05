@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/avatar_initials.dart';
 
 /// A conversation avatar: the participant's photo when it loads, and a dignified
 /// saffron-tint initial (or a group glyph) as the fallback — **never** a broken
@@ -20,7 +21,8 @@ class InboxAvatar extends StatelessWidget {
     required this.name,
     this.photoUrl,
     this.isGroup = false,
-    this.size = AppIconSize.wellBox, // 48dp — floors the row past the 48dp target
+    this.size =
+        AppIconSize.wellBox, // 48dp — floors the row past the 48dp target
   });
 
   final String name;
@@ -31,11 +33,7 @@ class InboxAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = photoUrl?.trim();
-    final fallback = _InitialFallback(
-      name: name,
-      isGroup: isGroup,
-      size: size,
-    );
+    final fallback = _InitialFallback(name: name, isGroup: isGroup, size: size);
 
     return ClipOval(
       child: SizedBox(
@@ -72,42 +70,28 @@ class _InitialFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
-
-    final trimmed = name.trim();
-    final initial = trimmed.isEmpty
-        ? null
-        : String.fromCharCode(trimmed.runes.first).toUpperCase();
-
-    // Glyph size scales with the well so the 40dp app-bar avatar and the 48dp
-    // row avatar both read correctly.
-    final glyph = size * 0.42;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            scheme.primary.withValues(alpha: 0.16),
-            scheme.primary.withValues(alpha: 0.06),
-          ],
-        ),
-      ),
+    // The map's avatar: two initials on the name's own tint, as on every
+    // Community surface; a group shows its icon on the same tint.
+    final initials = avatarInitials(name);
+    final (fill, ink) = avatarTint(name);
+    return ColoredBox(
+      color: fill,
       child: Center(
-        child: (isGroup || initial == null)
+        child: (isGroup || initials == null)
             ? Icon(
                 isGroup ? LucideIcons.users : LucideIcons.user,
-                size: glyph,
-                color: scheme.primary,
+                size: size * 0.42,
+                color: ink,
               )
             : Text(
-                initial,
-                style: theme.textTheme.titleMedium?.copyWith(color: saffronText),
+                initials,
+                maxLines: 1,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontSize: size / 3,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                  color: ink,
+                ),
               ),
       ),
     );

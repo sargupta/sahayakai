@@ -6,28 +6,49 @@ part of 'staffroom_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$unifiedFeedHash() => r'349101da4fe368923d997330a1b2747741bd82d9';
+String _$ensuredUserGroupsHash() => r'005b218e440dc64163395e9771b7b57f8a7e91f0';
 
-/// # Staffroom read providers (U-SI2)
+/// # Staffroom read providers
 ///
-/// Thin Riverpod wrappers over the [StaffroomTransport] server-derived reads
-/// (SPEC §A2 / §A3). Unlike the Pro Inbox's live `onSnapshot` surfaces, the
-/// Staffroom feed + groups + recommendations are **one-shot server reads** (the
-/// web polls them on focus + every 45s), so these are `FutureProvider`s, not
-/// `StreamProvider`s.
+/// Thin Riverpod wrappers over the [StaffroomTransport] REST reads. The feed,
+/// groups and recommendations are **one-shot server reads** (the web polls them
+/// on focus), so these are `FutureProvider`s, not `StreamProvider`s. Pull to
+/// refresh invalidates them.
 ///
-/// While Firebase is gated the bound transport is [DeferredStaffroomTransport],
-/// so every read resolves to an empty list / null (a genuinely-empty "ready"
-/// value, NOT a typed snapshot). The Staffroom home therefore reads its
-/// signed-out / awaiting surface off [currentStaffroomUserId] (null on-device),
-/// exactly the way the inbox reads it off `currentInboxUserId` — a `null` uid
-/// means "sign in to join the staffroom" regardless of what the (empty) reads
-/// return. Widget tests override the transport with a seeded fake **and**
-/// [currentStaffroomUserId] with a fixed uid to exercise ready / empty / data,
-/// and override the feed/posts providers directly with a pending / error future
-/// to exercise the loading / error surfaces.
-/// **ONE-SHOT.** The unified feed (`getUnifiedFeedAction`) — the primary surface
-/// whose [AsyncValue] drives the Staffroom home's loading / error / ready state.
+/// Signed out (or Firebase unconfigured) the bound transport is
+/// [DeferredStaffroomTransport], whose reads resolve empty; the screens read
+/// the signed-out surface off [currentStaffroomUserId] (null), so a `null` uid
+/// means "sign in to join the staffroom" regardless of what the reads return.
+/// **ONCE PER SESSION.** `POST /api/groups/ensure` — idempotently provisions
+/// the teacher's default groups (subject/grade, state, Daily Briefing,
+/// Community) the way the web does on first open of the community page.
+/// Without it a brand-new teacher has no groups and an empty feed.
+///
+/// Best-effort by design: a failure here must not block the feed or the
+/// groups list (both still return whatever groups already exist), so the
+/// error is logged, not rethrown. The provider only stays alive after a
+/// SUCCESS, so a failed attempt is retried the next time a screen reads it.
+///
+/// Copied from [ensuredUserGroups].
+@ProviderFor(ensuredUserGroups)
+final ensuredUserGroupsProvider = AutoDisposeFutureProvider<void>.internal(
+  ensuredUserGroups,
+  name: r'ensuredUserGroupsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$ensuredUserGroupsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef EnsuredUserGroupsRef = AutoDisposeFutureProviderRef<void>;
+String _$unifiedFeedHash() => r'4c12bbf9a76660f6fa8b85944472cd14c9fb804b';
+
+/// **ONE-SHOT.** The unified feed (`GET /api/groups/feed`) — the primary
+/// surface whose [AsyncValue] drives the Staffroom home's loading / error /
+/// ready state.
 ///
 /// Copied from [unifiedFeed].
 @ProviderFor(unifiedFeed)
@@ -44,10 +65,10 @@ final unifiedFeedProvider = AutoDisposeFutureProvider<List<FeedItem>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef UnifiedFeedRef = AutoDisposeFutureProviderRef<List<FeedItem>>;
-String _$myGroupsHash() => r'28c9441026aee8c9f3dd57a7e1828c2555973042';
+String _$myGroupsHash() => r'e4dc9e0bd6e7e369b95944883dc8fa02bb9a5d15';
 
-/// **ONE-SHOT.** The teacher's own groups (`getMyGroupsAction`) — the "Your
-/// groups" strip, and the source of truth for whether a group is already joined.
+/// **ONE-SHOT.** The teacher's own groups (`GET /api/groups`) — "Your groups",
+/// the composer's group picker, and a membership source for group detail.
 ///
 /// Copied from [myGroups].
 @ProviderFor(myGroups)
@@ -66,8 +87,7 @@ final myGroupsProvider = AutoDisposeFutureProvider<List<Group>>.internal(
 typedef MyGroupsRef = AutoDisposeFutureProviderRef<List<Group>>;
 String _$discoverGroupsHash() => r'd47c1582274f102b434be1531b6319a2f51bd4ad';
 
-/// **ONE-SHOT.** Suggested, not-yet-joined groups (`discoverGroupsAction`) — the
-/// "Discover groups" section.
+/// **ONE-SHOT.** Suggested, not-yet-joined groups (`GET /api/groups/discover`).
 ///
 /// Copied from [discoverGroups].
 @ProviderFor(discoverGroups)
@@ -87,7 +107,8 @@ typedef DiscoverGroupsRef = AutoDisposeFutureProviderRef<List<Group>>;
 String _$recommendedTeachersHash() =>
     r'87689ddf79b6e1cefd823b0fbc15bd6d7cd0d2d8';
 
-/// **ONE-SHOT.** "People you may know" (`getRecommendedTeachersAction`, ≤5).
+/// **ONE-SHOT.** "People you may know" (`GET
+/// /api/community/teachers/recommended`, ≤5).
 ///
 /// Copied from [recommendedTeachers].
 @ProviderFor(recommendedTeachers)
@@ -109,9 +130,7 @@ typedef RecommendedTeachersRef =
 String _$likedItemIdsHash() => r'4ace777c11bc7385844587e838b107d6db52b50f';
 
 /// **ONE-SHOT.** The ids the current user has already liked
-/// (`getLikedItemIdsAction`) — hydrates filled hearts on mount. Defaults to an
-/// empty [LikedItemIds] while it resolves, so a post card renders an outline
-/// heart first and fills it once this arrives.
+/// (`GET /api/community/likes`) — hydrates filled hearts on mount.
 ///
 /// Copied from [likedItemIds].
 @ProviderFor(likedItemIds)
@@ -151,26 +170,26 @@ class _SystemHash {
   }
 }
 
-/// **ONE-SHOT.family.** One group's metadata (`getGroupAction`) — the group
-/// detail header. `null` → the group was not found / removed.
+/// **ONE-SHOT.family.** One group's metadata (`GET /api/groups/{id}`) — the
+/// group detail header. `null` → the group was not found / removed.
 ///
 /// Copied from [staffroomGroup].
 @ProviderFor(staffroomGroup)
 const staffroomGroupProvider = StaffroomGroupFamily();
 
-/// **ONE-SHOT.family.** One group's metadata (`getGroupAction`) — the group
-/// detail header. `null` → the group was not found / removed.
+/// **ONE-SHOT.family.** One group's metadata (`GET /api/groups/{id}`) — the
+/// group detail header. `null` → the group was not found / removed.
 ///
 /// Copied from [staffroomGroup].
 class StaffroomGroupFamily extends Family<AsyncValue<Group?>> {
-  /// **ONE-SHOT.family.** One group's metadata (`getGroupAction`) — the group
-  /// detail header. `null` → the group was not found / removed.
+  /// **ONE-SHOT.family.** One group's metadata (`GET /api/groups/{id}`) — the
+  /// group detail header. `null` → the group was not found / removed.
   ///
   /// Copied from [staffroomGroup].
   const StaffroomGroupFamily();
 
-  /// **ONE-SHOT.family.** One group's metadata (`getGroupAction`) — the group
-  /// detail header. `null` → the group was not found / removed.
+  /// **ONE-SHOT.family.** One group's metadata (`GET /api/groups/{id}`) — the
+  /// group detail header. `null` → the group was not found / removed.
   ///
   /// Copied from [staffroomGroup].
   StaffroomGroupProvider call(String groupId) {
@@ -199,13 +218,13 @@ class StaffroomGroupFamily extends Family<AsyncValue<Group?>> {
   String? get name => r'staffroomGroupProvider';
 }
 
-/// **ONE-SHOT.family.** One group's metadata (`getGroupAction`) — the group
-/// detail header. `null` → the group was not found / removed.
+/// **ONE-SHOT.family.** One group's metadata (`GET /api/groups/{id}`) — the
+/// group detail header. `null` → the group was not found / removed.
 ///
 /// Copied from [staffroomGroup].
 class StaffroomGroupProvider extends AutoDisposeFutureProvider<Group?> {
-  /// **ONE-SHOT.family.** One group's metadata (`getGroupAction`) — the group
-  /// detail header. `null` → the group was not found / removed.
+  /// **ONE-SHOT.family.** One group's metadata (`GET /api/groups/{id}`) — the
+  /// group detail header. `null` → the group was not found / removed.
   ///
   /// Copied from [staffroomGroup].
   StaffroomGroupProvider(String groupId)
@@ -289,34 +308,34 @@ class _StaffroomGroupProviderElement
 
 String _$groupPostsHash() => r'ea6eebee88eb7177fe34161d8772249209a04cc1';
 
-/// **ONE-SHOT.family.** One group's posts (`getGroupPostsAction`). **Member-
-/// gated**: the real impl throws Forbidden for a non-member, which surfaces as a
-/// `.error` [AsyncValue] → the group detail shows a locked "members only"
-/// preview (never the posts).
+/// **ONE-SHOT.family.** One group's posts (`GET /api/groups/{id}/posts`).
+/// **Member-gated**: a non-member gets a 403 [ApiException]
+/// ([ApiErrorKind.forbidden]), which the group detail renders as the locked
+/// "members only" preview; any other error is a real error + retry.
 ///
 /// Copied from [groupPosts].
 @ProviderFor(groupPosts)
 const groupPostsProvider = GroupPostsFamily();
 
-/// **ONE-SHOT.family.** One group's posts (`getGroupPostsAction`). **Member-
-/// gated**: the real impl throws Forbidden for a non-member, which surfaces as a
-/// `.error` [AsyncValue] → the group detail shows a locked "members only"
-/// preview (never the posts).
+/// **ONE-SHOT.family.** One group's posts (`GET /api/groups/{id}/posts`).
+/// **Member-gated**: a non-member gets a 403 [ApiException]
+/// ([ApiErrorKind.forbidden]), which the group detail renders as the locked
+/// "members only" preview; any other error is a real error + retry.
 ///
 /// Copied from [groupPosts].
 class GroupPostsFamily extends Family<AsyncValue<List<GroupPost>>> {
-  /// **ONE-SHOT.family.** One group's posts (`getGroupPostsAction`). **Member-
-  /// gated**: the real impl throws Forbidden for a non-member, which surfaces as a
-  /// `.error` [AsyncValue] → the group detail shows a locked "members only"
-  /// preview (never the posts).
+  /// **ONE-SHOT.family.** One group's posts (`GET /api/groups/{id}/posts`).
+  /// **Member-gated**: a non-member gets a 403 [ApiException]
+  /// ([ApiErrorKind.forbidden]), which the group detail renders as the locked
+  /// "members only" preview; any other error is a real error + retry.
   ///
   /// Copied from [groupPosts].
   const GroupPostsFamily();
 
-  /// **ONE-SHOT.family.** One group's posts (`getGroupPostsAction`). **Member-
-  /// gated**: the real impl throws Forbidden for a non-member, which surfaces as a
-  /// `.error` [AsyncValue] → the group detail shows a locked "members only"
-  /// preview (never the posts).
+  /// **ONE-SHOT.family.** One group's posts (`GET /api/groups/{id}/posts`).
+  /// **Member-gated**: a non-member gets a 403 [ApiException]
+  /// ([ApiErrorKind.forbidden]), which the group detail renders as the locked
+  /// "members only" preview; any other error is a real error + retry.
   ///
   /// Copied from [groupPosts].
   GroupPostsProvider call(String groupId) {
@@ -345,17 +364,17 @@ class GroupPostsFamily extends Family<AsyncValue<List<GroupPost>>> {
   String? get name => r'groupPostsProvider';
 }
 
-/// **ONE-SHOT.family.** One group's posts (`getGroupPostsAction`). **Member-
-/// gated**: the real impl throws Forbidden for a non-member, which surfaces as a
-/// `.error` [AsyncValue] → the group detail shows a locked "members only"
-/// preview (never the posts).
+/// **ONE-SHOT.family.** One group's posts (`GET /api/groups/{id}/posts`).
+/// **Member-gated**: a non-member gets a 403 [ApiException]
+/// ([ApiErrorKind.forbidden]), which the group detail renders as the locked
+/// "members only" preview; any other error is a real error + retry.
 ///
 /// Copied from [groupPosts].
 class GroupPostsProvider extends AutoDisposeFutureProvider<List<GroupPost>> {
-  /// **ONE-SHOT.family.** One group's posts (`getGroupPostsAction`). **Member-
-  /// gated**: the real impl throws Forbidden for a non-member, which surfaces as a
-  /// `.error` [AsyncValue] → the group detail shows a locked "members only"
-  /// preview (never the posts).
+  /// **ONE-SHOT.family.** One group's posts (`GET /api/groups/{id}/posts`).
+  /// **Member-gated**: a non-member gets a 403 [ApiException]
+  /// ([ApiErrorKind.forbidden]), which the group detail renders as the locked
+  /// "members only" preview; any other error is a real error + retry.
   ///
   /// Copied from [groupPosts].
   GroupPostsProvider(String groupId)
@@ -470,5 +489,34 @@ final currentStaffroomUserIdProvider = AutoDisposeProvider<String?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrentStaffroomUserIdRef = AutoDisposeProviderRef<String?>;
+String _$connectionsControllerHash() =>
+    r'f49fdeef8989282d5968ebbcc886b5a54161337b';
+
+/// The teacher's connection graph (`GET /api/connections/mine`) and the only
+/// write path for it. Every card, row and pane reads its [ConnectionStatus]
+/// from here, so a request sent from "People you may know" shows "Requested"
+/// everywhere at once.
+///
+/// Each intent method calls the route FIRST and only then publishes the new
+/// state (never an optimistic pre-commit republish); a failure rethrows to the
+/// caller, which shows an inline error, and leaves the state untouched.
+///
+/// Copied from [ConnectionsController].
+@ProviderFor(ConnectionsController)
+final connectionsControllerProvider =
+    AutoDisposeAsyncNotifierProvider<
+      ConnectionsController,
+      MyConnectionData
+    >.internal(
+      ConnectionsController.new,
+      name: r'connectionsControllerProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$connectionsControllerHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$ConnectionsController = AutoDisposeAsyncNotifier<MyConnectionData>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

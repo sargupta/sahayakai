@@ -125,7 +125,7 @@ class ConversationRow extends StatelessWidget {
                       const SizedBox(width: AppSpacing.space2),
                       Semantics(
                         label: l10n.inboxUnreadLabel(unread),
-                        child: AppBadge.count(_countLabel(unread)),
+                        child: _UnreadBadge(_countLabel(unread)),
                       ),
                     ],
                   ],
@@ -188,6 +188,36 @@ class InboxAvatarShim extends StatelessWidget {
       photoUrl: photo,
       isGroup: conversation.isGroup,
       size: size,
+    );
+  }
+}
+
+/// The map's unread badge: a saffron disc (24px, wider for "99+") with white
+/// figures — white on saffron-600 clears 4.5:1.
+class _UnreadBadge extends StatelessWidget {
+  const _UnreadBadge(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      alignment: Alignment.center,
+      decoration: const ShapeDecoration(
+        color: AppColors.accentFill,
+        shape: StadiumBorder(),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textOnAccent,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
     );
   }
 }
