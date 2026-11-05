@@ -80,9 +80,14 @@ void main() {
     // Tap again → stop → read the captured WAV → STT → onResult. Reading the
     // recording is real file IO, so it must run under runAsync to complete in
     // the test's fake-async zone (mirrors how the controller test drives it).
+    // Waits for the result rather than a fixed slice of real time, so a busy
+    // machine running the whole suite cannot outrun it.
     await tester.runAsync(() async {
       await tester.tap(find.byType(InlineFieldMic));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final end = DateTime.now().add(const Duration(seconds: 3));
+      while (result == null && DateTime.now().isBefore(end)) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     });
     await tester.pump();
 

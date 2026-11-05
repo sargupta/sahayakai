@@ -8,6 +8,8 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import 'vidya_controller.dart';
+import 'vidya_cta_clearance.dart';
+import 'vidya_nav_dispatcher.dart' show topLocation;
 import 'vidya_orb_placement_controller.dart';
 import 'vidya_presence.dart';
 import 'vidya_sheet.dart';
@@ -49,6 +51,9 @@ class VidyaOverlay extends StatefulWidget {
   /// the SPHERE at `bottom: 100` (or 172 over a full-width CTA).
   static const double _bottomInset = 100 - _halo; // 86 → sphere at 100
 
+  /// Extra lift over a page's pinned full-width button: sphere at 172.
+  static const double _ctaLift = 172 - 100;
+
   /// The orb's painted box: sphere (56) + halo (14) on each side. Matches
   /// [VidyaOrb]'s own footprint so a perch anchor positions the sphere true.
   static const double _box = 56 + 14 * 2;
@@ -79,8 +84,10 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
         widget.router.routerDelegate,
       ]),
       builder: (context, _) {
-        final applied =
-            widget.router.routerDelegate.currentConfiguration.uri.path;
+        // The screen ON TOP: a pushed route (a tool, Settings…) does not
+        // change the router's `uri`, which still names the shell underneath,
+        // so reading `uri` hid the orb on every pushed screen.
+        final applied = topLocation(widget.router);
         // Before the delegate's initial route lands the match list is empty;
         // fall back to the provider so the first frame still sees splash.
         final location = applied.isEmpty
@@ -109,7 +116,19 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
             final media = MediaQuery.of(context);
             final screen = media.size;
-            final pad = media.padding;
+            // Everything the orb must clear at the bottom: the safe area, the
+            // keyboard while the teacher types, and a page's pinned
+            // full-width button (the map parks the sphere at 172 over one,
+            // not 100). Folded into one inset so parking, dragging and the
+            // perch guides all agree.
+            final hasCta =
+                (ref.watch(vidyaCtaRoutesProvider)[location] ?? 0) > 0;
+            final pad = media.padding.copyWith(
+              bottom:
+                  media.padding.bottom +
+                  media.viewInsets.bottom +
+                  (hasCta ? VidyaOverlay._ctaLift : 0),
+            );
             const box = VidyaOverlay._box;
 
             final parked = _boxTopLeft(placement.perch, screen, pad);

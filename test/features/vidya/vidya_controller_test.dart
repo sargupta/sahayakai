@@ -760,9 +760,12 @@ void main() {
         ..emitAmplitude(0.60)
         ..emitAmplitude(0.31) // and stops; the fan hums on
         ..emitAmplitude(0.33);
-      await Future<void>.delayed(
-        kTrailingSilence + const Duration(milliseconds: 300),
-      );
+      // Waits for the send rather than a fixed slice of real time, so a busy
+      // machine running the whole suite cannot outrun it.
+      final end = DateTime.now().add(kTrailingSilence * 4);
+      while (client.multiparts.isEmpty && DateTime.now().isBefore(end)) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
 
       expect(
         client.multiparts,
