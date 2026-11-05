@@ -1,12 +1,9 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show AppLifecycleListener, Locale;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/ai/openrouter_client.dart';
-import '../../../core/ai/openrouter_providers.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/network/api_exception.dart';
@@ -404,8 +401,6 @@ class VidyaController extends _$VidyaController {
   VidyaProfileRepository get _profileRepo =>
       ref.read(vidyaProfileRepositoryProvider);
   GeminiLiveClient get _live => ref.read(geminiLiveClientProvider);
-  OpenRouterClient? get _openRouter => ref.read(openRouterClientProvider);
-  String get _openRouterModel => ref.read(openRouterDefaultModelProvider);
 
   /// Whether a voice turn should open a conversation (Settings > Voice mode).
   /// Defensive like [_voiceMode]: a missing preferences plugin means on.
@@ -915,19 +910,9 @@ class VidyaController extends _$VidyaController {
 
     final VidyaTurn turn;
     try {
-      // Try OpenRouter first if configured (direct AI access, bypasses backend).
-      if (_openRouter != null) {
-        final liveTurn = await _askOpenRouter(
-          message,
-          priorHistory,
-          uiLang,
-          gen,
-        );
-        if (liveTurn == null) return;
-        turn = liveTurn;
-      } else {
-        turn = await _vidya.ask(request);
-      }
+      // Always through the backend: a model key compiled into the app is
+      // readable by anyone holding the APK (P0.6).
+      turn = await _vidya.ask(request);
     } on ApiException catch (e) {
       if (_stale(gen)) return;
       debugPrint(
@@ -1097,184 +1082,6 @@ class VidyaController extends _$VidyaController {
       pendingScreen: screen,
     );
     return true;
-  }
-
-  /// Calls OpenRouter directly for VEDA responses (bypasses backend).
-  ///
-  /// Converts the conversation history and message to OpenRouter format,
-  /// sends to the configured model, and converts the response back to
-  /// a [VidyaTurn] with the same structure as the backend would return.
-  Future<VidyaTurn?> _askOpenRouter(
-    String message,
-    List<ChatMessage> history,
-    String uiLang,
-    int gen,
-  ) async {
-    final openRouter = _openRouter!;
-    final model = _openRouterModel;
-
-    // Build system prompt for VEDA (teacher's co-teacher persona).
-    final systemPrompt = _buildOpenRouterSystemPrompt(uiLang);
-
-    // Convert chat history to OpenRouter messages.
-    final messages = <OpenRouterMessage>[
-      OpenRouterMessage(role: 'system', content: systemPrompt),
-      ...history.map(
-        (m) => OpenRouterMessage(
-          role: m.role == ChatRole.user ? 'user' : 'assistant',
-          content: m.text,
-        ),
-      ),
-      OpenRouterMessage(role: 'user', content: message),
-    ];
-
-    final request = OpenRouterChatRequest(
-      model: model,
-      messages: messages,
-      temperature: 0.4,
-      maxTokens: 350,
-      stream: true,
-    );
-
-    debugPrint(
-      '[Vidya] OpenRouter request: model=$model messages=${messages.length}',
-    );
-    final buffer = StringBuffer();
-    DateTime lastUi = DateTime.now();
-    bool hasAssistant = false;
-
-    try {
-      await for (final chunk in openRouter.chatStream(request)) {
-        if (_stale(gen)) return null;
-        final choices = chunk.choices;
-        final delta = choices.isEmpty ? '' : choices.first.delta.content;
-        if (delta.isEmpty) continue;
-        buffer.write(delta);
-
-        final now = DateTime.now();
-        if (!hasAssistant || now.difference(lastUi).inMilliseconds >= 120) {
-          lastUi = now;
-          final text = buffer.toString().trimRight();
-          if (text.isEmpty) continue;
-          if (!_stale(gen)) {
-            if (!hasAssistant) {
-              hasAssistant = true;
-              _set(
-                conversation: [
-                  ...state.conversation,
-                  ConversationBlock(
-                    role: ConversationRole.vidya,
-                    text: text,
-                    timestamp: DateTime.now(),
-                  ),
-                ],
-                status: VidyaStatus.thinking,
-              );
-            } else {
-              final updated = [...state.conversation];
-              if (updated.isNotEmpty &&
-                  updated.last.role == ConversationRole.vidya) {
-                updated[updated.length - 1] = ConversationBlock(
-                  role: ConversationRole.vidya,
-                  text: text,
-                  timestamp: updated.last.timestamp ?? DateTime.now(),
-                );
-                _set(conversation: updated, status: VidyaStatus.thinking);
-              }
-            }
-          }
-        }
-      }
-    } on DioException catch (e) {
-      debugPrint(
-        '[Vidya] OpenRouter DioException: type=${e.type} status=${e.response?.statusCode}',
-      );
-      final body = e.response?.data?.toString();
-      if (body != null) {
-        debugPrint(
-          '[Vidya] OpenRouter error body: ${body.length > 200 ? body.substring(0, 200) : body}',
-        );
-      }
-      throw ApiException.fromDio(e);
-    }
-    if (_stale(gen)) return null;
-
-    final content = buffer.toString().trim();
-    debugPrint('[Vidya] OpenRouter response: ${content.length} chars');
-
-    // Ensure the final full text is inked.
-    if (!_stale(gen)) {
-      if (state.conversation.isNotEmpty &&
-          state.conversation.last.role == ConversationRole.vidya) {
-        final updated = [...state.conversation];
-        updated[updated.length - 1] = ConversationBlock(
-          role: ConversationRole.vidya,
-          text: content,
-          timestamp: updated.last.timestamp ?? DateTime.now(),
-        );
-        _set(conversation: updated, status: VidyaStatus.thinking);
-      } else {
-        _set(
-          conversation: [
-            ...state.conversation,
-            ConversationBlock(
-              role: ConversationRole.vidya,
-              text: content,
-              timestamp: DateTime.now(),
-            ),
-          ],
-          status: VidyaStatus.thinking,
-        );
-      }
-    }
-
-    // Convert OpenRouter response to VidyaTurn format.
-    return VidyaTurn(response: content, directives: const []);
-  }
-
-  /// Builds the system prompt for OpenRouter VEDA calls.
-  String _buildOpenRouterSystemPrompt(String uiLang) {
-    final languageName = _languageDisplayName(uiLang);
-    return '''
-You are VEDYA, a warm, clear AI co-teacher for Indian teachers.
-Reply entirely in $languageName (do not switch languages mid-answer).
-Make answers practical and classroom-ready, and easy to follow when read aloud:
-- Keep sentences short (under 20 words) and use plain words.
-- Prefer 2-4 short points over long paragraphs.
-- Avoid markdown, bullet symbols, code, and numbered lists unless the teacher asks.
-- End with one brief actionable next step.
-- If a tool is needed (lesson plan, quiz, worksheet, exam paper, assessment, visual aid, instant answer, parent communication), say what to do and point to the dedicated tool in the app.
-- Keep the whole reply under 120 words.
-'''
-        .trim();
-  }
-
-  /// Maps language code to display name for system prompt.
-  String _languageDisplayName(String code) {
-    switch (code) {
-      case 'hi':
-        return 'Hindi';
-      case 'bn':
-        return 'Bengali';
-      case 'gu':
-        return 'Gujarati';
-      case 'kn':
-        return 'Kannada';
-      case 'ml':
-        return 'Malayalam';
-      case 'mr':
-        return 'Marathi';
-      case 'or':
-        return 'Odia';
-      case 'pa':
-        return 'Punjabi';
-      case 'ta':
-        return 'Tamil';
-      case 'te':
-        return 'Telugu';
-      default:
-        return 'English';
-    }
   }
 
   /// Whether the prior turns still count as the same conversation (SPEC §A.6).
