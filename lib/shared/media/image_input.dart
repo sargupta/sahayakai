@@ -12,6 +12,8 @@ import '../../core/i18n/gen/app_localizations.dart';
 import '../../core/i18n/l10n_ext.dart';
 import '../../core/theme/app_theme.dart';
 import '../widgets/inline_error.dart';
+import '../widgets/map_card.dart';
+import '../widgets/map_chip.dart';
 
 part 'image_input.g.dart';
 
@@ -165,7 +167,9 @@ class PlatformImagePickerService implements ImagePickerService {
   static bool _isPermissionDenied(String code) {
     final c = code.toLowerCase();
     // image_picker surfaces these on iOS; some Android OEMs use the same shape.
-    return c.contains('denied') || c.contains('access') || c == 'no_valid_image_uri';
+    return c.contains('denied') ||
+        c.contains('access') ||
+        c == 'no_valid_image_uri';
   }
 
   /// Best-effort MIME type. `image_picker` re-encodes to JPEG when
@@ -205,10 +209,16 @@ class ImageInput extends ConsumerStatefulWidget {
     required this.value,
     required this.onChanged,
     this.errorText,
+    this.required = false,
   });
 
   final PickedImage? value;
   final ValueChanged<PickedImage?> onChanged;
+
+  /// Whether the tool cannot run without a photo. The map then draws the
+  /// empty box in its red "still needed" tint from the start, not only after
+  /// a failed submit.
+  final bool required;
 
   /// A form-level error (e.g. "an image is required") shown when no pick-time
   /// error is active.
@@ -276,17 +286,20 @@ class _ImageInputState extends ConsumerState<ImageInput> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (value == null)
-          _EmptyWell(busy: _busy)
+          _EmptyBox(
+            busy: _busy,
+            needed: widget.required || widget.errorText != null,
+            onPick: _pick,
+          )
         else
-          _Preview(image: value, onRemove: _busy ? null : _remove),
-        const SizedBox(height: AppSpacing.space3),
-        _SourceButtons(
-          hasImage: value != null,
-          busy: _busy,
-          onPick: _pick,
-        ),
+          _Preview(
+            image: value,
+            busy: _busy,
+            onPick: _pick,
+            onRemove: _busy ? null : _remove,
+          ),
         if (errorMessage != null) ...[
-          const SizedBox(height: AppSpacing.space3),
+          const SizedBox(height: AppSpacing.space2),
           InlineError(message: errorMessage),
         ],
       ],
@@ -296,55 +309,106 @@ class _ImageInputState extends ConsumerState<ImageInput> {
   String _errorMessage(AppLocalizations l10n, ImageInputErrorKind kind) =>
       switch (kind) {
         ImageInputErrorKind.permissionDenied => l10n.imageInputPermissionDenied,
-        ImageInputErrorKind.tooLarge =>
-          l10n.imageInputTooLarge(_formatBytes(kMaxImageDataUriBytes)),
+        ImageInputErrorKind.tooLarge => l10n.imageInputTooLarge(
+          _formatBytes(kMaxImageDataUriBytes),
+        ),
         ImageInputErrorKind.failed => l10n.imageInputFailed,
       };
 }
 
-/// The empty state: a bordered well with a prompt, or a spinner while picking.
-class _EmptyWell extends StatelessWidget {
-  const _EmptyWell({required this.busy});
+/// The empty state, as the UX map draws it: a dashed 16px box with an upload
+/// glyph and "Take a photo or browse", and the two ways in under it. Red-tinted
+/// when the tool cannot run without a photo; a spinner while picking.
+class _EmptyBox extends StatelessWidget {
+  const _EmptyBox({
+    required this.busy,
+    required this.needed,
+    required this.onPick,
+  });
 
   final bool busy;
+  final bool needed;
+  final ValueChanged<ImageInputSource> onPick;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
-    return Container(
-      // Height wraps content (min constraint, not fixed) so Indic hint text and
-      // font scaling never clip. DESIGN_RUBRIC §7.
-      constraints: const BoxConstraints(minHeight: 128),
-      padding: const EdgeInsets.all(AppSpacing.space6),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rLg,
-        border: Border.all(color: scheme.outlineVariant),
+    final ink = needed ? AppColors.red700 : AppColors.textBody;
+    return CustomPaint(
+      painter: _DashedBoxPainter(
+        color: needed ? AppColors.mapRequiredBorder : AppColors.borderStrong,
       ),
-      alignment: Alignment.center,
-      child: busy
-          ? const _Busy()
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LucideIcons.imagePlus,
-                  size: AppIconSize.standalone,
-                  color: scheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: AppSpacing.space3),
-                Text(
-                  context.l10n.imageInputHint,
-                  textAlign: TextAlign.center,
-                  style: text.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 128),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: needed ? AppColors.mapRequiredBg : AppColors.surfaceMapCard,
+          borderRadius: AppRadius.rTile,
+        ),
+        alignment: Alignment.center,
+        child: busy
+            ? const _Busy()
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.upload, size: 22, color: ink),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.imageInputBrowse,
+                    textAlign: TextAlign.center,
+                    style: text.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: ink,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(height: AppSpacing.space3),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      MapChip(
+                        label: l10n.imageInputTakePhoto,
+                        selected: false,
+                        onTap: () => onPick(ImageInputSource.camera),
+                      ),
+                      MapChip(
+                        label: l10n.imageInputChooseGallery,
+                        selected: false,
+                        onTap: () => onPick(ImageInputSource.gallery),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+      ),
     );
   }
+}
+
+/// The map's dashed 1.5px outline on a 16px rounded box.
+class _DashedBoxPainter extends CustomPainter {
+  const _DashedBoxPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = AppRadius.rTile.toRRect(Offset.zero & size).deflate(0.75);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    for (final metric in (Path()..addRRect(rrect)).computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += 9) {
+        canvas.drawPath(metric.extractPath(d, d + 5), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBoxPainter old) => old.color != color;
 }
 
 class _Busy extends StatelessWidget {
@@ -352,55 +416,66 @@ class _Busy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
+    return const SizedBox(
       width: AppIconSize.standalone,
       height: AppIconSize.standalone,
-      child: CircularProgressIndicator(strokeWidth: 2, color: scheme.primary),
+      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
     );
   }
 }
 
-/// The picked state: a thumbnail, the size counter and its progress meter, and
-/// a Remove action.
+/// The picked state, as the map's card row: the page thumbnail, its name and
+/// how much of the upload cap it uses, then Retake / Choose another / Remove.
 class _Preview extends StatelessWidget {
-  const _Preview({required this.image, required this.onRemove});
+  const _Preview({
+    required this.image,
+    required this.busy,
+    required this.onPick,
+    required this.onRemove,
+  });
 
   final PickedImage image;
+  final bool busy;
+  final ValueChanged<ImageInputSource> onPick;
   final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-
     final used = _formatBytes(image.sizeBytes);
     final max = _formatBytes(kMaxImageDataUriBytes);
-    final fraction = (image.sizeBytes / kMaxImageDataUriBytes).clamp(0.0, 1.0);
+    final name = image.name?.trim();
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: AppRadius.rLg,
-        border: Border.all(color: scheme.outline),
-        boxShadow: AppShadows.soft,
+    Widget link(String label, ImageInputSource source) => TextButton(
+      onPressed: busy ? null : () => onPick(source),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.textLink,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space2),
+        textStyle: text.labelLarge?.copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
+      child: Text(label),
+    );
+
+    return MapCard(
+      padding: const EdgeInsets.fromLTRB(14, 14, 6, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // A hard 64x64 box owns the size, so the thumbnail never drives
-              // the Row's width from the decoded image's own dimensions.
+              // A hard box owns the size, so the thumbnail never drives the
+              // row's width from the decoded image's own dimensions.
               SizedBox(
-                width: 64,
-                height: 64,
+                width: 54,
+                height: 68,
                 child: ClipRRect(
-                  borderRadius: AppRadius.rMd,
+                  borderRadius: AppRadius.rRow,
                   child: Image.memory(
                     image.bytes,
                     fit: BoxFit.cover,
@@ -409,94 +484,49 @@ class _Preview extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.space4),
+              const SizedBox(width: AppSpacing.space3),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (image.name != null && image.name!.trim().isNotEmpty) ...[
+                    if (name != null && name.isNotEmpty)
                       Text(
-                        image.name!.trim(),
-                        style: text.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        name,
+                        style: text.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textStrong,
+                        ),
                       ),
-                      const SizedBox(height: AppSpacing.space1),
-                    ],
                     Text(
                       l10n.imageInputSizeOfMax(used, max),
-                      style: text.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.space2),
-                    // The size indicator: how much of the cap this image uses.
-                    ClipRRect(
-                      borderRadius: AppRadius.rSm,
-                      child: LinearProgressIndicator(
-                        value: fraction,
-                        minHeight: AppSpacing.space1,
-                        backgroundColor: scheme.surfaceContainerHigh,
-                        color: scheme.primary,
+                      style: text.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ],
                 ),
               ),
+              if (onRemove != null)
+                IconButton(
+                  onPressed: onRemove,
+                  tooltip: l10n.imageInputRemove,
+                  icon: const Icon(
+                    LucideIcons.trash2,
+                    size: 18,
+                    color: AppColors.textMuted,
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: AppSpacing.space3),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onRemove,
-              icon: const Icon(LucideIcons.trash2, size: AppIconSize.inline),
-              label: Text(l10n.imageInputRemove),
-            ),
+          Wrap(
+            children: [
+              link(l10n.imageInputRetake, ImageInputSource.camera),
+              link(l10n.imageInputChangeGallery, ImageInputSource.gallery),
+            ],
           ),
         ],
       ),
-    );
-  }
-}
-
-/// The camera + gallery buttons. Always present: when an image is already
-/// picked they act as "replace", so there is no separate replace control to
-/// keep in sync.
-class _SourceButtons extends StatelessWidget {
-  const _SourceButtons({
-    required this.hasImage,
-    required this.busy,
-    required this.onPick,
-  });
-
-  final bool hasImage;
-  final bool busy;
-  final ValueChanged<ImageInputSource> onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Wrap(
-      spacing: AppSpacing.space3,
-      runSpacing: AppSpacing.space3,
-      children: [
-        OutlinedButton.icon(
-          onPressed: busy ? null : () => onPick(ImageInputSource.camera),
-          icon: const Icon(LucideIcons.camera, size: AppIconSize.inline),
-          label: Text(
-            hasImage ? l10n.imageInputRetake : l10n.imageInputTakePhoto,
-          ),
-        ),
-        OutlinedButton.icon(
-          onPressed: busy ? null : () => onPick(ImageInputSource.gallery),
-          icon: const Icon(LucideIcons.image, size: AppIconSize.inline),
-          label: Text(
-            hasImage ? l10n.imageInputChangeGallery : l10n.imageInputChooseGallery,
-          ),
-        ),
-      ],
     );
   }
 }

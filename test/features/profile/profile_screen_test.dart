@@ -297,7 +297,7 @@ void main() {
       required String value,
     }) async {
       final field = find.ancestor(
-        of: find.text(label),
+        of: find.text(label.toUpperCase()),
         matching: find.byType(Column),
       );
       expect(field, findsWidgets);
@@ -409,7 +409,7 @@ void main() {
       await _pumpScreen(tester, source: source);
 
       final phone = find.ancestor(
-        of: find.text('Mobile number'),
+        of: find.text('MOBILE NUMBER'),
         matching: find.byType(Column),
       );
       await tester.enterText(

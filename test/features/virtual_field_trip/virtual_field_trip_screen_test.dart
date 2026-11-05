@@ -16,6 +16,7 @@ import 'package:sahayakai/features/virtual_field_trip/presentation/widgets/virtu
 import 'package:sahayakai/features/virtual_field_trip/presentation/widgets/virtual_field_trip_result_view.dart';
 import 'package:sahayakai/features/virtual_field_trip/presentation/widgets/virtual_field_trip_skeleton.dart';
 import 'package:sahayakai/shared/domain/tool_prefill.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
@@ -37,7 +38,9 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -64,7 +67,8 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Enter a topic'), findsOneWidget);
+      // The map's tool pages show no prompt before the first result.
+      expect(find.byType(EmptyView), findsNothing);
     });
 
     testWidgets('loading shows the itinerary-shaped skeleton', (tester) async {
@@ -78,7 +82,9 @@ void main() {
         ),
       );
       await tester.pump(); // don't settle: the loading future never completes
-      await tester.pump(const Duration(milliseconds: 300)); // settle entrance animations
+      await tester.pump(
+        const Duration(milliseconds: 300),
+      ); // settle entrance animations
 
       expect(find.byType(VirtualFieldTripSkeleton), findsOneWidget);
     });
@@ -139,7 +145,8 @@ void main() {
       // clear() returned the controller to idle: the itinerary is gone and the
       // empty prompt is back.
       expect(find.byType(VirtualFieldTripResultView), findsNothing);
-      expect(find.textContaining('Enter a topic'), findsOneWidget);
+      // The map's tool pages show no prompt before the first result.
+      expect(find.byType(EmptyView), findsNothing);
     });
 
     testWidgets(
@@ -353,9 +360,9 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Topic or theme'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(find.text('TOPIC OR THEME'), findsOneWidget);
+            expect(find.text('GRADE LEVEL'), findsOneWidget);
+            expect(find.text('LANGUAGE'), findsOneWidget);
           },
         );
       }

@@ -27,6 +27,7 @@ class LabeledField extends StatelessWidget {
     this.leadingIcon,
     this.counterText,
     this.trailing,
+    this.trailingBesideChild = false,
   });
 
   final String label;
@@ -41,7 +42,7 @@ class LabeledField extends StatelessWidget {
   /// A field-level error shown under the control in the error colour.
   final String? errorText;
 
-  /// An optional leading Lucide glyph before the label (long forms).
+  /// Kept for call sites; the UX map draws no icon beside a field label.
   final IconData? leadingIcon;
 
   /// An optional right-aligned tabular counter (e.g. "0 / 1000").
@@ -51,13 +52,32 @@ class LabeledField extends StatelessWidget {
   /// voice-dictation mic). Sits after any [counterText].
   final Widget? trailing;
 
+  /// Puts [trailing] at the end of the control's own row instead of the label
+  /// row: the map's topic card, where the small mic sits beside the text.
+  final bool trailingBesideChild;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final extras = AppTextExtras.of(context);
-    final labelStyle = text.titleSmall?.copyWith(letterSpacing: 0.2);
-    final mutedStyle = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    // The UX map's field label is its `.ov` overline: saffron, bold, tracked
+    // and uppercase in Latin script only (Indic scripts have no case, and
+    // tracking breaks their joins). The map draws no icon beside it.
+    final latin = Localizations.localeOf(context).languageCode == 'en';
+    final labelStyle = text.labelMedium?.copyWith(
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      letterSpacing: latin ? 1.5 : 0,
+      color: AppColors.textEyebrow,
+    );
+    final mutedStyle = text.bodySmall?.copyWith(
+      fontSize: 12.5,
+      color: AppColors.textMuted,
+    );
+
+    final besideChild = trailingBesideChild ? trailing : null;
+    final rowTrailing = trailingBesideChild ? null : trailing;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,34 +85,54 @@ class LabeledField extends StatelessWidget {
       children: [
         Row(
           children: [
-            if (leadingIcon != null) ...[
-              Icon(leadingIcon,
-                  size: AppIconSize.inline, color: scheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.space2),
-            ],
-            Flexible(child: Text(label, style: labelStyle)),
+            // Expanded when something sits at the end of the row, so that
+            // thing is pushed to the edge; Flexible otherwise, so the
+            // optional tag stays beside the label.
+            if (counterText != null || rowTrailing != null)
+              Expanded(
+                child: Text(
+                  latin ? label.toUpperCase() : label,
+                  style: labelStyle,
+                ),
+              )
+            else
+              Flexible(
+                child: Text(
+                  latin ? label.toUpperCase() : label,
+                  style: labelStyle,
+                ),
+              ),
             if (optionalLabel != null) ...[
               const SizedBox(width: AppSpacing.space2),
               Text(optionalLabel!, style: mutedStyle),
             ],
-            if (counterText != null || trailing != null) const Spacer(),
             if (counterText != null)
               Text(
                 counterText!,
-                style: extras.dataMedium.copyWith(color: scheme.onSurfaceVariant),
+                style: extras.dataMedium.copyWith(color: AppColors.textMuted),
               ),
-            if (trailing != null) ...[
+            if (rowTrailing != null) ...[
               if (counterText != null) const SizedBox(width: AppSpacing.space2),
-              trailing!,
+              rowTrailing,
             ],
           ],
         ),
         if (hint != null) ...[
-          const SizedBox(height: AppSpacing.space1),
+          const SizedBox(height: 2),
           Text(hint!, style: mutedStyle),
         ],
-        const SizedBox(height: AppSpacing.space3),
-        child,
+        SizedBox(height: besideChild == null ? AppSpacing.space2 : 2),
+        if (besideChild == null)
+          child
+        else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: child),
+              const SizedBox(width: AppSpacing.space1),
+              besideChild,
+            ],
+          ),
         if (errorText != null) ...[
           const SizedBox(height: AppSpacing.space2),
           Text(
@@ -104,3 +144,17 @@ class LabeledField extends StatelessWidget {
     );
   }
 }
+
+/// An input drawn straight on a UX map card, where the card is the field (the
+/// map's topic and question cards): no fill and no ring of its own.
+InputDecoration mapBareInput(String? hint) => InputDecoration(
+  hintText: hint,
+  filled: false,
+  isDense: true,
+  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+  border: InputBorder.none,
+  enabledBorder: InputBorder.none,
+  focusedBorder: InputBorder.none,
+  errorBorder: InputBorder.none,
+  focusedErrorBorder: InputBorder.none,
+);

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -12,8 +11,13 @@ import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/media/image_input.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
+import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/labeled_field.dart';
+import '../../../shared/widgets/map_card.dart';
+import '../../../shared/widgets/map_chip.dart';
+import '../../../shared/widgets/map_more_options.dart';
+import '../../../shared/widgets/map_option.dart';
+import '../../../shared/widgets/map_select.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../../vidya/domain/deliverable.dart';
@@ -113,7 +117,9 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     final locale = prefillLocale(p.language);
     if (locale != null) _language = locale;
     final count = p.questionCount;
-    if (count != null && count >= kMinQuestions && count <= kMaxQuestions) {
+    if (count != null &&
+        count >= kComposerMinQuestions &&
+        count <= kMaxQuestions) {
       _numQuestions = count;
     }
     for (final difficulty in QuizDifficulty.values) {
@@ -234,14 +240,15 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
 
     return ToolScaffold(
       wash: AppGradients.washQuiz,
-      title: l10n.quizTitle,
+      title: l10n.quizComposerTitle,
+      subtitle: l10n.quizComposerSubtitle,
       isBusy: state.isLoading,
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       deliverable: _deliverableFor(state.valueOrNull, l10n),
       onResubmit: _submit,
-      submitLabel: l10n.actionGenerate,
+      submitLabel: l10n.quizGenerate,
       // Hide the sticky Generate button once a quiz with questions is on screen
       // — the document's own action bar (Regenerate / Copy) takes over. An
       // empty-variants result keeps it, so the empty state is never a dead end.
@@ -264,27 +271,23 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              EditorialSectionHeader(l10n.quizSectionQuiz),
-              const SizedBox(height: AppSpacing.space4),
               _topicField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _numQuestionsField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _questionTypesField(l10n),
-              const SizedBox(height: AppSpacing.space8),
-              EditorialSectionHeader(l10n.sectionForYourClass),
               const SizedBox(height: AppSpacing.space4),
-              _gradeField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _subjectField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _imageField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _languageField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _difficultyField(l10n),
-              const SizedBox(height: AppSpacing.space6),
+              _questionTypesField(l10n),
+              const SizedBox(height: AppSpacing.space4),
+              _numQuestionsField(l10n),
+              const SizedBox(height: AppSpacing.space3),
               _bloomsField(l10n),
+              const SizedBox(height: AppSpacing.space3),
+              MapMoreOptions(
+                summary: _moreSummary(l10n),
+                children: [
+                  _classAndSubject(l10n),
+                  _languageField(l10n),
+                  _difficultyField(l10n),
+                  _imageField(l10n),
+                ],
+              ),
             ],
           ),
         ),
@@ -293,77 +296,78 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     );
   }
 
+  /// The map's topic card: the quiz topic on the card itself, with the small
+  /// mic that dictates into this field only.
   Widget _topicField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.quizTopicLabel,
-      leadingIcon: LucideIcons.lightbulb,
-      trailing: InlineFieldMic(
-        expectedLanguage: _language.code,
-        onResult: (text) => _topicController.text = text,
-      ),
-      child: TextFormField(
-        controller: _topicController,
-        maxLength: 1000,
-        maxLines: 2,
-        minLines: 1,
-        textInputAction: TextInputAction.done,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: InputDecoration(hintText: l10n.quizTopicHint),
-        validator: (value) => (value == null || value.trim().isEmpty)
-            ? l10n.quizTopicError
-            : null,
-      ),
-    );
-  }
-
-  Widget _numQuestionsField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.quizNumQuestionsLabel,
-      leadingIcon: LucideIcons.hash,
-      child: _Stepper(
-        value: _numQuestions,
-        min: kMinQuestions,
-        max: kMaxQuestions,
-        decrementTooltip: l10n.quizFewerQuestions,
-        incrementTooltip: l10n.quizMoreQuestions,
-        onChanged: (value) => setState(() => _numQuestions = value),
+    return MapCard(
+      child: LabeledField(
+        label: l10n.quizTopicLabel,
+        trailingBesideChild: true,
+        trailing: InlineFieldMic(
+          expectedLanguage: _language.code,
+          onResult: (text) => _topicController.text = text,
+        ),
+        child: TextFormField(
+          controller: _topicController,
+          maxLength: 1000,
+          maxLines: 4,
+          minLines: 2,
+          textInputAction: TextInputAction.newline,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: mapBareInput(l10n.quizTopicHint),
+          validator: (value) => (value == null || value.trim().isEmpty)
+              ? l10n.quizTopicError
+              : null,
+        ),
       ),
     );
   }
 
-  /// At least one type is required by the endpoint, so this is a real
-  /// [FormField] and its error sits in the form's own validation pass.
+  /// Question types: the map's two-column grid of option rows, each with a
+  /// check when chosen. At least one is required.
   Widget _questionTypesField(AppLocalizations l10n) {
     return FormField<Set<QuestionType>>(
       initialValue: _types,
       validator: (value) =>
           (value == null || value.isEmpty) ? l10n.quizTypesError : null,
       builder: (field) {
+        void toggle(QuestionType type) {
+          setState(() {
+            if (!_types.remove(type)) _types.add(type);
+          });
+          field.didChange(_types);
+        }
+
+        Widget option(QuestionType type) => MapOption(
+          label: _typeLabel(l10n, type),
+          selected: _types.contains(type),
+          showCheck: true,
+          onTap: () => toggle(type),
+        );
+
+        const types = QuestionType.values;
         return LabeledField(
           label: l10n.quizTypesLabel,
-          leadingIcon: LucideIcons.listChecks,
           errorText: field.errorText,
-          child: Wrap(
-            spacing: AppSpacing.space2,
-            runSpacing: AppSpacing.space2,
+          child: Column(
             children: [
-              for (final type in QuestionType.values)
-                FilterChip(
-                  label: Text(_typeLabel(l10n, type)),
-                  selected: _types.contains(type),
-                  showCheckmark: false,
-                  materialTapTargetSize: MaterialTapTargetSize.padded,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _types.add(type);
-                      } else {
-                        _types.remove(type);
-                      }
-                    });
-                    field.didChange(_types);
-                  },
+              for (var i = 0; i < types.length; i += 2) ...[
+                if (i > 0) const SizedBox(height: 10),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: option(types[i])),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: i + 1 < types.length
+                            ? option(types[i + 1])
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
                 ),
+              ],
             ],
           ),
         );
@@ -371,56 +375,151 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     );
   }
 
-  Widget _gradeField(AppLocalizations l10n) {
+  /// The map's "Questions" slider (3 to 20), its value in saffron at the end
+  /// of the label row.
+  Widget _numQuestionsField(AppLocalizations l10n) {
+    final text = Theme.of(context).textTheme;
     return LabeledField(
-      label: l10n.quizGradeLabel,
-      optionalLabel: l10n.quizOptional,
-      leadingIcon: LucideIcons.graduationCap,
-      child: DropdownButtonFormField<String?>(
-        initialValue: _grade,
-        isExpanded: true,
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l10n.quizGradeAny),
-          ),
-          for (final grade in kGradeLevels)
-            DropdownMenuItem<String?>(value: grade, child: Text(grade)),
-        ],
-        onChanged: (value) => setState(() => _grade = value),
+      label: l10n.quizQuestionsLabel,
+      trailing: Text(
+        '$_numQuestions',
+        style: text.titleMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.textEyebrow,
+        ),
+      ),
+      child: SliderTheme(
+        data: SliderTheme.of(context).copyWith(
+          activeTrackColor: AppColors.accent,
+          thumbColor: AppColors.accent,
+          inactiveTrackColor: AppColors.mapToggleOff,
+          overlayColor: AppColors.accentTint,
+          tickMarkShape: SliderTickMarkShape.noTickMark,
+        ),
+        child: Slider(
+          value: _numQuestions.toDouble(),
+          min: kComposerMinQuestions.toDouble(),
+          max: kMaxQuestions.toDouble(),
+          divisions: kMaxQuestions - kComposerMinQuestions,
+          label: '$_numQuestions',
+          semanticFormatterCallback: (v) => l10n.quizQuestionCount(v.round()),
+          onChanged: (v) => setState(() => _numQuestions = v.round()),
+        ),
       ),
     );
   }
 
-  Widget _subjectField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.quizSubjectLabel,
-      optionalLabel: l10n.quizOptional,
-      leadingIcon: LucideIcons.bookOpen,
-      child: DropdownButtonFormField<String?>(
-        initialValue: _subject,
-        isExpanded: true,
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l10n.quizSubjectAny),
+  /// Bloom's levels as the map's small saffron chips, then the strategy card
+  /// saying what each chosen level asks of the students.
+  Widget _bloomsField(AppLocalizations l10n) {
+    final text = Theme.of(context).textTheme;
+    final chosen = [
+      for (final level in kBloomsTaxonomyLevels)
+        if (_blooms.contains(level)) level,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        LabeledField(
+          label: l10n.quizBloomLevelsLabel,
+          child: Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: [
+              for (final level in kBloomsTaxonomyLevels)
+                MapChip(
+                  label: _bloomName(l10n, level),
+                  selected: _blooms.contains(level),
+                  selectedFill: AppColors.accentFill,
+                  onTap: () => setState(() {
+                    if (!_blooms.remove(level)) _blooms.add(level);
+                  }),
+                ),
+            ],
           ),
-          for (final subject in kSubjects)
-            DropdownMenuItem<String?>(value: subject, child: Text(subject)),
-        ],
-        onChanged: (value) => setState(() => _subject = value),
-      ),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.mapStrategyBg,
+            borderRadius: AppRadius.rTile,
+            border: Border.all(color: AppColors.mapStrategyBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MapOverline(l10n.quizStrategyTitle, color: AppColors.saffron700),
+              const SizedBox(height: AppSpacing.space1),
+              if (chosen.isEmpty)
+                Text(
+                  l10n.quizStrategyEmpty,
+                  style: text.bodySmall?.copyWith(color: AppColors.saffron700),
+                )
+              else
+                for (final level in chosen)
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${_bloomName(l10n, level)}: ',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        TextSpan(text: _bloomHow(l10n, level)),
+                      ],
+                    ),
+                    style: text.bodySmall?.copyWith(
+                      fontSize: 12.5,
+                      color: AppColors.saffron700,
+                    ),
+                  ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Class and Subject, side by side (inside More options).
+  Widget _classAndSubject(AppLocalizations l10n) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: MapSelect<String?>(
+            label: l10n.toolClassLabel,
+            value: _grade,
+            options: [
+              (null, l10n.toolAnyClass),
+              for (final grade in kGradeLevels) (grade, grade),
+            ],
+            onChanged: (value) => setState(() => _grade = value),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: MapSelect<String?>(
+            label: l10n.quizSubjectLabel,
+            value: _subject,
+            options: [
+              (null, l10n.quizSubjectAny),
+              for (final subject in kSubjects) (subject, subject),
+            ],
+            onChanged: (value) => setState(() => _subject = value),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _imageField(AppLocalizations l10n) {
     // Optional (unlike Worksheet, where the photo is required): a teacher may
-    // photograph a textbook page so the quiz is generated from it, or leave it
-    // blank and the form behaves exactly as before.
+    // photograph a textbook page to quiz straight from it.
     return LabeledField(
       label: l10n.toolImageOptionalLabel,
       hint: l10n.toolImageOptionalHint,
-      leadingIcon: LucideIcons.image,
       child: ImageInput(
         value: _image,
         onChanged: (picked) => setState(() => _image = picked),
@@ -429,148 +528,47 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   }
 
   Widget _languageField(AppLocalizations l10n) {
-    return LabeledField(
+    return MapSelect<AppLocale>(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
-      child: DropdownButtonFormField<AppLocale>(
-        initialValue: _language,
-        isExpanded: true,
-        items: [
-          for (final locale in AppLocale.values)
-            DropdownMenuItem<AppLocale>(
-              value: locale,
-              child: Text(locale.nativeLabel),
-            ),
-        ],
-        onChanged: (value) => setState(() => _language = value ?? _language),
-      ),
+      value: _language,
+      options: [
+        for (final locale in AppLocale.values) (locale, locale.nativeLabel),
+      ],
+      onChanged: (value) => setState(() => _language = value),
     );
   }
 
   Widget _difficultyField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.quizDifficultyLabel,
-      leadingIcon: LucideIcons.gauge,
       hint: l10n.quizDifficultyHint,
-      child: Wrap(
-        spacing: AppSpacing.space2,
-        runSpacing: AppSpacing.space2,
-        children: [
-          ChoiceChip(
-            label: Text(l10n.quizDifficultyAll),
-            selected: _targetDifficulty == null,
-            materialTapTargetSize: MaterialTapTargetSize.padded,
-            onSelected: (selected) {
-              if (selected) setState(() => _targetDifficulty = null);
-            },
-          ),
+      child: AppSegmented<QuizDifficulty?>(
+        value: _targetDifficulty,
+        onChanged: (value) => setState(() => _targetDifficulty = value),
+        segments: [
+          AppSegment(value: null, label: l10n.quizDifficultyAll),
           for (final difficulty in QuizDifficulty.values)
-            ChoiceChip(
-              label: Text(_difficultyLabel(l10n, difficulty)),
-              selected: _targetDifficulty == difficulty,
-              materialTapTargetSize: MaterialTapTargetSize.padded,
-              onSelected: (selected) {
-                if (selected) setState(() => _targetDifficulty = difficulty);
-              },
+            AppSegment(
+              value: difficulty,
+              label: _difficultyLabel(l10n, difficulty),
             ),
         ],
       ),
     );
   }
 
-  Widget _bloomsField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.quizBloomsLabel,
-      optionalLabel: l10n.quizOptional,
-      leadingIcon: LucideIcons.brain,
-      hint: l10n.quizBloomsHint,
-      child: Wrap(
-        spacing: AppSpacing.space2,
-        runSpacing: AppSpacing.space2,
-        children: [
-          for (final level in kBloomsTaxonomyLevels)
-            FilterChip(
-              label: Text(level),
-              selected: _blooms.contains(level),
-              showCheckmark: false,
-              materialTapTargetSize: MaterialTapTargetSize.padded,
-              onSelected: (selected) => setState(() {
-                if (selected) {
-                  _blooms.add(level);
-                } else {
-                  _blooms.remove(level);
-                }
-              }),
-            ),
-        ],
-      ),
-    );
-  }
+  /// What the closed "More options" card says is set.
+  String _moreSummary(AppLocalizations l10n) => [
+    _grade ?? l10n.toolAnyClass,
+    _language.nativeLabel,
+    _targetDifficulty == null
+        ? l10n.quizDifficultyAll
+        : _difficultyLabel(l10n, _targetDifficulty!),
+  ].join(' · ');
 }
 
-/// A labelled form row: a weight-first label (with an optional "Optional"
-/// marker), an optional hint, its control, and an optional error line. On the
-/// 4dp grid throughout.
-
-/// A -/+ counter. Both buttons are full 48dp targets and the value sits between
-/// them, so the control reads at a glance and never overflows at 360dp.
-class _Stepper extends StatelessWidget {
-  const _Stepper({
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-    required this.decrementTooltip,
-    required this.incrementTooltip,
-  });
-
-  final int value;
-  final int min;
-  final int max;
-  final ValueChanged<int> onChanged;
-  final String decrementTooltip;
-  final String incrementTooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Row(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: AppRadius.rField,
-            border: Border.all(color: scheme.outline),
-            boxShadow: AppShadows.e1,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                onPressed: value > min ? () => onChanged(value - 1) : null,
-                tooltip: decrementTooltip,
-                icon: const Icon(LucideIcons.minus, size: AppIconSize.inline),
-              ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 40),
-                child: Text(
-                  '$value',
-                  textAlign: TextAlign.center,
-                  style: text.titleMedium,
-                ),
-              ),
-              IconButton(
-                onPressed: value < max ? () => onChanged(value + 1) : null,
-                tooltip: incrementTooltip,
-                icon: const Icon(LucideIcons.plus, size: AppIconSize.inline),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
+/// The composer's smallest quiz: the UX map's slider starts at 3.
+const int kComposerMinQuestions = 3;
 
 String _difficultyLabel(AppLocalizations l10n, QuizDifficulty difficulty) =>
     switch (difficulty) {
@@ -584,4 +582,27 @@ String _typeLabel(AppLocalizations l10n, QuestionType type) => switch (type) {
   QuestionType.fillInTheBlanks => l10n.quizTypeFillInTheBlanks,
   QuestionType.shortAnswer => l10n.quizTypeShortAnswer,
   QuestionType.trueFalse => l10n.quizTypeTrueFalse,
+};
+
+/// A Bloom's level (the server's English wire value) in the teacher's
+/// language.
+String _bloomName(AppLocalizations l10n, String level) => switch (level) {
+  'Remember' => l10n.quizBloomRemember,
+  'Understand' => l10n.quizBloomUnderstand,
+  'Apply' => l10n.quizBloomApply,
+  'Analyze' => l10n.quizBloomAnalyze,
+  'Evaluate' => l10n.quizBloomEvaluate,
+  'Create' => l10n.quizBloomCreate,
+  _ => level,
+};
+
+/// What a Bloom's level asks of the students, for the strategy card.
+String _bloomHow(AppLocalizations l10n, String level) => switch (level) {
+  'Remember' => l10n.quizBloomRememberHow,
+  'Understand' => l10n.quizBloomUnderstandHow,
+  'Apply' => l10n.quizBloomApplyHow,
+  'Analyze' => l10n.quizBloomAnalyzeHow,
+  'Evaluate' => l10n.quizBloomEvaluateHow,
+  'Create' => l10n.quizBloomCreateHow,
+  _ => '',
 };

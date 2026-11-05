@@ -56,10 +56,7 @@ void main() {
     testWidgets('shows the prompt and both source buttons', (tester) async {
       await _pumpInput(tester, service: FakeImagePickerService());
 
-      expect(
-        find.text('Add a clear photo of the textbook page.'),
-        findsOneWidget,
-      );
+      expect(find.text('Take a photo or browse'), findsOneWidget);
       expect(find.text('Take photo'), findsOneWidget);
       expect(find.text('Choose from gallery'), findsOneWidget);
     });
@@ -78,9 +75,10 @@ void main() {
       expect(service.calls, [ImageInputSource.camera]);
       expect(host.value, isNotNull);
       expect(host.value!.dataUri, startsWith('data:image/jpeg;base64,'));
-      // The picked state renders the size counter + a Remove action.
+      // The picked state renders the size counter + a Remove action (the
+      // map's trash icon button, labelled by its tooltip).
       expect(find.textContaining('of 14 MB'), findsOneWidget);
-      expect(find.text('Remove photo'), findsOneWidget);
+      expect(find.byTooltip('Remove photo'), findsOneWidget);
     });
 
     testWidgets('a gallery pick uses the gallery source', (tester) async {
@@ -105,7 +103,7 @@ void main() {
 
       expect(service.calls, [ImageInputSource.camera]);
       expect(host.value, isNull);
-      expect(find.text('Remove photo'), findsNothing);
+      expect(find.byTooltip('Remove photo'), findsNothing);
     });
 
     testWidgets('Remove clears the picked image', (tester) async {
@@ -116,14 +114,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(host.value, isNotNull);
 
-      await tester.tap(find.text('Remove photo'));
+      await tester.tap(find.byTooltip('Remove photo'));
       await tester.pumpAndSettle();
 
       expect(host.value, isNull);
-      expect(
-        find.text('Add a clear photo of the textbook page.'),
-        findsOneWidget,
-      );
+      expect(find.text('Take a photo or browse'), findsOneWidget);
     });
   });
 
@@ -135,9 +130,15 @@ void main() {
       await tester.tap(find.text('Take photo'));
       await tester.pumpAndSettle();
 
-      // A 1x1 PNG encodes to well under 1 KB, so it reads in KB, of 14 MB.
-      expect(find.textContaining('of 14 MB'), findsOneWidget);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      // A tiny image encodes to a few hundred bytes / KB, read against the
+      // 14 MB cap as "{used} of {max}" (the map's card drops the old bar).
+      expect(
+        find.textContaining(RegExp(r'^\d+ (B|KB) of 14 MB$')),
+        findsOneWidget,
+      );
+      // ...and the picked card still offers both ways to replace the page.
+      expect(find.text('Retake photo'), findsOneWidget);
+      expect(find.text('Choose another'), findsOneWidget);
     });
   });
 
@@ -272,7 +273,7 @@ void main() {
           );
 
           expect(tester.takeException(), isNull);
-          expect(find.text('Remove photo'), findsOneWidget);
+          expect(find.byTooltip('Remove photo'), findsOneWidget);
           expect(find.textContaining('of 14 MB'), findsOneWidget);
         });
       }

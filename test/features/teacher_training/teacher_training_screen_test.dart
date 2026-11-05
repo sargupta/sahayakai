@@ -13,6 +13,7 @@ import 'package:sahayakai/features/teacher_training/presentation/widgets/teacher
 import 'package:sahayakai/features/teacher_training/presentation/widgets/teacher_training_result_view.dart';
 import 'package:sahayakai/features/teacher_training/presentation/widgets/teacher_training_skeleton.dart';
 import 'package:sahayakai/shared/domain/tool_prefill.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'teacher_training_fixtures.dart';
@@ -32,7 +33,9 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -59,7 +62,8 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Ask a teaching question'), findsOneWidget);
+      // The map's tool pages show no prompt before the first result.
+      expect(find.byType(EmptyView), findsNothing);
     });
 
     testWidgets('loading shows the advice-shaped skeleton', (tester) async {
@@ -73,7 +77,9 @@ void main() {
         ),
       );
       await tester.pump(); // don't settle: the loading future never completes
-      await tester.pump(const Duration(milliseconds: 300)); // settle entrance animations
+      await tester.pump(
+        const Duration(milliseconds: 300),
+      ); // settle entrance animations
 
       expect(find.byType(TeacherTrainingSkeleton), findsOneWidget);
     });
@@ -130,12 +136,12 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.text('Your question'), findsOneWidget);
-      expect(find.text('Subject'), findsOneWidget);
-      expect(find.text('Language'), findsOneWidget);
+      expect(find.text('YOUR QUESTION'), findsOneWidget);
+      expect(find.text('SUBJECT'), findsOneWidget);
+      expect(find.text('LANGUAGE'), findsOneWidget);
       // The endpoint's input schema has no gradeLevel, so the form must not
       // offer one (a pin against re-adding it).
-      expect(find.text('Grade level'), findsNothing);
+      expect(find.text('GRADE LEVEL'), findsNothing);
       expect(find.text('Any subject'), findsOneWidget);
       expect(find.text('Optional'), findsOneWidget);
     });
@@ -276,9 +282,9 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Your question'), findsOneWidget);
-            expect(find.text('Subject'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(find.text('YOUR QUESTION'), findsOneWidget);
+            expect(find.text('SUBJECT'), findsOneWidget);
+            expect(find.text('LANGUAGE'), findsOneWidget);
           },
         );
       }

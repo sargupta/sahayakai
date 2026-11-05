@@ -36,7 +36,21 @@ class _AppSpinnerState extends State<AppSpinner>
     _ctrl = AnimationController(
       vsync: this,
       duration: AppMotion.spinnerRotation,
-    )..repeat();
+    );
+  }
+
+  /// Spins only while motion is on: with reduce motion the spinner is a
+  /// still dot, and a controller left repeating behind it would keep the
+  /// frame clock running for nothing.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduce) {
+      _ctrl.stop();
+    } else if (!_ctrl.isAnimating) {
+      _ctrl.repeat();
+    }
   }
 
   @override

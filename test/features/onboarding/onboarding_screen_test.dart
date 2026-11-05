@@ -38,7 +38,7 @@ Future<void> _tapSave(WidgetTester tester) async {
 
 Future<void> _enter(WidgetTester tester, String label, String value) async {
   final field = find.ancestor(
-    of: find.text(label),
+    of: find.text(label.toUpperCase()),
     matching: find.byType(Column),
   );
   expect(field, findsWidgets);
@@ -196,7 +196,9 @@ void main() {
       expect(find.text(l10n.onboardingVidyaIntro), findsOneWidget);
     });
 
-    testWidgets('the hand choice persists to the orb placement', (tester) async {
+    testWidgets('the hand choice persists to the orb placement', (
+      tester,
+    ) async {
       await pumpOnboarding(tester);
       final container = containerOf(tester);
 

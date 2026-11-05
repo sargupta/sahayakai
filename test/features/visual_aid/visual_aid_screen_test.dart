@@ -12,6 +12,7 @@ import 'package:sahayakai/features/visual_aid/presentation/visual_aid_screen.dar
 import 'package:sahayakai/features/visual_aid/presentation/widgets/visual_aid_error_view.dart';
 import 'package:sahayakai/features/visual_aid/presentation/widgets/visual_aid_result_view.dart';
 import 'package:sahayakai/features/visual_aid/presentation/widgets/visual_aid_skeleton.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
@@ -31,7 +32,9 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -58,7 +61,8 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Describe a drawing'), findsOneWidget);
+      // The map's tool pages show no prompt before the first result.
+      expect(find.byType(EmptyView), findsNothing);
     });
 
     testWidgets('loading shows the drawing-shaped skeleton', (tester) async {
@@ -70,7 +74,9 @@ void main() {
         ),
       );
       await tester.pump(); // don't settle: the loading future never completes
-      await tester.pump(const Duration(milliseconds: 300)); // settle entrance animations
+      await tester.pump(
+        const Duration(milliseconds: 300),
+      ); // settle entrance animations
 
       expect(find.byType(VisualAidSkeleton), findsOneWidget);
     });
@@ -270,10 +276,10 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('What should the drawing show?'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
-            expect(find.text('Subject'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(find.text('WHAT SHOULD THE DRAWING SHOW?'), findsOneWidget);
+            expect(find.text('GRADE LEVEL'), findsOneWidget);
+            expect(find.text('SUBJECT'), findsOneWidget);
+            expect(find.text('LANGUAGE'), findsOneWidget);
           },
         );
       }

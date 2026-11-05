@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -10,9 +9,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/media/image_input.dart';
 import '../../../shared/motion/animated_entrance.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
-import '../../../shared/widgets/labeled_field.dart';
-import '../../../shared/widgets/note_banner.dart';
+import '../../../shared/widgets/map_more_options.dart';
+import '../../../shared/widgets/map_select.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../../vidya/domain/deliverable.dart';
@@ -67,6 +65,10 @@ class _AssessmentScannerScreenState
   /// capture cap stay in sync.
   bool _batch = false;
 
+  /// Set by the first Finish tap, so a missing class or subject shows its
+  /// error then, not before the teacher has tried.
+  bool _tried = false;
+
   @override
   void initState() {
     super.initState();
@@ -84,6 +86,8 @@ class _AssessmentScannerScreenState
     // The button is disabled until a page is added, so `_pages` is non-empty
     // here; the subject/grade validators own the rest of the gate.
     if (_pages.isEmpty) return;
+    setState(() => _tried = true);
+    if (_subject == null || _grade == null) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final request = AssessmentScanRequest(
@@ -169,17 +173,23 @@ class _AssessmentScannerScreenState
     final canSubmit = _pages.isNotEmpty && !state.isLoading && !hasResult;
 
     return ToolScaffold(
-      title: l10n.assessmentScannerTitle,
+      title: l10n.scannerComposerTitle,
+      // The map's "Class 7 · Maths test" once chosen.
+      subtitle: _contextLine(l10n),
+      headerTrailing: hasResult
+          ? null
+          : _PagePill(pages: _pages.length, maxPages: kAssessmentMaxPages),
       isBusy: state.isLoading,
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       onResubmit: _submit,
       deliverable: _deliverableFor(state.valueOrNull, l10n),
-      submitLabel: l10n.assessmentScannerSubmit,
-      onSubmit: canSubmit ? _submit : null,
-      // Screen 11 (capture) wears the solid dark scanner surface; Screen 12
-      // (results) wears its own warm light wash — the design's phase flip.
+      submitLabel: l10n.scannerFinish,
+      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      canSubmit: canSubmit,
+      // Light like the rest of the app: a warm wash while capturing, the
+      // results wash once graded.
       wash: hasResult ? AppGradients.washScanResults : AppGradients.washScanner,
       result: KeyedSubtree(
         key: _resultKey,
@@ -200,56 +210,95 @@ class _AssessmentScannerScreenState
                 widget.taskDescription!.trim().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentTint,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'From your task: ${widget.taskDescription}',
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
+                child: Text(
+                  'From your task: ${widget.taskDescription}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: AppColors.textMuted),
                 ),
               ),
-            // v3 Screen 11/12's header line: the test context + the page pill.
-            _HeaderRow(
-              contextLine: _contextLine(l10n),
-              pages: _pages.length,
-              maxPages: kAssessmentMaxPages,
-            ),
-            // The form is the CAPTURE phase (Screen 11). Once a scorecard is on
-            // screen the design shows results only (Screen 12), but the form
-            // stays mounted Offstage so its state — and the Form validation
-            // Regenerate relies on — survive the flip.
+            // The form is the capture phase. Once a scorecard is on screen it
+            // stays mounted Offstage, so its state survives the flip.
             Offstage(
               offstage: hasResult,
               child: Form(
                 key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: AppSpacing.space6),
-                    EditorialSectionHeader(l10n.assessmentScannerSectionSheet),
+                    PageCapture(
+                      pages: _pages,
+                      batch: _batch,
+                      onToggleBatch: () => setState(() => _batch = !_batch),
+                      onChanged: (pages) => setState(() {
+                        _pages
+                          ..clear()
+                          ..addAll(pages);
+                      }),
+                    ),
                     const SizedBox(height: AppSpacing.space4),
-                    _pagesField(l10n),
-                    const SizedBox(height: AppSpacing.space8),
-                    EditorialSectionHeader(l10n.sectionForYourClass),
-                    const SizedBox(height: AppSpacing.space4),
-                    _subjectField(l10n),
-                    const SizedBox(height: AppSpacing.space6),
-                    _gradeField(l10n),
-                    const SizedBox(height: AppSpacing.space6),
-                    _languageField(l10n),
-                    const SizedBox(height: AppSpacing.space6),
-                    _answerKeyField(l10n),
-                    const SizedBox(height: AppSpacing.space6),
-                    _PrivacyNote(l10n: l10n),
+                    // The grade is tuned to the class and the subject; the
+                    // server needs both.
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: MapSelect<String?>(
+                            label: l10n.toolClassLabel,
+                            value: _grade,
+                            options: [
+                              (null, l10n.assessmentScannerGradePlaceholder),
+                              for (final grade in kGradeLevels) (grade, grade),
+                            ],
+                            onChanged: (value) =>
+                                setState(() => _grade = value),
+                            errorText: _tried && _grade == null
+                                ? l10n.assessmentScannerGradeError
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: MapSelect<String?>(
+                            label: l10n.assessmentScannerSubjectLabel,
+                            value: _subject,
+                            options: [
+                              (null, l10n.assessmentScannerSubjectPlaceholder),
+                              for (final subject in kAssessmentSubjects)
+                                (subject, subject),
+                            ],
+                            onChanged: (value) =>
+                                setState(() => _subject = value),
+                            errorText: _tried && _subject == null
+                                ? l10n.assessmentScannerSubjectError
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.space3),
+                    MapMoreOptions(
+                      summary: _language.nativeLabel,
+                      children: [
+                        MapSelect<AppLocale>(
+                          label: l10n.languageLabel,
+                          value: _language,
+                          options: [
+                            for (final locale in AppLocale.values)
+                              (locale, locale.nativeLabel),
+                          ],
+                          onChanged: (value) =>
+                              setState(() => _language = value),
+                        ),
+                        _answerKeyField(l10n),
+                        Text(
+                          l10n.assessmentScannerPrivacyNote,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -261,9 +310,8 @@ class _AssessmentScannerScreenState
     );
   }
 
-  /// The header line under the app bar: `grade · subject` once chosen (the
-  /// design's "Class 7 · Maths test"), falling back to the tool subtitle, plus
-  /// the `N / max` page pill on the right.
+  /// The muted line under the title: `class · subject` once chosen (the map's
+  /// "Class 7 · Maths test"), else what the tool does.
   String _contextLine(AppLocalizations l10n) {
     final parts = <String>[
       if (_grade != null && _grade!.isNotEmpty) _grade!,
@@ -272,152 +320,34 @@ class _AssessmentScannerScreenState
     return parts.isEmpty ? l10n.assessmentScannerSubtitle : parts.join(' · ');
   }
 
-  Widget _pagesField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.assessmentScannerPagesLabel,
-      hint: l10n.assessmentScannerPagesHint,
-      leadingIcon: LucideIcons.scanLine,
-      child: PageCapture(
-        pages: _pages,
-        batch: _batch,
-        onToggleBatch: () => setState(() => _batch = !_batch),
-        onChanged: (pages) => setState(() {
-          _pages
-            ..clear()
-            ..addAll(pages);
-        }),
-      ),
-    );
-  }
-
-  Widget _subjectField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.assessmentScannerSubjectLabel,
-      hint: l10n.assessmentScannerSubjectHint,
-      leadingIcon: LucideIcons.bookOpen,
-      child: DropdownButtonFormField<String>(
-        initialValue: _subject,
-        isExpanded: true,
-        hint: Text(l10n.assessmentScannerSubjectPlaceholder),
-        items: [
-          for (final subject in kAssessmentSubjects)
-            DropdownMenuItem<String>(value: subject, child: Text(subject)),
-        ],
-        onChanged: (value) => setState(() => _subject = value),
-        validator: (value) =>
-            value == null ? l10n.assessmentScannerSubjectError : null,
-      ),
-    );
-  }
-
-  Widget _gradeField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.assessmentScannerGradeLabel,
-      leadingIcon: LucideIcons.graduationCap,
-      child: DropdownButtonFormField<String>(
-        initialValue: _grade,
-        isExpanded: true,
-        hint: Text(l10n.assessmentScannerGradePlaceholder),
-        items: [
-          for (final grade in kGradeLevels)
-            DropdownMenuItem<String>(value: grade, child: Text(grade)),
-        ],
-        onChanged: (value) => setState(() => _grade = value),
-        validator: (value) =>
-            value == null ? l10n.assessmentScannerGradeError : null,
-      ),
-    );
-  }
-
-  Widget _languageField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
-      child: DropdownButtonFormField<AppLocale>(
-        initialValue: _language,
-        isExpanded: true,
-        items: [
-          for (final locale in AppLocale.values)
-            DropdownMenuItem<AppLocale>(
-              value: locale,
-              child: Text(locale.nativeLabel),
-            ),
-        ],
-        onChanged: (value) => setState(() => _language = value ?? _language),
-      ),
-    );
-  }
-
   Widget _answerKeyField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.assessmentScannerAnswerKeyLabel,
-      optionalLabel: l10n.assessmentScannerOptional,
-      hint: l10n.assessmentScannerAnswerKeyHint,
-      leadingIcon: LucideIcons.listChecks,
-      child: TextFormField(
-        controller: _answerKeyController,
-        maxLength: 20000,
-        maxLines: 6,
-        minLines: 2,
-        textInputAction: TextInputAction.newline,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: InputDecoration(
-          hintText: l10n.assessmentScannerAnswerKeyPlaceholder,
-        ),
-      ),
-    );
-  }
-}
-
-/// v3 Screen 11/12's content header line: the live test context on the left
-/// (the design's "Class 7 · Maths test") and the `N / max` pages pill on the
-/// right (the design's "12 / 34"). The screen title itself lives in the app
-/// bar, so this line never duplicates it.
-class _HeaderRow extends StatelessWidget {
-  const _HeaderRow({
-    required this.contextLine,
-    required this.pages,
-    required this.maxPages,
-  });
-
-  final String contextLine;
-  final int pages;
-  final int maxPages;
-
-  @override
-  Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Text(
-            contextLine,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            // Theme role: legible on the dark capture surface AND on Screen
-            // 12's light wash once the phase flips.
-            style: text.bodySmall?.copyWith(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+        Text(
+          l10n.assessmentScannerAnswerKeyLabel,
+          style: text.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.textStrong,
           ),
         ),
-        const SizedBox(width: AppSpacing.space3),
-        // The page pill: milk ground, ink text — high contrast on both phases.
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-          decoration: const BoxDecoration(
-            color: AppColors.milk50,
-            borderRadius: BorderRadius.all(Radius.circular(9999)),
-          ),
-          child: Text(
-            '$pages / $maxPages',
-            style: text.labelSmall?.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.ink900,
-            ),
+        Text(
+          l10n.assessmentScannerAnswerKeyHint,
+          style: text.bodySmall?.copyWith(color: AppColors.textMuted),
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        // The theme's input field, as on every other tool form.
+        TextFormField(
+          controller: _answerKeyController,
+          maxLength: 20000,
+          maxLines: 6,
+          minLines: 2,
+          textInputAction: TextInputAction.newline,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: l10n.assessmentScannerAnswerKeyPlaceholder,
           ),
         ),
       ],
@@ -425,20 +355,36 @@ class _HeaderRow extends StatelessWidget {
   }
 }
 
-/// A quiet note that the student's name is never sent for grading. Dignified,
-/// not a warning.
-class _PrivacyNote extends StatelessWidget {
-  const _PrivacyNote({required this.l10n});
+/// The header's page count ("1 / 3"), a light pill with a hairline ring.
+class _PagePill extends StatelessWidget {
+  const _PagePill({required this.pages, required this.maxPages});
 
-  final AppLocalizations l10n;
+  final int pages;
+  final int maxPages;
 
   @override
   Widget build(BuildContext context) {
-    // Full ink (default AiText onSurface), matching the sibling _QualityCard:
-    // NoteBanner's surfaceContainerHigh fill makes the muted body only ~3.86:1.
-    return NoteBanner(
-      icon: LucideIcons.info,
-      body: l10n.assessmentScannerPrivacyNote,
+    final l10n = context.l10n;
+    return Semantics(
+      label: l10n.assessmentScannerPageCounter(pages, maxPages),
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: const ShapeDecoration(
+          color: AppColors.surfaceCard,
+          shape: StadiumBorder(
+            side: BorderSide(color: AppColors.borderHairline),
+          ),
+        ),
+        child: Text(
+          '$pages / $maxPages',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textStrong,
+          ),
+        ),
+      ),
     );
   }
 }

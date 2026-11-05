@@ -17,6 +17,7 @@ class PrimaryButton extends StatelessWidget {
     this.onPressed,
     this.isBusy = false,
     this.icon,
+    this.ink = false,
   });
 
   final String label;
@@ -24,31 +25,32 @@ class PrimaryButton extends StatelessWidget {
   final bool isBusy;
   final IconData? icon;
 
+  /// The map's ink button (`background: var(--a-ink)`, no lift) for a
+  /// tool whose primary action is not a making step (Instant Answer).
+  final bool ink;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final enabled = onPressed != null && !isBusy;
-    final glow = enabled
-        ? (isDark ? AppShadows.dSaffronGlow : AppShadows.ctaGlowLight)
+    final glow = enabled && !ink
+        ? (isDark ? AppShadows.dSaffronGlow : const [AppShadows.mapButton])
         : null;
 
     return PressableScale(
       pressedScale: 0.97,
       enabled: enabled,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              scheme.primary,
-              Color.lerp(scheme.primary, Colors.black, 0.18)!,
-            ],
-          ),
-          borderRadius: AppRadius.rControl,
-          boxShadow: glow,
+        // The UX map's `.btn`: a 52px saffron-600 pill with its warm lift;
+        // disabled, the pale `.btn.dis` fill with no lift.
+        decoration: ShapeDecoration(
+          color: !(enabled || isBusy)
+              ? (ink ? AppColors.textFaint : AppColors.mapButtonDisabled)
+              : (ink ? AppColors.textStrong : AppColors.accentFill),
+          shape: const StadiumBorder(),
+          shadows: glow,
         ),
         child: ConstrainedBox(
           // A MINIMUM height, not a fixed one: at textScale 1.3 a long label
@@ -58,7 +60,7 @@ class PrimaryButton extends StatelessWidget {
           // 56dp. `minWidth: infinity` keeps the full-width fill.
           constraints: const BoxConstraints(
             minWidth: double.infinity,
-            minHeight: 56,
+            minHeight: 52,
           ),
           child: FilledButton(
             onPressed: isBusy ? null : onPressed,
@@ -66,9 +68,16 @@ class PrimaryButton extends StatelessWidget {
               backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
               foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
               elevation: const WidgetStatePropertyAll(0),
-              shape: const WidgetStatePropertyAll(
-                RoundedRectangleBorder(borderRadius: AppRadius.rControl),
+              // The theme's label style (the app font), sized to the map's
+              // `.btn`. A bare TextStyle here would drop the font family and
+              // fall back to the platform font.
+              textStyle: WidgetStatePropertyAll(
+                theme.textTheme.labelLarge?.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
+              shape: const WidgetStatePropertyAll(StadiumBorder()),
             ),
             child: isBusy
                 ? SizedBox(

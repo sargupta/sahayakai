@@ -231,6 +231,9 @@ void main() {
         findsNothing,
       );
 
+      // Let the delayed read land (the skeleton holds still under reduce
+      // motion, so nothing else moves the clock).
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
     });
 

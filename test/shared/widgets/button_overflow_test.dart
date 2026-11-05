@@ -102,7 +102,7 @@ void main() {
   }
 
   testWidgets(
-    'PrimaryButton: a short label at scale 1.0 still renders at 56dp',
+    'PrimaryButton: a short label at scale 1.0 still renders at 52dp',
     (tester) async {
       await tester.pumpWidget(
         _host(const PrimaryButton(label: 'Sign in', onPressed: _noop)),
@@ -110,7 +110,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(tester.getSize(find.byType(PrimaryButton)).height, 56);
+      expect(tester.getSize(find.byType(PrimaryButton)).height, 52);
     },
   );
 

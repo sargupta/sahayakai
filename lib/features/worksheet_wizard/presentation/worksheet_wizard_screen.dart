@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -13,8 +12,11 @@ import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/media/image_input.dart';
 import '../../../shared/voice/tts_speaker.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
+import '../../../shared/widgets/map_card.dart';
+import '../../../shared/widgets/map_more_options.dart';
+import '../../../shared/widgets/map_option.dart';
+import '../../../shared/widgets/map_select.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../../vidya/domain/deliverable.dart';
@@ -252,17 +254,20 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
           );
 
     return ToolScaffold(
-      title: l10n.worksheetTitle,
+      title: l10n.worksheetComposerTitle,
+      subtitle: l10n.worksheetComposerSubtitle,
       isBusy: state.isLoading,
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       onResubmit: _submit,
       deliverable: _deliverableFor(state.valueOrNull, l10n),
-      submitLabel: l10n.actionGenerate,
+      submitLabel: l10n.worksheetGenerate,
       // Hide the sticky Generate button once a worksheet is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
+      // The map keeps Generate off until a page is in.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      canSubmit: _image != null,
       result: KeyedSubtree(
         key: _resultKey,
         child: AnimatedSwitcher(
@@ -279,138 +284,155 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            EditorialSectionHeader(l10n.worksheetSectionWorksheet),
-            const SizedBox(height: AppSpacing.space4),
             _imageField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _promptField(l10n),
-            const SizedBox(height: AppSpacing.space8),
-            EditorialSectionHeader(l10n.sectionForYourClass),
             const SizedBox(height: AppSpacing.space4),
-            _gradeField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _subjectField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _languageField(l10n),
+            _promptField(l10n),
+            const SizedBox(height: AppSpacing.space4),
+            MapMoreOptions(
+              summary: [
+                _grade ?? l10n.toolAnyClass,
+                _language.nativeLabel,
+              ].join(' · '),
+              children: [_classAndSubject(l10n), _languageField(l10n)],
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// The image is required by the endpoint, so it is a real [FormField]: its
-  /// "required" error joins the form's own validation pass and clears the
-  /// moment a photo is picked.
+  /// The textbook page. The endpoint needs it, so it is a real [FormField]
+  /// and the map's red "required" state shows until a page is in. A page
+  /// VIDYA drew from a spoken topic says so under it.
   Widget _imageField(AppLocalizations l10n) {
+    final text = Theme.of(context).textTheme;
     return FormField<PickedImage>(
       key: _imageFieldKey,
       initialValue: _image,
       validator: (value) => value == null ? l10n.worksheetImageError : null,
       builder: (field) {
-        return LabeledField(
-          label: l10n.worksheetImageLabel,
-          hint: _topicPage
-              ? l10n.worksheetTopicPageHint
-              : l10n.worksheetImageHint,
-          leadingIcon: LucideIcons.image,
-          child: ImageInput(
-            value: _image,
-            errorText: field.errorText,
-            onChanged: (picked) {
-              setState(() {
-                _image = picked;
-                _topicPage = false;
-              });
-              field.didChange(picked);
-            },
-          ),
+        final missing = _image == null;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MapOverline(
+              missing ? l10n.worksheetPageRequired : l10n.worksheetPageAdded,
+              color: missing ? AppColors.red700 : AppColors.textEyebrow,
+            ),
+            const SizedBox(height: AppSpacing.space2),
+            ImageInput(
+              value: _image,
+              required: true,
+              errorText: field.errorText,
+              onChanged: (picked) {
+                setState(() {
+                  _image = picked;
+                  _topicPage = false;
+                });
+                field.didChange(picked);
+              },
+            ),
+            if (_topicPage) ...[
+              const SizedBox(height: AppSpacing.space2),
+              Text(
+                l10n.worksheetTopicPageHint,
+                style: text.bodySmall?.copyWith(color: AppColors.textMuted),
+              ),
+            ],
+          ],
         );
       },
     );
   }
 
+  /// The map's instructions card, then three suggestions that fill it.
   Widget _promptField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.worksheetPromptLabel,
-      leadingIcon: LucideIcons.fileText,
-      // Voice-first: dictate the worksheet instructions instead of typing them.
-      trailing: InlineFieldMic(
-        expectedLanguage: _language.code,
-        onResult: (text) => _promptController.text = text,
-      ),
-      child: TextFormField(
-        controller: _promptController,
-        maxLength: 2000,
-        maxLines: 4,
-        minLines: 2,
-        textInputAction: TextInputAction.newline,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: InputDecoration(hintText: l10n.worksheetPromptHint),
-        validator: (value) => (value == null || value.trim().isEmpty)
-            ? l10n.worksheetPromptError
-            : null,
-      ),
+    final suggestions = [
+      l10n.worksheetSuggest1,
+      l10n.worksheetSuggest2,
+      l10n.worksheetSuggest3,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        MapCard(
+          child: LabeledField(
+            label: l10n.worksheetInstructionsLabel,
+            // Voice-first: dictate the instructions instead of typing them.
+            trailingBesideChild: true,
+            trailing: InlineFieldMic(
+              expectedLanguage: _language.code,
+              onResult: (text) => _promptController.text = text,
+            ),
+            child: TextFormField(
+              controller: _promptController,
+              maxLength: 2000,
+              maxLines: 4,
+              minLines: 2,
+              textInputAction: TextInputAction.newline,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: mapBareInput(l10n.worksheetPromptHint),
+              validator: (value) => (value == null || value.trim().isEmpty)
+                  ? l10n.worksheetPromptError
+                  : null,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        for (final (i, s) in suggestions.indexed) ...[
+          if (i > 0) const SizedBox(height: 7),
+          MapOption(
+            label: s,
+            selected: _promptController.text == s,
+            onTap: () => setState(() => _promptController.text = s),
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _gradeField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.worksheetGradeLabel,
-      optionalLabel: l10n.worksheetOptional,
-      leadingIcon: LucideIcons.graduationCap,
-      child: DropdownButtonFormField<String?>(
-        initialValue: _grade,
-        isExpanded: true,
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l10n.worksheetGradeAny),
+  /// Class and Subject, side by side (inside More options).
+  Widget _classAndSubject(AppLocalizations l10n) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: MapSelect<String?>(
+            label: l10n.toolClassLabel,
+            value: _grade,
+            options: [
+              (null, l10n.toolAnyClass),
+              for (final grade in kGradeLevels) (grade, grade),
+            ],
+            onChanged: (value) => setState(() => _grade = value),
           ),
-          for (final grade in kGradeLevels)
-            DropdownMenuItem<String?>(value: grade, child: Text(grade)),
-        ],
-        onChanged: (value) => setState(() => _grade = value),
-      ),
-    );
-  }
-
-  Widget _subjectField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.worksheetSubjectLabel,
-      optionalLabel: l10n.worksheetOptional,
-      leadingIcon: LucideIcons.bookOpen,
-      child: DropdownButtonFormField<String?>(
-        initialValue: _subject,
-        isExpanded: true,
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l10n.worksheetSubjectAny),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: MapSelect<String?>(
+            label: l10n.worksheetSubjectLabel,
+            value: _subject,
+            options: [
+              (null, l10n.worksheetSubjectAny),
+              for (final subject in kSubjects) (subject, subject),
+            ],
+            onChanged: (value) => setState(() => _subject = value),
           ),
-          for (final subject in kSubjects)
-            DropdownMenuItem<String?>(value: subject, child: Text(subject)),
-        ],
-        onChanged: (value) => setState(() => _subject = value),
-      ),
+        ),
+      ],
     );
   }
 
   Widget _languageField(AppLocalizations l10n) {
-    return LabeledField(
+    return MapSelect<AppLocale>(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
-      child: DropdownButtonFormField<AppLocale>(
-        initialValue: _language,
-        isExpanded: true,
-        items: [
-          for (final locale in AppLocale.values)
-            DropdownMenuItem<AppLocale>(
-              value: locale,
-              child: Text(locale.nativeLabel),
-            ),
-        ],
-        onChanged: (value) => setState(() => _language = value ?? _language),
-      ),
+      value: _language,
+      options: [
+        for (final locale in AppLocale.values) (locale, locale.nativeLabel),
+      ],
+      onChanged: (value) => setState(() => _language = value),
     );
   }
 }

@@ -196,27 +196,26 @@ class AppTheme {
       // -----------------------------------------------------------------------
       // Input fields — filled, rField (14), 2px saffron focus ring
       // -----------------------------------------------------------------------
+      // The UX map's input: white, on a hairline ring, 14px corners; the
+      // focus ring is saffron.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppGlass.lFlatFillSoft,
+        fillColor: AppColors.surfaceMapCard,
         contentPadding: AppSpacing.fieldPadding,
         hintStyle: textTheme.bodyMedium?.copyWith(
-          color: scheme.onSurfaceVariant,
+          color: AppColors.textMuted,
         ),
-        enabledBorder: OutlineInputBorder(
+        enabledBorder: const OutlineInputBorder(
           borderRadius: AppRadius.rField,
-          borderSide: BorderSide(color: scheme.outline, width: 1),
+          borderSide: BorderSide(color: AppColors.borderHairline, width: 1),
         ),
-        border: OutlineInputBorder(
+        border: const OutlineInputBorder(
           borderRadius: AppRadius.rField,
-          borderSide: BorderSide(color: scheme.outline, width: 1),
+          borderSide: BorderSide(color: AppColors.borderHairline, width: 1),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.rField,
-          borderSide: BorderSide(
-            color: scheme.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: AppColors.accent, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadius.rField,

@@ -123,7 +123,7 @@ void main() {
     expect(player.played, isEmpty);
 
     // Generate manually by tapping the sticky Generate button.
-    await tester.tap(find.text('Generate'));
+    await tester.tap(find.text('Generate lesson'));
     await tester.pumpAndSettle();
 
     // The result landed — but a manual generation must never auto-speak.

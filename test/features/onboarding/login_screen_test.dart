@@ -96,10 +96,9 @@ void main() {
       // to find out the app speaks Odia.
       await _pumpLogin(tester);
 
-      // The prompt is now an EditorialSectionHeader eyebrow, which uppercases
-      // Latin (unicameral Indic scripts are left as-is). Same string, same
-      // reachable-before-sign-in behaviour — only the register changed.
-      expect(find.text('CHOOSE YOUR LANGUAGE'), findsOneWidget);
+      // The prompt is an EditorialSectionHeader: the map's quiet bold title,
+      // in sentence case.
+      expect(find.text('Choose your language'), findsOneWidget);
       expect(find.text('Language'), findsWidgets);
     });
   });

@@ -121,6 +121,47 @@ class AppColors {
   static const Color tileIndigoInk = Color(0xFF293B8F);
   static const Color tileAmberBg = Color(0xFFFBEFDC); // rubrics, assessments
   static const Color tileAmberInk = Color(0xFF8A4A08);
+  // UX map — tool screens.
+  static const Color mapOptOn = Color(0xFFF9EEE4); // `.opt.on`
+  static const Color mapOptOnRing = Color(0xFFE7B691);
+  static const Color mapOptLeaf = Color(0xFFEAEEE4); // `.opt.gon`
+  static const Color mapOptLeafRing = Color(0xFFA9C3A5);
+  static const Color mapButtonDisabled = Color(0xFFE7BC95); // `.btn.dis`
+  static const Color mapNcertBg = Color(0xFFE9E5EE); // NCERT banner
+  static const Color mapNcertBorder = Color(0xFFD9D3E0);
+  static const Color mapStrategyBg = Color(0xFFFBF1E4); // quiz strategy card
+  static const Color mapStrategyBorder = Color(0xFFF0DCC2);
+  static const Color mapNoteBg = Color(0xFFF6E6D8); // source / caution note
+  static const Color mapNoteBorder = Color(0xFFEFD2BC);
+  static const Color mapNoteInk = Color(0xFF794A08);
+  static const Color mapRequiredBg = Color(0xFFFCEDEA); // photo still needed
+  static const Color mapRequiredBorder = Color(0xFFE6A9A0);
+  static const Color mapBubbleBorder = Color(0xFFEFD9C8); // VIDYA offer
+  static const Color mapVideoBg = Color(0xFFFBE5E3);
+  static const Color mapAnswerSlot = Color(0xFFE2DBD2); // dashed answer line
+  static const Color mapOptionIdle = Color(0xFFF5F4F3); // a quiz option
+  static const Color mapKeyBg = Color(0xFFE9EDE7); // the correct option
+  // Scanner (the map's one dark screen).
+  static const Color scanWash = Color(0xFF17120F);
+  static const Color scanInk = Color(0xFFF4EEE6);
+  static const Color scanMuted = Color(0xFFB5ACA3);
+  static const Color scanHint = Color(0xFFCFC6BC);
+  static const Color scanControl = Color(0xFF3C3734); // dark chip, back
+  static const Color scanControlInk = Color(0xFFE9E3DC);
+  static const Color scanControlOn = Color(0xFFE8E6E2);
+  static const Color scanFrame = Color(0xFF63605D);
+  static const Color scanFeedLight = Color(0xFF3B342E);
+  static const Color scanFeedDark = Color(0xFF1D1916);
+  static const Color scanLine = Color(0xFFE0B88F);
+  static const Color scanGuide = Color(0x59FFFFFF); // dashed sheet outline
+  static const Color scanGuideFill = Color(0x24FFFFFF); // ruled lines
+  // Scanner capture well, light (the app's paper, not a dark camera).
+  static const Color scanWellTop = Color(0xFFFFFCF7); // centre of the well
+  static const Color scanWellEdge = Color(0xFFF4ECE1); // edge of the well
+  static const Color scanWellFrame = Color(0xFFE6D9C9); // 1.5px frame
+  static const Color scanGuideInk = Color(0x52171310); // dashed sheet, 32%
+  static const Color scanRuleInk = Color(0x1A171310); // ruled lines, 10%
+  static const Color scanLineGlow = Color(0x59C96A28); // saffron glow, 35%
   static const Color borderHairline = Color(0x14171310); // rgba(23,19,16,.08)
   static const Color borderStrong = Color(0x1F171310); // rgba(23,19,16,.12)
   static const Color borderRow = Color(0x1A171310); // rgba(23,19,16,.10)

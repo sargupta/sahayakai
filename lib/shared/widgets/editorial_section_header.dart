@@ -2,38 +2,29 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// EditorialSectionHeader (PREMIUM_DESIGN_SPEC.md §3.4 / §5). The register that
-/// opens every group: a saffron [eyebrow] (tracked, UPPERCASE for Latin only —
-/// unicameral Indic scripts lean on tracking + saffron) followed by a 1px
-/// `outlineVariant` hairline rule running to the right margin.
+/// A group heading on a tool form: the UX map's card title, bold Bricolage
+/// in ink, with no rule. Field labels under it carry the saffron overline
+/// ([LabeledField]), so a group reads as a quiet title over its fields.
 class EditorialSectionHeader extends StatelessWidget {
-  const EditorialSectionHeader(this.eyebrow, {super.key, this.rule = true});
+  const EditorialSectionHeader(this.eyebrow, {super.key, this.rule = false});
 
   final String eyebrow;
 
-  /// Whether to draw the trailing hairline rule (default true).
+  /// Kept for call sites; the UX map draws no rule under a heading.
   final bool rule;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final extras = AppTextExtras.of(context);
-    // UPPERCASE Latin only; leave Indic untouched.
-    final label = _hasNonLatin(eyebrow) ? eyebrow : eyebrow.toUpperCase();
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Flexible(child: Text(label, style: extras.eyebrow)),
-        if (rule) ...[
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(
-            child: Container(height: 1, color: scheme.outlineVariant),
-          ),
-        ],
-      ],
+    return Semantics(
+      header: true,
+      child: Text(
+        eyebrow,
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textStrong,
+        ),
+      ),
     );
   }
 }
-
-bool _hasNonLatin(String s) => s.runes.any((r) => r > 0x24F);

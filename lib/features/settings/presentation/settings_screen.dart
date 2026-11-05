@@ -19,6 +19,7 @@ import '../../../shared/widgets/inline_error.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/map_card.dart';
 import '../../../shared/widgets/map_chip.dart';
+import '../../../shared/widgets/map_choice_sheet.dart';
 import '../../../shared/widgets/map_segmented.dart';
 import '../../../shared/widgets/map_toggle.dart';
 import '../../../shared/widgets/offline_view.dart';
@@ -241,7 +242,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     AppLocalizations l10n,
     ProfileSettings profile,
   ) async {
-    final picked = await _showChoiceSheet<String?>(
+    final picked = await showMapChoiceSheet<String?>(
       context,
       title: l10n.settingsBoardLabel,
       selected: profile.educationBoard,
@@ -260,7 +261,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _pickRole(AppLocalizations l10n, ProfileSettings profile) async {
-    final picked = await _showChoiceSheet<AdministrativeRole?>(
+    final picked = await showMapChoiceSheet<AdministrativeRole?>(
       context,
       title: l10n.settingsAdminRoleLabel,
       selected: profile.administrativeRole,
@@ -813,103 +814,6 @@ class _Chevron extends StatelessWidget {
 }
 
 // ------------------------------------------------------------ picker sheets
-
-/// A picked option. Wrapped so "Not set" (a null value) is distinguishable
-/// from dismissing the sheet (a null result).
-class _Choice<T> {
-  const _Choice(this.value);
-
-  final T value;
-}
-
-/// One choice from a list, as a bottom sheet of rows with a leaf check on the
-/// current one.
-Future<_Choice<T>?> _showChoiceSheet<T>(
-  BuildContext context, {
-  required String title,
-  required T selected,
-  required List<(T, String)> options,
-}) {
-  return showModalBottomSheet<_Choice<T>>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (sheetContext) {
-      final text = Theme.of(sheetContext).textTheme;
-      return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.mapGutter,
-                0,
-                AppSpacing.mapGutter,
-                AppSpacing.space2,
-              ),
-              child: Text(
-                title,
-                style: text.displayLarge?.copyWith(
-                  fontSize: 19,
-                  color: AppColors.textStrong,
-                ),
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.only(bottom: AppSpacing.space4),
-                children: [
-                  for (final (value, label) in options)
-                    Semantics(
-                      button: true,
-                      selected: value == selected,
-                      child: InkWell(
-                        onTap: () =>
-                            Navigator.of(sheetContext).pop(_Choice<T>(value)),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 48),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.mapGutter,
-                              vertical: AppSpacing.space3,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    label,
-                                    style: text.bodyLarge?.copyWith(
-                                      fontSize: 14,
-                                      fontWeight: value == selected
-                                          ? FontWeight.w700
-                                          : FontWeight.w400,
-                                      color: AppColors.textStrong,
-                                    ),
-                                  ),
-                                ),
-                                if (value == selected)
-                                  const Icon(
-                                    LucideIcons.check,
-                                    size: 18,
-                                    color: AppColors.leaf500,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
 
 /// Qualifications: several at once, as the map's leaf chips, then Done.
 class _QualificationsSheet extends StatefulWidget {

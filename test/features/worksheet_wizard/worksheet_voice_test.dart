@@ -103,9 +103,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // The spoken description seeded the prompt, and the grade/subject applied.
+      // The spoken description seeded the prompt, and the grade/subject applied
+      // (Class and Subject live under More options).
       expect(find.text('Fractions practice'), findsOneWidget);
+      await tester.tap(find.text('More options'));
+      await tester.pumpAndSettle();
       expect(find.text('Class 6'), findsOneWidget);
+      expect(find.text('Mathematics'), findsOneWidget);
       // With no photo, the topic page stands in and the worksheet is made.
       expect(log, hasLength(1), reason: 'the teacher never taps Generate');
       expect(log.single.imageDataUri, _topicPage.dataUri);
@@ -184,10 +188,10 @@ void main() {
       await tester.tap(find.text('Retake photo'));
       await tester.pumpAndSettle();
       expect(find.textContaining('VIDYA made this'), findsNothing);
-      expect(
-        find.text('The worksheet is built from this page.'),
-        findsOneWidget,
-      );
+      // The real photo now fills the page slot (still a picked page, not the
+      // required empty box).
+      expect(find.text('TEXTBOOK PAGE'), findsOneWidget);
+      expect(find.byTooltip('Remove photo'), findsOneWidget);
     });
 
     testWidgets('autoSubmit + an empty prompt does NOT auto-run', (
@@ -300,7 +304,7 @@ void main() {
 
       await tester.tap(find.text('Take photo'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Generate'));
+      await tester.tap(find.text('Generate worksheet'));
       await tester.pumpAndSettle();
 
       // The worksheet landed — but a manual generation must never auto-speak.

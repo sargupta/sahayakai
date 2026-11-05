@@ -13,6 +13,8 @@ import 'package:sahayakai/features/assessment_scanner/presentation/widgets/asses
 import 'package:sahayakai/features/assessment_scanner/presentation/widgets/assessment_scanner_result_view.dart';
 import 'package:sahayakai/features/assessment_scanner/presentation/widgets/assessment_scanner_skeleton.dart';
 import 'package:sahayakai/shared/media/image_input.dart';
+import 'package:sahayakai/shared/widgets/primary_button.dart';
+import 'package:sahayakai/shared/widgets/tool_scaffold.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
@@ -39,7 +41,9 @@ Widget _host({
       ...overrides,
     ],
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -64,6 +68,15 @@ Future<void> _addPage(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// The sticky "Finish and grade" button.
+Finder get _finishButton =>
+    find.widgetWithText(PrimaryButton, 'Finish and grade');
+
+PrimaryButton _finish(WidgetTester tester) =>
+    tester.widget<PrimaryButton>(_finishButton);
+
+/// Picks [value] from the Class/Subject [MapSelect] currently showing
+/// [placeholder]: tap the tile, then the option in the choice sheet.
 Future<void> _pickDropdown(
   WidgetTester tester,
   String placeholder,
@@ -83,7 +96,7 @@ void main() {
   });
 
   group('idle + the page gate', () {
-    testWidgets('opens on the empty page-capture prompt, no Grade button yet', (
+    testWidgets('opens on the empty page-capture prompt, Finish disabled', (
       tester,
     ) async {
       tester.view.physicalSize = kNarrowPhone;
@@ -93,15 +106,25 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      // v3 11 — the dark scan-framing guide is the empty prompt.
+      // The capture screen, light like the rest of the app: title, the
+      // "N / 3" header pill, and the scan-framing guide as the empty prompt.
+      expect(
+        tester.widget<ToolScaffold>(find.byType(ToolScaffold)).dark,
+        isFalse,
+      );
+      expect(find.text('Scan answer sheets'), findsOneWidget);
+      expect(find.text('0 / 3'), findsOneWidget);
       expect(find.text('Fit the whole sheet inside the frame'), findsOneWidget);
+      // Class + Subject are required map selects, unset.
+      expect(find.text('CLASS'), findsOneWidget);
+      expect(find.text('SUBJECT'), findsOneWidget);
       expect(find.text('Choose a subject'), findsOneWidget);
       expect(find.text('Choose a grade'), findsOneWidget);
-      // The Grade button is gated until at least one page is captured.
-      expect(find.text('Grade the answer sheet'), findsNothing);
+      // Finish is gated (shown disabled) until at least one page is captured.
+      expect(_finish(tester).onPressed, isNull);
     });
 
-    testWidgets('capturing a page reveals the Grade button', (tester) async {
+    testWidgets('capturing a page enables Finish and grade', (tester) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -113,7 +136,8 @@ void main() {
 
       expect(find.text('Page 1'), findsOneWidget);
       expect(find.text('1 of 3 pages'), findsOneWidget);
-      expect(find.text('Grade the answer sheet'), findsOneWidget);
+      expect(find.text('1 / 3'), findsOneWidget);
+      expect(_finish(tester).onPressed, isNotNull);
     });
   });
 
@@ -166,7 +190,7 @@ void main() {
   });
 
   group('validation + submit', () {
-    testWidgets('Grade with no subject chosen blocks and shows the error', (
+    testWidgets('Finish with no subject chosen blocks and shows the error', (
       tester,
     ) async {
       final client = FakeApiClient(postResponse: scanJson());
@@ -174,9 +198,24 @@ void main() {
       await tester.pumpAndSettle();
 
       await _addPage(tester);
-      await tester.tap(find.text('Grade the answer sheet'));
+      // No error before the first Finish tap.
+      expect(find.text('Please choose the subject.'), findsNothing);
+      expect(find.text('Please choose the grade.'), findsNothing);
+
+      await tester.tap(_finishButton);
       await tester.pumpAndSettle();
 
+      // Both required selects are missing: both say so, nothing is sent.
+      expect(find.text('Please choose the subject.'), findsOneWidget);
+      expect(find.text('Please choose the grade.'), findsOneWidget);
+      expect(client.posts, isEmpty);
+
+      // Choosing the class clears its error; the missing subject still blocks.
+      await _pickDropdown(tester, 'Choose a grade', 'Class 5');
+      await tester.tap(_finishButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Please choose the grade.'), findsNothing);
       expect(find.text('Please choose the subject.'), findsOneWidget);
       expect(client.posts, isEmpty);
     });
@@ -192,7 +231,7 @@ void main() {
       await _pickDropdown(tester, 'Choose a subject', 'Mathematics');
       await _pickDropdown(tester, 'Choose a grade', 'Class 5');
 
-      await tester.tap(find.text('Grade the answer sheet'));
+      await tester.tap(_finishButton);
       await tester.pumpAndSettle();
 
       // The scorecard rendered from the fixture (v3 Screen 12: the three-stat
@@ -222,7 +261,9 @@ void main() {
         ),
       );
       await tester.pump(); // don't settle: the loading future never completes
-      await tester.pump(const Duration(milliseconds: 300)); // settle entrance animations
+      await tester.pump(
+        const Duration(milliseconds: 300),
+      ); // settle entrance animations
 
       expect(find.byType(AssessmentScannerSkeleton), findsOneWidget);
     });
@@ -285,7 +326,13 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Answer sheet pages'), findsOneWidget);
+            expect(find.text('Scan answer sheets'), findsOneWidget);
+            expect(
+              find.byKey(const ValueKey('scanner_chip_camera')),
+              findsOneWidget,
+            );
+            expect(find.text('More options'), findsOneWidget);
+            expect(_finishButton, findsOneWidget);
           },
         );
       }
@@ -303,7 +350,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // The chrome renders in the Indic script; add a page so the tile,
-          // counter and Grade button all lay out under the scaled Indic glyphs.
+          // counter and Finish button all lay out under the scaled Indic glyphs.
           await _addPage(tester);
           expect(tester.takeException(), isNull);
         },

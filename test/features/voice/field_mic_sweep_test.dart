@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
+import 'package:sahayakai/features/assess_assignment/domain/assessment.dart';
 import 'package:sahayakai/features/assess_assignment/presentation/assess_assignment_screen.dart';
 import 'package:sahayakai/features/rubric_generator/presentation/rubric_generator_screen.dart';
 import 'package:sahayakai/features/teacher_training/presentation/teacher_training_screen.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/inline_field_mic.dart';
 import 'package:sahayakai/features/virtual_field_trip/presentation/virtual_field_trip_screen.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
+import 'package:sahayakai/shared/widgets/app_segmented.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// VOICE_FIRST_GAP field-mic sweep. Every form-driven tool with a free-text
@@ -70,9 +72,12 @@ void main() {
     // Grade mode shows no free-text field, so no mic yet.
     expect(find.byType(InlineFieldMic), findsNothing);
 
-    // The mode selector is a row of ChoiceChips below the fold; scroll it in
-    // before tapping (mirrors the screen's own mode-selection test).
-    final scoreChip = find.widgetWithText(ChoiceChip, 'Score a transcript');
+    // The mode selector is the map's segmented control (AppSegmented, three
+    // modes) below the fold; scroll it in before tapping.
+    final scoreChip = find.descendant(
+      of: find.byType(AppSegmented<AssessmentMode>),
+      matching: find.text('Score a transcript'),
+    );
     await tester.ensureVisible(scoreChip);
     await tester.tap(scoreChip);
     await tester.pumpAndSettle();

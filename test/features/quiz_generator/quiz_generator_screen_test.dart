@@ -3,19 +3,23 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/quiz_generator/domain/quiz.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/quiz_controller.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/quiz_generator_screen.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_result_view.dart';
+import 'package:sahayakai/shared/domain/tool_prefill.dart';
+import 'package:sahayakai/shared/widgets/app_segmented.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
+import 'package:sahayakai/shared/widgets/map_chip.dart';
+import 'package:sahayakai/shared/widgets/map_option.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'quiz_fixtures.dart';
 
-/// Form-layer gates: the chips, dropdowns and stepper are the overflow-prone
-/// half of the screen, so they face the same DESIGN_RUBRIC §12 checks as the
+/// Form-layer gates: the question-type grid, the count slider, the Bloom's
+/// chips and the More options card are the overflow-prone half of the screen, so they face the same DESIGN_RUBRIC §12 checks as the
 /// result. Also pins the two validation rules the endpoint depends on: a topic
 /// is required, and at least one question type must be selected.
 ///
@@ -24,11 +28,14 @@ Widget _hostScreen({
   Brightness brightness = Brightness.light,
   double textScale = 1.0,
   List<Override> overrides = const [],
+  ToolPrefill? prefill,
 }) {
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -38,7 +45,7 @@ Widget _hostScreen({
         ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: const QuizGeneratorScreen(),
+      home: QuizGeneratorScreen(prefill: prefill),
     ),
   );
 }
@@ -63,11 +70,21 @@ void main() {
             expect(tester.takeException(), isNull);
 
             // Every field is laid out, including the wrapping chip groups.
-            expect(find.text('Topic'), findsOneWidget);
-            expect(find.text('Number of questions'), findsOneWidget);
-            expect(find.text('Question types'), findsOneWidget);
+            // English labels render as the map's uppercase overline.
+            expect(find.text('TOPIC'), findsOneWidget);
+            expect(find.text('QUESTIONS'), findsOneWidget);
+            expect(find.text('QUESTION TYPES'), findsOneWidget);
+            expect(find.byType(MapOption), findsNWidgets(4));
+            expect(find.byType(Slider), findsOneWidget);
+            expect(find.text('BLOOM’S TAXONOMY LEVELS'), findsOneWidget);
+            expect(find.byType(MapChip), findsNWidgets(6));
+            expect(find.text('PEDAGOGICAL STRATEGY'), findsOneWidget);
+
+            // The tucked-away fields lay out too once More options opens.
+            await _openMoreOptions(tester);
+            expect(tester.takeException(), isNull);
             expect(find.text('All levels'), findsOneWidget);
-            expect(find.text('Thinking skills'), findsOneWidget);
+            expect(find.text('DIFFICULTY'), findsOneWidget);
           },
         );
       }
@@ -75,7 +92,9 @@ void main() {
   });
 
   group('states', () {
-    testWidgets('opens in the idle/empty state', (tester) async {
+    testWidgets('opens on the bare form, with no idle empty state', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -83,7 +102,11 @@ void main() {
       await tester.pumpWidget(_hostScreen());
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('tap Generate'), findsOneWidget);
+      // Before the first quiz the result slot renders nothing: the form and
+      // its Generate button are the whole screen.
+      expect(find.byType(EmptyView), findsNothing);
+      expect(find.textContaining('tap Generate'), findsNothing);
+      expect(find.text('Generate quiz'), findsOneWidget);
     });
 
     testWidgets('defaults mirror the web form', (tester) async {
@@ -96,44 +119,53 @@ void main() {
 
       // numQuestions 5; multiple_choice + short_answer; Remember + Understand.
       expect(find.text('5'), findsOneWidget);
-      expect(
-        tester.widget<FilterChip>(_chip('Multiple choice')).selected,
-        isTrue,
-      );
-      expect(tester.widget<FilterChip>(_chip('Short answer')).selected, isTrue);
-      expect(
-        tester.widget<FilterChip>(_chip('Fill in the blanks')).selected,
-        isFalse,
-      );
-      expect(tester.widget<FilterChip>(_chip('Remember')).selected, isTrue);
-      expect(tester.widget<FilterChip>(_chip('Understand')).selected, isTrue);
-      expect(tester.widget<FilterChip>(_chip('Apply')).selected, isFalse);
+      expect(tester.widget<Slider>(find.byType(Slider)).value, 5);
+      expect(_option(tester, 'Multiple choice').selected, isTrue);
+      expect(_option(tester, 'Short answer').selected, isTrue);
+      expect(_option(tester, 'Fill in the blanks').selected, isFalse);
+      expect(_option(tester, 'True or false').selected, isFalse);
+      expect(_bloom(tester, 'Remember').selected, isTrue);
+      expect(_bloom(tester, 'Understand').selected, isTrue);
+      expect(_bloom(tester, 'Apply').selected, isFalse);
 
       // No target difficulty -> the endpoint returns all three variants.
-      expect(tester.widget<ChoiceChip>(_choice('All levels')).selected, isTrue);
+      await _openMoreOptions(tester);
+      expect(
+        tester
+            .widget<AppSegmented<QuizDifficulty?>>(
+              find.byType(AppSegmented<QuizDifficulty?>),
+            )
+            .value,
+        isNull,
+      );
+      expect(find.text('All levels'), findsOneWidget);
     });
   });
 
-  group('number of questions stepper', () {
-    testWidgets('increments and decrements', (tester) async {
+  group('number of questions slider', () {
+    testWidgets('steps up and down one question at a time', (tester) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
+      final semantics = tester.ensureSemantics();
 
       await tester.pumpWidget(_hostScreen());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(LucideIcons.plus));
+      final slider = find.semantics.byValue('5 questions');
+      tester.semantics.increase(slider);
       await tester.pumpAndSettle();
       expect(find.text('6'), findsOneWidget);
+      expect(tester.widget<Slider>(find.byType(Slider)).value, 6);
 
-      await tester.tap(find.byIcon(LucideIcons.minus));
+      tester.semantics.decrease(find.semantics.byValue('6 questions'));
       await tester.pumpAndSettle();
       expect(find.text('5'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      semantics.dispose();
     });
 
-    testWidgets('clamps at the endpoint bounds (1..20)', (tester) async {
+    testWidgets('clamps at the composer bounds (3..20)', (tester) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -141,45 +173,57 @@ void main() {
       await tester.pumpWidget(_hostScreen());
       await tester.pumpAndSettle();
 
-      // Walk down to the floor; the button then disables rather than going 0.
-      for (var i = 0; i < 6; i++) {
-        final minus = tester.widget<IconButton>(
-          find.ancestor(
-            of: find.byIcon(LucideIcons.minus),
-            matching: find.byType(IconButton),
-          ),
-        );
-        if (minus.onPressed == null) break;
-        await tester.tap(find.byIcon(LucideIcons.minus));
-        await tester.pumpAndSettle();
-      }
-      expect(find.text('1'), findsOneWidget);
-      expect(
-        tester
-            .widget<IconButton>(
-              find.ancestor(
-                of: find.byIcon(LucideIcons.minus),
-                matching: find.byType(IconButton),
-              ),
-            )
-            .onPressed,
-        isNull,
-      );
+      final slider = tester.widget<Slider>(find.byType(Slider));
+      expect(slider.min, 3);
+      expect(slider.max, 20);
 
-      // And up to the ceiling.
-      for (var i = 0; i < 25; i++) {
-        final plus = tester.widget<IconButton>(
-          find.ancestor(
-            of: find.byIcon(LucideIcons.plus),
-            matching: find.byType(IconButton),
-          ),
-        );
-        if (plus.onPressed == null) break;
-        await tester.tap(find.byIcon(LucideIcons.plus));
-        await tester.pumpAndSettle();
-      }
+      // Drag far past the floor; the count stops at 3 rather than going lower.
+      await tester.drag(find.byType(Slider), const Offset(-1000, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('3'), findsOneWidget);
+      expect(tester.widget<Slider>(find.byType(Slider)).value, 3);
+
+      // And far past the ceiling.
+      await tester.drag(find.byType(Slider), const Offset(1000, 0));
+      await tester.pumpAndSettle();
       expect(find.text('20'), findsOneWidget);
+      expect(tester.widget<Slider>(find.byType(Slider)).value, 20);
       expect(tester.takeException(), isNull);
+    });
+
+    for (final count in [2, 21]) {
+      testWidgets('a prefilled count of $count (outside 3..20) is ignored', (
+        tester,
+      ) async {
+        tester.view.physicalSize = kNarrowPhone;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          _hostScreen(prefill: ToolPrefill(questionCount: count)),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.widget<Slider>(find.byType(Slider)).value, 5);
+        expect(find.text('5'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('a prefilled count inside 3..20 seeds the slider', (
+      tester,
+    ) async {
+      tester.view.physicalSize = kNarrowPhone;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        _hostScreen(prefill: const ToolPrefill(questionCount: 12)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Slider>(find.byType(Slider)).value, 12);
+      expect(find.text('12'), findsOneWidget);
     });
   });
 
@@ -192,7 +236,7 @@ void main() {
       await tester.pumpWidget(_hostScreen());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Generate'));
+      await tester.tap(find.text('Generate quiz'));
       await tester.pumpAndSettle();
 
       expect(find.text('Please enter a topic for the quiz.'), findsOneWidget);
@@ -218,7 +262,7 @@ void main() {
 
       await tester.enterText(find.byType(TextFormField), 'Fractions');
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Generate'));
+      await tester.tap(find.text('Generate quiz'));
       await tester.pumpAndSettle();
 
       expect(
@@ -287,7 +331,7 @@ void main() {
           );
           // ...and — the fix — the sticky Generate button is still there, so the
           // teacher can retry instead of being stranded past the skipped footer.
-          expect(find.text('Generate'), findsOneWidget);
+          expect(find.text('Generate quiz'), findsOneWidget);
           expect(tester.takeException(), isNull);
         },
       );
@@ -306,8 +350,19 @@ class _StubController extends QuizController {
   FutureOr<Quiz?> build() => data;
 }
 
-Finder _chip(String label) =>
-    find.ancestor(of: find.text(label), matching: find.byType(FilterChip));
+/// A question-type row from the two-column grid.
+MapOption _option(WidgetTester tester, String label) =>
+    tester.widget<MapOption>(find.widgetWithText(MapOption, label));
 
-Finder _choice(String label) =>
-    find.ancestor(of: find.text(label), matching: find.byType(ChoiceChip));
+/// A Bloom's level chip.
+MapChip _bloom(WidgetTester tester, String label) =>
+    tester.widget<MapChip>(find.widgetWithText(MapChip, label));
+
+/// Expands the collapsed "More options" card (its fields stay Offstage until
+/// it opens).
+Future<void> _openMoreOptions(WidgetTester tester) async {
+  await tester.ensureVisible(find.text('More options'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('More options'));
+  await tester.pumpAndSettle();
+}

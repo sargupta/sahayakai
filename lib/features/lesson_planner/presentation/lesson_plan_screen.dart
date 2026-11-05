@@ -11,14 +11,20 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/data/library_items_provider.dart';
+import '../../../shared/domain/library_item.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/media/image_input.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/app_segmented.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
+import '../../../shared/widgets/map_card.dart';
+import '../../../shared/widgets/map_chip.dart';
+import '../../../shared/widgets/map_more_options.dart';
+import '../../../shared/widgets/map_select.dart';
+import '../../../shared/widgets/map_toggle.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../../vidya/domain/deliverable.dart';
@@ -62,7 +68,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   /// generation is the DocumentSheet masthead.
   final _resultKey = GlobalKey();
 
-  final Set<String> _grades = <String>{};
+  String? _grade;
   final Set<LessonInclude> _includes = <LessonInclude>{};
   String? _subject;
   late AppLocale _language;
@@ -110,7 +116,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     if (p == null) return;
     if (p.topic != null) _topicController.text = p.topic!;
     if (p.gradeLevel != null && kGradeLevels.contains(p.gradeLevel)) {
-      _grades.add(p.gradeLevel!);
+      _grade = p.gradeLevel;
     }
     if (p.subject != null && kSubjects.contains(p.subject)) {
       _subject = p.subject;
@@ -131,7 +137,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     final request = LessonPlanRequest(
       topic: _topicController.text,
       language: _language.aiName,
-      gradeLevels: _grades.toList(growable: false),
+      gradeLevels: [?_grade],
       subject: _subject,
       resourceLevel: _resource,
       difficultyLevel: _difficulty,
@@ -277,14 +283,15 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
 
     return ToolScaffold(
       wash: AppGradients.washComposer,
-      title: l10n.lessonPlanTitle,
+      title: l10n.lessonComposerTitle,
+      subtitle: l10n.lessonComposerSubtitle,
       isBusy: state.isLoading,
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       onResubmit: _submit,
       deliverable: _deliverableFor(state.valueOrNull, l10n),
-      submitLabel: l10n.actionGenerate,
+      submitLabel: l10n.lessonComposerGenerate,
       // Hide the sticky Generate button once a plan is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
@@ -328,31 +335,27 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
                     ),
                   ),
                 ),
-              EditorialSectionHeader(l10n.lessonPlanSectionLesson),
-              const SizedBox(height: AppSpacing.space4),
               _topicField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _gradeField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _subjectField(l10n),
-              if (_grades.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.space4),
-                _ncertBanner(l10n),
-              ],
-              const SizedBox(height: AppSpacing.space6),
-              _includeField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _imageField(l10n),
-              const SizedBox(height: AppSpacing.space8),
-              EditorialSectionHeader(l10n.lessonPlanSectionApproach),
+              const SizedBox(height: AppSpacing.space3),
+              _classAndSubject(l10n),
               const SizedBox(height: AppSpacing.space4),
-              _languageField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _resourceField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _difficultyField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _ruralField(l10n),
+              _includeField(l10n),
+              if (_grade != null) ...[
+                const SizedBox(height: AppSpacing.space4),
+                _ncertBanner(l10n, _grade!),
+              ],
+              _recentCard(l10n),
+              const SizedBox(height: AppSpacing.space3),
+              MapMoreOptions(
+                summary: _moreSummary(l10n),
+                children: [
+                  _languageField(l10n),
+                  _resourceField(l10n),
+                  _difficultyField(l10n),
+                  _ruralField(l10n),
+                  _imageField(l10n),
+                ],
+              ),
             ],
           ),
         ),
@@ -361,102 +364,83 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     );
   }
 
+  /// The map's topic card: the saffron "Topic" overline, the small mic that
+  /// dictates into this field only, and the topic in bold on the card itself.
   Widget _topicField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.lessonPlanTopicLabel,
-      leadingIcon: LucideIcons.lightbulb,
-      trailing: InlineFieldMic(
-        expectedLanguage: _language.code,
-        onResult: (text) => _topicController.text = text,
-      ),
-      child: TextFormField(
-        controller: _topicController,
-        maxLength: 1000,
-        maxLines: 2,
-        minLines: 1,
-        textInputAction: TextInputAction.done,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: InputDecoration(hintText: l10n.lessonPlanTopicHint),
-        validator: (value) => (value == null || value.trim().isEmpty)
-            ? l10n.lessonPlanTopicError
-            : null,
-      ),
-    );
-  }
-
-  Widget _gradeField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.lessonPlanGradeLabel,
-      optionalLabel: l10n.lessonPlanOptional,
-      leadingIcon: LucideIcons.graduationCap,
-      child: Wrap(
-        spacing: AppSpacing.space2,
-        runSpacing: AppSpacing.space2,
-        children: [
-          for (final grade in kGradeLevels)
-            FilterChip(
-              label: Text(grade),
-              selected: _grades.contains(grade),
-              showCheckmark: false,
-              materialTapTargetSize: MaterialTapTargetSize.padded,
-              onSelected: (selected) => setState(() {
-                if (selected) {
-                  _grades.add(grade);
-                } else {
-                  _grades.remove(grade);
-                }
-              }),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _subjectField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.lessonPlanSubjectLabel,
-      optionalLabel: l10n.lessonPlanOptional,
-      leadingIcon: LucideIcons.bookOpen,
-      child: DropdownButtonFormField<String?>(
-        initialValue: _subject,
-        isExpanded: true,
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l10n.lessonPlanSubjectAny),
+    return MapCard(
+      child: LabeledField(
+        label: l10n.lessonPlanTopicLabel,
+        trailingBesideChild: true,
+        trailing: InlineFieldMic(
+          expectedLanguage: _language.code,
+          onResult: (text) => _topicController.text = text,
+        ),
+        child: TextFormField(
+          controller: _topicController,
+          maxLength: 1000,
+          maxLines: 3,
+          minLines: 1,
+          textInputAction: TextInputAction.done,
+          textCapitalization: TextCapitalization.sentences,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textStrong,
           ),
-          for (final subject in kSubjects)
-            DropdownMenuItem<String?>(value: subject, child: Text(subject)),
-        ],
-        onChanged: (value) => setState(() => _subject = value),
+          decoration: mapBareInput(l10n.lessonPlanTopicHint),
+          validator: (value) => (value == null || value.trim().isEmpty)
+              ? l10n.lessonPlanTopicError
+              : null,
+        ),
       ),
     );
   }
 
-  /// v3 05 "Include" — optional components the teacher asks the plan to
-  /// emphasise. Genuinely wired: selected chips fold into the model prompt (see
-  /// [LessonPlanRequestDto]). Empty by default, so a plain plan is unchanged.
+  /// Class and Subject, the map's two tap-to-change selectors side by side.
+  Widget _classAndSubject(AppLocalizations l10n) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: MapSelect<String?>(
+            label: l10n.toolClassLabel,
+            value: _grade,
+            options: [
+              (null, l10n.toolAnyClass),
+              for (final grade in kGradeLevels) (grade, grade),
+            ],
+            onChanged: (value) => setState(() => _grade = value),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: MapSelect<String?>(
+            label: l10n.lessonPlanSubjectLabel,
+            value: _subject,
+            options: [
+              (null, l10n.lessonPlanSubjectAny),
+              for (final subject in kSubjects) (subject, subject),
+            ],
+            onChanged: (value) => setState(() => _subject = value),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _includeField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanIncludeLabel,
-      optionalLabel: l10n.lessonPlanOptional,
-      leadingIcon: LucideIcons.listChecks,
       child: Wrap(
-        spacing: AppSpacing.space2,
-        runSpacing: AppSpacing.space2,
+        spacing: 7,
+        runSpacing: 7,
         children: [
           for (final item in LessonInclude.values)
-            FilterChip(
-              label: Text(_includeLabel(l10n, item)),
+            MapChip(
+              label: _includeLabel(l10n, item),
               selected: _includes.contains(item),
-              showCheckmark: false,
-              materialTapTargetSize: MaterialTapTargetSize.padded,
-              onSelected: (selected) => setState(() {
-                if (selected) {
-                  _includes.add(item);
-                } else {
-                  _includes.remove(item);
-                }
+              onTap: () => setState(() {
+                if (!_includes.remove(item)) _includes.add(item);
               }),
             ),
         ],
@@ -477,47 +461,39 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     }
   }
 
-  /// v3 05 NCERT-alignment reassurance. Honest: the plan really is checked
-  /// against the NCERT syllabus for the chosen class server-side (the flow runs
-  /// `validateChapterForFlow(grade, subject, topic)` and returns any warning,
-  /// which the result view already surfaces). Shown once a grade is picked; it
-  /// promises alignment for that class, never a chapter number the app has not
-  /// been given.
-  Widget _ncertBanner(AppLocalizations l10n) {
-    final scheme = Theme.of(context).colorScheme;
+  /// The map's NCERT banner: an indigo "N" tile and the alignment promise for
+  /// the chosen class, before anything is written. Honest: the plan really is
+  /// checked against the NCERT syllabus for that class server-side; it never
+  /// names a chapter the app has not been given.
+  Widget _ncertBanner(AppLocalizations l10n, String grade) {
     final text = Theme.of(context).textTheme;
-    final grade = kGradeLevels.firstWhere(
-      _grades.contains,
-      orElse: () => _grades.first,
-    );
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.space3),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: scheme.tertiary.withValues(alpha: 0.08),
+        color: AppColors.mapNcertBg,
         borderRadius: AppRadius.rCard,
-        border: Border.all(color: scheme.tertiary.withValues(alpha: 0.18)),
-        boxShadow: const [AppShadows.card],
+        border: Border.all(color: AppColors.mapNcertBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 26,
-            height: 26,
+            width: 28,
+            height: 28,
             alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: scheme.tertiary,
-              borderRadius: AppRadius.rSm,
+            decoration: const BoxDecoration(
+              color: AppColors.indigo500,
+              borderRadius: AppRadius.rRow,
             ),
             child: Text(
               'N',
-              style: text.labelMedium?.copyWith(
-                color: scheme.onTertiary,
+              style: text.labelLarge?.copyWith(
+                color: AppColors.textOnAccent,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.space3),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,13 +501,15 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
               children: [
                 Text(
                   l10n.lessonPlanNcertTitle,
-                  style: text.labelLarge?.copyWith(color: scheme.tertiary),
+                  style: text.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.indigo500,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.space1),
                 Text(
                   l10n.lessonPlanNcertBody(grade),
                   style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                    color: AppColors.indigo500,
                     height: 1.4,
                   ),
                 ),
@@ -543,14 +521,85 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     );
   }
 
+  /// The map's "Recent" card: the teacher's last three saved lessons, each
+  /// reopening the saved plan. Drawn only when there are some.
+  Widget _recentCard(AppLocalizations l10n) {
+    final items = ref.watch(libraryItemsProvider).valueOrNull;
+    final lessons = [
+      for (final item in items ?? const <LibraryItem>[])
+        if (item.type == ContentType.lessonPlan) item,
+    ].take(3).toList(growable: false);
+    if (lessons.isEmpty) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.space3),
+      child: MapCard(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.lessonComposerRecent,
+              style: text.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textStrong,
+              ),
+            ),
+            for (final (i, item) in lessons.indexed) ...[
+              if (i > 0)
+                const Divider(height: 1, color: AppColors.borderHairline),
+              InkWell(
+                onTap: () => context.push(Routes.libraryDetailPath(item.id)),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          [
+                            item.title,
+                            if (item.gradeLevel != null) item.gradeLevel!,
+                          ].join(' · '),
+                          style: text.bodySmall?.copyWith(
+                            fontSize: 12.5,
+                            color: AppColors.textBody,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        LucideIcons.chevronRight,
+                        size: 14,
+                        color: AppColors.textMuted,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// What the closed "More options" card says is set.
+  String _moreSummary(AppLocalizations l10n) => [
+    _language.nativeLabel,
+    switch (_difficulty) {
+      DifficultyLevel.remedial => l10n.lessonPlanDifficultyRemedial,
+      DifficultyLevel.standard => l10n.lessonPlanDifficultyStandard,
+      DifficultyLevel.advanced => l10n.lessonPlanDifficultyAdvanced,
+    },
+    if (_image != null) l10n.toolImageOptionalLabel,
+  ].join(' · ');
+
   Widget _imageField(AppLocalizations l10n) {
-    // Optional here (unlike Worksheet, where the photo is required and gated by
-    // a FormField validator): a teacher may photograph a textbook page to plan
-    // straight from it, or leave it blank and the form works exactly as before.
+    // Optional here (unlike Worksheet, where the photo is required): a teacher
+    // may photograph a textbook page to plan straight from it.
     return LabeledField(
       label: l10n.toolImageOptionalLabel,
       hint: l10n.toolImageOptionalHint,
-      leadingIcon: LucideIcons.image,
       child: ImageInput(
         value: _image,
         onChanged: (picked) => setState(() => _image = picked),
@@ -559,28 +608,19 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   }
 
   Widget _languageField(AppLocalizations l10n) {
-    return LabeledField(
+    return MapSelect<AppLocale>(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
-      child: DropdownButtonFormField<AppLocale>(
-        initialValue: _language,
-        isExpanded: true,
-        items: [
-          for (final locale in AppLocale.values)
-            DropdownMenuItem<AppLocale>(
-              value: locale,
-              child: Text(locale.nativeLabel),
-            ),
-        ],
-        onChanged: (value) => setState(() => _language = value ?? _language),
-      ),
+      value: _language,
+      options: [
+        for (final locale in AppLocale.values) (locale, locale.nativeLabel),
+      ],
+      onChanged: (value) => setState(() => _language = value),
     );
   }
 
   Widget _resourceField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanResourceLabel,
-      leadingIcon: LucideIcons.layers,
       child: AppSegmented<ResourceLevel>(
         value: _resource,
         onChanged: (value) => setState(() => _resource = value),
@@ -605,7 +645,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _difficultyField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanDifficultyLabel,
-      leadingIcon: LucideIcons.gauge,
       child: AppSegmented<DifficultyLevel>(
         value: _difficulty,
         onChanged: (value) => setState(() => _difficulty = value),
@@ -627,23 +666,37 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     );
   }
 
+  /// "Use local, everyday examples": the map's toggle row.
   Widget _ruralField(AppLocalizations l10n) {
-    final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    return SwitchListTile.adaptive(
-      value: _useRuralContext,
-      onChanged: (value) => setState(() => _useRuralContext = value),
-      contentPadding: EdgeInsets.zero,
-      secondary: Icon(
-        LucideIcons.sprout,
-        size: AppIconSize.inline,
-        color: scheme.onSurfaceVariant,
-      ),
-      title: Text(l10n.lessonPlanRuralLabel, style: text.bodyLarge),
-      subtitle: Text(
-        l10n.lessonPlanRuralHint,
-        style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-      ),
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.lessonPlanRuralLabel,
+                style: text.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textStrong,
+                ),
+              ),
+              Text(
+                l10n.lessonPlanRuralHint,
+                style: text.bodySmall?.copyWith(color: AppColors.textMuted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.space3),
+        MapToggle(
+          value: _useRuralContext,
+          onChanged: (value) => setState(() => _useRuralContext = value),
+          label: l10n.lessonPlanRuralLabel,
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -11,8 +10,10 @@ import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
+import '../../../shared/widgets/map_card.dart';
+import '../../../shared/widgets/map_option.dart';
+import '../../../shared/widgets/map_select.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../../vidya/domain/deliverable.dart';
@@ -211,13 +212,15 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
 
     return ToolScaffold(
       title: l10n.instantAnswerTitle,
+      subtitle: l10n.instantComposerSubtitle,
+      inkSubmit: true,
       isBusy: state.isLoading,
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.
       hasResult: hasResult,
       onResubmit: _submit,
       deliverable: _deliverableFor(state.valueOrNull, l10n),
-      submitLabel: l10n.instantAnswerAction,
+      submitLabel: l10n.instantGenerate,
       // Hide the sticky submit button once an answer is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
@@ -240,14 +243,12 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _questionField(l10n),
-              const SizedBox(height: AppSpacing.space8),
-              EditorialSectionHeader(l10n.sectionForYourClass),
               const SizedBox(height: AppSpacing.space4),
-              _gradeField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _subjectField(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _languageField(l10n),
+              _suggestions(l10n),
+              const SizedBox(height: AppSpacing.space4),
+              _classSubjectLanguage(l10n),
+              const SizedBox(height: AppSpacing.space3),
+              _sourceNote(l10n),
             ],
           ),
         ),
@@ -256,89 +257,124 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     );
   }
 
+  /// The map's question card: the question on the card itself, with the small
+  /// mic that dictates into this field only.
   Widget _questionField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.instantAnswerQuestionLabel,
-      leadingIcon: LucideIcons.helpCircle,
-      trailing: InlineFieldMic(
-        expectedLanguage: _language.code,
-        onResult: (text) => _questionController.text = text,
-      ),
-      child: TextFormField(
-        controller: _questionController,
-        // The flow rejects anything longer, so stop it here with a counter
-        // rather than let the request fail.
-        maxLength: kMaxQuestionLength,
-        maxLines: 4,
-        minLines: 3,
-        textInputAction: TextInputAction.newline,
-        textCapitalization: TextCapitalization.sentences,
-        keyboardType: TextInputType.multiline,
-        decoration: InputDecoration(hintText: l10n.instantAnswerQuestionHint),
-        validator: (value) => (value == null || value.trim().isEmpty)
-            ? l10n.instantAnswerQuestionError
-            : null,
-      ),
-    );
-  }
-
-  Widget _gradeField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.instantAnswerGradeLabel,
-      optionalLabel: l10n.instantAnswerOptional,
-      leadingIcon: LucideIcons.graduationCap,
-      child: DropdownButtonFormField<String?>(
-        initialValue: _grade,
-        isExpanded: true,
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l10n.instantAnswerGradeAny),
-          ),
-          for (final grade in kGradeLevels)
-            DropdownMenuItem<String?>(value: grade, child: Text(grade)),
-        ],
-        onChanged: (value) => setState(() => _grade = value),
+    return MapCard(
+      child: LabeledField(
+        label: l10n.instantAnswerQuestionLabel,
+        trailingBesideChild: true,
+        trailing: InlineFieldMic(
+          expectedLanguage: _language.code,
+          onResult: (text) => _questionController.text = text,
+        ),
+        child: TextFormField(
+          controller: _questionController,
+          // The flow rejects anything longer, so stop it here with a counter
+          // rather than let the request fail.
+          maxLength: kMaxQuestionLength,
+          maxLines: 4,
+          minLines: 3,
+          textInputAction: TextInputAction.newline,
+          textCapitalization: TextCapitalization.sentences,
+          keyboardType: TextInputType.multiline,
+          decoration: mapBareInput(l10n.instantAnswerQuestionHint),
+          validator: (value) => (value == null || value.trim().isEmpty)
+              ? l10n.instantAnswerQuestionError
+              : null,
+        ),
       ),
     );
   }
 
-  Widget _subjectField(AppLocalizations l10n) {
+  /// "Try one of these": what a good question looks like. A tap fills the
+  /// question box.
+  Widget _suggestions(AppLocalizations l10n) {
+    final suggestions = [
+      l10n.instantSuggest1,
+      l10n.instantSuggest2,
+      l10n.instantSuggest3,
+      l10n.instantSuggest4,
+      l10n.instantSuggest5,
+      l10n.instantSuggest6,
+    ];
     return LabeledField(
-      label: l10n.instantAnswerSubjectLabel,
-      optionalLabel: l10n.instantAnswerOptional,
-      leadingIcon: LucideIcons.bookOpen,
-      child: DropdownButtonFormField<String?>(
-        initialValue: _subject,
-        isExpanded: true,
-        items: [
-          DropdownMenuItem<String?>(
-            value: null,
-            child: Text(l10n.instantAnswerSubjectAny),
-          ),
-          for (final subject in kSubjects)
-            DropdownMenuItem<String?>(value: subject, child: Text(subject)),
-        ],
-        onChanged: (value) => setState(() => _subject = value),
-      ),
-    );
-  }
-
-  Widget _languageField(AppLocalizations l10n) {
-    return LabeledField(
-      label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
-      child: DropdownButtonFormField<AppLocale>(
-        initialValue: _language,
-        isExpanded: true,
-        items: [
-          for (final locale in AppLocale.values)
-            DropdownMenuItem<AppLocale>(
-              value: locale,
-              child: Text(locale.nativeLabel),
+      label: l10n.instantTryOne,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (i, q) in suggestions.indexed) ...[
+            if (i > 0) const SizedBox(height: 7),
+            MapOption(
+              label: q,
+              selected: _questionController.text == q,
+              onTap: () => setState(() => _questionController.text = q),
             ),
+          ],
         ],
-        onChanged: (value) => setState(() => _language = value ?? _language),
+      ),
+    );
+  }
+
+  /// Class, Subject and Language: the map's three selectors in a row.
+  Widget _classSubjectLanguage(AppLocalizations l10n) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: MapSelect<String?>(
+            label: l10n.toolClassLabel,
+            value: _grade,
+            options: [
+              (null, l10n.toolAnyClass),
+              for (final grade in kGradeLevels) (grade, grade),
+            ],
+            onChanged: (value) => setState(() => _grade = value),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: MapSelect<String?>(
+            label: l10n.instantAnswerSubjectLabel,
+            value: _subject,
+            options: [
+              (null, l10n.instantAnswerSubjectAny),
+              for (final subject in kSubjects) (subject, subject),
+            ],
+            onChanged: (value) => setState(() => _subject = value),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: MapSelect<AppLocale>(
+            label: l10n.languageLabel,
+            value: _language,
+            options: [
+              for (final locale in AppLocale.values)
+                (locale, locale.nativeLabel),
+            ],
+            onChanged: (value) => setState(() => _language = value),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The map's source note: answers come from Sahayak's own knowledge, so
+  /// the teacher checks the facts first. (The app runs no web check, so it
+  /// never promises one.)
+  Widget _sourceNote(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      decoration: const BoxDecoration(
+        color: AppColors.mapNoteBg,
+        borderRadius: AppRadius.rField,
+      ),
+      child: Text(
+        l10n.instantSourceNote,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: AppColors.saffron700),
       ),
     );
   }

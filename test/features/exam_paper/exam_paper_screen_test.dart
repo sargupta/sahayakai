@@ -14,6 +14,7 @@ import 'package:sahayakai/features/exam_paper/presentation/widgets/exam_paper_er
 import 'package:sahayakai/features/exam_paper/presentation/widgets/exam_paper_in_progress_view.dart';
 import 'package:sahayakai/features/exam_paper/presentation/widgets/exam_paper_result_view.dart';
 import 'package:sahayakai/features/exam_paper/presentation/widgets/exam_paper_skeleton.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
@@ -35,7 +36,9 @@ Widget _host({
   return ProviderScope(
     overrides: [apiClientOverride(FakeApiClient()), ...overrides],
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -78,7 +81,8 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Choose a board'), findsOneWidget);
+      // The map's tool pages show no prompt before the first result.
+      expect(find.byType(EmptyView), findsNothing);
     });
 
     testWidgets('loading shows the exam-paper-shaped skeleton', (tester) async {
@@ -90,7 +94,9 @@ void main() {
         ),
       );
       await tester.pump(); // don't settle: the loading future never completes
-      await tester.pump(const Duration(milliseconds: 300)); // settle entrance animations
+      await tester.pump(
+        const Duration(milliseconds: 300),
+      ); // settle entrance animations
 
       expect(find.byType(ExamPaperSkeleton), findsOneWidget);
     });
@@ -362,8 +368,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Board'), findsOneWidget);
-            expect(find.text('Chapters'), findsOneWidget);
+            expect(find.text('BOARD'), findsOneWidget);
+            expect(find.text('CHAPTERS'), findsOneWidget);
           },
         );
       }

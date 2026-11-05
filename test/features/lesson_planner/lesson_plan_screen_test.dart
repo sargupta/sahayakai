@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
+import 'package:sahayakai/features/lesson_planner/domain/lesson_plan.dart';
+import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_controller.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/inline_field_mic.dart';
 import 'package:sahayakai/shared/domain/tool_prefill.dart';
+import 'package:sahayakai/shared/widgets/map_chip.dart';
+import 'package:sahayakai/shared/widgets/map_select.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// U-V6 — the reference for threading a VIDYA directive INTO a tool: the
@@ -13,8 +17,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// blank (unchanged) when none is passed. Also that the inline dictation mic is
 /// present on the primary (topic) field.
 
-Widget _host({ToolPrefill? prefill}) {
+Widget _host({ToolPrefill? prefill, List<Override> overrides = const []}) {
   return ProviderScope(
+    overrides: overrides,
     child: MaterialApp(
       theme: AppTheme.light(),
       locale: const Locale('en'),
@@ -23,6 +28,21 @@ Widget _host({ToolPrefill? prefill}) {
       home: LessonPlanScreen(prefill: prefill),
     ),
   );
+}
+
+/// The single-choice Class selector (the map's tap-to-change tile).
+MapSelect<String?> _classSelect(WidgetTester tester) => tester.widget(
+  find.byWidgetPredicate((w) => w is MapSelect<String?> && w.label == 'Class'),
+);
+
+/// A controller that records the request instead of generating.
+class _CapturingLessonController extends LessonPlanController {
+  LessonPlanRequest? request;
+
+  @override
+  Future<void> generate(LessonPlanRequest request) async {
+    this.request = request;
+  }
 }
 
 void main() {
@@ -50,14 +70,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Fractions'), findsOneWidget);
-    expect(
-      tester
-          .widget<FilterChip>(find.widgetWithText(FilterChip, 'Class 10'))
-          .selected,
-      isTrue,
-    );
+    // Class is a single-choice selector now: the prefilled class is its value.
+    expect(_classSelect(tester).value, 'Class 10');
+    expect(find.text('Class 10'), findsOneWidget);
     expect(find.text('Science'), findsOneWidget);
-    // language 'kn' → the Kannada endonym is shown in the language picker.
+    // language 'kn' → the Kannada endonym is shown in the language picker,
+    // which lives under "More options".
+    await tester.tap(find.text('More options'));
+    await tester.pumpAndSettle();
     expect(find.text('ಕನ್ನಡ'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -82,12 +102,11 @@ void main() {
 
       // Topic still seeds; the unknown grade/subject simply do not apply.
       expect(find.text('Photosynthesis'), findsOneWidget);
-      expect(
-        tester
-            .widget<FilterChip>(find.widgetWithText(FilterChip, 'Class 10'))
-            .selected,
-        isFalse,
-      );
+      expect(_classSelect(tester).value, isNull);
+      expect(find.text('Any class'), findsOneWidget);
+      expect(find.text('Any subject'), findsOneWidget);
+      expect(find.text('Grade 99'), findsNothing);
+      expect(find.text('Astrophysics'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -102,13 +121,52 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
+      expect(find.text('Make a lesson'), findsOneWidget);
       expect(find.text('Fractions'), findsNothing);
-      expect(
-        tester
-            .widget<FilterChip>(find.widgetWithText(FilterChip, 'Class 10'))
-            .selected,
-        isFalse,
+      expect(_classSelect(tester).value, isNull);
+      expect(find.text('Any class'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Class is a single choice picked from the sheet, sent as gradeLevels',
+    (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final controller = _CapturingLessonController();
+      await tester.pumpWidget(
+        _host(
+          overrides: [
+            lessonPlanControllerProvider.overrideWith(() => controller),
+          ],
+        ),
       );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).first, 'Fractions');
+
+      // Pick Class 7, then change it to Class 8: only one class is ever held.
+      await tester.tap(find.text('CLASS'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Class 7').last);
+      await tester.pumpAndSettle();
+      expect(_classSelect(tester).value, 'Class 7');
+
+      await tester.tap(find.text('CLASS'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Class 8').last);
+      await tester.pumpAndSettle();
+      expect(_classSelect(tester).value, 'Class 8');
+      expect(find.text('Class 7'), findsNothing);
+
+      await tester.tap(find.text('Generate lesson'));
+      await tester.pumpAndSettle();
+
+      expect(controller.request, isNotNull);
+      expect(controller.request!.topic, 'Fractions');
+      expect(controller.request!.gradeLevels, ['Class 8']);
     },
   );
 
@@ -138,6 +196,9 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
+      MapChip chip(String label) =>
+          tester.widget<MapChip>(find.widgetWithText(MapChip, label));
+
       // All four v3 components are offered.
       for (final label in [
         l10n.lessonPlanIncludeActivity,
@@ -145,20 +206,18 @@ void main() {
         l10n.lessonPlanIncludeHomework,
         l10n.lessonPlanIncludeStoryHook,
       ]) {
-        expect(find.widgetWithText(FilterChip, label), findsOneWidget);
+        expect(find.widgetWithText(MapChip, label), findsOneWidget);
+        // None preselected — a plain plan sends exactly the typed topic.
+        expect(chip(label).selected, isFalse, reason: label);
       }
-      // None preselected — a plain plan sends exactly the typed topic.
-      expect(
-        tester
-            .widget<FilterChip>(
-              find.widgetWithText(
-                FilterChip,
-                l10n.lessonPlanIncludeActivity,
-              ),
-            )
-            .selected,
-        isFalse,
-      );
+
+      // A tap toggles one on, a second tap off again.
+      await tester.tap(find.text(l10n.lessonPlanIncludeActivity));
+      await tester.pumpAndSettle();
+      expect(chip(l10n.lessonPlanIncludeActivity).selected, isTrue);
+      await tester.tap(find.text(l10n.lessonPlanIncludeActivity));
+      await tester.pumpAndSettle();
+      expect(chip(l10n.lessonPlanIncludeActivity).selected, isFalse);
     });
 
     testWidgets('no NCERT banner until a grade is chosen', (tester) async {

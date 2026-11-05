@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../motion/animated_entrance.dart';
 
 /// Paints a shimmer over its subtree with the app's two skeleton tones.
 ///
 /// Every skeleton wrapped identical `Shimmer.fromColors` colours; this is the
-/// one place that pairing lives now.
+/// one place that pairing lives now. With reduce motion on it does not sweep.
 class SkeletonShimmer extends StatelessWidget {
   const SkeletonShimmer({super.key, required this.child});
 
@@ -20,6 +21,9 @@ class SkeletonShimmer extends StatelessWidget {
       highlightColor: scheme.surfaceContainerHigh,
       period: const Duration(milliseconds: 1200),
       direction: ShimmerDirection.ltr,
+      // Reduce motion: the bars hold still (the shimmer's controller stops),
+      // so nothing animates behind a teacher who asked for stillness.
+      enabled: context.motionEnabled,
       child: child,
     );
   }

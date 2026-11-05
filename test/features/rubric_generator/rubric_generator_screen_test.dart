@@ -13,6 +13,7 @@ import 'package:sahayakai/features/rubric_generator/presentation/widgets/rubric_
 import 'package:sahayakai/features/rubric_generator/presentation/widgets/rubric_result_view.dart';
 import 'package:sahayakai/features/rubric_generator/presentation/widgets/rubric_skeleton.dart';
 import 'package:sahayakai/shared/domain/tool_prefill.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'rubric_fixtures.dart';
@@ -30,7 +31,9 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -57,7 +60,8 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Describe the assignment'), findsOneWidget);
+      // The map's tool pages show no prompt before the first result.
+      expect(find.byType(EmptyView), findsNothing);
     });
 
     testWidgets('loading shows the rubric-shaped skeleton', (tester) async {
@@ -69,7 +73,9 @@ void main() {
         ),
       );
       await tester.pump(); // don't settle: the loading future never completes
-      await tester.pump(const Duration(milliseconds: 300)); // settle entrance animations
+      await tester.pump(
+        const Duration(milliseconds: 300),
+      ); // settle entrance animations
 
       expect(find.byType(RubricSkeleton), findsOneWidget);
     });
@@ -222,8 +228,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('What is the assignment?'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
+            expect(find.text('WHAT IS THE ASSIGNMENT?'), findsOneWidget);
+            expect(find.text('GRADE LEVEL'), findsOneWidget);
           },
         );
       }

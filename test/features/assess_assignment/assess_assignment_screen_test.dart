@@ -13,6 +13,8 @@ import 'package:sahayakai/features/assess_assignment/presentation/widgets/assess
 import 'package:sahayakai/features/assess_assignment/presentation/widgets/assess_assignment_result_view.dart';
 import 'package:sahayakai/features/assess_assignment/presentation/widgets/assess_assignment_skeleton.dart';
 import 'package:sahayakai/shared/media/image_input.dart';
+import 'package:sahayakai/shared/widgets/app_segmented.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'assess_assignment_fixtures.dart';
@@ -36,7 +38,9 @@ Widget _host({
       ...overrides,
     ],
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -63,10 +67,9 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining("Add a photo of the student's work"),
-        findsOneWidget,
-      );
+      // The map's tool pages show no prompt before the first result.
+      expect(find.byType(EmptyView), findsNothing);
+      expect(find.byType(AssessAssignmentSkeleton), findsNothing);
     });
 
     testWidgets('loading shows the scorecard-shaped skeleton', (tester) async {
@@ -170,7 +173,7 @@ void main() {
         find.text("Please add a photo of the student's work."),
         findsNothing,
       );
-      expect(find.text('Remove photo'), findsOneWidget);
+      expect(find.byTooltip('Remove photo'), findsOneWidget);
     });
   });
 
@@ -183,12 +186,9 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(ChoiceChip, 'Grade'), findsOneWidget);
-      expect(find.widgetWithText(ChoiceChip, 'Read only'), findsOneWidget);
-      expect(
-        find.widgetWithText(ChoiceChip, 'Score a transcript'),
-        findsOneWidget,
-      );
+      expect(_mode('Grade'), findsOneWidget);
+      expect(_mode('Read only'), findsOneWidget);
+      expect(_mode('Score a transcript'), findsOneWidget);
     });
 
     testWidgets('the corrected-transcript field appears only in score mode', (
@@ -202,22 +202,22 @@ void main() {
       await tester.pumpAndSettle();
 
       // Hidden by default (full mode).
-      expect(find.text('Corrected transcript'), findsNothing);
+      expect(find.text('CORRECTED TRANSCRIPT'), findsNothing);
 
-      final scoreChip = find.widgetWithText(ChoiceChip, 'Score a transcript');
+      final scoreChip = _mode('Score a transcript');
       await tester.ensureVisible(scoreChip);
       await tester.tap(scoreChip);
       await tester.pumpAndSettle();
 
       // Now revealed.
-      expect(find.text('Corrected transcript'), findsOneWidget);
+      expect(find.text('CORRECTED TRANSCRIPT'), findsOneWidget);
 
       // Switching back to Read only hides it again.
-      final readChip = find.widgetWithText(ChoiceChip, 'Read only');
+      final readChip = _mode('Read only');
       await tester.ensureVisible(readChip);
       await tester.tap(readChip);
       await tester.pumpAndSettle();
-      expect(find.text('Corrected transcript'), findsNothing);
+      expect(find.text('CORRECTED TRANSCRIPT'), findsNothing);
     });
   });
 
@@ -237,7 +237,7 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Student work photo'), findsOneWidget);
+            expect(find.text('STUDENT WORK PHOTO'), findsOneWidget);
             expect(find.text('Take photo'), findsOneWidget);
             expect(find.text('Assess'), findsOneWidget);
           },
@@ -265,3 +265,9 @@ class _StubController extends AssessAssignmentController {
     return data;
   }
 }
+
+/// A mode in the map's segmented control (it was a ChoiceChip row).
+Finder _mode(String label) => find.descendant(
+  of: find.byType(AppSegmented<AssessmentMode>),
+  matching: find.text(label),
+);

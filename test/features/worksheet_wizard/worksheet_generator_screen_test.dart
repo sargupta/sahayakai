@@ -13,6 +13,8 @@ import 'package:sahayakai/features/worksheet_wizard/presentation/widgets/workshe
 import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_controller.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
 import 'package:sahayakai/shared/media/image_input.dart';
+import 'package:sahayakai/shared/widgets/empty_view.dart';
+import 'package:sahayakai/shared/widgets/primary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'worksheet_fixtures.dart';
@@ -20,7 +22,8 @@ import 'worksheet_fixtures.dart';
 /// Screen-layer gates: the required-image + required-prompt validation the
 /// endpoint depends on, the four async states, and the DESIGN_RUBRIC §12
 /// overflow checks. No live API is exercised: the controller is stubbed for the
-/// state tests and no test taps Generate with a valid form.
+/// state tests and no test taps Generate with a valid form. Generate is only
+/// enabled once a textbook page is in (the map keeps it off until then).
 Widget _host({
   Brightness brightness = Brightness.light,
   double textScale = 1.0,
@@ -35,7 +38,9 @@ Widget _host({
       ...overrides,
     ],
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -62,10 +67,14 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('Add a textbook photo and a prompt'),
-        findsOneWidget,
-      );
+      // Before the first result the result region renders nothing (no idle
+      // EmptyView); the form itself carries the guidance: the textbook page
+      // is flagged required and Generate stays off until a page is in.
+      expect(find.byType(EmptyView), findsNothing);
+      expect(find.text('Worksheet Wizard'), findsOneWidget);
+      expect(find.text('TEXTBOOK PAGE · REQUIRED'), findsOneWidget);
+      expect(find.text('Take a photo or browse'), findsOneWidget);
+      expect(_generate(tester).onPressed, isNull);
     });
 
     testWidgets('loading shows the worksheet-shaped skeleton', (tester) async {
@@ -121,31 +130,7 @@ void main() {
   });
 
   group('validation', () {
-    testWidgets('an empty form blocks submit on both image and prompt', (
-      tester,
-    ) async {
-      tester.view.physicalSize = kNarrowPhone;
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(_host());
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Generate'));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('Please add a photo of the textbook page.'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Please describe the worksheet you need.'),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('picking an image clears the required-image error', (
+    testWidgets('submit is blocked until a textbook photo is added', (
       tester,
     ) async {
       tester.view.physicalSize = kNarrowPhone;
@@ -157,28 +142,66 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Surface the errors first.
-      await tester.tap(find.text('Generate'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Please add a photo of the textbook page.'),
-        findsOneWidget,
+      // No photo: the page is flagged required and Generate shows disabled
+      // (the endpoint cannot run without the page).
+      expect(find.text('TEXTBOOK PAGE · REQUIRED'), findsOneWidget);
+      expect(_generate(tester).onPressed, isNull);
+      // Even with instructions typed, the missing photo still blocks.
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'Make a multiplication worksheet',
       );
+      await tester.pumpAndSettle();
+      expect(_generate(tester).onPressed, isNull);
 
-      // Now pick a photo; the image error clears and the preview appears.
+      // A photo arrives: the required flag clears and Generate is enabled.
       await tester.tap(find.text('Take photo'));
       await tester.pumpAndSettle();
+      expect(find.text('TEXTBOOK PAGE · REQUIRED'), findsNothing);
+      expect(find.text('TEXTBOOK PAGE'), findsOneWidget);
+      expect(_generate(tester).onPressed, isNotNull);
+      expect(tester.takeException(), isNull);
+    });
 
+    testWidgets('with a photo in, an empty prompt still blocks submit', (
+      tester,
+    ) async {
+      tester.view.physicalSize = kNarrowPhone;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final generated = <WorksheetRequest>[];
+      await tester.pumpWidget(
+        _host(
+          picker: FakeImagePickerService(result: tinyRaw()),
+          overrides: [
+            worksheetControllerProvider.overrideWith(
+              () => _RecordingController(generated),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Take photo'));
+      await tester.pumpAndSettle();
+      // The picked card replaces the empty box.
+      expect(find.byTooltip('Remove photo'), findsOneWidget);
+
+      await tester.tap(find.text('Generate worksheet'));
+      await tester.pumpAndSettle();
+
+      // The image is in, so its error never shows; the prompt is required.
       expect(
         find.text('Please add a photo of the textbook page.'),
         findsNothing,
       );
-      expect(find.text('Remove photo'), findsOneWidget);
-      // The prompt is still required, so the form is still incomplete.
       expect(
         find.text('Please describe the worksheet you need.'),
         findsOneWidget,
       );
+      expect(generated, isEmpty, reason: 'an empty prompt must not generate');
+      expect(tester.takeException(), isNull);
     });
   });
 
@@ -198,14 +221,30 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Textbook page photo'), findsOneWidget);
-            expect(find.text('What worksheet do you need?'), findsOneWidget);
+            expect(find.text('TEXTBOOK PAGE · REQUIRED'), findsOneWidget);
+            expect(find.text('WORKSHEET INSTRUCTIONS'), findsOneWidget);
             expect(find.text('Take photo'), findsOneWidget);
+            expect(find.text('More options'), findsOneWidget);
           },
         );
       }
     }
   });
+}
+
+/// The sticky Generate button.
+PrimaryButton _generate(WidgetTester tester) => tester.widget<PrimaryButton>(
+  find.widgetWithText(PrimaryButton, 'Generate worksheet'),
+);
+
+/// Records generate calls without a repository; the screen stays idle.
+class _RecordingController extends WorksheetController {
+  _RecordingController(this.log);
+
+  final List<WorksheetRequest> log;
+
+  @override
+  Future<void> generate(WorksheetRequest request) async => log.add(request);
 }
 
 /// A worksheet controller with a fixed outcome, so the screen's four async

@@ -1,15 +1,16 @@
 // ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/i18n/l10n_ext.dart';
 import '../../core/theme/app_theme.dart';
 import '../../features/vidya/domain/deliverable.dart';
 import '../../features/vidya/presentation/deliver_tray.dart';
+import '../../features/vidya/presentation/vidya_cta_clearance.dart';
 import '../../features/vidya/presentation/vidya_presence.dart';
-import '../../features/vidya/presentation/vidya_sheet.dart';
 import '../motion/animated_entrance.dart';
-import 'glass_app_bar.dart';
+import 'map_page_header.dart';
 import 'primary_button.dart';
 
 /// Every AI tool page's shell: surface AppBar + a scrolling form capped at
@@ -48,6 +49,11 @@ class ToolScaffold extends ConsumerStatefulWidget {
     super.key,
     required this.title,
     required this.child,
+    this.subtitle,
+    this.headerTrailing,
+    this.dark = false,
+    this.inkSubmit = false,
+    this.canSubmit = true,
     this.result,
     this.onSubmit,
     this.submitLabel,
@@ -62,8 +68,28 @@ class ToolScaffold extends ConsumerStatefulWidget {
     this.deliverable,
   });
 
+  /// The page title: the UX map's large Bricolage heading at the top of the
+  /// page ("Make a lesson", "Quiz Generator").
   final String title;
   final Widget child;
+
+  /// The muted line under the title ("Spoken or typed, same result").
+  final String? subtitle;
+
+  /// Shown at the end of the header row, opposite Back (a count pill).
+  final Widget? headerTrailing;
+
+  /// The map's one dark screen (the scanner): a near-black wash, light ink,
+  /// and a dark Back button.
+  final bool dark;
+
+  /// The map's ink primary button (Instant Answer's "Get instant answer")
+  /// instead of the saffron one.
+  final bool inkSubmit;
+
+  /// False while a required input is missing (the worksheet's page, the
+  /// scanner's first sheet): the button shows, disabled, as the map draws it.
+  final bool canSubmit;
   final Widget? result;
   final VoidCallback? onSubmit;
   final String? submitLabel;
@@ -73,7 +99,8 @@ class ToolScaffold extends ConsumerStatefulWidget {
   /// `168deg` gradient). `null` → `washDefault`.
   final Gradient? wash;
 
-  /// Whether the app bar shows the VIDYA co-teacher action (default true).
+  /// Kept for call sites: the UX map has no app bar, and VIDYA is the orb
+  /// that floats over every tool.
   final bool vidyaAction;
 
   /// Hands the running generation to VIDYA and leaves the screen (v3 06). When
@@ -196,12 +223,16 @@ class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
       bottom = PrimaryButton(
         label: widget.submitLabel ?? 'Generate',
         onPressed: widget.onResubmit,
+        ink: widget.inkSubmit,
       );
     } else if (widget.onSubmit != null) {
       bottom = PrimaryButton(
         label: widget.submitLabel ?? 'Generate',
-        onPressed: widget.isBusy ? null : widget.onSubmit,
+        onPressed: (widget.isBusy || !widget.canSubmit)
+            ? null
+            : widget.onSubmit,
         isBusy: widget.isBusy,
+        ink: widget.inkSubmit,
       );
     } else {
       bottom = null;
@@ -219,15 +250,13 @@ class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
                   ? AppGradients.darkVignette
                   : AppGradients.washDefault));
 
-    return DecoratedBox(
-      decoration: BoxDecoration(gradient: effectiveWash),
+    final page = DecoratedBox(
+      decoration: widget.dark
+          ? const BoxDecoration(color: AppColors.scanWash)
+          : BoxDecoration(gradient: effectiveWash),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         resizeToAvoidBottomInset: true,
-        appBar: GlassAppBar(
-          title: Text(widget.title),
-          actions: [if (widget.vidyaAction) const VidyaAppBarAction()],
-        ),
         body: SafeArea(
           child: Stack(
             children: [
@@ -237,7 +266,12 @@ class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
               Opacity(
                 opacity: working ? 0.4 : 1,
                 child: SingleChildScrollView(
-                  padding: AppSpacing.pagePadding,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.mapGutter,
+                    AppSpacing.space2,
+                    AppSpacing.mapGutter,
+                    AppSpacing.space6,
+                  ),
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: ConstrainedBox(
@@ -245,6 +279,20 @@ class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          MapPageHeader(
+                            dark: widget.dark,
+                            trailing: widget.headerTrailing,
+                          ),
+                          // The result carries its own masthead.
+                          if (!output) ...[
+                            const SizedBox(height: AppSpacing.space2),
+                            MapPageTitle(
+                              title: widget.title,
+                              subtitle: widget.subtitle,
+                              dark: widget.dark,
+                            ),
+                            const SizedBox(height: AppSpacing.space4),
+                          ],
                           if (editing) ...[
                             _ScaffoldPill(
                               label: l10n.outputBackToResult,
@@ -286,18 +334,28 @@ class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
             ],
           ),
         ),
+        // The floating orb parks above whatever is pinned here.
         bottomNavigationBar: bottom == null
             ? null
-            : SafeArea(
-                // The working sheet is full-bleed (its own sheetPadding sets
-                // the inset); the plain submit button keeps the page gutter.
-                child: Padding(
-                  padding: working ? EdgeInsets.zero : AppSpacing.pagePadding,
-                  child: bottom,
+            : VidyaCtaClearance(
+                child: SafeArea(
+                  // The working sheet is full-bleed (its own sheetPadding sets
+                  // the inset); the plain submit button keeps the page gutter.
+                  child: Padding(
+                    padding: working ? EdgeInsets.zero : AppSpacing.pagePadding,
+                    child: bottom,
+                  ),
                 ),
               ),
       ),
     );
+    // The dark scanner needs light status-bar icons.
+    return widget.dark
+        ? AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle.light,
+            child: page,
+          )
+        : page;
   }
 }
 
