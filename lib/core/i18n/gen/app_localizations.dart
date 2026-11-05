@@ -7411,6 +7411,960 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'VIDYA made this from your topic. Add a photo of a textbook page to build it from your book instead.'**
   String get worksheetTopicPageHint;
+
+  /// Photo picker: the empty box prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo or browse'**
+  String get imageInputBrowse;
+
+  /// Tool forms: the collapsed card holding the fields the map leaves out.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get toolMoreOptions;
+
+  /// Tool forms: the class selector label.
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get toolClassLabel;
+
+  /// Tool forms: no class chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Any class'**
+  String get toolAnyClass;
+
+  /// Make hub: page title.
+  ///
+  /// In en, this message translates to:
+  /// **'What are we making?'**
+  String get makeHubTitle;
+
+  /// Make hub: the card that opens VIDYA.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap and speak'**
+  String get makeHubSpeak;
+
+  /// Make hub: an example of what to say.
+  ///
+  /// In en, this message translates to:
+  /// **'“Class 5 fractions revision sheet”'**
+  String get makeHubSpeakExample;
+
+  /// Make hub: link under the example.
+  ///
+  /// In en, this message translates to:
+  /// **'Or type a topic'**
+  String get makeHubType;
+
+  /// Make hub: group heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare'**
+  String get makeHubPrepare;
+
+  /// Make hub: group heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Assess'**
+  String get makeHubAssess;
+
+  /// Make hub: group heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore'**
+  String get makeHubExplore;
+
+  /// Make hub: group heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Parents'**
+  String get makeHubParents;
+
+  /// Make hub: lesson plan tile.
+  ///
+  /// In en, this message translates to:
+  /// **'In timed steps'**
+  String get makeHubLessonSub;
+
+  /// Make hub: worksheet tile.
+  ///
+  /// In en, this message translates to:
+  /// **'From a textbook photo'**
+  String get makeHubWorksheetSub;
+
+  /// Make hub: quiz tile.
+  ///
+  /// In en, this message translates to:
+  /// **'3–20 questions'**
+  String get makeHubQuizSub;
+
+  /// Make hub: rubric tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Criteria × levels'**
+  String get makeHubRubricSub;
+
+  /// Make hub: scanner tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade an answer sheet'**
+  String get makeHubScannerSub;
+
+  /// Make hub: attendance tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice roll call'**
+  String get makeHubAttendanceSub;
+
+  /// Make hub: instant answer tile.
+  ///
+  /// In en, this message translates to:
+  /// **'A quick expert answer'**
+  String get makeHubInstantSub;
+
+  /// Lesson composer: page title.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a lesson'**
+  String get lessonComposerTitle;
+
+  /// Lesson composer: under the title.
+  ///
+  /// In en, this message translates to:
+  /// **'Spoken or typed, same result'**
+  String get lessonComposerSubtitle;
+
+  /// Lesson composer: primary button.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate lesson'**
+  String get lessonComposerGenerate;
+
+  /// Lesson composer: the card of recent lessons.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get lessonComposerRecent;
+
+  /// Quiz composer: page title.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiz Generator'**
+  String get quizComposerTitle;
+
+  /// Quiz composer: under the title.
+  ///
+  /// In en, this message translates to:
+  /// **'Any topic, with the question types you choose.'**
+  String get quizComposerSubtitle;
+
+  /// Quiz composer: the question-count slider label.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions'**
+  String get quizQuestionsLabel;
+
+  /// Quiz composer: Bloom levels label.
+  ///
+  /// In en, this message translates to:
+  /// **'Bloom’s taxonomy levels'**
+  String get quizBloomLevelsLabel;
+
+  /// Quiz composer: the card explaining the chosen levels.
+  ///
+  /// In en, this message translates to:
+  /// **'Pedagogical strategy'**
+  String get quizStrategyTitle;
+
+  /// Quiz composer: no Bloom level chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one level.'**
+  String get quizStrategyEmpty;
+
+  /// Bloom level name.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember'**
+  String get quizBloomRemember;
+
+  /// Bloom level name.
+  ///
+  /// In en, this message translates to:
+  /// **'Understand'**
+  String get quizBloomUnderstand;
+
+  /// Bloom level name.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get quizBloomApply;
+
+  /// Bloom level name.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze'**
+  String get quizBloomAnalyze;
+
+  /// Bloom level name.
+  ///
+  /// In en, this message translates to:
+  /// **'Evaluate'**
+  String get quizBloomEvaluate;
+
+  /// Bloom level name.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get quizBloomCreate;
+
+  /// Quiz strategy: what this level asks students to do.
+  ///
+  /// In en, this message translates to:
+  /// **'recall facts, terms and basic concepts.'**
+  String get quizBloomRememberHow;
+
+  /// Quiz strategy line.
+  ///
+  /// In en, this message translates to:
+  /// **'explain ideas in their own words.'**
+  String get quizBloomUnderstandHow;
+
+  /// Quiz strategy line.
+  ///
+  /// In en, this message translates to:
+  /// **'use what they learned in a new situation.'**
+  String get quizBloomApplyHow;
+
+  /// Quiz strategy line.
+  ///
+  /// In en, this message translates to:
+  /// **'break ideas apart and compare them.'**
+  String get quizBloomAnalyzeHow;
+
+  /// Quiz strategy line.
+  ///
+  /// In en, this message translates to:
+  /// **'judge and justify a choice.'**
+  String get quizBloomEvaluateHow;
+
+  /// Quiz strategy line.
+  ///
+  /// In en, this message translates to:
+  /// **'make something new from what they know.'**
+  String get quizBloomCreateHow;
+
+  /// Quiz composer: primary button.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate quiz'**
+  String get quizGenerate;
+
+  /// Instant answer: under the title.
+  ///
+  /// In en, this message translates to:
+  /// **'A quick, expert answer to a question from class.'**
+  String get instantComposerSubtitle;
+
+  /// Instant answer: suggestions heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Try one of these'**
+  String get instantTryOne;
+
+  /// Instant answer: a suggested question.
+  ///
+  /// In en, this message translates to:
+  /// **'Why is the sky blue?'**
+  String get instantSuggest1;
+
+  /// Instant answer: a suggested question.
+  ///
+  /// In en, this message translates to:
+  /// **'Photosynthesis, using how Pongal is made'**
+  String get instantSuggest2;
+
+  /// Instant answer: a suggested question.
+  ///
+  /// In en, this message translates to:
+  /// **'The history of Nalanda University'**
+  String get instantSuggest3;
+
+  /// Instant answer: a suggested question.
+  ///
+  /// In en, this message translates to:
+  /// **'The major rivers in India'**
+  String get instantSuggest4;
+
+  /// Instant answer: a suggested question.
+  ///
+  /// In en, this message translates to:
+  /// **'Why do leaves change colour?'**
+  String get instantSuggest5;
+
+  /// Instant answer: a suggested question.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain gravity with a bullock cart'**
+  String get instantSuggest6;
+
+  /// Instant answer: honest note on where answers come from.
+  ///
+  /// In en, this message translates to:
+  /// **'Answers come from Sahayak’s own knowledge. Please check the facts before teaching them.'**
+  String get instantSourceNote;
+
+  /// Instant answer: primary button.
+  ///
+  /// In en, this message translates to:
+  /// **'Get instant answer'**
+  String get instantGenerate;
+
+  /// Worksheet: page title.
+  ///
+  /// In en, this message translates to:
+  /// **'Worksheet Wizard'**
+  String get worksheetComposerTitle;
+
+  /// Worksheet: under the title.
+  ///
+  /// In en, this message translates to:
+  /// **'Photograph a textbook page, then say what you want made from it.'**
+  String get worksheetComposerSubtitle;
+
+  /// Worksheet: photo field label while no photo is added.
+  ///
+  /// In en, this message translates to:
+  /// **'Textbook page · required'**
+  String get worksheetPageRequired;
+
+  /// Worksheet: photo field label once a photo is in.
+  ///
+  /// In en, this message translates to:
+  /// **'Textbook page'**
+  String get worksheetPageAdded;
+
+  /// Worksheet: instructions field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Worksheet instructions'**
+  String get worksheetInstructionsLabel;
+
+  /// Worksheet: a suggested instruction.
+  ///
+  /// In en, this message translates to:
+  /// **'From this page, create 5 fill-in-the-blanks for Grade 2.'**
+  String get worksheetSuggest1;
+
+  /// Worksheet: a suggested instruction.
+  ///
+  /// In en, this message translates to:
+  /// **'A “Match the following” from the key words on this page'**
+  String get worksheetSuggest2;
+
+  /// Worksheet: a suggested instruction.
+  ///
+  /// In en, this message translates to:
+  /// **'A word search with the difficult words on this page.'**
+  String get worksheetSuggest3;
+
+  /// Worksheet: primary button.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate worksheet'**
+  String get worksheetGenerate;
+
+  /// Scanner: page title.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan answer sheets'**
+  String get scannerComposerTitle;
+
+  /// Scanner: primary button.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish and grade'**
+  String get scannerFinish;
+
+  /// Community: a post / chat / request was refused for being sent too often (429), no wait time known.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re doing that too often. Please wait a little and try again.'**
+  String get communityRateLimited;
+
+  /// Community: rate-limited (429) with the wait the server asked for, in minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{Too many tries. Please try again in 1 minute.} other{Too many tries. Please try again in {minutes} minutes.}}'**
+  String communityRateLimitedMinutes(num minutes);
+
+  /// Community: a write failed because the phone is offline or the request timed out.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Please try again.'**
+  String get communityOffline;
+
+  /// Community: a post or chat was refused because the teacher is not a member of the group (403).
+  ///
+  /// In en, this message translates to:
+  /// **'Join this group to post or chat here.'**
+  String get communityNotMember;
+
+  /// People you may know: why suggested — teaches at the same school.
+  ///
+  /// In en, this message translates to:
+  /// **'Same school'**
+  String get communityReasonSameSchool;
+
+  /// People you may know: why suggested — teaches in the same district.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher nearby'**
+  String get communityReasonNearby;
+
+  /// People you may know: why suggested — an active teacher on SahayakAI.
+  ///
+  /// In en, this message translates to:
+  /// **'Active educator'**
+  String get communityReasonActive;
+
+  /// People you may know: why suggested — also teaches this subject. {subject} is the subject name as the server sends it.
+  ///
+  /// In en, this message translates to:
+  /// **'Also teaches {subject}'**
+  String communityReasonSubjectPeer(Object subject);
+
+  /// Community: the collapsed post composer prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'What did you do today?'**
+  String get communityComposerPrompt;
+
+  /// Community: hint inside the post text field.
+  ///
+  /// In en, this message translates to:
+  /// **'Share something from your class'**
+  String get communityComposerHint;
+
+  /// Community composer: label of the group picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Post to'**
+  String get communityComposerPostTo;
+
+  /// Community composer: label above the post-type chips.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind of post'**
+  String get communityComposerTypeLabel;
+
+  /// Community composer: the submit button.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get communityComposerPost;
+
+  /// Community composer: confirmation after a post was published.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted'**
+  String get communityComposerPosted;
+
+  /// Community composer: the post could not be published.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t post. Please try again.'**
+  String get communityComposerFailed;
+
+  /// Community composer: collapse the composer without posting.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get communityComposerClose;
+
+  /// Community Messages: the note explaining when chat opens.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat opens only after a teacher accepts your connection request.'**
+  String get communityMessagesNote;
+
+  /// Community Messages: section label for incoming connection requests, with their number.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending requests · {count}'**
+  String communityPendingRequestsCount(Object count);
+
+  /// Community Messages: heading of the block that leads to the network screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Find more teachers'**
+  String get communityFindMoreTitle;
+
+  /// Community Messages: line under "Find more teachers".
+  ///
+  /// In en, this message translates to:
+  /// **'See groups to join and teachers you may know.'**
+  String get communityFindMoreBody;
+
+  /// Community Messages: link that opens the network screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Find teachers'**
+  String get communityFindMoreAction;
+
+  /// Community: shown in place of a name when a teacher profile could not be loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'A teacher'**
+  String get communityUnknownTeacher;
+
+  /// Community: confirmation after accepting a connection request.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected. You can now message each other.'**
+  String get communityNowConnected;
+
+  /// Community: the chat with a teacher could not be opened.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the chat. Please try again.'**
+  String get communityMessageFailed;
+
+  /// Your network: section label for the teacher's groups, with their number.
+  ///
+  /// In en, this message translates to:
+  /// **'My groups · {count}'**
+  String communityMyGroupsCount(Object count);
+
+  /// Your network: section label for groups worth joining.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested groups'**
+  String get communitySuggestedGroups;
+
+  /// Your network: section label for accepted connections, with their number.
+  ///
+  /// In en, this message translates to:
+  /// **'Connections · {count}'**
+  String communityConnectionsCount(Object count);
+
+  /// Your network: no group suggestions to show.
+  ///
+  /// In en, this message translates to:
+  /// **'No group suggestions right now.'**
+  String get communityNoSuggestedGroups;
+
+  /// Your network: no teacher suggestions to show.
+  ///
+  /// In en, this message translates to:
+  /// **'No teacher suggestions right now.'**
+  String get communityNoPeople;
+
+  /// Your network: one section could not load; a retry button sits beside it.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this list.'**
+  String get communityNetworkLoadFailed;
+
+  /// Chat: one message that did not send, quoting its start. {preview} is the teacher's own text.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent: {preview}'**
+  String inboxSendFailedPreview(Object preview);
+
+  /// Chat: remove a message that failed to send instead of retrying it.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get inboxDiscard;
+
+  /// Conversation: loading older messages failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load older messages.'**
+  String get inboxLoadOlderFailed;
+
+  /// Chat: play a voice note (button label for screen readers).
+  ///
+  /// In en, this message translates to:
+  /// **'Play voice note'**
+  String get inboxPlayVoiceNote;
+
+  /// Chat: pause the playing voice note.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause voice note'**
+  String get inboxPauseVoiceNote;
+
+  /// Chat: a voice note could not be played.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t play this voice note.'**
+  String get inboxVoiceNoteFailed;
+
+  /// Parent hotline picker: page title.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent outreach'**
+  String get parentHotlineOutreachTitle;
+
+  /// Parent hotline picker subtitle: how many students in the class have a parent phone saved.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, =1{{count} of 1 student has a parent phone on file} other{{count} of {total} students have a parent phone on file}}'**
+  String parentHotlineOutreachSubtitle(Object count, num total);
+
+  /// Parent hotline picker: the chip on a student card that starts the call flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get parentHotlineContact;
+
+  /// Parent hotline picker: section of students just marked absent in the register.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked absent'**
+  String get parentHotlineMarkedAbsent;
+
+  /// Parent hotline picker: section with the rest of the class.
+  ///
+  /// In en, this message translates to:
+  /// **'All students'**
+  String get parentHotlineAllStudents;
+
+  /// Parent hotline picker: one class failed to load.
+  ///
+  /// In en, this message translates to:
+  /// **'This class didn\'t load'**
+  String get parentHotlineClassLoadFailed;
+
+  /// Parent hotline call steps: header naming whose parent is being contacted.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact {name}\'s parent'**
+  String parentHotlineContactTitle(Object name);
+
+  /// Parent hotline: step 1 overline.
+  ///
+  /// In en, this message translates to:
+  /// **'Step 1 of 3 · Reason for outreach'**
+  String get parentHotlineStepReason;
+
+  /// Parent hotline: step 2 overline.
+  ///
+  /// In en, this message translates to:
+  /// **'Step 2 of 3 · Evidence'**
+  String get parentHotlineStepEvidence;
+
+  /// Parent hotline: step 3 overline.
+  ///
+  /// In en, this message translates to:
+  /// **'Step 3 of 3 · Review before sending'**
+  String get parentHotlineStepReview;
+
+  /// Parent hotline: button that moves to the next step.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get parentHotlineNext;
+
+  /// Parent hotline: button that returns to the previous step.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get parentHotlineBack;
+
+  /// Parent hotline evidence card: absences heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent attendance'**
+  String get parentHotlineEvidenceRecentAttendance;
+
+  /// Parent hotline evidence card: marks heading; the AI quotes these figures.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent marks · AI cites these'**
+  String get parentHotlineEvidenceRecentMarks;
+
+  /// Parent hotline evidence: no absences on record.
+  ///
+  /// In en, this message translates to:
+  /// **'No absences marked in the last 30 days.'**
+  String get parentHotlineEvidenceNoAbsences;
+
+  /// Parent hotline evidence: a read failed (not the same as nothing on record).
+  ///
+  /// In en, this message translates to:
+  /// **'This couldn\'t be loaded right now.'**
+  String get parentHotlineEvidenceLoadFailed;
+
+  /// Parent hotline evidence: pill when the recent average is below 35%.
+  ///
+  /// In en, this message translates to:
+  /// **'At risk'**
+  String get parentHotlineEvidenceAtRisk;
+
+  /// Parent hotline evidence: honesty line under the figures.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI is told to cite these and not to invent numbers.'**
+  String get parentHotlineEvidenceCiteNote;
+
+  /// Parent hotline evidence step: label above the optional teacher note.
+  ///
+  /// In en, this message translates to:
+  /// **'Specific note · optional'**
+  String get parentHotlineNoteOptional;
+
+  /// Parent hotline: calls are refused outside 9am-9pm India time; {time} is when calling reopens, in local time.
+  ///
+  /// In en, this message translates to:
+  /// **'Parents are only called between 9 AM and 9 PM (India time). You can call from {time}.'**
+  String parentHotlineCallingHours(Object time);
+
+  /// Parent hotline: calls refused outside calling hours, reopening time unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Parents are only called between 9 AM and 9 PM (India time). Please try again then.'**
+  String get parentHotlineCallingHoursNoTime;
+
+  /// Parent hotline calling stage: overline with the elapsed time (m:ss).
+  ///
+  /// In en, this message translates to:
+  /// **'Call in progress · {time}'**
+  String parentHotlineCallingTimer(Object time);
+
+  /// Parent hotline calling stage: overline when the start time is unknown (resumed call).
+  ///
+  /// In en, this message translates to:
+  /// **'Call in progress'**
+  String get parentHotlineCallingNoTimer;
+
+  /// Parent hotline calling stage: language of the call and number of exchanges so far.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Speaking {language}} =1{Speaking {language} · 1 exchange so far} other{Speaking {language} · {count} exchanges so far}}'**
+  String parentHotlineCallingSpeaking(num count, Object language);
+
+  /// Parent hotline calling stage: heading of the live transcript card.
+  ///
+  /// In en, this message translates to:
+  /// **'Live transcript'**
+  String get parentHotlineLiveTranscript;
+
+  /// Parent hotline transcript: label for lines spoken by the AI voice.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get parentHotlineSpeakerAi;
+
+  /// Parent hotline transcript: label for lines spoken by the parent.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent'**
+  String get parentHotlineSpeakerParent;
+
+  /// Parent hotline calling stage: recent status checks failed; the call may still be going.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t check on the call just now. It may still be going — still trying.'**
+  String get parentHotlinePollTrouble;
+
+  /// Parent hotline calling stage: leave the screen; the call keeps going and can be resumed.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave — the call continues'**
+  String get parentHotlineLeaveCall;
+
+  /// Parent hotline: start a new message for the same student.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new message'**
+  String get parentHotlineStartNew;
+
+  /// Parent hotline: the call was still running when the app stopped checking.
+  ///
+  /// In en, this message translates to:
+  /// **'The call may still be going'**
+  String get parentHotlineStillInProgressTitle;
+
+  /// Parent hotline: body for a long-running call.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s taking longer than usual. Check back in a few minutes — the summary will appear here.'**
+  String get parentHotlineStillInProgressBody;
+
+  /// Parent hotline: the app could not find out how the call is going.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t check this call'**
+  String get parentHotlineCheckFailedTitle;
+
+  /// Parent hotline: body when the call status could not be checked.
+  ///
+  /// In en, this message translates to:
+  /// **'The call may still be going. Check your connection and try again.'**
+  String get parentHotlineCheckFailedBody;
+
+  /// Parent hotline: re-check the status of a call.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get parentHotlineCheckAgain;
+
+  /// Parent hotline summary: green banner title.
+  ///
+  /// In en, this message translates to:
+  /// **'Call completed'**
+  String get parentHotlineCallCompleted;
+
+  /// Parent hotline / message: the device is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Check your connection and try again.'**
+  String get parentHotlineErrorOffline;
+
+  /// Parent hotline: the server refused access to this class or student.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have access to this student\'s class.'**
+  String get parentHotlineErrorForbidden;
+
+  /// Parent hotline: the student, class or outreach record no longer exists.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find this student or class any more. Please start again.'**
+  String get parentHotlineErrorNotFound;
+
+  /// Mark attendance: after saving, opens the parent hotline with absent students first. Calls are placed one at a time.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 marked absent · call a parent} other{{count} marked absent · call a parent}}'**
+  String attendanceCallParents(num count);
+
+  /// Mark attendance: tag shown when the register was opened from one of the teacher's tasks.
+  ///
+  /// In en, this message translates to:
+  /// **'From your task'**
+  String get attendanceFromTask;
+
+  /// Subject picker label for the API subject "Mathematics".
+  ///
+  /// In en, this message translates to:
+  /// **'Mathematics'**
+  String get parentMessageSubjectMathematics;
+
+  /// Subject picker label for the API subject "Science".
+  ///
+  /// In en, this message translates to:
+  /// **'Science'**
+  String get parentMessageSubjectScience;
+
+  /// Subject picker label for the API subject "Social Science".
+  ///
+  /// In en, this message translates to:
+  /// **'Social Science'**
+  String get parentMessageSubjectSocialScience;
+
+  /// Subject picker label for the API subject "History".
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get parentMessageSubjectHistory;
+
+  /// Subject picker label for the API subject "Geography".
+  ///
+  /// In en, this message translates to:
+  /// **'Geography'**
+  String get parentMessageSubjectGeography;
+
+  /// Subject picker label for the API subject "Civics".
+  ///
+  /// In en, this message translates to:
+  /// **'Civics'**
+  String get parentMessageSubjectCivics;
+
+  /// Subject picker label for the API subject "English".
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get parentMessageSubjectEnglish;
+
+  /// Subject picker label for the API subject "Hindi".
+  ///
+  /// In en, this message translates to:
+  /// **'Hindi'**
+  String get parentMessageSubjectHindi;
+
+  /// Subject picker label for the API subject "Sanskrit".
+  ///
+  /// In en, this message translates to:
+  /// **'Sanskrit'**
+  String get parentMessageSubjectSanskrit;
+
+  /// Subject picker label for the API subject "Kannada".
+  ///
+  /// In en, this message translates to:
+  /// **'Kannada'**
+  String get parentMessageSubjectKannada;
+
+  /// Subject picker label for the API subject "Computer Science".
+  ///
+  /// In en, this message translates to:
+  /// **'Computer Science'**
+  String get parentMessageSubjectComputerScience;
+
+  /// Subject picker label for the API subject "Environmental Studies (EVS)".
+  ///
+  /// In en, this message translates to:
+  /// **'Environmental Studies (EVS)'**
+  String get parentMessageSubjectEnvironmentalStudies;
+
+  /// Subject picker label for the API subject "General".
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get parentMessageSubjectGeneral;
+
+  /// Parent hotline evidence card: the student has no recorded assessment marks yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No marks recorded yet.'**
+  String get parentHotlineEvidenceNoMarks;
+
+  /// Staffroom post footer: how many comments the post has (shown only when there is at least one).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 comment} other{{count} comments}}'**
+  String staffroomCommentsCount(num count);
+
+  /// Messages pane: overline above teachers whose connection request was just accepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Just connected'**
+  String get communityJustConnected;
+
+  /// Messages pane: line under a teacher whose request was just accepted; chat is now open.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected · you can chat now'**
+  String get communityConnectedCanChat;
+
+  /// Snackbar when the teacher leaves a parent call screen: the AI call keeps going, and Home lists it to return to.
+  ///
+  /// In en, this message translates to:
+  /// **'The call carries on. You can return to it from Home.'**
+  String get parentHotlineCallContinuesNote;
+
+  /// Home 'Waiting for you' row: a parent call the teacher left running; tapping returns to it.
+  ///
+  /// In en, this message translates to:
+  /// **'Call with {name}\'s parent · tap to return'**
+  String homeWaitingParentCall(Object name);
 }
 
 class _AppLocalizationsDelegate

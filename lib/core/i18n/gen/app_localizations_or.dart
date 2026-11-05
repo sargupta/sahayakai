@@ -3350,10 +3350,14 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String staffroomMemberCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count ସଦସ୍ୟ',
+      other: '$countString ସଦସ୍ୟ',
       one: '1 ସଦସ୍ୟ',
     );
     return '$_temp0';
@@ -4300,4 +4304,565 @@ class AppLocalizationsOr extends AppLocalizations {
   @override
   String get worksheetTopicPageHint =>
       'VIDYA ଏହାକୁ ଆପଣଙ୍କ ବିଷୟରୁ ତିଆରି କରିଛି। ଆପଣଙ୍କ ବହିରୁ ତିଆରି କରିବାକୁ ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠାର ଫଟୋ ଯୋଡନ୍ତୁ।';
+
+  @override
+  String get imageInputBrowse => 'ଫଟୋ ନିଅନ୍ତୁ କିମ୍ବା ବାଛନ୍ତୁ';
+
+  @override
+  String get toolMoreOptions => 'ଅଧିକ ବିକଳ୍ପ';
+
+  @override
+  String get toolClassLabel => 'ଶ୍ରେଣୀ';
+
+  @override
+  String get toolAnyClass => 'ଯେକୌଣସି ଶ୍ରେଣୀ';
+
+  @override
+  String get makeHubTitle => 'ଆଜି କ’ଣ ତିଆରି କରିବା?';
+
+  @override
+  String get makeHubSpeak => 'ଟାପ୍ କରି କୁହନ୍ତୁ';
+
+  @override
+  String get makeHubSpeakExample => '“ଶ୍ରେଣୀ 5 ଭଗ୍ନାଂଶ ପୁନରାବୃତ୍ତି ପତ୍ର”';
+
+  @override
+  String get makeHubType => 'କିମ୍ବା ବିଷୟ ଲେଖନ୍ତୁ';
+
+  @override
+  String get makeHubPrepare => 'ପ୍ରସ୍ତୁତି';
+
+  @override
+  String get makeHubAssess => 'ମୂଲ୍ୟାୟନ';
+
+  @override
+  String get makeHubExplore => 'ଅନ୍ୱେଷଣ';
+
+  @override
+  String get makeHubParents => 'ଅଭିଭାବକ';
+
+  @override
+  String get makeHubLessonSub => 'ସମୟ ସହ ପର୍ଯ୍ୟାୟରେ';
+
+  @override
+  String get makeHubWorksheetSub => 'ପାଠ୍ୟପୁସ୍ତକ ଫଟୋରୁ';
+
+  @override
+  String get makeHubQuizSub => '3–20 ପ୍ରଶ୍ନ';
+
+  @override
+  String get makeHubRubricSub => 'ମାନଦଣ୍ଡ × ସ୍ତର';
+
+  @override
+  String get makeHubScannerSub => 'ଉତ୍ତରପତ୍ର ଯାଞ୍ଚ';
+
+  @override
+  String get makeHubAttendanceSub => 'କହି ହାଜିରା';
+
+  @override
+  String get makeHubInstantSub => 'ଶୀଘ୍ର ବିଶେଷଜ୍ଞ ଉତ୍ତର';
+
+  @override
+  String get lessonComposerTitle => 'ପାଠ ତିଆରି କରନ୍ତୁ';
+
+  @override
+  String get lessonComposerSubtitle => 'କୁହନ୍ତୁ କିମ୍ବା ଲେଖନ୍ତୁ, ଫଳ ସମାନ';
+
+  @override
+  String get lessonComposerGenerate => 'ପାଠ ପ୍ରସ୍ତୁତ କରନ୍ତୁ';
+
+  @override
+  String get lessonComposerRecent => 'ସାମ୍ପ୍ରତିକ';
+
+  @override
+  String get quizComposerTitle => 'କୁଇଜ୍ ଜେନେରେଟର';
+
+  @override
+  String get quizComposerSubtitle =>
+      'ଯେକୌଣସି ବିଷୟ, ଆପଣ ବାଛିଥିବା ପ୍ରଶ୍ନ ପ୍ରକାର ସହ।';
+
+  @override
+  String get quizQuestionsLabel => 'ପ୍ରଶ୍ନ';
+
+  @override
+  String get quizBloomLevelsLabel => 'ବ୍ଲୁମ୍ ବର୍ଗୀକରଣ ସ୍ତର';
+
+  @override
+  String get quizStrategyTitle => 'ଶିକ୍ଷଣ କୌଶଳ';
+
+  @override
+  String get quizStrategyEmpty => 'ଅତି କମରେ ଗୋଟିଏ ସ୍ତର ବାଛନ୍ତୁ।';
+
+  @override
+  String get quizBloomRemember => 'ସ୍ମରଣ';
+
+  @override
+  String get quizBloomUnderstand => 'ବୁଝିବା';
+
+  @override
+  String get quizBloomApply => 'ପ୍ରୟୋଗ';
+
+  @override
+  String get quizBloomAnalyze => 'ବିଶ୍ଳେଷଣ';
+
+  @override
+  String get quizBloomEvaluate => 'ମୂଲ୍ୟାୟନ';
+
+  @override
+  String get quizBloomCreate => 'ସୃଷ୍ଟି';
+
+  @override
+  String get quizBloomRememberHow => 'ତଥ୍ୟ, ଶବ୍ଦ ଓ ମୌଳିକ ଧାରଣା ମନେ ପକାଇବା।';
+
+  @override
+  String get quizBloomUnderstandHow => 'ନିଜ ଭାଷାରେ ଧାରଣା ବୁଝାଇବା।';
+
+  @override
+  String get quizBloomApplyHow => 'ଶିଖିଥିବା କଥା ନୂଆ ପରିସ୍ଥିତିରେ ବ୍ୟବହାର କରିବା।';
+
+  @override
+  String get quizBloomAnalyzeHow => 'ଧାରଣାକୁ ଭାଗ କରି ତୁଳନା କରିବା।';
+
+  @override
+  String get quizBloomEvaluateHow => 'ଏକ ବାଛଣିକୁ ଯାଞ୍ଚ କରି କାରଣ ଦେବା।';
+
+  @override
+  String get quizBloomCreateHow => 'ଜାଣିଥିବା କଥାରୁ କିଛି ନୂଆ ତିଆରି କରିବା।';
+
+  @override
+  String get quizGenerate => 'କୁଇଜ୍ ପ୍ରସ୍ତୁତ କରନ୍ତୁ';
+
+  @override
+  String get instantComposerSubtitle => 'କ୍ଲାସର ପ୍ରଶ୍ନର ଶୀଘ୍ର, ବିଶେଷଜ୍ଞ ଉତ୍ତର।';
+
+  @override
+  String get instantTryOne => 'ଏଥିରୁ ଗୋଟିଏ ଚେଷ୍ଟା କରନ୍ତୁ';
+
+  @override
+  String get instantSuggest1 => 'ଆକାଶ ନୀଳ କାହିଁକି?';
+
+  @override
+  String get instantSuggest2 => 'ଆଲୋକ ସଂଶ୍ଳେଷଣ, ପୋଙ୍ଗଲ ତିଆରିର ଉଦାହରଣରେ';
+
+  @override
+  String get instantSuggest3 => 'ନାଳନ୍ଦା ବିଶ୍ୱବିଦ୍ୟାଳୟର ଇତିହାସ';
+
+  @override
+  String get instantSuggest4 => 'ଭାରତର ପ୍ରମୁଖ ନଦୀ';
+
+  @override
+  String get instantSuggest5 => 'ପତ୍ରର ରଙ୍ଗ କାହିଁକି ବଦଳେ?';
+
+  @override
+  String get instantSuggest6 => 'ଗୋରୁଗାଡ଼ିର ଉଦାହରଣରେ ମାଧ୍ୟାକର୍ଷଣ ବୁଝାନ୍ତୁ';
+
+  @override
+  String get instantSourceNote =>
+      'ଉତ୍ତର ସହାୟକର ନିଜ ଜ୍ଞାନରୁ ଆସେ। ପଢ଼ାଇବା ପୂର୍ବରୁ ତଥ୍ୟ ଯାଞ୍ଚ କରନ୍ତୁ।';
+
+  @override
+  String get instantGenerate => 'ତୁରନ୍ତ ଉତ୍ତର ପାଆନ୍ତୁ';
+
+  @override
+  String get worksheetComposerTitle => 'ୱାର୍କସିଟ୍ ୱିଜାର୍ଡ';
+
+  @override
+  String get worksheetComposerSubtitle =>
+      'ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠାର ଫଟୋ ନିଅନ୍ତୁ, ତାପରେ ସେଥିରୁ କ’ଣ ତିଆରି କରିବେ କୁହନ୍ତୁ।';
+
+  @override
+  String get worksheetPageRequired => 'ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠା · ଆବଶ୍ୟକ';
+
+  @override
+  String get worksheetPageAdded => 'ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠା';
+
+  @override
+  String get worksheetInstructionsLabel => 'ୱାର୍କସିଟ୍ ନିର୍ଦ୍ଦେଶ';
+
+  @override
+  String get worksheetSuggest1 =>
+      'ଏହି ପୃଷ୍ଠାରୁ ଶ୍ରେଣୀ 2 ପାଇଁ 5ଟି ଶୂନ୍ୟସ୍ଥାନ ପୂରଣ ତିଆରି କରନ୍ତୁ।';
+
+  @override
+  String get worksheetSuggest2 => 'ଏହି ପୃଷ୍ଠାର ମୁଖ୍ୟ ଶବ୍ଦରୁ “ମେଳ କର”';
+
+  @override
+  String get worksheetSuggest3 => 'ଏହି ପୃଷ୍ଠାର କଠିନ ଶବ୍ଦରେ ଶବ୍ଦ ଖୋଜା ଧନ୍ଦା।';
+
+  @override
+  String get worksheetGenerate => 'ୱାର୍କସିଟ୍ ପ୍ରସ୍ତୁତ କରନ୍ତୁ';
+
+  @override
+  String get scannerComposerTitle => 'ଉତ୍ତରପତ୍ର ସ୍କାନ୍ କରନ୍ତୁ';
+
+  @override
+  String get scannerFinish => 'ଶେଷ କରି ଯାଞ୍ଚ କରନ୍ତୁ';
+
+  @override
+  String get communityRateLimited =>
+      'ଆପଣ ଏହା ବହୁତ ଶୀଘ୍ର ଶୀଘ୍ର କରୁଛନ୍ତି। ଟିକେ ଅପେକ୍ଷା କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String communityRateLimitedMinutes(num minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'ବହୁତ ଥର ଚେଷ୍ଟା ହେଲା। $minutes ମିନିଟ ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
+      one: 'ବହୁତ ଥର ଚେଷ୍ଟା ହେଲା। 1 ମିନିଟ ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get communityOffline => 'ଇଣ୍ଟରନେଟ୍ ସଂଯୋଗ ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get communityNotMember =>
+      'ଏଠାରେ ପୋଷ୍ଟ କିମ୍ବା ଚାଟ୍ କରିବାକୁ ଏହି ଗୋଷ୍ଠୀରେ ଯୋଗ ଦିଅନ୍ତୁ।';
+
+  @override
+  String get communityReasonSameSchool => 'ସମାନ ବିଦ୍ୟାଳୟ';
+
+  @override
+  String get communityReasonNearby => 'ପାଖର ଶିକ୍ଷକ';
+
+  @override
+  String get communityReasonActive => 'ସକ୍ରିୟ ଶିକ୍ଷକ';
+
+  @override
+  String communityReasonSubjectPeer(Object subject) {
+    return '$subject ମଧ୍ୟ ପଢ଼ାନ୍ତି';
+  }
+
+  @override
+  String get communityComposerPrompt => 'ଆଜି ଆପଣ କ’ଣ କଲେ?';
+
+  @override
+  String get communityComposerHint => 'ଆପଣଙ୍କ ଶ୍ରେଣୀର କିଛି କଥା ସେୟାର୍ କରନ୍ତୁ';
+
+  @override
+  String get communityComposerPostTo => 'କେଉଁଠି ପୋଷ୍ଟ କରିବେ';
+
+  @override
+  String get communityComposerTypeLabel => 'ପୋଷ୍ଟର ପ୍ରକାର';
+
+  @override
+  String get communityComposerPost => 'ପୋଷ୍ଟ କରନ୍ତୁ';
+
+  @override
+  String get communityComposerPosted => 'ପୋଷ୍ଟ ହେଲା';
+
+  @override
+  String get communityComposerFailed =>
+      'ପୋଷ୍ଟ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get communityComposerClose => 'ବନ୍ଦ କରନ୍ତୁ';
+
+  @override
+  String get communityMessagesNote =>
+      'ଜଣେ ଶିକ୍ଷକ ଆପଣଙ୍କ ସଂଯୋଗ ଅନୁରୋଧ ଗ୍ରହଣ କଲା ପରେ ହିଁ ଚାଟ୍ ଖୋଲେ।';
+
+  @override
+  String communityPendingRequestsCount(Object count) {
+    return 'ବାକି ଅନୁରୋଧ · $count';
+  }
+
+  @override
+  String get communityFindMoreTitle => 'ଅଧିକ ଶିକ୍ଷକ ଖୋଜନ୍ତୁ';
+
+  @override
+  String get communityFindMoreBody =>
+      'ଯୋଗ ଦେବା ଭଳି ଗୋଷ୍ଠୀ ଓ ଆପଣ ଜାଣିଥିବା ଶିକ୍ଷକଙ୍କୁ ଦେଖନ୍ତୁ।';
+
+  @override
+  String get communityFindMoreAction => 'ଶିକ୍ଷକ ଖୋଜନ୍ତୁ';
+
+  @override
+  String get communityUnknownTeacher => 'ଜଣେ ଶିକ୍ଷକ';
+
+  @override
+  String get communityNowConnected =>
+      'ସଂଯୁକ୍ତ ହେଲେ। ଏବେ ପରସ୍ପରକୁ ବାର୍ତ୍ତା ପଠାଇ ପାରିବେ।';
+
+  @override
+  String get communityMessageFailed =>
+      'ଚାଟ୍ ଖୋଲିପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String communityMyGroupsCount(Object count) {
+    return 'ମୋ ଗୋଷ୍ଠୀ · $count';
+  }
+
+  @override
+  String get communitySuggestedGroups => 'ପରାମର୍ଶିତ ଗୋଷ୍ଠୀ';
+
+  @override
+  String communityConnectionsCount(Object count) {
+    return 'ସଂଯୋଗ · $count';
+  }
+
+  @override
+  String get communityNoSuggestedGroups => 'ଏବେ କୌଣସି ପରାମର୍ଶିତ ଗୋଷ୍ଠୀ ନାହିଁ।';
+
+  @override
+  String get communityNoPeople => 'ଏବେ କୌଣସି ପରାମର୍ଶିତ ଶିକ୍ଷକ ନାହାନ୍ତି।';
+
+  @override
+  String get communityNetworkLoadFailed => 'ଏହି ତାଲିକା ଲୋଡ୍ ହେଲା ନାହିଁ।';
+
+  @override
+  String inboxSendFailedPreview(Object preview) {
+    return 'ପଠାଯାଇନାହିଁ: $preview';
+  }
+
+  @override
+  String get inboxDiscard => 'ହଟାନ୍ତୁ';
+
+  @override
+  String get inboxLoadOlderFailed => 'ପୁରୁଣା ବାର୍ତ୍ତା ଲୋଡ୍ ହେଲା ନାହିଁ।';
+
+  @override
+  String get inboxPlayVoiceNote => 'ଭଏସ୍ ନୋଟ୍ ଚଲାନ୍ତୁ';
+
+  @override
+  String get inboxPauseVoiceNote => 'ଭଏସ୍ ନୋଟ୍ ରଖନ୍ତୁ';
+
+  @override
+  String get inboxVoiceNoteFailed => 'ଏହି ଭଏସ୍ ନୋଟ୍ ଚାଲିପାରିଲା ନାହିଁ।';
+
+  @override
+  String get parentHotlineOutreachTitle => 'ଅଭିଭାବକ ଯୋଗାଯୋଗ';
+
+  @override
+  String parentHotlineOutreachSubtitle(Object count, num total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total ଜଣଙ୍କ ମଧ୍ୟରୁ $count ଛାତ୍ରଙ୍କ ଅଭିଭାବକଙ୍କ ଫୋନ୍ ରେକର୍ଡରେ ଅଛି',
+      one: '1 ଜଣଙ୍କ ମଧ୍ୟରୁ $count ଛାତ୍ରଙ୍କ ଅଭିଭାବକଙ୍କ ଫୋନ୍ ରେକର୍ଡରେ ଅଛି',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineContact => 'ଯୋଗାଯୋଗ କରନ୍ତୁ';
+
+  @override
+  String get parentHotlineMarkedAbsent => 'ଅନୁପସ୍ଥିତ ଚିହ୍ନିତ';
+
+  @override
+  String get parentHotlineAllStudents => 'ସମସ୍ତ ଛାତ୍ରଛାତ୍ରୀ';
+
+  @override
+  String get parentHotlineClassLoadFailed => 'ଏହି ଶ୍ରେଣୀ ଲୋଡ୍ ହେଲା ନାହିଁ';
+
+  @override
+  String parentHotlineContactTitle(Object name) {
+    return '$nameଙ୍କ ଅଭିଭାବକଙ୍କ ସହ ଯୋଗାଯୋଗ କରନ୍ତୁ';
+  }
+
+  @override
+  String get parentHotlineStepReason => 'ପଦକ୍ଷେପ 3 ରୁ 1 · ଯୋଗାଯୋଗର କାରଣ';
+
+  @override
+  String get parentHotlineStepEvidence => 'ପଦକ୍ଷେପ 3 ରୁ 2 · ପ୍ରମାଣ';
+
+  @override
+  String get parentHotlineStepReview =>
+      'ପଦକ୍ଷେପ 3 ରୁ 3 · ପଠାଇବା ପୂର୍ବରୁ ଦେଖନ୍ତୁ';
+
+  @override
+  String get parentHotlineNext => 'ପରବର୍ତ୍ତୀ';
+
+  @override
+  String get parentHotlineBack => 'ପଛକୁ';
+
+  @override
+  String get parentHotlineEvidenceRecentAttendance => 'ସାମ୍ପ୍ରତିକ ଉପସ୍ଥିତି';
+
+  @override
+  String get parentHotlineEvidenceRecentMarks =>
+      'ସାମ୍ପ୍ରତିକ ନମ୍ବର · AI ଏଗୁଡ଼ିକ ଉଲ୍ଲେଖ କରିବ';
+
+  @override
+  String get parentHotlineEvidenceNoAbsences =>
+      'ଗତ 30 ଦିନରେ କୌଣସି ଅନୁପସ୍ଥିତି ଚିହ୍ନିତ ହୋଇନାହିଁ।';
+
+  @override
+  String get parentHotlineEvidenceLoadFailed => 'ଏହା ଏବେ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ।';
+
+  @override
+  String get parentHotlineEvidenceAtRisk => 'ବିପଦରେ';
+
+  @override
+  String get parentHotlineEvidenceCiteNote =>
+      'AIକୁ ଏଗୁଡ଼ିକ ଉଲ୍ଲେଖ କରିବାକୁ ଏବଂ କୌଣସି ସଂଖ୍ୟା ତିଆରି ନକରିବାକୁ କୁହାଯାଇଛି।';
+
+  @override
+  String get parentHotlineNoteOptional => 'ନିର୍ଦ୍ଦିଷ୍ଟ ଟିପ୍ପଣୀ · ଇଚ୍ଛାଧୀନ';
+
+  @override
+  String parentHotlineCallingHours(Object time) {
+    return 'ଅଭିଭାବକଙ୍କୁ କେବଳ ସକାଳ 9ଟାରୁ ରାତି 9ଟା (ଭାରତୀୟ ସମୟ) ମଧ୍ୟରେ କଲ୍ କରାଯାଏ। ଆପଣ $timeରୁ କଲ୍ କରିପାରିବେ।';
+  }
+
+  @override
+  String get parentHotlineCallingHoursNoTime =>
+      'ଅଭିଭାବକଙ୍କୁ କେବଳ ସକାଳ 9ଟାରୁ ରାତି 9ଟା (ଭାରତୀୟ ସମୟ) ମଧ୍ୟରେ କଲ୍ କରାଯାଏ। ଦୟାକରି ସେତେବେଳେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String parentHotlineCallingTimer(Object time) {
+    return 'କଲ୍ ଚାଲିଛି · $time';
+  }
+
+  @override
+  String get parentHotlineCallingNoTimer => 'କଲ୍ ଚାଲିଛି';
+
+  @override
+  String parentHotlineCallingSpeaking(num count, Object language) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$languageରେ କଥା ହେଉଛି · ଏପର୍ଯ୍ୟନ୍ତ $countଟି ବାର୍ତ୍ତାଳାପ',
+      one: '$languageରେ କଥା ହେଉଛି · ଏପର୍ଯ୍ୟନ୍ତ 1ଟି ବାର୍ତ୍ତାଳାପ',
+      zero: '$languageରେ କଥା ହେଉଛି',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineLiveTranscript => 'ସିଧାସଳଖ କଥୋପକଥନ';
+
+  @override
+  String get parentHotlineSpeakerAi => 'AI';
+
+  @override
+  String get parentHotlineSpeakerParent => 'ଅଭିଭାବକ';
+
+  @override
+  String get parentHotlinePollTrouble =>
+      'ଏବେ କଲ୍‌ର ସ୍ଥିତି ଯାଞ୍ଚ କରିହେଲା ନାହିଁ। କଲ୍ ହୁଏତ ଏବେ ବି ଚାଲିଛି — ଚେଷ୍ଟା ଜାରି ଅଛି।';
+
+  @override
+  String get parentHotlineLeaveCall => 'ବାହାରି ଯାଆନ୍ତୁ — କଲ୍ ଚାଲୁ ରହିବ';
+
+  @override
+  String get parentHotlineStartNew => 'ନୂଆ ବାର୍ତ୍ତା ଆରମ୍ଭ କରନ୍ତୁ';
+
+  @override
+  String get parentHotlineStillInProgressTitle => 'କଲ୍ ହୁଏତ ଏବେ ବି ଚାଲିଛି';
+
+  @override
+  String get parentHotlineStillInProgressBody =>
+      'ସାଧାରଣ ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। କିଛି ମିନିଟ୍ ପରେ ପୁଣି ଦେଖନ୍ତୁ — ସାରାଂଶ ଏଠାରେ ଦେଖାଯିବ।';
+
+  @override
+  String get parentHotlineCheckFailedTitle =>
+      'ଆମେ ଏହି କଲ୍‌ର ସ୍ଥିତି ଯାଞ୍ଚ କରିପାରିଲୁ ନାହିଁ';
+
+  @override
+  String get parentHotlineCheckFailedBody =>
+      'କଲ୍ ହୁଏତ ଏବେ ବି ଚାଲିଛି। ଆପଣଙ୍କ ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get parentHotlineCheckAgain => 'ପୁଣି ଯାଞ୍ଚ କରନ୍ତୁ';
+
+  @override
+  String get parentHotlineCallCompleted => 'କଲ୍ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା';
+
+  @override
+  String get parentHotlineErrorOffline =>
+      'ଆପଣ ଅଫଲାଇନ୍ ଅଛନ୍ତି। ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get parentHotlineErrorForbidden =>
+      'ଏହି ଛାତ୍ରଙ୍କ ଶ୍ରେଣୀକୁ ଆପଣଙ୍କର ପ୍ରବେଶ ନାହିଁ।';
+
+  @override
+  String get parentHotlineErrorNotFound =>
+      'ଏହି ଛାତ୍ର ବା ଶ୍ରେଣୀ ଆଉ ମିଳୁନାହିଁ। ଦୟାକରି ପୁଣି ଆରମ୍ଭ କରନ୍ତୁ।';
+
+  @override
+  String attendanceCallParents(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ଜଣ ଅନୁପସ୍ଥିତ · ଅଭିଭାବକଙ୍କୁ କଲ୍ କରନ୍ତୁ',
+      one: '1 ଜଣ ଅନୁପସ୍ଥିତ · ଅଭିଭାବକଙ୍କୁ କଲ୍ କରନ୍ତୁ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get attendanceFromTask => 'ଆପଣଙ୍କ କାର୍ଯ୍ୟରୁ';
+
+  @override
+  String get parentMessageSubjectMathematics => 'ଗଣିତ';
+
+  @override
+  String get parentMessageSubjectScience => 'ବିଜ୍ଞାନ';
+
+  @override
+  String get parentMessageSubjectSocialScience => 'ସାମାଜିକ ବିଜ୍ଞାନ';
+
+  @override
+  String get parentMessageSubjectHistory => 'ଇତିହାସ';
+
+  @override
+  String get parentMessageSubjectGeography => 'ଭୂଗୋଳ';
+
+  @override
+  String get parentMessageSubjectCivics => 'ନାଗରିକ ଶାସ୍ତ୍ର';
+
+  @override
+  String get parentMessageSubjectEnglish => 'ଇଂରାଜୀ';
+
+  @override
+  String get parentMessageSubjectHindi => 'ହିନ୍ଦୀ';
+
+  @override
+  String get parentMessageSubjectSanskrit => 'ସଂସ୍କୃତ';
+
+  @override
+  String get parentMessageSubjectKannada => 'କନ୍ନଡ଼';
+
+  @override
+  String get parentMessageSubjectComputerScience => 'କମ୍ପ୍ୟୁଟର ବିଜ୍ଞାନ';
+
+  @override
+  String get parentMessageSubjectEnvironmentalStudies => 'ପରିବେଶ ଅଧ୍ୟୟନ (EVS)';
+
+  @override
+  String get parentMessageSubjectGeneral => 'ସାଧାରଣ';
+
+  @override
+  String get parentHotlineEvidenceNoMarks =>
+      'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ନମ୍ବର ରେକର୍ଡ ହୋଇନାହିଁ।';
+
+  @override
+  String staffroomCommentsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countଟି ମନ୍ତବ୍ୟ',
+      one: '1ଟି ମନ୍ତବ୍ୟ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get communityJustConnected => 'ଏବେ ସଂଯୁକ୍ତ';
+
+  @override
+  String get communityConnectedCanChat => 'ସଂଯୁକ୍ତ · ଏବେ ଚାଟ୍ କରିପାରିବେ';
+
+  @override
+  String get parentHotlineCallContinuesNote =>
+      'କଲ୍ ଚାଲୁଛି। ଆପଣ ହୋମ୍‌ରୁ ଏଥିକୁ ଫେରିପାରିବେ।';
+
+  @override
+  String homeWaitingParentCall(Object name) {
+    return '$nameଙ୍କ ଅଭିଭାବକଙ୍କ ସହ କଲ୍ · ଫେରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ';
+  }
 }

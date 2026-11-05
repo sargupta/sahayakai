@@ -4105,7 +4105,8 @@
     "description": "Group member count (plural).",
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -5147,5 +5148,641 @@
   "worksheetTopicPageHint": "VIDYA made this from your topic. Add a photo of a textbook page to build it from your book instead.",
   "@worksheetTopicPageHint": {
     "description": "Worksheet Wizard: hint under the image when VIDYA drew the page from the spoken topic."
+  },
+  "imageInputBrowse": "Take a photo or browse",
+  "@imageInputBrowse": {
+    "description": "Photo picker: the empty box prompt."
+  },
+  "toolMoreOptions": "More options",
+  "@toolMoreOptions": {
+    "description": "Tool forms: the collapsed card holding the fields the map leaves out."
+  },
+  "toolClassLabel": "Class",
+  "@toolClassLabel": {
+    "description": "Tool forms: the class selector label."
+  },
+  "toolAnyClass": "Any class",
+  "@toolAnyClass": {
+    "description": "Tool forms: no class chosen."
+  },
+  "makeHubTitle": "What are we making?",
+  "@makeHubTitle": {
+    "description": "Make hub: page title."
+  },
+  "makeHubSpeak": "Tap and speak",
+  "@makeHubSpeak": {
+    "description": "Make hub: the card that opens VIDYA."
+  },
+  "makeHubSpeakExample": "“Class 5 fractions revision sheet”",
+  "@makeHubSpeakExample": {
+    "description": "Make hub: an example of what to say."
+  },
+  "makeHubType": "Or type a topic",
+  "@makeHubType": {
+    "description": "Make hub: link under the example."
+  },
+  "makeHubPrepare": "Prepare",
+  "@makeHubPrepare": {
+    "description": "Make hub: group heading."
+  },
+  "makeHubAssess": "Assess",
+  "@makeHubAssess": {
+    "description": "Make hub: group heading."
+  },
+  "makeHubExplore": "Explore",
+  "@makeHubExplore": {
+    "description": "Make hub: group heading."
+  },
+  "makeHubParents": "Parents",
+  "@makeHubParents": {
+    "description": "Make hub: group heading."
+  },
+  "makeHubLessonSub": "In timed steps",
+  "@makeHubLessonSub": {
+    "description": "Make hub: lesson plan tile."
+  },
+  "makeHubWorksheetSub": "From a textbook photo",
+  "@makeHubWorksheetSub": {
+    "description": "Make hub: worksheet tile."
+  },
+  "makeHubQuizSub": "3–20 questions",
+  "@makeHubQuizSub": {
+    "description": "Make hub: quiz tile."
+  },
+  "makeHubRubricSub": "Criteria × levels",
+  "@makeHubRubricSub": {
+    "description": "Make hub: rubric tile."
+  },
+  "makeHubScannerSub": "Grade an answer sheet",
+  "@makeHubScannerSub": {
+    "description": "Make hub: scanner tile."
+  },
+  "makeHubAttendanceSub": "Voice roll call",
+  "@makeHubAttendanceSub": {
+    "description": "Make hub: attendance tile."
+  },
+  "makeHubInstantSub": "A quick expert answer",
+  "@makeHubInstantSub": {
+    "description": "Make hub: instant answer tile."
+  },
+  "lessonComposerTitle": "Make a lesson",
+  "@lessonComposerTitle": {
+    "description": "Lesson composer: page title."
+  },
+  "lessonComposerSubtitle": "Spoken or typed, same result",
+  "@lessonComposerSubtitle": {
+    "description": "Lesson composer: under the title."
+  },
+  "lessonComposerGenerate": "Generate lesson",
+  "@lessonComposerGenerate": {
+    "description": "Lesson composer: primary button."
+  },
+  "lessonComposerRecent": "Recent",
+  "@lessonComposerRecent": {
+    "description": "Lesson composer: the card of recent lessons."
+  },
+  "quizComposerTitle": "Quiz Generator",
+  "@quizComposerTitle": {
+    "description": "Quiz composer: page title."
+  },
+  "quizComposerSubtitle": "Any topic, with the question types you choose.",
+  "@quizComposerSubtitle": {
+    "description": "Quiz composer: under the title."
+  },
+  "quizQuestionsLabel": "Questions",
+  "@quizQuestionsLabel": {
+    "description": "Quiz composer: the question-count slider label."
+  },
+  "quizBloomLevelsLabel": "Bloom’s taxonomy levels",
+  "@quizBloomLevelsLabel": {
+    "description": "Quiz composer: Bloom levels label."
+  },
+  "quizStrategyTitle": "Pedagogical strategy",
+  "@quizStrategyTitle": {
+    "description": "Quiz composer: the card explaining the chosen levels."
+  },
+  "quizStrategyEmpty": "Pick at least one level.",
+  "@quizStrategyEmpty": {
+    "description": "Quiz composer: no Bloom level chosen."
+  },
+  "quizBloomRemember": "Remember",
+  "@quizBloomRemember": {
+    "description": "Bloom level name."
+  },
+  "quizBloomUnderstand": "Understand",
+  "@quizBloomUnderstand": {
+    "description": "Bloom level name."
+  },
+  "quizBloomApply": "Apply",
+  "@quizBloomApply": {
+    "description": "Bloom level name."
+  },
+  "quizBloomAnalyze": "Analyze",
+  "@quizBloomAnalyze": {
+    "description": "Bloom level name."
+  },
+  "quizBloomEvaluate": "Evaluate",
+  "@quizBloomEvaluate": {
+    "description": "Bloom level name."
+  },
+  "quizBloomCreate": "Create",
+  "@quizBloomCreate": {
+    "description": "Bloom level name."
+  },
+  "quizBloomRememberHow": "recall facts, terms and basic concepts.",
+  "@quizBloomRememberHow": {
+    "description": "Quiz strategy: what this level asks students to do."
+  },
+  "quizBloomUnderstandHow": "explain ideas in their own words.",
+  "@quizBloomUnderstandHow": {
+    "description": "Quiz strategy line."
+  },
+  "quizBloomApplyHow": "use what they learned in a new situation.",
+  "@quizBloomApplyHow": {
+    "description": "Quiz strategy line."
+  },
+  "quizBloomAnalyzeHow": "break ideas apart and compare them.",
+  "@quizBloomAnalyzeHow": {
+    "description": "Quiz strategy line."
+  },
+  "quizBloomEvaluateHow": "judge and justify a choice.",
+  "@quizBloomEvaluateHow": {
+    "description": "Quiz strategy line."
+  },
+  "quizBloomCreateHow": "make something new from what they know.",
+  "@quizBloomCreateHow": {
+    "description": "Quiz strategy line."
+  },
+  "quizGenerate": "Generate quiz",
+  "@quizGenerate": {
+    "description": "Quiz composer: primary button."
+  },
+  "instantComposerSubtitle": "A quick, expert answer to a question from class.",
+  "@instantComposerSubtitle": {
+    "description": "Instant answer: under the title."
+  },
+  "instantTryOne": "Try one of these",
+  "@instantTryOne": {
+    "description": "Instant answer: suggestions heading."
+  },
+  "instantSuggest1": "Why is the sky blue?",
+  "@instantSuggest1": {
+    "description": "Instant answer: a suggested question."
+  },
+  "instantSuggest2": "Photosynthesis, using how Pongal is made",
+  "@instantSuggest2": {
+    "description": "Instant answer: a suggested question."
+  },
+  "instantSuggest3": "The history of Nalanda University",
+  "@instantSuggest3": {
+    "description": "Instant answer: a suggested question."
+  },
+  "instantSuggest4": "The major rivers in India",
+  "@instantSuggest4": {
+    "description": "Instant answer: a suggested question."
+  },
+  "instantSuggest5": "Why do leaves change colour?",
+  "@instantSuggest5": {
+    "description": "Instant answer: a suggested question."
+  },
+  "instantSuggest6": "Explain gravity with a bullock cart",
+  "@instantSuggest6": {
+    "description": "Instant answer: a suggested question."
+  },
+  "instantSourceNote": "Answers come from Sahayak’s own knowledge. Please check the facts before teaching them.",
+  "@instantSourceNote": {
+    "description": "Instant answer: honest note on where answers come from."
+  },
+  "instantGenerate": "Get instant answer",
+  "@instantGenerate": {
+    "description": "Instant answer: primary button."
+  },
+  "worksheetComposerTitle": "Worksheet Wizard",
+  "@worksheetComposerTitle": {
+    "description": "Worksheet: page title."
+  },
+  "worksheetComposerSubtitle": "Photograph a textbook page, then say what you want made from it.",
+  "@worksheetComposerSubtitle": {
+    "description": "Worksheet: under the title."
+  },
+  "worksheetPageRequired": "Textbook page · required",
+  "@worksheetPageRequired": {
+    "description": "Worksheet: photo field label while no photo is added."
+  },
+  "worksheetPageAdded": "Textbook page",
+  "@worksheetPageAdded": {
+    "description": "Worksheet: photo field label once a photo is in."
+  },
+  "worksheetInstructionsLabel": "Worksheet instructions",
+  "@worksheetInstructionsLabel": {
+    "description": "Worksheet: instructions field label."
+  },
+  "worksheetSuggest1": "From this page, create 5 fill-in-the-blanks for Grade 2.",
+  "@worksheetSuggest1": {
+    "description": "Worksheet: a suggested instruction."
+  },
+  "worksheetSuggest2": "A “Match the following” from the key words on this page",
+  "@worksheetSuggest2": {
+    "description": "Worksheet: a suggested instruction."
+  },
+  "worksheetSuggest3": "A word search with the difficult words on this page.",
+  "@worksheetSuggest3": {
+    "description": "Worksheet: a suggested instruction."
+  },
+  "worksheetGenerate": "Generate worksheet",
+  "@worksheetGenerate": {
+    "description": "Worksheet: primary button."
+  },
+  "scannerComposerTitle": "Scan answer sheets",
+  "@scannerComposerTitle": {
+    "description": "Scanner: page title."
+  },
+  "scannerFinish": "Finish and grade",
+  "@scannerFinish": {
+    "description": "Scanner: primary button."
+  },
+  "communityRateLimited": "You're doing that too often. Please wait a little and try again.",
+  "@communityRateLimited": {
+    "description": "Community: a post / chat / request was refused for being sent too often (429), no wait time known."
+  },
+  "communityRateLimitedMinutes": "{minutes, plural, =1{Too many tries. Please try again in 1 minute.} other{Too many tries. Please try again in {minutes} minutes.}}",
+  "@communityRateLimitedMinutes": {
+    "description": "Community: rate-limited (429) with the wait the server asked for, in minutes."
+  },
+  "communityOffline": "No internet connection. Please try again.",
+  "@communityOffline": {
+    "description": "Community: a write failed because the phone is offline or the request timed out."
+  },
+  "communityNotMember": "Join this group to post or chat here.",
+  "@communityNotMember": {
+    "description": "Community: a post or chat was refused because the teacher is not a member of the group (403)."
+  },
+  "communityReasonSameSchool": "Same school",
+  "@communityReasonSameSchool": {
+    "description": "People you may know: why suggested — teaches at the same school."
+  },
+  "communityReasonNearby": "Teacher nearby",
+  "@communityReasonNearby": {
+    "description": "People you may know: why suggested — teaches in the same district."
+  },
+  "communityReasonActive": "Active educator",
+  "@communityReasonActive": {
+    "description": "People you may know: why suggested — an active teacher on SahayakAI."
+  },
+  "communityReasonSubjectPeer": "Also teaches {subject}",
+  "@communityReasonSubjectPeer": {
+    "description": "People you may know: why suggested — also teaches this subject. {subject} is the subject name as the server sends it."
+  },
+  "communityComposerPrompt": "What did you do today?",
+  "@communityComposerPrompt": {
+    "description": "Community: the collapsed post composer prompt."
+  },
+  "communityComposerHint": "Share something from your class",
+  "@communityComposerHint": {
+    "description": "Community: hint inside the post text field."
+  },
+  "communityComposerPostTo": "Post to",
+  "@communityComposerPostTo": {
+    "description": "Community composer: label of the group picker."
+  },
+  "communityComposerTypeLabel": "Kind of post",
+  "@communityComposerTypeLabel": {
+    "description": "Community composer: label above the post-type chips."
+  },
+  "communityComposerPost": "Post",
+  "@communityComposerPost": {
+    "description": "Community composer: the submit button."
+  },
+  "communityComposerPosted": "Posted",
+  "@communityComposerPosted": {
+    "description": "Community composer: confirmation after a post was published."
+  },
+  "communityComposerFailed": "Couldn't post. Please try again.",
+  "@communityComposerFailed": {
+    "description": "Community composer: the post could not be published."
+  },
+  "communityComposerClose": "Close",
+  "@communityComposerClose": {
+    "description": "Community composer: collapse the composer without posting."
+  },
+  "communityMessagesNote": "Chat opens only after a teacher accepts your connection request.",
+  "@communityMessagesNote": {
+    "description": "Community Messages: the note explaining when chat opens."
+  },
+  "communityPendingRequestsCount": "Pending requests · {count}",
+  "@communityPendingRequestsCount": {
+    "description": "Community Messages: section label for incoming connection requests, with their number."
+  },
+  "communityFindMoreTitle": "Find more teachers",
+  "@communityFindMoreTitle": {
+    "description": "Community Messages: heading of the block that leads to the network screen."
+  },
+  "communityFindMoreBody": "See groups to join and teachers you may know.",
+  "@communityFindMoreBody": {
+    "description": "Community Messages: line under \"Find more teachers\"."
+  },
+  "communityFindMoreAction": "Find teachers",
+  "@communityFindMoreAction": {
+    "description": "Community Messages: link that opens the network screen."
+  },
+  "communityUnknownTeacher": "A teacher",
+  "@communityUnknownTeacher": {
+    "description": "Community: shown in place of a name when a teacher profile could not be loaded."
+  },
+  "communityNowConnected": "Connected. You can now message each other.",
+  "@communityNowConnected": {
+    "description": "Community: confirmation after accepting a connection request."
+  },
+  "communityMessageFailed": "Couldn't open the chat. Please try again.",
+  "@communityMessageFailed": {
+    "description": "Community: the chat with a teacher could not be opened."
+  },
+  "communityMyGroupsCount": "My groups · {count}",
+  "@communityMyGroupsCount": {
+    "description": "Your network: section label for the teacher's groups, with their number."
+  },
+  "communitySuggestedGroups": "Suggested groups",
+  "@communitySuggestedGroups": {
+    "description": "Your network: section label for groups worth joining."
+  },
+  "communityConnectionsCount": "Connections · {count}",
+  "@communityConnectionsCount": {
+    "description": "Your network: section label for accepted connections, with their number."
+  },
+  "communityNoSuggestedGroups": "No group suggestions right now.",
+  "@communityNoSuggestedGroups": {
+    "description": "Your network: no group suggestions to show."
+  },
+  "communityNoPeople": "No teacher suggestions right now.",
+  "@communityNoPeople": {
+    "description": "Your network: no teacher suggestions to show."
+  },
+  "communityNetworkLoadFailed": "Couldn't load this list.",
+  "@communityNetworkLoadFailed": {
+    "description": "Your network: one section could not load; a retry button sits beside it."
+  },
+  "inboxSendFailedPreview": "Not sent: {preview}",
+  "@inboxSendFailedPreview": {
+    "description": "Chat: one message that did not send, quoting its start. {preview} is the teacher's own text."
+  },
+  "inboxDiscard": "Discard",
+  "@inboxDiscard": {
+    "description": "Chat: remove a message that failed to send instead of retrying it."
+  },
+  "inboxLoadOlderFailed": "Couldn't load older messages.",
+  "@inboxLoadOlderFailed": {
+    "description": "Conversation: loading older messages failed."
+  },
+  "inboxPlayVoiceNote": "Play voice note",
+  "@inboxPlayVoiceNote": {
+    "description": "Chat: play a voice note (button label for screen readers)."
+  },
+  "inboxPauseVoiceNote": "Pause voice note",
+  "@inboxPauseVoiceNote": {
+    "description": "Chat: pause the playing voice note."
+  },
+  "inboxVoiceNoteFailed": "Couldn't play this voice note.",
+  "@inboxVoiceNoteFailed": {
+    "description": "Chat: a voice note could not be played."
+  },
+  "parentHotlineOutreachTitle": "Parent outreach",
+  "@parentHotlineOutreachTitle": {
+    "description": "Parent hotline picker: page title."
+  },
+  "parentHotlineOutreachSubtitle": "{total, plural, =1{{count} of 1 student has a parent phone on file} other{{count} of {total} students have a parent phone on file}}",
+  "@parentHotlineOutreachSubtitle": {
+    "description": "Parent hotline picker subtitle: how many students in the class have a parent phone saved."
+  },
+  "parentHotlineContact": "Contact",
+  "@parentHotlineContact": {
+    "description": "Parent hotline picker: the chip on a student card that starts the call flow."
+  },
+  "parentHotlineMarkedAbsent": "Marked absent",
+  "@parentHotlineMarkedAbsent": {
+    "description": "Parent hotline picker: section of students just marked absent in the register."
+  },
+  "parentHotlineAllStudents": "All students",
+  "@parentHotlineAllStudents": {
+    "description": "Parent hotline picker: section with the rest of the class."
+  },
+  "parentHotlineClassLoadFailed": "This class didn't load",
+  "@parentHotlineClassLoadFailed": {
+    "description": "Parent hotline picker: one class failed to load."
+  },
+  "parentHotlineContactTitle": "Contact {name}'s parent",
+  "@parentHotlineContactTitle": {
+    "description": "Parent hotline call steps: header naming whose parent is being contacted."
+  },
+  "parentHotlineStepReason": "Step 1 of 3 · Reason for outreach",
+  "@parentHotlineStepReason": {
+    "description": "Parent hotline: step 1 overline."
+  },
+  "parentHotlineStepEvidence": "Step 2 of 3 · Evidence",
+  "@parentHotlineStepEvidence": {
+    "description": "Parent hotline: step 2 overline."
+  },
+  "parentHotlineStepReview": "Step 3 of 3 · Review before sending",
+  "@parentHotlineStepReview": {
+    "description": "Parent hotline: step 3 overline."
+  },
+  "parentHotlineNext": "Next",
+  "@parentHotlineNext": {
+    "description": "Parent hotline: button that moves to the next step."
+  },
+  "parentHotlineBack": "Back",
+  "@parentHotlineBack": {
+    "description": "Parent hotline: button that returns to the previous step."
+  },
+  "parentHotlineEvidenceRecentAttendance": "Recent attendance",
+  "@parentHotlineEvidenceRecentAttendance": {
+    "description": "Parent hotline evidence card: absences heading."
+  },
+  "parentHotlineEvidenceRecentMarks": "Recent marks · AI cites these",
+  "@parentHotlineEvidenceRecentMarks": {
+    "description": "Parent hotline evidence card: marks heading; the AI quotes these figures."
+  },
+  "parentHotlineEvidenceNoAbsences": "No absences marked in the last 30 days.",
+  "@parentHotlineEvidenceNoAbsences": {
+    "description": "Parent hotline evidence: no absences on record."
+  },
+  "parentHotlineEvidenceLoadFailed": "This couldn't be loaded right now.",
+  "@parentHotlineEvidenceLoadFailed": {
+    "description": "Parent hotline evidence: a read failed (not the same as nothing on record)."
+  },
+  "parentHotlineEvidenceAtRisk": "At risk",
+  "@parentHotlineEvidenceAtRisk": {
+    "description": "Parent hotline evidence: pill when the recent average is below 35%."
+  },
+  "parentHotlineEvidenceCiteNote": "The AI is told to cite these and not to invent numbers.",
+  "@parentHotlineEvidenceCiteNote": {
+    "description": "Parent hotline evidence: honesty line under the figures."
+  },
+  "parentHotlineNoteOptional": "Specific note · optional",
+  "@parentHotlineNoteOptional": {
+    "description": "Parent hotline evidence step: label above the optional teacher note."
+  },
+  "parentHotlineCallingHours": "Parents are only called between 9 AM and 9 PM (India time). You can call from {time}.",
+  "@parentHotlineCallingHours": {
+    "description": "Parent hotline: calls are refused outside 9am-9pm India time; {time} is when calling reopens, in local time."
+  },
+  "parentHotlineCallingHoursNoTime": "Parents are only called between 9 AM and 9 PM (India time). Please try again then.",
+  "@parentHotlineCallingHoursNoTime": {
+    "description": "Parent hotline: calls refused outside calling hours, reopening time unknown."
+  },
+  "parentHotlineCallingTimer": "Call in progress · {time}",
+  "@parentHotlineCallingTimer": {
+    "description": "Parent hotline calling stage: overline with the elapsed time (m:ss)."
+  },
+  "parentHotlineCallingNoTimer": "Call in progress",
+  "@parentHotlineCallingNoTimer": {
+    "description": "Parent hotline calling stage: overline when the start time is unknown (resumed call)."
+  },
+  "parentHotlineCallingSpeaking": "{count, plural, =0{Speaking {language}} =1{Speaking {language} · 1 exchange so far} other{Speaking {language} · {count} exchanges so far}}",
+  "@parentHotlineCallingSpeaking": {
+    "description": "Parent hotline calling stage: language of the call and number of exchanges so far."
+  },
+  "parentHotlineLiveTranscript": "Live transcript",
+  "@parentHotlineLiveTranscript": {
+    "description": "Parent hotline calling stage: heading of the live transcript card."
+  },
+  "parentHotlineSpeakerAi": "AI",
+  "@parentHotlineSpeakerAi": {
+    "description": "Parent hotline transcript: label for lines spoken by the AI voice."
+  },
+  "parentHotlineSpeakerParent": "Parent",
+  "@parentHotlineSpeakerParent": {
+    "description": "Parent hotline transcript: label for lines spoken by the parent."
+  },
+  "parentHotlinePollTrouble": "We couldn't check on the call just now. It may still be going — still trying.",
+  "@parentHotlinePollTrouble": {
+    "description": "Parent hotline calling stage: recent status checks failed; the call may still be going."
+  },
+  "parentHotlineLeaveCall": "Leave — the call continues",
+  "@parentHotlineLeaveCall": {
+    "description": "Parent hotline calling stage: leave the screen; the call keeps going and can be resumed."
+  },
+  "parentHotlineStartNew": "Start a new message",
+  "@parentHotlineStartNew": {
+    "description": "Parent hotline: start a new message for the same student."
+  },
+  "parentHotlineStillInProgressTitle": "The call may still be going",
+  "@parentHotlineStillInProgressTitle": {
+    "description": "Parent hotline: the call was still running when the app stopped checking."
+  },
+  "parentHotlineStillInProgressBody": "It's taking longer than usual. Check back in a few minutes — the summary will appear here.",
+  "@parentHotlineStillInProgressBody": {
+    "description": "Parent hotline: body for a long-running call."
+  },
+  "parentHotlineCheckFailedTitle": "We couldn't check this call",
+  "@parentHotlineCheckFailedTitle": {
+    "description": "Parent hotline: the app could not find out how the call is going."
+  },
+  "parentHotlineCheckFailedBody": "The call may still be going. Check your connection and try again.",
+  "@parentHotlineCheckFailedBody": {
+    "description": "Parent hotline: body when the call status could not be checked."
+  },
+  "parentHotlineCheckAgain": "Check again",
+  "@parentHotlineCheckAgain": {
+    "description": "Parent hotline: re-check the status of a call."
+  },
+  "parentHotlineCallCompleted": "Call completed",
+  "@parentHotlineCallCompleted": {
+    "description": "Parent hotline summary: green banner title."
+  },
+  "parentHotlineErrorOffline": "You're offline. Check your connection and try again.",
+  "@parentHotlineErrorOffline": {
+    "description": "Parent hotline / message: the device is offline."
+  },
+  "parentHotlineErrorForbidden": "You don't have access to this student's class.",
+  "@parentHotlineErrorForbidden": {
+    "description": "Parent hotline: the server refused access to this class or student."
+  },
+  "parentHotlineErrorNotFound": "We couldn't find this student or class any more. Please start again.",
+  "@parentHotlineErrorNotFound": {
+    "description": "Parent hotline: the student, class or outreach record no longer exists."
+  },
+  "attendanceCallParents": "{count, plural, =1{1 marked absent · call a parent} other{{count} marked absent · call a parent}}",
+  "@attendanceCallParents": {
+    "description": "Mark attendance: after saving, opens the parent hotline with absent students first. Calls are placed one at a time."
+  },
+  "attendanceFromTask": "From your task",
+  "@attendanceFromTask": {
+    "description": "Mark attendance: tag shown when the register was opened from one of the teacher's tasks."
+  },
+  "parentMessageSubjectMathematics": "Mathematics",
+  "@parentMessageSubjectMathematics": {
+    "description": "Subject picker label for the API subject \"Mathematics\"."
+  },
+  "parentMessageSubjectScience": "Science",
+  "@parentMessageSubjectScience": {
+    "description": "Subject picker label for the API subject \"Science\"."
+  },
+  "parentMessageSubjectSocialScience": "Social Science",
+  "@parentMessageSubjectSocialScience": {
+    "description": "Subject picker label for the API subject \"Social Science\"."
+  },
+  "parentMessageSubjectHistory": "History",
+  "@parentMessageSubjectHistory": {
+    "description": "Subject picker label for the API subject \"History\"."
+  },
+  "parentMessageSubjectGeography": "Geography",
+  "@parentMessageSubjectGeography": {
+    "description": "Subject picker label for the API subject \"Geography\"."
+  },
+  "parentMessageSubjectCivics": "Civics",
+  "@parentMessageSubjectCivics": {
+    "description": "Subject picker label for the API subject \"Civics\"."
+  },
+  "parentMessageSubjectEnglish": "English",
+  "@parentMessageSubjectEnglish": {
+    "description": "Subject picker label for the API subject \"English\"."
+  },
+  "parentMessageSubjectHindi": "Hindi",
+  "@parentMessageSubjectHindi": {
+    "description": "Subject picker label for the API subject \"Hindi\"."
+  },
+  "parentMessageSubjectSanskrit": "Sanskrit",
+  "@parentMessageSubjectSanskrit": {
+    "description": "Subject picker label for the API subject \"Sanskrit\"."
+  },
+  "parentMessageSubjectKannada": "Kannada",
+  "@parentMessageSubjectKannada": {
+    "description": "Subject picker label for the API subject \"Kannada\"."
+  },
+  "parentMessageSubjectComputerScience": "Computer Science",
+  "@parentMessageSubjectComputerScience": {
+    "description": "Subject picker label for the API subject \"Computer Science\"."
+  },
+  "parentMessageSubjectEnvironmentalStudies": "Environmental Studies (EVS)",
+  "@parentMessageSubjectEnvironmentalStudies": {
+    "description": "Subject picker label for the API subject \"Environmental Studies (EVS)\"."
+  },
+  "parentMessageSubjectGeneral": "General",
+  "@parentMessageSubjectGeneral": {
+    "description": "Subject picker label for the API subject \"General\"."
+  },
+  "parentHotlineEvidenceNoMarks": "No marks recorded yet.",
+  "@parentHotlineEvidenceNoMarks": {
+    "description": "Parent hotline evidence card: the student has no recorded assessment marks yet."
+  },
+  "staffroomCommentsCount": "{count, plural, =1{1 comment} other{{count} comments}}",
+  "@staffroomCommentsCount": {
+    "description": "Staffroom post footer: how many comments the post has (shown only when there is at least one)."
+  },
+  "communityJustConnected": "Just connected",
+  "@communityJustConnected": {
+    "description": "Messages pane: overline above teachers whose connection request was just accepted."
+  },
+  "communityConnectedCanChat": "Connected · you can chat now",
+  "@communityConnectedCanChat": {
+    "description": "Messages pane: line under a teacher whose request was just accepted; chat is now open."
+  },
+  "parentHotlineCallContinuesNote": "The call carries on. You can return to it from Home.",
+  "@parentHotlineCallContinuesNote": {
+    "description": "Snackbar when the teacher leaves a parent call screen: the AI call keeps going, and Home lists it to return to."
+  },
+  "homeWaitingParentCall": "Call with {name}'s parent · tap to return",
+  "@homeWaitingParentCall": {
+    "description": "Home 'Waiting for you' row: a parent call the teacher left running; tapping returns to it."
   }
 }
