@@ -5,24 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/shared/widgets/app_segmented.dart';
 
-/// WCAG AA for the [AppSegmented] `_track` labels. The **unselected** label sits
-/// on the track fill, not the thumb — it previously used `onSurfaceVariant`,
-/// which is only 3.86:1 on the old `surfaceContainerHigh` fill (a fail for the
-/// `labelLarge` text, which is not large text). It now uses full-ink
-/// `onSurface` (matching the `_chips` fallback), which this test pins in both
-/// themes by reading the ACTUAL rendered label colour and computing its ratio
-/// against the actual track fill.
-///
-/// GL-3 (App-wide Glassmorphism Reskin) updated the track's fill from the
-/// flat `surfaceContainerHigh` token to `AppGlass`'s translucent flat-fill
-/// token (the same one `AppCard` now uses) — so the "actual track fill" this
-/// test composites against is now [AppGlass.lFlatFill]/[AppGlass.dFlatFill]
-/// alpha-blended over the screen backdrop, using the SAME `Color.alphaBlend`
-/// composite method `theme_contrast_test.dart`'s own "GL-1 glassmorphism —
-/// flat-fill token stays AA-safe" group already uses (and already proves
-/// clears AA generically for this token) — not the plain opaque
-/// `surfaceContainerHigh` colour this test asserted against before the
-/// reskin.
+/// WCAG AA for the [AppSegmented] labels, read from the ACTUAL rendered label
+/// colours. Light: AppSegmented now draws the UX map's segmented control
+/// ([MapSegmented]) — unselected labels in `AppColors.textBody` on a white
+/// track, the selected label white on the `AppColors.accentFill` pill — and
+/// both pairs must clear 4.5:1. The dark case keeps the older glass-track
+/// assertion (a pre-existing failure, tracked separately).
 double _lin(int c) {
   final s = c / 255.0;
   return s <= 0.03928
@@ -69,8 +57,52 @@ Future<Color> _unselectedLabelColor(
   return label.style!.color!;
 }
 
+Future<(Color, Color)> _labelColors(
+  WidgetTester tester,
+  ThemeData theme,
+) async {
+  await _unselectedLabelColor(tester, theme);
+  final unselected = tester.widget<Text>(find.text('Two')).style!.color!;
+  final selected = tester.widget<Text>(find.text('One')).style!.color!;
+  return (unselected, selected);
+}
+
 void main() {
-  for (final brightness in Brightness.values) {
+  // Light: AppSegmented now draws the UX map's segmented control
+  // ([MapSegmented]) — a WHITE pill track, the chosen option a saffron-600
+  // ([AppColors.accentFill]) pill with white text, unselected labels in
+  // [AppColors.textBody]. Both label/fill pairs must clear AA (4.5:1), read
+  // from the ACTUAL rendered label colours.
+  testWidgets(
+    'AppSegmented unselected label clears AA on the track fill (light)',
+    (tester) async {
+      final theme = AppTheme.light();
+      final (unselected, selected) = await _labelColors(tester, theme);
+
+      // The map's segmented control: body ink on a white track.
+      expect(unselected, AppColors.textBody);
+      expect(
+        _ratio(unselected, Colors.white),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'the unselected segment label must meet AA (>=4.5) on the white '
+            'track',
+      );
+
+      // The selected pill: white text on the saffron-600 fill.
+      expect(selected, AppColors.textOnAccent);
+      expect(
+        _ratio(selected, AppColors.accentFill),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'the selected segment label must meet AA (>=4.5) on the '
+            'accentFill pill',
+      );
+    },
+  );
+
+  // Dark: unchanged (pre-existing failure, tracked separately).
+  for (final brightness in [Brightness.dark]) {
     testWidgets(
       'AppSegmented unselected label clears AA on the track fill (${brightness.name})',
       (tester) async {
