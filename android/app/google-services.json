@@ -1,79 +1,41 @@
 {
   "project_info": {
-    "project_number": "640589855975",
-    "firebase_url": "https://sahayakai-b4248-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "sahayakai-b4248",
-    "storage_bucket": "sahayakai-b4248.firebasestorage.app"
+    "project_number": "966091633060",
+    "project_id": "riya-outbound-staging",
+    "storage_bucket": "riya-outbound-staging.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:640589855975:android:aa84dea51808bd90aa3642",
-        "android_client_info": {
-          "package_name": "app.sahayakai.mobile"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "640589855975-glna3u1bschhpv73vrs4td82og1db1i9.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "app.sahayakai.mobile",
-            "certificate_hash": "2b38c23a240512cd89b96da1c7e93b43b0824d13"
-          }
-        },
-        {
-          "client_id": "640589855975-5hskrqgg7k87p6m2ogb9lj19tel78d14.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyD_pehiRo06GVArOqAuMyGsGts3EzYFS9E"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "640589855975-5hskrqgg7k87p6m2ogb9lj19tel78d14.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:640589855975:android:37697468bdd1b61baa3642",
+        "mobilesdk_app_id": "1:966091633060:android:c9e47dc9f3fdd2a5055131",
         "android_client_info": {
           "package_name": "com.sargvision.sahayakai"
         }
       },
       "oauth_client": [
         {
-          "client_id": "640589855975-qhvgts1oh8s50t9jg2hlh8a0p1kh1lhs.apps.googleusercontent.com",
+          "client_id": "966091633060-brqq87v6hs7rc6crpurkvtj8cvp7ucsm.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.sargvision.sahayakai",
-            "certificate_hash": "2b38c23a240512cd89b96da1c7e93b43b0824d13"
+            "certificate_hash": "04e895f9ac49c4e0fe09818b91a65b3e4574e1c6"
           }
         },
         {
-          "client_id": "640589855975-5hskrqgg7k87p6m2ogb9lj19tel78d14.apps.googleusercontent.com",
+          "client_id": "966091633060-0a0ltpb1v883q5h4qek1h40gor62vh15.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyD_pehiRo06GVArOqAuMyGsGts3EzYFS9E"
+          "current_key": "AIzaSyB74s0u-hC0OUaFKWHenOsig38l82sjUw8"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "640589855975-5hskrqgg7k87p6m2ogb9lj19tel78d14.apps.googleusercontent.com",
+              "client_id": "966091633060-0a0ltpb1v883q5h4qek1h40gor62vh15.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

@@ -4,4 +4,13 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug builds only: the Android emulator's software GPU (swiftshader)
+         crashes under Impeller, including when the app is opened from the
+         launcher rather than by flutter run with its no-enable-impeller flag.
+         Release builds keep Impeller. -->
+    <application>
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
+    </application>
 </manifest>
