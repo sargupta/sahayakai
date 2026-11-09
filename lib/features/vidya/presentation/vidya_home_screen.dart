@@ -13,6 +13,7 @@ import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/language_switcher.dart';
+import '../../attendance/presentation/attendance_providers.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import '../../notifications/data/notifications_store.dart';
@@ -705,6 +706,12 @@ class _WaitingCard extends ConsumerWidget {
           orElse: () => 0,
         );
     final unreadUpdates = ref.watch(unreadNotificationCountProvider);
+    // Students marked absent today in a SAVED register: the map's "N
+    // absentees to call" reminder. Zero while loading or on a failed read —
+    // a reminder never shows an error.
+    final absentToday = ref
+        .watch(todayAbsentCountProvider)
+        .maybeWhen(data: (n) => n, orElse: () => 0);
     // A parent call the teacher left running (the hotline controller lives
     // on; the call carries on server-side). Tapping returns to it.
     final callingStudent = ref.watch(
@@ -722,6 +729,13 @@ class _WaitingCard extends ConsumerWidget {
         _WaitingRow(
           dot: AppColors.leaf500,
           label: l10n.homeWaitingParentCall(firstName(callingStudent)),
+          onOpen: () => context.push(Routes.parentHotline),
+        ),
+      // While a call is running the row above already leads to outreach.
+      if (absentToday > 0 && (callingStudent?.isEmpty ?? true))
+        _WaitingRow(
+          dot: AppColors.red500,
+          label: l10n.attendanceCallParents(absentToday),
           onOpen: () => context.push(Routes.parentHotline),
         ),
       for (final Deliverable item in ready.reversed.take(3))

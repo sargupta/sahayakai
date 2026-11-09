@@ -4832,4 +4832,42 @@ class AppLocalizationsHi extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$name के अभिभावक से कॉल · लौटने के लिए टैप करें';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'वेब स्रोतों से जाँचा नहीं गया · पढ़ाने से पहले एक बार जाँच लें।';
+
+  @override
+  String get parentHotlineSummaryTopicSheet => 'विषय की वर्कशीट बनाएँ';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'फ़ॉलो-अप तय करें';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded =>
+      'फ़ॉलो-अप अपडेट्स में जोड़ा गया';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$name के अभिभावक से फ़ॉलो-अप करें';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'कॉल सारांश से · जो तय हुआ उसे देखने के लिए टैप करें';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'लगातार अनुपस्थित';
+
+  @override
+  String get vidyaSuggestQuiz => 'क्विज़ बनाएँ';
+
+  @override
+  String get vidyaSuggestWorksheet => 'वर्कशीट बनाएँ';
+
+  @override
+  String get vidyaSuggestAllTools => 'सभी टूल देखें';
+
+  @override
+  String get vidyaSuggestPostToWorksheet => 'किसी पोस्ट से वर्कशीट बनाएँ';
 }

@@ -4903,4 +4903,44 @@ class AppLocalizationsMl extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$name-ന്റെ രക്ഷിതാവുമായി കോൾ · തിരികെ പോകാൻ ടാപ്പ് ചെയ്യുക';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'വെബ് ഉറവിടങ്ങളുമായി ഒത്തുനോക്കിയിട്ടില്ല · പഠിപ്പിക്കുന്നതിനു മുമ്പ് ഒരിക്കൽ പരിശോധിക്കുക.';
+
+  @override
+  String get parentHotlineSummaryTopicSheet =>
+      'വിഷയത്തിന്റെ വർക്ക്ഷീറ്റ് തയ്യാറാക്കുക';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'ഫോളോ-അപ്പ് നിശ്ചയിക്കുക';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded =>
+      'ഫോളോ-അപ്പ് അപ്ഡേറ്റുകളിൽ ചേർത്തു';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$name-ന്റെ രക്ഷിതാവുമായി ഫോളോ-അപ്പ് ചെയ്യുക';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'കോൾ സംഗ്രഹത്തിൽ നിന്ന് · തീരുമാനിച്ചത് കാണാൻ ടാപ്പ് ചെയ്യുക';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'തുടർച്ചയായ ഹാജരില്ലായ്മ';
+
+  @override
+  String get vidyaSuggestQuiz => 'ക്വിസ് തയ്യാറാക്കുക';
+
+  @override
+  String get vidyaSuggestWorksheet => 'വർക്ക്ഷീറ്റ് തയ്യാറാക്കുക';
+
+  @override
+  String get vidyaSuggestAllTools => 'എല്ലാ ടൂളുകളും കാണുക';
+
+  @override
+  String get vidyaSuggestPostToWorksheet =>
+      'പോസ്റ്റിൽ നിന്ന് വർക്ക്ഷീറ്റ് തയ്യാറാക്കുക';
 }

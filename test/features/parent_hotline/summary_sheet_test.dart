@@ -116,6 +116,9 @@ Future<void> _pump(
   VoidCallback? onCheckAgain,
   bool isBusy = false,
   bool hasDraft = true,
+  VoidCallback? onMakeTopicSheet,
+  VoidCallback? onScheduleFollowUp,
+  bool followUpScheduled = false,
   Brightness brightness = Brightness.light,
   double textScale = 1.0,
   Locale locale = const Locale('en'),
@@ -159,6 +162,9 @@ Future<void> _pump(
                 onCheckAgain: onCheckAgain ?? () {},
                 isBusy: isBusy,
                 hasDraft: hasDraft,
+                onMakeTopicSheet: onMakeTopicSheet,
+                onScheduleFollowUp: onScheduleFollowUp,
+                followUpScheduled: followUpScheduled,
               ),
             ),
           ),
@@ -296,32 +302,31 @@ void main() {
       expect(find.textContaining('next Friday'), findsOneWidget);
     });
 
-    testWidgets(
-      'the action-items block is the saffron-ringed card (the map)',
-      (tester) async {
-        const action = 'Share this week revision sheet with the parent.';
-        await _pump(
-          tester,
-          outcome: HotlineSummaryOutcome.summary,
-          callResult: _summaryResult(_summary(actions: const [action])),
-        );
-        // The action item prose sits inside the card ringed in the map's
-        // saffron — the block the teacher must act on.
-        final tonedBox = find.ancestor(
-          of: find.text(action),
-          matching: find.byWidgetPredicate(
-            (w) =>
-                w is Container &&
-                w.decoration is BoxDecoration &&
-                (w.decoration as BoxDecoration).border ==
-                    Border.all(color: AppColors.mapOptOnRing, width: 1.5),
-          ),
-        );
-        expect(tonedBox, findsOneWidget);
-        // Each to-do carries the arrow-right glyph.
-        expect(find.byIcon(LucideIcons.arrowRight), findsWidgets);
-      },
-    );
+    testWidgets('the action-items block is the saffron-ringed card (the map)', (
+      tester,
+    ) async {
+      const action = 'Share this week revision sheet with the parent.';
+      await _pump(
+        tester,
+        outcome: HotlineSummaryOutcome.summary,
+        callResult: _summaryResult(_summary(actions: const [action])),
+      );
+      // The action item prose sits inside the card ringed in the map's
+      // saffron — the block the teacher must act on.
+      final tonedBox = find.ancestor(
+        of: find.text(action),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              w.decoration is BoxDecoration &&
+              (w.decoration as BoxDecoration).border ==
+                  Border.all(color: AppColors.mapOptOnRing, width: 1.5),
+        ),
+      );
+      expect(tonedBox, findsOneWidget);
+      // Each to-do carries the arrow-right glyph.
+      expect(find.byIcon(LucideIcons.arrowRight), findsWidgets);
+    });
   });
 
   // ── Sentiment badge: tone per sentiment + WCAG AA on the fill ───────────────
@@ -514,6 +519,55 @@ void main() {
   });
 
   // ── Footer + dedup countdown ───────────────────────────────────────────────
+
+  group('next steps (map: topic sheet, follow-up)', () {
+    testWidgets('both actions show and fire when wired', (tester) async {
+      var topic = 0, followUp = 0;
+      await _pump(
+        tester,
+        outcome: HotlineSummaryOutcome.summary,
+        callResult: _summaryResult(_summary()),
+        onMakeTopicSheet: () => topic++,
+        onScheduleFollowUp: () => followUp++,
+      );
+
+      await tester.ensureVisible(find.text('Make the topic sheet'));
+      await tester.tap(find.text('Make the topic sheet'));
+      expect(topic, 1);
+
+      await tester.ensureVisible(find.text('Schedule follow-up'));
+      await tester.tap(find.text('Schedule follow-up'));
+      expect(followUp, 1);
+    });
+
+    testWidgets('a scheduled follow-up shows as done and cannot repeat', (
+      tester,
+    ) async {
+      var followUp = 0;
+      await _pump(
+        tester,
+        outcome: HotlineSummaryOutcome.summary,
+        callResult: _summaryResult(_summary()),
+        onScheduleFollowUp: () => followUp++,
+        followUpScheduled: true,
+      );
+
+      expect(find.text('Schedule follow-up'), findsNothing);
+      await tester.ensureVisible(find.text('Follow-up added to Updates'));
+      await tester.tap(find.text('Follow-up added to Updates'));
+      expect(followUp, 0);
+    });
+
+    testWidgets('unwired, neither action appears', (tester) async {
+      await _pump(
+        tester,
+        outcome: HotlineSummaryOutcome.summary,
+        callResult: _summaryResult(_summary()),
+      );
+      expect(find.text('Make the topic sheet'), findsNothing);
+      expect(find.text('Schedule follow-up'), findsNothing);
+    });
+  });
 
   group('footer', () {
     testWidgets('Done and Call-again-later fire their callbacks', (

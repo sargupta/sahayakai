@@ -4847,4 +4847,41 @@ class AppLocalizationsBn extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$name-এর অভিভাবকের সঙ্গে কল · ফিরতে ট্যাপ করুন';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'ওয়েব উৎসের সঙ্গে মিলিয়ে দেখা হয়নি · পড়ানোর আগে একবার যাচাই করুন।';
+
+  @override
+  String get parentHotlineSummaryTopicSheet => 'বিষয়ের ওয়ার্কশিট তৈরি করুন';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'ফলো-আপ ঠিক করুন';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded => 'ফলো-আপ আপডেটে যোগ হয়েছে';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$name-এর অভিভাবকের সঙ্গে ফলো-আপ করুন';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'কলের সারাংশ থেকে · কী ঠিক হয়েছে দেখতে ট্যাপ করুন';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'পরপর অনুপস্থিত';
+
+  @override
+  String get vidyaSuggestQuiz => 'কুইজ তৈরি করুন';
+
+  @override
+  String get vidyaSuggestWorksheet => 'ওয়ার্কশিট তৈরি করুন';
+
+  @override
+  String get vidyaSuggestAllTools => 'সব টুল দেখুন';
+
+  @override
+  String get vidyaSuggestPostToWorksheet => 'পোস্ট থেকে ওয়ার্কশিট তৈরি করুন';
 }

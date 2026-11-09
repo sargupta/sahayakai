@@ -1392,5 +1392,16 @@
   "communityJustConnected": "अभी जुड़े",
   "communityConnectedCanChat": "जुड़ गए · अब बात कर सकते हैं",
   "parentHotlineCallContinuesNote": "कॉल जारी है। आप होम से इस पर लौट सकते हैं।",
-  "homeWaitingParentCall": "{name} के अभिभावक से कॉल · लौटने के लिए टैप करें"
+  "homeWaitingParentCall": "{name} के अभिभावक से कॉल · लौटने के लिए टैप करें",
+  "instantAnswerVerifyNote": "वेब स्रोतों से जाँचा नहीं गया · पढ़ाने से पहले एक बार जाँच लें।",
+  "parentHotlineSummaryTopicSheet": "विषय की वर्कशीट बनाएँ",
+  "parentHotlineSummaryScheduleFollowUp": "फ़ॉलो-अप तय करें",
+  "parentHotlineSummaryFollowUpAdded": "फ़ॉलो-अप अपडेट्स में जोड़ा गया",
+  "notificationFollowUpTitle": "{name} के अभिभावक से फ़ॉलो-अप करें",
+  "notificationFollowUpBody": "कॉल सारांश से · जो तय हुआ उसे देखने के लिए टैप करें",
+  "parentHotlineConsecutiveAbsences": "लगातार अनुपस्थित",
+  "vidyaSuggestQuiz": "क्विज़ बनाएँ",
+  "vidyaSuggestWorksheet": "वर्कशीट बनाएँ",
+  "vidyaSuggestAllTools": "सभी टूल देखें",
+  "vidyaSuggestPostToWorksheet": "किसी पोस्ट से वर्कशीट बनाएँ"
 }

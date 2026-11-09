@@ -12,6 +12,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/platform/clock.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/ai_text.dart';
 import '../../../shared/widgets/app_segmented.dart';
@@ -377,8 +378,47 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           onCopyForWhatsApp: _onWhatsApp,
           onStartNew: _controller.startNewMessage,
           onCheckAgain: _controller.recheckCall,
+          onMakeTopicSheet: () => context.push(
+            Routes.worksheetWizard,
+            extra: ToolPrefill(topic: state.subject),
+          ),
+          onScheduleFollowUp: (state.outreachId?.isNotEmpty ?? false)
+              ? () => _scheduleFollowUp(state)
+              : null,
+          followUpScheduled: _followUpScheduled(state),
         );
     }
+  }
+
+  /// The Updates row "Schedule follow-up" writes, keyed like the call rows so
+  /// tapping it reopens this call's summary and a second tap cannot stack a
+  /// duplicate.
+  String _followUpId(ParentHotlineState state) =>
+      'hotline:${state.outreachId}:${TeacherNotificationKind.followUp.wire}';
+
+  bool _followUpScheduled(ParentHotlineState state) {
+    if (!(state.outreachId?.isNotEmpty ?? false)) return false;
+    final id = _followUpId(state);
+    return ref.watch(notificationsProvider).any((n) => n.id == id);
+  }
+
+  void _scheduleFollowUp(ParentHotlineState state) {
+    final student = state.studentName?.trim() ?? '';
+    ref
+        .read(notificationsProvider.notifier)
+        .record(
+          TeacherNotification(
+            id: _followUpId(state),
+            kind: TeacherNotificationKind.followUp,
+            at: ref.read(nowProvider)(),
+            label: student.isEmpty ? context.l10n.parentHotlineTitle : student,
+          ),
+        );
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(context.l10n.parentHotlineSummaryFollowUpAdded)),
+      );
   }
 
   // ── Parent outreach (pick a student) ────────────────────────────────────────
@@ -426,12 +466,31 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
       (r) => r.classId == classId,
       orElse: () => roster.first,
     );
-    // The students just marked absent come first, in roster order.
+    // The map's outreach groups, each in roster order: children on a run of
+    // consecutive absences, then those just marked absent, then everyone
+    // else. Headings appear only when there is a group to set apart.
     final absent = widget.absentStudentIds;
-    final students = [
-      ...klass.students.where((s) => absent.contains(s.id)),
-      ...klass.students.where((s) => !absent.contains(s.id)),
-    ];
+    bool onRun(HotlineStudent s) =>
+        !absent.contains(s.id) &&
+        s.suggestedReason == OutreachReason.consecutiveAbsences;
+    final groups = <(String, List<HotlineStudent>)>[
+      (
+        l10n.parentHotlineConsecutiveAbsences,
+        klass.students.where(onRun).toList(),
+      ),
+      (
+        l10n.parentHotlineMarkedAbsent,
+        klass.students.where((s) => absent.contains(s.id)).toList(),
+      ),
+      (
+        l10n.parentHotlineAllStudents,
+        klass.students
+            .where((s) => !absent.contains(s.id) && !onRun(s))
+            .toList(),
+      ),
+    ].where((g) => g.$2.isNotEmpty).toList();
+    final students = [for (final g in groups) ...g.$2];
+    final showHeadings = groups.length > 1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -475,7 +534,15 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           _rosterEmpty(l10n)
         else
           for (final (index, student) in students.indexed) ...[
-            if (index > 0) const SizedBox(height: AppSpacing.space2),
+            if (showHeadings && _startsGroup(groups, index)) ...[
+              if (index > 0) const SizedBox(height: AppSpacing.space4),
+              MapOverline(
+                _groupTitleAt(groups, index),
+                color: AppColors.textEyebrow,
+              ),
+              const SizedBox(height: AppSpacing.space2),
+            ] else if (index > 0)
+              const SizedBox(height: AppSpacing.space2),
             staggeredItem(
               context,
               _StudentCard(
@@ -488,6 +555,32 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           ],
       ],
     );
+  }
+
+  /// Whether the [index]th student in the flattened [groups] opens a group.
+  static bool _startsGroup(
+    List<(String, List<HotlineStudent>)> groups,
+    int index,
+  ) {
+    var start = 0;
+    for (final g in groups) {
+      if (index == start) return true;
+      start += g.$2.length;
+    }
+    return false;
+  }
+
+  /// The heading of the group the [index]th student belongs to.
+  static String _groupTitleAt(
+    List<(String, List<HotlineStudent>)> groups,
+    int index,
+  ) {
+    var end = 0;
+    for (final g in groups) {
+      end += g.$2.length;
+      if (index < end) return g.$1;
+    }
+    return groups.last.$1;
   }
 
   void _pickStudent(HotlineStudent student) {

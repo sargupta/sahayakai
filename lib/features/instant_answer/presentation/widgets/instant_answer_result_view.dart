@@ -11,9 +11,11 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/icon_well.dart';
+import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../../staffroom/presentation/share_to_community_sheet.dart';
 import '../../data/instant_answer_repository.dart';
 import '../../domain/instant_answer.dart';
 import 'answer_markdown_view.dart';
@@ -95,6 +97,17 @@ class InstantAnswerResultView extends ConsumerWidget {
         title: l10n.instantAnswerResultTitle,
         child: AnswerMarkdownView(source: answer.answer),
       ),
+      // The map's honesty line: the answer comes from the model alone, so the
+      // teacher checks it before it reaches the class.
+      NoteBanner.custom(
+        icon: LucideIcons.alertTriangle,
+        child: Text(
+          l10n.instantAnswerVerifyNote,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.textBody),
+        ),
+      ),
       // videoSuggestionUrl is optional and null far more often than not. The DTO
       // layer already normalized it to a validated http(s) Uri, so the tap is
       // safe.
@@ -167,6 +180,14 @@ class _ActionBar extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.space2),
         ReadAloudButton(text: spoken),
+        const SizedBox(height: AppSpacing.space2),
+        // Opens the Staffroom composer on this answer as a Resource post;
+        // nothing is posted until the teacher taps Post.
+        SecondaryButton(
+          label: l10n.deliverPostCommunity,
+          icon: LucideIcons.users,
+          onPressed: () => showShareToCommunitySheet(context, text: spoken),
+        ),
         const SizedBox(height: AppSpacing.space3),
         ResultActionsBar(
           text: spoken,

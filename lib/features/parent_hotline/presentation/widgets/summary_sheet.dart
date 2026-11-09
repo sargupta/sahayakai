@@ -54,6 +54,9 @@ class SummarySheet extends StatelessWidget {
     required this.onCheckAgain,
     this.isBusy = false,
     this.hasDraft = true,
+    this.onMakeTopicSheet,
+    this.onScheduleFollowUp,
+    this.followUpScheduled = false,
   });
 
   /// Which terminal branch to render (the controller's derived discriminator).
@@ -104,6 +107,18 @@ class SummarySheet extends StatelessWidget {
   /// may have none.
   final bool hasDraft;
 
+  /// The map's "Make the topic sheet": opens a worksheet on what the child
+  /// missed. Null hides the action.
+  final VoidCallback? onMakeTopicSheet;
+
+  /// The map's "Schedule follow-up": adds a reminder to Updates. Null hides
+  /// the action.
+  final VoidCallback? onScheduleFollowUp;
+
+  /// The reminder for this call is already in Updates — the action shows that
+  /// instead of offering it again.
+  final bool followUpScheduled;
+
   @override
   Widget build(BuildContext context) {
     switch (outcome) {
@@ -116,6 +131,9 @@ class SummarySheet extends StatelessWidget {
           dedupRetryAfterSeconds: dedupRetryAfterSeconds,
           onDone: onDone,
           onCallAgain: isBusy ? null : onCallAgain,
+          onMakeTopicSheet: onMakeTopicSheet,
+          onScheduleFollowUp: followUpScheduled ? null : onScheduleFollowUp,
+          followUpScheduled: followUpScheduled,
         );
       case HotlineSummaryOutcome.manual:
         return _ManualTerminal(
@@ -172,6 +190,9 @@ class _FullSummary extends StatelessWidget {
     required this.dedupRetryAfterSeconds,
     required this.onDone,
     required this.onCallAgain,
+    this.onMakeTopicSheet,
+    this.onScheduleFollowUp,
+    this.followUpScheduled = false,
   });
 
   final String studentName;
@@ -181,6 +202,9 @@ class _FullSummary extends StatelessWidget {
   final int? dedupRetryAfterSeconds;
   final VoidCallback onDone;
   final VoidCallback? onCallAgain;
+  final VoidCallback? onMakeTopicSheet;
+  final VoidCallback? onScheduleFollowUp;
+  final bool followUpScheduled;
 
   @override
   Widget build(BuildContext context) {
@@ -354,6 +378,33 @@ class _FullSummary extends StatelessWidget {
         for (var i = 0; i < blocks.length; i++) ...[
           if (i > 0) const SizedBox(height: AppSpacing.space3),
           inkSettle(context, blocks[i], index: i),
+        ],
+        if (onMakeTopicSheet != null ||
+            onScheduleFollowUp != null ||
+            followUpScheduled) ...[
+          const SizedBox(height: AppSpacing.space4),
+          // The map's next steps from a call: a worksheet on what the child
+          // missed, and a reminder to follow up with the parent.
+          if (onMakeTopicSheet != null)
+            SecondaryButton(
+              label: l10n.parentHotlineSummaryTopicSheet,
+              icon: LucideIcons.fileText,
+              onPressed: onMakeTopicSheet,
+            ),
+          if (onMakeTopicSheet != null &&
+              (onScheduleFollowUp != null || followUpScheduled))
+            const SizedBox(height: AppSpacing.space2),
+          if (followUpScheduled)
+            SecondaryButton(
+              label: l10n.parentHotlineSummaryFollowUpAdded,
+              icon: LucideIcons.check,
+            )
+          else if (onScheduleFollowUp != null)
+            SecondaryButton(
+              label: l10n.parentHotlineSummaryScheduleFollowUp,
+              icon: LucideIcons.calendarClock,
+              onPressed: onScheduleFollowUp,
+            ),
         ],
         const SizedBox(height: AppSpacing.space5),
         _SummaryFooter(

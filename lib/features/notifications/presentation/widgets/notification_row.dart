@@ -140,6 +140,7 @@ class NotificationRow extends StatelessWidget {
     TeacherNotificationKind.callFailed => MapTint.leaf,
     TeacherNotificationKind.absenceRun => MapTint.amber,
     TeacherNotificationKind.examPaperQueued => MapTint.indigo,
+    TeacherNotificationKind.followUp => MapTint.saffron,
   };
 
   static IconData _glyph(TeacherNotificationKind kind) => switch (kind) {
@@ -147,6 +148,7 @@ class NotificationRow extends StatelessWidget {
     TeacherNotificationKind.callFailed => LucideIcons.phoneMissed,
     TeacherNotificationKind.absenceRun => LucideIcons.calendarX,
     TeacherNotificationKind.examPaperQueued => LucideIcons.fileText,
+    TeacherNotificationKind.followUp => LucideIcons.calendarClock,
   };
 }
 
@@ -165,6 +167,9 @@ String notificationTitle(TeacherNotification n, AppLocalizations l10n) =>
       ),
       TeacherNotificationKind.examPaperQueued =>
         l10n.notificationExamPaperTitle(n.label),
+      TeacherNotificationKind.followUp => l10n.notificationFollowUpTitle(
+        n.label,
+      ),
     };
 
 /// The row's second line.
@@ -183,4 +188,5 @@ String notificationBody(TeacherNotification n, AppLocalizations l10n) =>
             : l10n.attendanceTitle,
       ),
       TeacherNotificationKind.examPaperQueued => l10n.notificationExamPaperBody,
+      TeacherNotificationKind.followUp => l10n.notificationFollowUpBody,
     };

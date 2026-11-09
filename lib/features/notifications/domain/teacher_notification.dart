@@ -27,7 +27,12 @@ enum TeacherNotificationKind {
 
   /// `POST /api/ai/exam-paper` answered **202** — the paper is still being
   /// generated server-side and will be saved to the Library.
-  examPaperQueued;
+  examPaperQueued,
+
+  /// The teacher tapped "Schedule follow-up" on a parent call's summary: a
+  /// reminder to follow up with that parent. Keyed like a call row
+  /// (`hotline:{outreachId}:followUp`), so tapping it reopens that summary.
+  followUp;
 
   /// The wire token persisted in shared_preferences.
   String get wire => name;
@@ -107,7 +112,8 @@ class TeacherNotification {
   /// does not follow that shape.
   String? get outreachId {
     if (kind != TeacherNotificationKind.callCompleted &&
-        kind != TeacherNotificationKind.callFailed) {
+        kind != TeacherNotificationKind.callFailed &&
+        kind != TeacherNotificationKind.followUp) {
       return null;
     }
     const prefix = 'hotline:';

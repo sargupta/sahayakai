@@ -4849,4 +4849,42 @@ class AppLocalizationsKn extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$name ಅವರ ಪೋಷಕರೊಂದಿಗೆ ಕರೆ · ಹಿಂತಿರುಗಲು ಟ್ಯಾಪ್ ಮಾಡಿ';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'ವೆಬ್ ಮೂಲಗಳೊಂದಿಗೆ ಪರಿಶೀಲಿಸಿಲ್ಲ · ಕಲಿಸುವ ಮೊದಲು ಒಮ್ಮೆ ಪರಿಶೀಲಿಸಿ.';
+
+  @override
+  String get parentHotlineSummaryTopicSheet => 'ವಿಷಯದ ವರ್ಕ್‌ಶೀಟ್ ಮಾಡಿ';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'ಫಾಲೋ-ಅಪ್ ನಿಗದಿಪಡಿಸಿ';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded =>
+      'ಫಾಲೋ-ಅಪ್ ಅಪ್‌ಡೇಟ್‌ಗಳಿಗೆ ಸೇರಿಸಲಾಗಿದೆ';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$name ಅವರ ಪೋಷಕರೊಂದಿಗೆ ಫಾಲೋ-ಅಪ್ ಮಾಡಿ';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'ಕರೆಯ ಸಾರಾಂಶದಿಂದ · ಏನು ಒಪ್ಪಿಕೊಂಡರು ನೋಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'ಸತತ ಗೈರುಹಾಜರಿ';
+
+  @override
+  String get vidyaSuggestQuiz => 'ಕ್ವಿಜ್ ಮಾಡಿ';
+
+  @override
+  String get vidyaSuggestWorksheet => 'ವರ್ಕ್‌ಶೀಟ್ ಮಾಡಿ';
+
+  @override
+  String get vidyaSuggestAllTools => 'ಎಲ್ಲಾ ಉಪಕರಣಗಳನ್ನು ನೋಡಿ';
+
+  @override
+  String get vidyaSuggestPostToWorksheet => 'ಪೋಸ್ಟ್‌ನಿಂದ ವರ್ಕ್‌ಶೀಟ್ ಮಾಡಿ';
 }

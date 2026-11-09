@@ -4930,4 +4930,45 @@ class AppLocalizationsTa extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$name அவர்களின் பெற்றோருடன் அழைப்பு · திரும்ப தட்டவும்';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'இணைய ஆதாரங்களுடன் சரிபார்க்கப்படவில்லை · கற்பிக்கும் முன் ஒருமுறை சரிபாருங்கள்.';
+
+  @override
+  String get parentHotlineSummaryTopicSheet =>
+      'பாடப்பகுதி பயிற்சித்தாள் உருவாக்கு';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp =>
+      'தொடர் நடவடிக்கை திட்டமிடு';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded =>
+      'தொடர் நடவடிக்கை அறிவிப்புகளில் சேர்க்கப்பட்டது';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$name அவர்களின் பெற்றோரைத் தொடர்ந்து அணுகவும்';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'அழைப்புச் சுருக்கத்திலிருந்து · ஒப்புக்கொண்டதைப் பார்க்கத் தட்டவும்';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'தொடர் வருகையின்மை';
+
+  @override
+  String get vidyaSuggestQuiz => 'வினாடி வினா உருவாக்கு';
+
+  @override
+  String get vidyaSuggestWorksheet => 'பயிற்சித்தாள் உருவாக்கு';
+
+  @override
+  String get vidyaSuggestAllTools => 'அனைத்துக் கருவிகளையும் பார்';
+
+  @override
+  String get vidyaSuggestPostToWorksheet =>
+      'இடுகையிலிருந்து பயிற்சித்தாள் உருவாக்கு';
 }

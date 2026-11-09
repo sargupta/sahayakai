@@ -1392,5 +1392,16 @@
   "communityJustConnected": "ಈಗಷ್ಟೇ ಸಂಪರ್ಕಗೊಂಡವರು",
   "communityConnectedCanChat": "ಸಂಪರ್ಕಗೊಂಡಿದೆ · ಈಗ ಚಾಟ್ ಮಾಡಬಹುದು",
   "parentHotlineCallContinuesNote": "ಕರೆ ಮುಂದುವರಿಯುತ್ತದೆ. ಹೋಮ್‌ನಿಂದ ನೀವು ಅದಕ್ಕೆ ಹಿಂತಿರುಗಬಹುದು.",
-  "homeWaitingParentCall": "{name} ಅವರ ಪೋಷಕರೊಂದಿಗೆ ಕರೆ · ಹಿಂತಿರುಗಲು ಟ್ಯಾಪ್ ಮಾಡಿ"
+  "homeWaitingParentCall": "{name} ಅವರ ಪೋಷಕರೊಂದಿಗೆ ಕರೆ · ಹಿಂತಿರುಗಲು ಟ್ಯಾಪ್ ಮಾಡಿ",
+  "instantAnswerVerifyNote": "ವೆಬ್ ಮೂಲಗಳೊಂದಿಗೆ ಪರಿಶೀಲಿಸಿಲ್ಲ · ಕಲಿಸುವ ಮೊದಲು ಒಮ್ಮೆ ಪರಿಶೀಲಿಸಿ.",
+  "parentHotlineSummaryTopicSheet": "ವಿಷಯದ ವರ್ಕ್‌ಶೀಟ್ ಮಾಡಿ",
+  "parentHotlineSummaryScheduleFollowUp": "ಫಾಲೋ-ಅಪ್ ನಿಗದಿಪಡಿಸಿ",
+  "parentHotlineSummaryFollowUpAdded": "ಫಾಲೋ-ಅಪ್ ಅಪ್‌ಡೇಟ್‌ಗಳಿಗೆ ಸೇರಿಸಲಾಗಿದೆ",
+  "notificationFollowUpTitle": "{name} ಅವರ ಪೋಷಕರೊಂದಿಗೆ ಫಾಲೋ-ಅಪ್ ಮಾಡಿ",
+  "notificationFollowUpBody": "ಕರೆಯ ಸಾರಾಂಶದಿಂದ · ಏನು ಒಪ್ಪಿಕೊಂಡರು ನೋಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ",
+  "parentHotlineConsecutiveAbsences": "ಸತತ ಗೈರುಹಾಜರಿ",
+  "vidyaSuggestQuiz": "ಕ್ವಿಜ್ ಮಾಡಿ",
+  "vidyaSuggestWorksheet": "ವರ್ಕ್‌ಶೀಟ್ ಮಾಡಿ",
+  "vidyaSuggestAllTools": "ಎಲ್ಲಾ ಉಪಕರಣಗಳನ್ನು ನೋಡಿ",
+  "vidyaSuggestPostToWorksheet": "ಪೋಸ್ಟ್‌ನಿಂದ ವರ್ಕ್‌ಶೀಟ್ ಮಾಡಿ"
 }

@@ -4865,4 +4865,41 @@ class AppLocalizationsOr extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$nameଙ୍କ ଅଭିଭାବକଙ୍କ ସହ କଲ୍ · ଫେରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'ୱେବ୍ ଉତ୍ସ ସହ ଯାଞ୍ଚ ହୋଇନାହିଁ · ପଢ଼ାଇବା ପୂର୍ବରୁ ଥରେ ଯାଞ୍ଚ କରନ୍ତୁ।';
+
+  @override
+  String get parentHotlineSummaryTopicSheet => 'ବିଷୟର ୱର୍କସିଟ୍ ତିଆରି କରନ୍ତୁ';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'ଫଲୋ-ଅପ୍ ସ୍ଥିର କରନ୍ତୁ';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded => 'ଫଲୋ-ଅପ୍ ଅପଡେଟ୍‌ରେ ଯୋଡ଼ାଗଲା';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$nameଙ୍କ ଅଭିଭାବକଙ୍କ ସହ ଫଲୋ-ଅପ୍ କରନ୍ତୁ';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'କଲ୍ ସାରାଂଶରୁ · କ\'ଣ ସ୍ଥିର ହେଲା ଦେଖିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'ଲଗାତାର ଅନୁପସ୍ଥିତ';
+
+  @override
+  String get vidyaSuggestQuiz => 'କୁଇଜ୍ ତିଆରି କରନ୍ତୁ';
+
+  @override
+  String get vidyaSuggestWorksheet => 'ୱର୍କସିଟ୍ ତିଆରି କରନ୍ତୁ';
+
+  @override
+  String get vidyaSuggestAllTools => 'ସମସ୍ତ ଟୁଲ୍ ଦେଖନ୍ତୁ';
+
+  @override
+  String get vidyaSuggestPostToWorksheet => 'ପୋଷ୍ଟରୁ ୱର୍କସିଟ୍ ତିଆରି କରନ୍ତୁ';
 }

@@ -4831,4 +4831,41 @@ class AppLocalizationsMr extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$name यांच्या पालकांशी कॉल · परत जाण्यासाठी टॅप करा';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'वेब स्रोतांशी पडताळलेले नाही · शिकवण्यापूर्वी एकदा तपासा.';
+
+  @override
+  String get parentHotlineSummaryTopicSheet => 'विषयाची वर्कशीट बनवा';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'फॉलो-अप ठरवा';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded => 'फॉलो-अप अपडेट्समध्ये जोडला';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$name च्या पालकांशी फॉलो-अप करा';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'कॉल सारांशातून · काय ठरले ते पाहण्यासाठी टॅप करा';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'सलग गैरहजर';
+
+  @override
+  String get vidyaSuggestQuiz => 'क्विझ बनवा';
+
+  @override
+  String get vidyaSuggestWorksheet => 'वर्कशीट बनवा';
+
+  @override
+  String get vidyaSuggestAllTools => 'सर्व टूल्स पहा';
+
+  @override
+  String get vidyaSuggestPostToWorksheet => 'पोस्टमधून वर्कशीट बनवा';
 }

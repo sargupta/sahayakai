@@ -6,6 +6,7 @@ import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/features/attendance/data/attendance_errors.dart';
 import 'package:sahayakai/features/parent_hotline/domain/hotline_roster.dart';
 import 'package:sahayakai/features/parent_hotline/domain/hotline_student.dart';
+import 'package:sahayakai/features/parent_hotline/domain/parent_outreach.dart';
 import 'package:sahayakai/features/parent_hotline/presentation/hotline_roster_provider.dart';
 
 import '../../support/fake_api_client.dart';
@@ -133,6 +134,59 @@ void main() {
     expect(roster.last.hasParentPhone, isFalse);
     expect(roster.last.parentPhoneLast4, isNull);
   });
+
+  test('a student absent 3+ school days in a row right now starts on the '
+      'consecutive-absences reason; everyone else has none', () async {
+    const summariesPath = '/api/attendance/classes/c1/summaries';
+    final client = FakeApiClient(
+      getResponsesByPath: <String, Object?>{
+        classesPath: [classJson()],
+        studentsPath: [
+          maskedStudent(),
+          maskedStudent(id: 's2', name: 'Bhavya Nair', rollNumber: 8),
+        ],
+        summariesPath: [
+          <String, dynamic>{
+            'studentId': 's1',
+            'studentName': 'Asha Rao',
+            'rollNumber': 7,
+            'currentAbsenceStreak': 3,
+          },
+          <String, dynamic>{
+            'studentId': 's2',
+            'studentName': 'Bhavya Nair',
+            'rollNumber': 8,
+            'currentAbsenceStreak': 2,
+          },
+        ],
+      },
+    );
+    final roster = (await read(makeContainer(client: client))).single.students;
+    expect(roster.first.suggestedReason, OutreachReason.consecutiveAbsences);
+    expect(roster.last.suggestedReason, isNull);
+  });
+
+  test(
+    'a failed summaries read only loses the ranking, never the roster',
+    () async {
+      final client = FakeApiClient(
+        getResponsesByPath: <String, Object?>{
+          classesPath: [classJson()],
+          studentsPath: [maskedStudent()],
+        },
+        getErrorsByPath: <String, Object>{
+          '/api/attendance/classes/c1/summaries': const ApiException(
+            ApiErrorKind.server,
+            'boom',
+            statusCode: 500,
+          ),
+        },
+      );
+      final classes = await read(makeContainer(client: client));
+      expect(classes.single.failed, isFalse);
+      expect(classes.single.students.single.suggestedReason, isNull);
+    },
+  );
 
   test('always sends ?projection=roster', () async {
     final client = FakeApiClient(

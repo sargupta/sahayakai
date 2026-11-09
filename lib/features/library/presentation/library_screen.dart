@@ -19,7 +19,6 @@ import '../../../shared/widgets/map_chip.dart';
 import '../../../shared/widgets/map_icon_tile.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/secondary_button.dart';
-import '../../dashboard/presentation/app_shell.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 
 /// My work: the teacher's own saved work, drawn to the UX map's Library screen
@@ -662,7 +661,9 @@ class _MakeNewButton extends StatelessWidget {
         shape: const StadiumBorder(),
         child: InkWell(
           customBorder: const StadiumBorder(),
-          onTap: () => AppShell.openCreatePalette(context),
+          // The map's Make hub (Prepare · Assess · Explore · Parents), the
+          // one place every tool starts from; it replaced the Create palette.
+          onTap: () => context.push(Routes.prepDesk),
           child: SizedBox(
             height: _MapGeometry.buttonHeight,
             child: Center(

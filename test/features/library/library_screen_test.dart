@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/router/routes.dart';
+import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:sahayakai/features/inbox/data/messages_stream_provider.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/features/library/presentation/library_detail_screen.dart';
@@ -262,9 +263,16 @@ void main() {
       await tester.tap(find.text('Make something new'));
       await tester.pumpAndSettle();
 
-      // It opens the tool picker, whose first entry is a real, routed tool.
-      expect(find.text('Search tools'), findsOneWidget);
-      await tester.tap(find.text('Lesson Plan').last);
+      // It opens the map's Make hub, whose first entry is a real, routed tool.
+      expect(find.byType(DashboardScreen), findsOneWidget);
+      final lesson = find
+          .descendant(
+            of: find.byType(DashboardScreen),
+            matching: find.text('Lesson Plan'),
+          )
+          .first;
+      await tester.ensureVisible(lesson);
+      await tester.tap(lesson);
       await tester.pumpAndSettle();
       expect(find.byType(LessonPlanScreen), findsOneWidget);
     });

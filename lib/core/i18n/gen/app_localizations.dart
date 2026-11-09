@@ -8365,6 +8365,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Call with {name}\'s parent · tap to return'**
   String homeWaitingParentCall(Object name);
+
+  /// Instant answer result: warning that the answer was not checked against web sources.
+  ///
+  /// In en, this message translates to:
+  /// **'Not checked against web sources · please verify before you teach it.'**
+  String get instantAnswerVerifyNote;
+
+  /// Parent call summary: action that opens a worksheet on what the child missed.
+  ///
+  /// In en, this message translates to:
+  /// **'Make the topic sheet'**
+  String get parentHotlineSummaryTopicSheet;
+
+  /// Parent call summary: action that adds a follow-up reminder to Updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule follow-up'**
+  String get parentHotlineSummaryScheduleFollowUp;
+
+  /// Parent call summary: confirmation (and the done state of the action) once the follow-up reminder is in Updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up added to Updates'**
+  String get parentHotlineSummaryFollowUpAdded;
+
+  /// Updates row title: a follow-up reminder the teacher scheduled from a parent call summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow up with {name}\'s parent'**
+  String notificationFollowUpTitle(String name);
+
+  /// Updates row body for a follow-up reminder: tapping reopens that call's summary.
+  ///
+  /// In en, this message translates to:
+  /// **'From your call summary · tap to see what was agreed'**
+  String get notificationFollowUpBody;
+
+  /// Parent outreach picker: section of students absent several school days in a row right now.
+  ///
+  /// In en, this message translates to:
+  /// **'Consecutive absences'**
+  String get parentHotlineConsecutiveAbsences;
+
+  /// VIDYA sheet suggestion row: open the quiz maker.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a quiz'**
+  String get vidyaSuggestQuiz;
+
+  /// VIDYA sheet suggestion row: open the worksheet wizard.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a worksheet'**
+  String get vidyaSuggestWorksheet;
+
+  /// VIDYA sheet suggestion row: open the Make hub with every tool.
+  ///
+  /// In en, this message translates to:
+  /// **'See all tools'**
+  String get vidyaSuggestAllTools;
+
+  /// VIDYA sheet suggestion row on Community: turn a post's idea into a worksheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn a post into a worksheet'**
+  String get vidyaSuggestPostToWorksheet;
 }
 
 class _AppLocalizationsDelegate

@@ -4831,4 +4831,41 @@ class AppLocalizationsGu extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$nameના વાલી સાથે કૉલ · પાછા જવા ટૅપ કરો';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'વેબ સ્રોતો સાથે ચકાસાયેલું નથી · ભણાવતા પહેલાં એક વાર ચકાસો.';
+
+  @override
+  String get parentHotlineSummaryTopicSheet => 'વિષયની વર્કશીટ બનાવો';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'ફોલો-અપ નક્કી કરો';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded => 'ફોલો-અપ અપડેટ્સમાં ઉમેરાયું';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$nameના વાલી સાથે ફોલો-અપ કરો';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'કૉલના સારાંશમાંથી · શું નક્કી થયું તે જોવા ટૅપ કરો';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'સતત ગેરહાજર';
+
+  @override
+  String get vidyaSuggestQuiz => 'ક્વિઝ બનાવો';
+
+  @override
+  String get vidyaSuggestWorksheet => 'વર્કશીટ બનાવો';
+
+  @override
+  String get vidyaSuggestAllTools => 'બધાં ટૂલ જુઓ';
+
+  @override
+  String get vidyaSuggestPostToWorksheet => 'પોસ્ટમાંથી વર્કશીટ બનાવો';
 }

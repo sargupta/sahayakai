@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/platform/clock.dart';
 import '../data/attendance_repository.dart';
 import '../domain/attendance_class.dart';
 import '../domain/attendance_date.dart';
@@ -141,3 +142,31 @@ class AbsenceQuery {
   @override
   int get hashCode => Object.hash(classId, studentId, limitDays);
 }
+
+/// How many students the teacher marked absent TODAY across all her classes —
+/// Home's "N marked absent · call a parent" row.
+///
+/// Reads only saved registers (`dailyRegisterProvider`), never the unsaved
+/// marks on an open roll call, so the count matches what parent outreach will
+/// list. A class whose register cannot be read counts as zero rather than
+/// failing the whole row: Home must not show an error for a reminder.
+final todayAbsentCountProvider = FutureProvider<int>((ref) async {
+  final classes = await ref.watch(attendanceClassesProvider.future);
+  final today = AttendanceDate.fromIstInstant(ref.watch(nowProvider)());
+  var absent = 0;
+  for (final c in classes) {
+    try {
+      final register = await ref.watch(
+        dailyRegisterProvider((classId: c.id, date: today)).future,
+      );
+      absent +=
+          register?.statuses.values
+              .where((s) => s == AttendanceStatus.absent)
+              .length ??
+          0;
+    } catch (_) {
+      // Unreadable register: no reminder for that class (see above).
+    }
+  }
+  return absent;
+});

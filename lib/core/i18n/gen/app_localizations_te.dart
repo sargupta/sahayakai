@@ -4862,4 +4862,43 @@ class AppLocalizationsTe extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return '$name తల్లిదండ్రులతో కాల్ · తిరిగి వెళ్ళడానికి నొక్కండి';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'వెబ్ మూలాలతో తనిఖీ చేయలేదు · బోధించే ముందు ఒకసారి సరిచూసుకోండి.';
+
+  @override
+  String get parentHotlineSummaryTopicSheet => 'అంశపు వర్క్‌షీట్ తయారు చేయండి';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'ఫాలో-అప్ షెడ్యూల్ చేయండి';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded =>
+      'ఫాలో-అప్ అప్‌డేట్స్‌కు జోడించబడింది';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return '$name తల్లిదండ్రులతో ఫాలో-అప్ చేయండి';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'కాల్ సారాంశం నుండి · ఏమి ఒప్పుకున్నారో చూడటానికి ట్యాప్ చేయండి';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'వరుసగా గైర్హాజరు';
+
+  @override
+  String get vidyaSuggestQuiz => 'క్విజ్ తయారు చేయండి';
+
+  @override
+  String get vidyaSuggestWorksheet => 'వర్క్‌షీట్ తయారు చేయండి';
+
+  @override
+  String get vidyaSuggestAllTools => 'అన్ని టూల్స్ చూడండి';
+
+  @override
+  String get vidyaSuggestPostToWorksheet =>
+      'పోస్ట్ నుండి వర్క్‌షీట్ తయారు చేయండి';
 }

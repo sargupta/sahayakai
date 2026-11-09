@@ -5784,5 +5784,55 @@
   "homeWaitingParentCall": "Call with {name}'s parent · tap to return",
   "@homeWaitingParentCall": {
     "description": "Home 'Waiting for you' row: a parent call the teacher left running; tapping returns to it."
+  },
+  "instantAnswerVerifyNote": "Not checked against web sources · please verify before you teach it.",
+  "@instantAnswerVerifyNote": {
+    "description": "Instant answer result: warning that the answer was not checked against web sources."
+  },
+  "parentHotlineSummaryTopicSheet": "Make the topic sheet",
+  "@parentHotlineSummaryTopicSheet": {
+    "description": "Parent call summary: action that opens a worksheet on what the child missed."
+  },
+  "parentHotlineSummaryScheduleFollowUp": "Schedule follow-up",
+  "@parentHotlineSummaryScheduleFollowUp": {
+    "description": "Parent call summary: action that adds a follow-up reminder to Updates."
+  },
+  "parentHotlineSummaryFollowUpAdded": "Follow-up added to Updates",
+  "@parentHotlineSummaryFollowUpAdded": {
+    "description": "Parent call summary: confirmation (and the done state of the action) once the follow-up reminder is in Updates."
+  },
+  "notificationFollowUpTitle": "Follow up with {name}'s parent",
+  "@notificationFollowUpTitle": {
+    "description": "Updates row title: a follow-up reminder the teacher scheduled from a parent call summary.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Rohan"
+      }
+    }
+  },
+  "notificationFollowUpBody": "From your call summary · tap to see what was agreed",
+  "@notificationFollowUpBody": {
+    "description": "Updates row body for a follow-up reminder: tapping reopens that call's summary."
+  },
+  "parentHotlineConsecutiveAbsences": "Consecutive absences",
+  "@parentHotlineConsecutiveAbsences": {
+    "description": "Parent outreach picker: section of students absent several school days in a row right now."
+  },
+  "vidyaSuggestQuiz": "Make a quiz",
+  "@vidyaSuggestQuiz": {
+    "description": "VIDYA sheet suggestion row: open the quiz maker."
+  },
+  "vidyaSuggestWorksheet": "Make a worksheet",
+  "@vidyaSuggestWorksheet": {
+    "description": "VIDYA sheet suggestion row: open the worksheet wizard."
+  },
+  "vidyaSuggestAllTools": "See all tools",
+  "@vidyaSuggestAllTools": {
+    "description": "VIDYA sheet suggestion row: open the Make hub with every tool."
+  },
+  "vidyaSuggestPostToWorksheet": "Turn a post into a worksheet",
+  "@vidyaSuggestPostToWorksheet": {
+    "description": "VIDYA sheet suggestion row on Community: turn a post's idea into a worksheet."
   }
 }

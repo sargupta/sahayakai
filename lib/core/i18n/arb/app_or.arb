@@ -1392,5 +1392,16 @@
   "communityJustConnected": "ଏବେ ସଂଯୁକ୍ତ",
   "communityConnectedCanChat": "ସଂଯୁକ୍ତ · ଏବେ ଚାଟ୍ କରିପାରିବେ",
   "parentHotlineCallContinuesNote": "କଲ୍ ଚାଲୁଛି। ଆପଣ ହୋମ୍‌ରୁ ଏଥିକୁ ଫେରିପାରିବେ।",
-  "homeWaitingParentCall": "{name}ଙ୍କ ଅଭିଭାବକଙ୍କ ସହ କଲ୍ · ଫେରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ"
+  "homeWaitingParentCall": "{name}ଙ୍କ ଅଭିଭାବକଙ୍କ ସହ କଲ୍ · ଫେରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
+  "instantAnswerVerifyNote": "ୱେବ୍ ଉତ୍ସ ସହ ଯାଞ୍ଚ ହୋଇନାହିଁ · ପଢ଼ାଇବା ପୂର୍ବରୁ ଥରେ ଯାଞ୍ଚ କରନ୍ତୁ।",
+  "parentHotlineSummaryTopicSheet": "ବିଷୟର ୱର୍କସିଟ୍ ତିଆରି କରନ୍ତୁ",
+  "parentHotlineSummaryScheduleFollowUp": "ଫଲୋ-ଅପ୍ ସ୍ଥିର କରନ୍ତୁ",
+  "parentHotlineSummaryFollowUpAdded": "ଫଲୋ-ଅପ୍ ଅପଡେଟ୍‌ରେ ଯୋଡ଼ାଗଲା",
+  "notificationFollowUpTitle": "{name}ଙ୍କ ଅଭିଭାବକଙ୍କ ସହ ଫଲୋ-ଅପ୍ କରନ୍ତୁ",
+  "notificationFollowUpBody": "କଲ୍ ସାରାଂଶରୁ · କ'ଣ ସ୍ଥିର ହେଲା ଦେଖିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
+  "parentHotlineConsecutiveAbsences": "ଲଗାତାର ଅନୁପସ୍ଥିତ",
+  "vidyaSuggestQuiz": "କୁଇଜ୍ ତିଆରି କରନ୍ତୁ",
+  "vidyaSuggestWorksheet": "ୱର୍କସିଟ୍ ତିଆରି କରନ୍ତୁ",
+  "vidyaSuggestAllTools": "ସମସ୍ତ ଟୁଲ୍ ଦେଖନ୍ତୁ",
+  "vidyaSuggestPostToWorksheet": "ପୋଷ୍ଟରୁ ୱର୍କସିଟ୍ ତିଆରି କରନ୍ତୁ"
 }

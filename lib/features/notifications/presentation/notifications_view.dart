@@ -152,7 +152,8 @@ class NotificationsView extends ConsumerWidget {
   /// pushing a malformed path.
   static String _destination(TeacherNotification n) => switch (n.kind) {
     TeacherNotificationKind.callCompleted ||
-    TeacherNotificationKind.callFailed => Routes.parentHotline,
+    TeacherNotificationKind.callFailed ||
+    TeacherNotificationKind.followUp => Routes.parentHotline,
     TeacherNotificationKind.absenceRun =>
       n.classId == null || n.classId!.isEmpty
           ? Routes.attendance

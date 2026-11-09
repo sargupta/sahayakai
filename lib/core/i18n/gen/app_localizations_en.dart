@@ -4808,4 +4808,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String homeWaitingParentCall(Object name) {
     return 'Call with $name\'s parent · tap to return';
   }
+
+  @override
+  String get instantAnswerVerifyNote =>
+      'Not checked against web sources · please verify before you teach it.';
+
+  @override
+  String get parentHotlineSummaryTopicSheet => 'Make the topic sheet';
+
+  @override
+  String get parentHotlineSummaryScheduleFollowUp => 'Schedule follow-up';
+
+  @override
+  String get parentHotlineSummaryFollowUpAdded => 'Follow-up added to Updates';
+
+  @override
+  String notificationFollowUpTitle(String name) {
+    return 'Follow up with $name\'s parent';
+  }
+
+  @override
+  String get notificationFollowUpBody =>
+      'From your call summary · tap to see what was agreed';
+
+  @override
+  String get parentHotlineConsecutiveAbsences => 'Consecutive absences';
+
+  @override
+  String get vidyaSuggestQuiz => 'Make a quiz';
+
+  @override
+  String get vidyaSuggestWorksheet => 'Make a worksheet';
+
+  @override
+  String get vidyaSuggestAllTools => 'See all tools';
+
+  @override
+  String get vidyaSuggestPostToWorksheet => 'Turn a post into a worksheet';
 }

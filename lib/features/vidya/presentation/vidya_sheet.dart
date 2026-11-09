@@ -394,6 +394,11 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                     else if (!busy)
                       Flexible(
                         child: _SuggestionRows(
+                          suggestions: _suggestionsFor(
+                            widget.pagePath ?? Routes.home,
+                            ref.watch(vidyaShellTabProvider),
+                            l10n,
+                          ),
                           onSuggestion: (route) {
                             final router = GoRouter.of(context);
                             Navigator.of(context).pop();
@@ -678,19 +683,18 @@ class _WaveformState extends State<_Waveform>
 /// What VIDYA can do from here, as rows to pick (UX map `SuggestionRow`s). The
 /// first is the likeliest, so it carries the selected look.
 class _SuggestionRows extends StatelessWidget {
-  const _SuggestionRows({required this.onSuggestion});
+  const _SuggestionRows({
+    required this.suggestions,
+    required this.onSuggestion,
+  });
 
+  /// (label, route) pairs, likeliest first — see [_suggestionsFor].
+  final List<(String, String)> suggestions;
   final ValueChanged<String> onSuggestion;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
-    final suggestions = <(String, String)>[
-      (l10n.homeTileLesson, Routes.lessonPlan),
-      (l10n.homeTileRollCall, Routes.attendance),
-      (l10n.homeTileScan, Routes.assessmentScanner),
-    ];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.only(top: AppSpacing.space3),
@@ -919,6 +923,56 @@ class _GrabHandle extends StatelessWidget {
       ),
     );
   }
+}
+
+/// What VIDYA offers from the page behind her sheet, likeliest first (the
+/// map's "Ask in place": the suggestions follow the page). Same page reading
+/// as [_pageLabelFor]: on the shell route the tab decides.
+List<(String, String)> _suggestionsFor(
+  String path,
+  int shellTab,
+  AppLocalizations l10n,
+) {
+  final lesson = (l10n.homeTileLesson, Routes.lessonPlan);
+  final rollCall = (l10n.homeTileRollCall, Routes.attendance);
+  final scan = (l10n.homeTileScan, Routes.assessmentScanner);
+  final callParents = (l10n.homeTileCall, Routes.parentHotline);
+  final quiz = (l10n.vidyaSuggestQuiz, Routes.quizGenerator);
+  final worksheet = (l10n.vidyaSuggestWorksheet, Routes.worksheetWizard);
+  final allTools = (l10n.vidyaSuggestAllTools, Routes.prepDesk);
+
+  final tab = path == Routes.home ? shellTab : -1;
+  if (tab == 1 || path.startsWith(Routes.library)) {
+    return [lesson, quiz, allTools];
+  }
+  if (tab == 2 ||
+      path.startsWith(Routes.staffroom) ||
+      path.startsWith(Routes.network) ||
+      path.startsWith(Routes.inbox)) {
+    return [
+      (l10n.vidyaSuggestPostToWorksheet, Routes.worksheetWizard),
+      lesson,
+      callParents,
+    ];
+  }
+  if (tab == 3 ||
+      path.startsWith(Routes.profile) ||
+      path.startsWith(Routes.settings)) {
+    return [lesson, rollCall, allTools];
+  }
+  if (path.startsWith(Routes.attendance) ||
+      path.startsWith(Routes.parentHotline) ||
+      path.startsWith(Routes.parentMessage)) {
+    return [callParents, rollCall, scan];
+  }
+  if (path.startsWith(Routes.lessonPlan)) return [quiz, worksheet, scan];
+  if (path.startsWith(Routes.assessmentScanner) ||
+      path.startsWith(Routes.quizGenerator) ||
+      path.startsWith(Routes.examPaper) ||
+      path.startsWith(Routes.rubricGenerator)) {
+    return [worksheet, callParents, lesson];
+  }
+  return [lesson, rollCall, scan];
 }
 
 String? _pageLabelFor(String? path, int shellTab, AppLocalizations l10n) {

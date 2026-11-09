@@ -1392,5 +1392,16 @@
   "communityJustConnected": "ഇപ്പോൾ ബന്ധപ്പെട്ടവർ",
   "communityConnectedCanChat": "ബന്ധപ്പെട്ടു · ഇനി ചാറ്റ് ചെയ്യാം",
   "parentHotlineCallContinuesNote": "കോൾ തുടരുന്നു. ഹോമിൽ നിന്ന് നിങ്ങൾക്ക് അതിലേക്ക് മടങ്ങാം.",
-  "homeWaitingParentCall": "{name}-ന്റെ രക്ഷിതാവുമായി കോൾ · തിരികെ പോകാൻ ടാപ്പ് ചെയ്യുക"
+  "homeWaitingParentCall": "{name}-ന്റെ രക്ഷിതാവുമായി കോൾ · തിരികെ പോകാൻ ടാപ്പ് ചെയ്യുക",
+  "instantAnswerVerifyNote": "വെബ് ഉറവിടങ്ങളുമായി ഒത്തുനോക്കിയിട്ടില്ല · പഠിപ്പിക്കുന്നതിനു മുമ്പ് ഒരിക്കൽ പരിശോധിക്കുക.",
+  "parentHotlineSummaryTopicSheet": "വിഷയത്തിന്റെ വർക്ക്ഷീറ്റ് തയ്യാറാക്കുക",
+  "parentHotlineSummaryScheduleFollowUp": "ഫോളോ-അപ്പ് നിശ്ചയിക്കുക",
+  "parentHotlineSummaryFollowUpAdded": "ഫോളോ-അപ്പ് അപ്ഡേറ്റുകളിൽ ചേർത്തു",
+  "notificationFollowUpTitle": "{name}-ന്റെ രക്ഷിതാവുമായി ഫോളോ-അപ്പ് ചെയ്യുക",
+  "notificationFollowUpBody": "കോൾ സംഗ്രഹത്തിൽ നിന്ന് · തീരുമാനിച്ചത് കാണാൻ ടാപ്പ് ചെയ്യുക",
+  "parentHotlineConsecutiveAbsences": "തുടർച്ചയായ ഹാജരില്ലായ്മ",
+  "vidyaSuggestQuiz": "ക്വിസ് തയ്യാറാക്കുക",
+  "vidyaSuggestWorksheet": "വർക്ക്ഷീറ്റ് തയ്യാറാക്കുക",
+  "vidyaSuggestAllTools": "എല്ലാ ടൂളുകളും കാണുക",
+  "vidyaSuggestPostToWorksheet": "പോസ്റ്റിൽ നിന്ന് വർക്ക്ഷീറ്റ് തയ്യാറാക്കുക"
 }

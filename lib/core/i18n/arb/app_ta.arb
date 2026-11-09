@@ -1392,5 +1392,16 @@
   "communityJustConnected": "இப்போது இணைந்தவர்கள்",
   "communityConnectedCanChat": "இணைந்துவிட்டீர்கள் · இப்போது அரட்டை அடிக்கலாம்",
   "parentHotlineCallContinuesNote": "அழைப்பு தொடர்கிறது. முகப்பிலிருந்து அதற்குத் திரும்பலாம்.",
-  "homeWaitingParentCall": "{name} அவர்களின் பெற்றோருடன் அழைப்பு · திரும்ப தட்டவும்"
+  "homeWaitingParentCall": "{name} அவர்களின் பெற்றோருடன் அழைப்பு · திரும்ப தட்டவும்",
+  "instantAnswerVerifyNote": "இணைய ஆதாரங்களுடன் சரிபார்க்கப்படவில்லை · கற்பிக்கும் முன் ஒருமுறை சரிபாருங்கள்.",
+  "parentHotlineSummaryTopicSheet": "பாடப்பகுதி பயிற்சித்தாள் உருவாக்கு",
+  "parentHotlineSummaryScheduleFollowUp": "தொடர் நடவடிக்கை திட்டமிடு",
+  "parentHotlineSummaryFollowUpAdded": "தொடர் நடவடிக்கை அறிவிப்புகளில் சேர்க்கப்பட்டது",
+  "notificationFollowUpTitle": "{name} அவர்களின் பெற்றோரைத் தொடர்ந்து அணுகவும்",
+  "notificationFollowUpBody": "அழைப்புச் சுருக்கத்திலிருந்து · ஒப்புக்கொண்டதைப் பார்க்கத் தட்டவும்",
+  "parentHotlineConsecutiveAbsences": "தொடர் வருகையின்மை",
+  "vidyaSuggestQuiz": "வினாடி வினா உருவாக்கு",
+  "vidyaSuggestWorksheet": "பயிற்சித்தாள் உருவாக்கு",
+  "vidyaSuggestAllTools": "அனைத்துக் கருவிகளையும் பார்",
+  "vidyaSuggestPostToWorksheet": "இடுகையிலிருந்து பயிற்சித்தாள் உருவாக்கு"
 }

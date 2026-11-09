@@ -1392,5 +1392,16 @@
   "communityJustConnected": "ਹੁਣੇ ਜੁੜੇ",
   "communityConnectedCanChat": "ਜੁੜ ਗਏ · ਹੁਣ ਗੱਲ ਕਰ ਸਕਦੇ ਹੋ",
   "parentHotlineCallContinuesNote": "ਕਾਲ ਜਾਰੀ ਹੈ। ਤੁਸੀਂ ਹੋਮ ਤੋਂ ਇਸ ’ਤੇ ਵਾਪਸ ਆ ਸਕਦੇ ਹੋ।",
-  "homeWaitingParentCall": "{name} ਦੇ ਮਾਪਿਆਂ ਨਾਲ ਕਾਲ · ਵਾਪਸ ਜਾਣ ਲਈ ਟੈਪ ਕਰੋ"
+  "homeWaitingParentCall": "{name} ਦੇ ਮਾਪਿਆਂ ਨਾਲ ਕਾਲ · ਵਾਪਸ ਜਾਣ ਲਈ ਟੈਪ ਕਰੋ",
+  "instantAnswerVerifyNote": "ਵੈੱਬ ਸਰੋਤਾਂ ਨਾਲ ਜਾਂਚਿਆ ਨਹੀਂ ਗਿਆ · ਪੜ੍ਹਾਉਣ ਤੋਂ ਪਹਿਲਾਂ ਇੱਕ ਵਾਰ ਜਾਂਚ ਲਓ।",
+  "parentHotlineSummaryTopicSheet": "ਵਿਸ਼ੇ ਦੀ ਵਰਕਸ਼ੀਟ ਬਣਾਓ",
+  "parentHotlineSummaryScheduleFollowUp": "ਫਾਲੋ-ਅੱਪ ਤੈਅ ਕਰੋ",
+  "parentHotlineSummaryFollowUpAdded": "ਫਾਲੋ-ਅੱਪ ਅੱਪਡੇਟਸ ਵਿੱਚ ਜੋੜਿਆ ਗਿਆ",
+  "notificationFollowUpTitle": "{name} ਦੇ ਮਾਪਿਆਂ ਨਾਲ ਫਾਲੋ-ਅੱਪ ਕਰੋ",
+  "notificationFollowUpBody": "ਕਾਲ ਦੇ ਸਾਰ ਤੋਂ · ਕੀ ਤੈਅ ਹੋਇਆ ਦੇਖਣ ਲਈ ਟੈਪ ਕਰੋ",
+  "parentHotlineConsecutiveAbsences": "ਲਗਾਤਾਰ ਗ਼ੈਰਹਾਜ਼ਰ",
+  "vidyaSuggestQuiz": "ਕੁਇਜ਼ ਬਣਾਓ",
+  "vidyaSuggestWorksheet": "ਵਰਕਸ਼ੀਟ ਬਣਾਓ",
+  "vidyaSuggestAllTools": "ਸਾਰੇ ਟੂਲ ਦੇਖੋ",
+  "vidyaSuggestPostToWorksheet": "ਪੋਸਟ ਤੋਂ ਵਰਕਸ਼ੀਟ ਬਣਾਓ"
 }

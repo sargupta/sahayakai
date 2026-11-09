@@ -19,6 +19,8 @@ import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../../parent_hotline/domain/hotline_launch.dart';
+import '../../../parent_hotline/domain/parent_outreach.dart';
 import '../../domain/assessment_scan.dart';
 
 /// Renders a graded [AssessmentResult] as a printed scorecard, not a chat dump
@@ -205,7 +207,14 @@ class _RemedialPrompt extends StatelessWidget {
                 child: _PillButton(
                   label: l10n.scanRemedialMessageParents,
                   filled: false,
-                  onTap: () => context.push(Routes.parentMessage),
+                  // The map's Parent outreach, opened on the academic
+                  // reason: the scan is the evidence for that call.
+                  onTap: () => context.push(
+                    Routes.parentHotline,
+                    extra: const HotlineLaunch(
+                      suggestedReason: OutreachReason.poorPerformance,
+                    ),
+                  ),
                 ),
               ),
             ],

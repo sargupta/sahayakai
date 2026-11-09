@@ -4,11 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/platform/clock.dart';
 import '../../attendance/data/attendance_errors.dart';
 import '../../attendance/data/attendance_repository.dart';
 import '../../attendance/domain/attendance_class.dart';
+import '../../attendance/domain/attendance_date.dart';
+import '../../notifications/domain/teacher_notification.dart'
+    show kAbsenceRunThreshold;
 import '../domain/hotline_roster.dart';
 import '../domain/hotline_student.dart';
+import '../domain/parent_outreach.dart';
 
 /// An explicitly SUPPLIED roster, or null when nothing was supplied.
 ///
@@ -62,7 +67,10 @@ final hotlineRosterProvider = FutureProvider<List<HotlineClassRoster>>((ref) {
     );
   }
 
-  return _readRosters(ref.watch(attendanceRepositoryProvider));
+  return _readRosters(
+    ref.watch(attendanceRepositoryProvider),
+    AttendanceDate.fromIstInstant(ref.watch(nowProvider)()),
+  );
 });
 
 /// A supplied flat list, grouped by class in first-seen order.
@@ -91,12 +99,15 @@ List<HotlineClassRoster> groupSuppliedRoster(List<HotlineStudent> students) {
   ];
 }
 
-Future<List<HotlineClassRoster>> _readRosters(AttendanceRepository repo) async {
+Future<List<HotlineClassRoster>> _readRosters(
+  AttendanceRepository repo,
+  AttendanceDate today,
+) async {
   final classes = await repo.listClasses();
   if (classes.isEmpty) return const <HotlineClassRoster>[];
 
   final rosters = await Future.wait([
-    for (final klass in classes) _readClass(repo, klass),
+    for (final klass in classes) _readClass(repo, klass, today),
   ]);
 
   // Whole-picker answers (see the provider doc).
@@ -113,10 +124,16 @@ Future<List<HotlineClassRoster>> _readRosters(AttendanceRepository repo) async {
 Future<HotlineClassRoster> _readClass(
   AttendanceRepository repo,
   AttendanceClass klass,
+  AttendanceDate today,
 ) async {
   final subject = klass.subject.trim().isEmpty ? null : klass.subject.trim();
   try {
+    // Both reads start together, but the roster's own error must surface
+    // unwrapped (the picker branches on its exact type), so it is awaited on
+    // its own; the streak read never throws.
+    final streak = _studentsOnAbsenceRun(repo, klass.id, today);
     final roster = await repo.listRoster(klass.id);
+    final onStreak = await streak;
     return HotlineClassRoster(
       classId: klass.id,
       className: klass.name,
@@ -129,6 +146,12 @@ Future<HotlineClassRoster> _readClass(
             classId: klass.id,
             className: klass.name,
             subject: subject,
+            // The map's "Consecutive absences" group: a child absent
+            // [kAbsenceRunThreshold]+ school days in a row right now starts on
+            // that reason.
+            suggestedReason: onStreak.contains(student.id)
+                ? OutreachReason.consecutiveAbsences
+                : null,
           ),
       ]),
     );
@@ -139,5 +162,30 @@ Future<HotlineClassRoster> _readClass(
       subject: subject,
       error: error,
     );
+  }
+}
+
+/// The students currently absent [kAbsenceRunThreshold] or more school days
+/// in a row, read off this month's server-computed summaries.
+///
+/// Best-effort: the summaries only rank the list, so a failed read returns no
+/// one rather than failing the roster the teacher came to pick from.
+Future<Set<String>> _studentsOnAbsenceRun(
+  AttendanceRepository repo,
+  String classId,
+  AttendanceDate today,
+) async {
+  try {
+    final summaries = await repo.studentSummaries(
+      classId,
+      year: today.year,
+      month: today.month,
+    );
+    return <String>{
+      for (final s in summaries)
+        if ((s.currentAbsenceStreak ?? 0) >= kAbsenceRunThreshold) s.studentId,
+    };
+  } catch (_) {
+    return const <String>{};
   }
 }

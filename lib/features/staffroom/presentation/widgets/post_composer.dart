@@ -33,8 +33,15 @@ const int kGroupPostMaxChars = 2000;
 /// appears without a manual pull. A failure (429 rate limit, 403 non-member,
 /// offline) keeps the draft and shows a translated reason.
 class PostComposer extends ConsumerStatefulWidget {
-  const PostComposer({super.key, required this.groups, this.fixedGroupId})
-      : assert(groups.length > 0 || fixedGroupId != null);
+  const PostComposer({
+    super.key,
+    required this.groups,
+    this.fixedGroupId,
+    this.initialText,
+    this.initialType,
+    this.startOpen = false,
+    this.onPosted,
+  }) : assert(groups.length > 0 || fixedGroupId != null);
 
   /// The groups the teacher may post to (their own groups). Ignored when
   /// [fixedGroupId] is set.
@@ -42,6 +49,20 @@ class PostComposer extends ConsumerStatefulWidget {
 
   /// Post to this group only (group detail) — no picker is shown.
   final String? fixedGroupId;
+
+  /// A draft to start from — what "Post to Community" hands over from a tool's
+  /// result. Trimmed to [kGroupPostMaxChars] so the post can always be sent.
+  final String? initialText;
+
+  /// The post type to start on (a tool's result is a [PostType.resource]).
+  final PostType? initialType;
+
+  /// Opens straight to the text field instead of the collapsed pill.
+  final bool startOpen;
+
+  /// Called after a successful post (the composer has already collapsed and
+  /// confirmed it) — a host sheet closes itself here.
+  final VoidCallback? onPosted;
 
   @override
   ConsumerState<PostComposer> createState() => _PostComposerState();
@@ -58,6 +79,14 @@ class _PostComposerState extends ConsumerState<PostComposer> {
   @override
   void initState() {
     super.initState();
+    final draft = widget.initialText?.trim();
+    if (draft != null && draft.isNotEmpty) {
+      _text.text = draft.length > kGroupPostMaxChars
+          ? draft.substring(0, kGroupPostMaxChars)
+          : draft;
+    }
+    _type = widget.initialType ?? PostType.share;
+    _open = widget.startOpen;
     _text.addListener(_onChanged);
   }
 
@@ -93,11 +122,9 @@ class _PostComposerState extends ConsumerState<PostComposer> {
       _error = null;
     });
     try {
-      await ref.read(staffroomTransportProvider).createGroupPost(
-            groupId: groupId,
-            content: content,
-            postType: _type,
-          );
+      await ref
+          .read(staffroomTransportProvider)
+          .createGroupPost(groupId: groupId, content: content, postType: _type);
       if (!mounted) return;
       ref
         ..invalidate(unifiedFeedProvider)
@@ -112,6 +139,7 @@ class _PostComposerState extends ConsumerState<PostComposer> {
       ScaffoldMessenger.maybeOf(context)
         ?..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.communityComposerPosted)));
+      widget.onPosted?.call();
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -177,8 +205,7 @@ class _PostComposerState extends ConsumerState<PostComposer> {
     }
 
     final groupId = _targetGroupId;
-    final canPost =
-        !_busy && groupId != null && _text.text.trim().isNotEmpty;
+    final canPost = !_busy && groupId != null && _text.text.trim().isNotEmpty;
 
     return MapCard(
       child: Column(
