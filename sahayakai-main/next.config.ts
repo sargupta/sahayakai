@@ -34,11 +34,11 @@ const nextConfig: NextConfig = {
         // Firebase Auth reverse-proxy for same-site OAuth (iPhone Safari ITP workaround)
         {
           source: '/__/auth/:path*',
-          destination: 'https://sahayakai-b4248.firebaseapp.com/__/auth/:path*',
+          destination: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sahayakai-b4248'}.firebaseapp.com/__/auth/:path*`,
         },
         {
           source: '/__/firebase/:path*',
-          destination: 'https://sahayakai-b4248.firebaseapp.com/__/firebase/:path*',
+          destination: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sahayakai-b4248'}.firebaseapp.com/__/firebase/:path*`,
         },
       ],
     };

@@ -1,10 +1,8 @@
 {
-  "apiKey": "AIzaSyBKgCKW4e6YpM4HHIgAhwhJwmyQ0wRGCtw",
-  "authDomain": "sahayakai-b4248.firebaseapp.com",
-  "databaseURL": "https://sahayakai-b4248-default-rtdb.asia-southeast1.firebasedatabase.app",
-  "projectId": "sahayakai-b4248",
-  "storageBucket": "sahayakai-b4248.firebasestorage.app",
-  "messagingSenderId": "640589855975",
-  "appId": "1:640589855975:web:624436f873a78069aa3642",
-  "measurementId": "G-273SVBVJ2L"
+  "apiKey": "AIzaSyBgGthWPyogYjeGlDpKIv5e69W0vi7u0y0",
+  "authDomain": "riya-outbound-staging.firebaseapp.com",
+  "projectId": "riya-outbound-staging",
+  "storageBucket": "riya-outbound-staging.firebasestorage.app",
+  "messagingSenderId": "966091633060",
+  "appId": "1:966091633060:web:7558e4d4d9f64a79055131"
 }

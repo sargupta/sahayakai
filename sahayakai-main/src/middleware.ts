@@ -6,8 +6,10 @@ import {
     verifyProfileCompleteCookie,
 } from '@/lib/profile-complete-cookie';
 
-// Firebase Project ID
-const PROJECT_ID = 'sahayakai-b4248';
+// Firebase Project ID. Inlined at build time from the Docker build arg, so a
+// deploy to another Firebase project verifies that project's tokens.
+const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sahayakai-b4248';
+const PROJECT_NUMBER = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '640589855975';
 const ISSUER = `https://securetoken.google.com/${PROJECT_ID}`;
 const GOOGLE_CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 
@@ -20,7 +22,7 @@ const APP_CHECK_ISSUER = `https://firebaseappcheck.googleapis.com/${PROJECT_ID}`
 // https://firebase.google.com/docs/app-check/custom-resource-backend#nodejs
 const APP_CHECK_AUD_PREFIXES = [
     `projects/${PROJECT_ID}`,
-    'projects/640589855975', // project number
+    `projects/${PROJECT_NUMBER}`, // project number
 ];
 
 // Cache the JWKS resolver across requests (it has its own internal TTL).

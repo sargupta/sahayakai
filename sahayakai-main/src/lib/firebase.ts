@@ -30,9 +30,9 @@ const firebaseConfig = {
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "www.sahayakai.com",
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "sahayakai-b4248",
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "sahayakai-b4248-mumbai",
-    messagingSenderId: "640589855975",
-    appId: "1:640589855975:web:624436f873a78069aa3642",
-    measurementId: "G-273SVBVJ2L"
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "640589855975",
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:640589855975:web:624436f873a78069aa3642",
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-273SVBVJ2L"
 };
 
 import { getAuth } from "firebase/auth";

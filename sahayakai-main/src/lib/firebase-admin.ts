@@ -20,18 +20,24 @@ export async function initializeFirebase() {
 
         if (isPlaceholder(serviceAccountString)) {
           logger.info("Fetching service account from Secret Manager...", "FirebaseAdmin");
-          serviceAccountString = await getSecret('FIREBASE_SERVICE_ACCOUNT_KEY');
+          serviceAccountString = await getSecret('FIREBASE_SERVICE_ACCOUNT_KEY').catch(() => undefined);
         }
 
+        // No key anywhere: fall back to Application Default Credentials, i.e.
+        // the Cloud Run runtime service account. Keyless is the safer setup;
+        // the key path stays for local dev and the original project.
+        let credential: ReturnType<typeof admin.credential.applicationDefault>;
         if (isPlaceholder(serviceAccountString)) {
-          throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY not found in Environment or Secret Manager.");
-        }
-
-        let serviceAccount: any;
-        try {
-          serviceAccount = JSON.parse(serviceAccountString!);
-        } catch (e) {
-          throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY is not a valid JSON string. If you are using Secret Manager, ensure your local .env.local doesn't have a placeholder for it, or that gcloud auth is configured.");
+          logger.info("No service account key; using Application Default Credentials", "FirebaseAdmin");
+          credential = admin.credential.applicationDefault();
+        } else {
+          let serviceAccount: any;
+          try {
+            serviceAccount = JSON.parse(serviceAccountString!);
+          } catch (e) {
+            throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY is not a valid JSON string. If you are using Secret Manager, ensure your local .env.local doesn't have a placeholder for it, or that gcloud auth is configured.");
+          }
+          credential = admin.credential.cert(serviceAccount);
         }
 
         if (isPlaceholder(process.env.GOOGLE_GENAI_API_KEY)) {
@@ -47,7 +53,8 @@ export async function initializeFirebase() {
         logger.info("Using storage bucket", "FirebaseAdmin", { storageBucket });
 
         admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
+          credential,
+          projectId: process.env.GOOGLE_CLOUD_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
           storageBucket: storageBucket,
         });
         logger.info("Success.", "FirebaseAdmin");

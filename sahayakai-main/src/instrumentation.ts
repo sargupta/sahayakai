@@ -31,6 +31,8 @@ export async function register() {
     const missing: string[] = [];
 
     for (const [key, purpose] of Object.entries(REQUIRED_ENV_VARS)) {
+        // Cloud Run: Firebase Admin uses the runtime service account instead.
+        if (key === 'FIREBASE_SERVICE_ACCOUNT_KEY' && process.env.K_SERVICE) continue;
         if (!process.env[key]) {
             missing.push(`  MISSING  ${key}  (${purpose})`);
         }

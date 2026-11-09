@@ -30,13 +30,15 @@ export async function GET() {
                 uptime: process.uptime()
             },
             environment: {
+                // On Cloud Run (K_SERVICE set) Firebase Admin falls back to the
+                // runtime service account, so a key file is not required there.
                 healthy: !!(
                     process.env.GOOGLE_GENAI_API_KEY &&
-                    process.env.FIREBASE_SERVICE_ACCOUNT_KEY
+                    (process.env.FIREBASE_SERVICE_ACCOUNT_KEY || process.env.K_SERVICE)
                 ),
                 missingVars: [
                     !process.env.GOOGLE_GENAI_API_KEY && 'GOOGLE_GENAI_API_KEY',
-                    !process.env.FIREBASE_SERVICE_ACCOUNT_KEY && 'FIREBASE_SERVICE_ACCOUNT_KEY',
+                    !process.env.FIREBASE_SERVICE_ACCOUNT_KEY && !process.env.K_SERVICE && 'FIREBASE_SERVICE_ACCOUNT_KEY',
                 ].filter(Boolean)
             }
         }
