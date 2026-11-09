@@ -14,7 +14,7 @@ class Transcript {
 
   /// The web's silence / mis-tap guard: a transcript under 2 characters is not
   /// worth a VIDYA round-trip.
-  bool get isUsable => text.trim().length >= 2;
+  bool get isUsable => text.trim().length >= 2 && RegExp(r'\p{L}', unicode: true).hasMatch(text.trim());
 
   static Transcript fromJson(Map<String, dynamic> json) => Transcript(
         text: (json['text'] as String?)?.trim() ?? '',
