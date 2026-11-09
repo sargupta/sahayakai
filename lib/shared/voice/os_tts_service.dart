@@ -6,9 +6,20 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'os_tts_service.g.dart';
 
-/// OS-level TTS fallback (Android `TextToSpeech`) — used ONLY when the cloud
-/// `/api/tts` endpoint returns a `403 PLAN_UPGRADE_REQUIRED` error.
-/// Zero impact on paid/upgrade flows; this path is strictly additive.
+/// The speech rate VIDYA's on-device voice uses: a touch slower than normal,
+/// so a teacher can follow her over classroom noise.
+///
+/// flutter_tts takes 0.0–1.0 with **0.5 as normal speed** on both platforms:
+/// Android doubles the value before handing it to `TextToSpeech` (1.0 is
+/// normal there), and iOS's `AVSpeechUtterance` default is 0.5. So 0.45 is
+/// about 0.9× normal. (This was 0.85 — about 1.7× normal on Android — which
+/// is why VIDYA sounded rushed.)
+const double kVidyaOsSpeechRate = 0.45;
+
+/// On-device TTS (Android `TextToSpeech`): VIDYA's voice whenever the cloud
+/// `/api/tts` reply cannot be played — the plan-gate 403, no audio in the
+/// reply, a synthesis slower than the controller's timebox, or any other
+/// failure. The cloud voice is preferred whenever it answers.
 class OsTtsService {
   OsTtsService._();
 
@@ -24,23 +35,25 @@ class OsTtsService {
   Future<bool> initialize(String languageCode) async {
     if (_initialized) {
       // Re-set language if changed
-      await _tts.setLanguage(languageCode);
-      return true;
+      return _isAvailable(await _tts.setLanguage(languageCode));
     }
 
     _initialized = true;
 
-    // Configure for speech use-case
-    // Slightly slower + clearer for teacher-facing speech.
-    await _tts.setSpeechRate(0.85);
-    await _tts.setPitch(0.95);
+    // Slightly slower than normal, for teacher-facing speech (see the
+    // constant for how flutter_tts scales the rate).
+    await _tts.setSpeechRate(kVidyaOsSpeechRate);
     await _tts.setVolume(1.0);
     await _tts.setPitch(1.0);
 
-    // Set language (Android TTS uses BCP-47)
-    final bool available = await _tts.setLanguage(languageCode);
-    return available;
+    // Set language (Android TTS uses BCP-47). The plugin answers 1 / 0 on
+    // Android (an int, not a bool): reading it as a bool threw on the FIRST
+    // initialize, so VIDYA's first on-device reply of a session was silent.
+    return _isAvailable(await _tts.setLanguage(languageCode));
   }
+
+  /// flutter_tts's `setLanguage` reply: `1`/`0` on Android, a bool elsewhere.
+  static bool _isAvailable(Object? reply) => reply == 1 || reply == true;
 
   /// Speak [text] with the current language. Returns when utterance completes
   /// or is interrupted.
