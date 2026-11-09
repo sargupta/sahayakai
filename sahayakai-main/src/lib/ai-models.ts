@@ -32,13 +32,14 @@
  */
 
 import { isFeatureEnabled } from './feature-flags';
+import { MODELS } from '@/ai/models';
 
 /** Canonical Gemini model identifiers. Add new variants here as they roll out. */
 export const GEMINI_MODELS = {
-    /** Default — fast, cheap, multimodal. Production default since 2026-05-19. */
-    FLASH_2_0: 'vertexai/gemini-2.5-flash',
-    /** Higher-quality fallback. Use when 2.0-flash regresses on edge cases. */
-    PRO_2_5: 'googleai/gemini-2.5-pro',
+    /** Default — fast, cheap, multimodal. Key names are historical; the IDs come from src/ai/models.ts. */
+    FLASH_2_0: MODELS.flash,
+    /** Higher-quality fallback. Use when flash regresses on edge cases. */
+    PRO_2_5: MODELS.pro,
 } as const;
 
 export type GeminiModel = (typeof GEMINI_MODELS)[keyof typeof GEMINI_MODELS];

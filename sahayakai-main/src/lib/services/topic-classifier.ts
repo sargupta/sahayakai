@@ -26,6 +26,7 @@
  */
 
 import { z } from 'genkit';
+import { MODELS } from '@/ai/models';
 
 /** Stamp written alongside `topicIds`. Bump when the topic seed materially
  *  improves so the backfill re-classifies only stale docs (F8). */
@@ -35,7 +36,7 @@ export const TOPIC_CLASS_VERSION = 'v1';
  *  genkit.ts) so ops can swap without a code change. Default stays Flash; set
  *  TOPIC_CLASS_MODEL=googleai/gemini-flash-lite-latest to run on the 500-RPD
  *  Flash-Lite key (accuracy deferred, see PLAN-pyq-syllabus-change.md §16). */
-const TOPIC_CLASS_MODEL = process.env.TOPIC_CLASS_MODEL || 'googleai/gemini-2.5-flash';
+const TOPIC_CLASS_MODEL = process.env.TOPIC_CLASS_MODEL || MODELS.flashLite;
 
 /** Questions per model call. Default 150 > the corpus's largest chapter (102),
  *  so every current chapter is exactly one call; the cap only splits a future

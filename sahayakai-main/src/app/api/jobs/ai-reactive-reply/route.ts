@@ -19,6 +19,7 @@ import {
     loadPersonaMemory,
     savePersonaMemory,
 } from '@/lib/ai-teacher-personas';
+import { MODELS } from '@/ai/models';
 
 export const maxDuration = 60;
 
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
         const { ai, runResiliently } = await import('@/ai/genkit');
         const result = await runResiliently(async (override) => {
             return ai.generate({
-                model: 'vertexai/gemini-2.5-flash',
+                model: MODELS.flash,
                 system: systemPrompt,
                 prompt: userPrompt,
                 config: {

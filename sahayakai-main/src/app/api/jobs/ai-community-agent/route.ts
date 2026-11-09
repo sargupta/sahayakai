@@ -33,6 +33,7 @@ import {
     type PersonaMemory,
 } from '@/lib/ai-teacher-personas';
 import { getAllPersonas, pickFromPool } from '@/lib/ai-persona-runtime';
+import { MODELS } from '@/ai/models';
 
 export const maxDuration = 120;
 
@@ -44,7 +45,7 @@ async function generateContent(systemPrompt: string, userPrompt: string): Promis
 
     const result = await runResiliently(async (override) => {
         return ai.generate({
-            model: 'vertexai/gemini-2.5-flash',
+            model: MODELS.flash,
             system: systemPrompt,
             prompt: userPrompt,
             config: {

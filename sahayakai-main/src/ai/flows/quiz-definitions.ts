@@ -3,6 +3,7 @@ import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { QuizGeneratorInputSchema, QuizGeneratorOutputSchema } from '@/ai/schemas/quiz-generator-schemas';
+import { MODELS, modelName } from '@/ai/models';
 
 export const quizGeneratorPrompt = ai.definePrompt({
   name: 'quizGeneratorPrompt',
@@ -136,14 +137,14 @@ export const quizGeneratorFlow = ai.defineFlow(
       const output = result.output;
 
       if (input.userId && (result as any).usage) {
-        UsageTracker.trackGemini(input.userId, (result as any).usage.totalTokens || 0, 'gemini-2.5-flash');
+        UsageTracker.trackGemini(input.userId, (result as any).usage.totalTokens || 0, modelName(MODELS.flash));
       }
 
       if (!output) {
         throw new FlowExecutionError(
           'AI model returned null output',
           {
-            modelUsed: 'gemini-2.5-flash',
+            modelUsed: modelName(MODELS.flash),
             input: input.topic
           }
         );

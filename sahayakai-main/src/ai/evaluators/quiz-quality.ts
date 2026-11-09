@@ -1,5 +1,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { MODELS } from '@/ai/models';
 
 // Define the evaluator
 ai.defineEvaluator(
@@ -29,7 +30,7 @@ ai.defineEvaluator(
     const correctnessPromises = output.questions.map(async (q: any) => {
       try {
         const result = await ai.generate({
-          model: 'vertexai/gemini-2.5-flash',
+          model: MODELS.flash,
           prompt: `You are an expert teacher evaluating a quiz question for factual accuracy.
 
 Question: ${q.questionText || q.question || q.text}
@@ -73,7 +74,7 @@ Respond with ONLY a JSON object: {"correct": true/false, "reasoning": "brief exp
         try {
           const options = q.options || [];
           const result = await ai.generate({
-            model: 'vertexai/gemini-2.5-flash',
+            model: MODELS.flash,
             prompt: `You are evaluating MCQ distractors (wrong answer choices) for educational quality.
 
 Question: ${q.questionText || q.question || q.text}

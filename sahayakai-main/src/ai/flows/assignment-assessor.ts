@@ -25,8 +25,9 @@ import { normalizeLanguage } from '@/ai/lib/normalize-language';
 import { HANDWRITING_FEW_SHOTS } from '@/ai/lib/handwriting-fewshots';
 import { validateAssessment } from './assignment-assessor-validation';
 import { RubricGeneratorOutputSchema, type RubricGeneratorOutput } from './rubric-generator';
+import { MODELS } from '@/ai/models';
 
-const ASSESSMENT_MODEL = 'googleai/gemini-2.5-pro';
+const ASSESSMENT_MODEL = MODELS.pro;
 
 const RubricSnapshotSchema = RubricGeneratorOutputSchema;
 

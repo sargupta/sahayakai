@@ -20,6 +20,7 @@ import { ai, runResiliently } from '@/ai/genkit';
 import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 import { INJECTION_GUARD, frameUserInput } from '@/ai/prompt-hardening';
 import { logger } from '@/lib/logger';
+import { MODELS } from '@/ai/models';
 
 /**
  * NCERT-demo 2026-05-19 — chapter validation hook.
@@ -413,7 +414,7 @@ export async function runGenkitVidya(
 
     return await runResiliently(async (config) => {
         const response = await ai.generate({
-            model: 'vertexai/gemini-2.5-flash',
+            model: MODELS.flash,
             prompt: `System: ${systemPrompt}\n\nChat History:\n${frameUserInput('chat_history', chatContext)}\n\nUser: ${frameUserInput('message', input.message)}\n\nOutput strictly the JSON response as required by the System prompt. Return ONLY a single JSON object, no prose, no markdown code fences.`,
             ...config,
             config: {

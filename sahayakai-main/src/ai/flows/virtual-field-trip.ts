@@ -15,6 +15,7 @@ import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
+import { MODELS, modelName } from '@/ai/models';
 
 export const VirtualFieldTripInputSchema = z.object({
   topic: z.string().max(1000).describe('The topic or theme for the virtual field trip.'),
@@ -150,7 +151,7 @@ const virtualFieldTripFlow = ai.defineFlow(
         throw new FlowExecutionError(
           'AI model returned null output',
           {
-            modelUsed: 'gemini-2.5-flash',
+            modelUsed: modelName(MODELS.flash),
             input: input.topic
           }
         );

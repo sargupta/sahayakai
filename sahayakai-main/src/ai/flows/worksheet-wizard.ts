@@ -101,6 +101,7 @@ export async function generateWorksheet(input: WorksheetWizardInput): Promise<Wo
 
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
+import { MODELS, modelName } from '@/ai/models';
 
 const worksheetWizardPrompt = ai.definePrompt({
   name: 'worksheetWizardPrompt',
@@ -191,7 +192,7 @@ const worksheetWizardFlow = ai.defineFlow(
         throw new FlowExecutionError(
           'AI model returned null output',
           {
-            modelUsed: 'gemini-2.5-flash',
+            modelUsed: modelName(MODELS.flash),
             input: input.prompt
           }
         );

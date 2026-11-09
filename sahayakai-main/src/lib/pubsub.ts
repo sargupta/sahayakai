@@ -20,7 +20,7 @@ export function getPubSub() {
     // In production, it uses service account or default credentials
     // In local dev, we might use an emulator or a real project ID
     pubsub = new PubSub({
-        projectId: process.env.GOOGLE_CLOUD_PROJECT || 'sahayakai-b4248',
+        projectId: process.env.GOOGLE_CLOUD_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'riya-outbound-staging',
     });
 
     return pubsub;

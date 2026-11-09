@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { AITeacherPersona, getPersonaUserDoc } from '@/lib/ai-teacher-personas';
 import { invalidatePersonaCache } from '@/lib/ai-persona-runtime';
+import { MODELS } from '@/ai/models';
 
 export const maxDuration = 180;
 
@@ -195,7 +196,7 @@ export async function POST(request: NextRequest) {
         const { ai, runResiliently } = await import('@/ai/genkit');
         const result = await runResiliently(async (override) => {
             return ai.generate({
-                model: 'vertexai/gemini-2.5-flash',
+                model: MODELS.flash,
                 system: 'You generate realistic Indian school teacher persona profiles for a teacher community platform. Output ONLY valid JSON. No markdown, no commentary.',
                 prompt: buildSchemaInstruction(count),
                 config: {

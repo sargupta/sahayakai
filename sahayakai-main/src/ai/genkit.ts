@@ -1,6 +1,7 @@
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-import { vertexAI } from '@genkit-ai/vertexai';
+import { vertexAI } from '@genkit-ai/google-genai';
+import { DEFAULT_MODEL, MODELS, VERTEX_LOCATION, VERTEX_PROJECT } from './models';
 import { getSecret } from '@/lib/secrets';
 import { logger } from '@/lib/logger';
 
@@ -10,23 +11,23 @@ if (isPlaceholder(process.env.GOOGLE_API_KEY)) delete process.env.GOOGLE_API_KEY
 if (isPlaceholder(process.env.GEMINI_API_KEY)) delete process.env.GEMINI_API_KEY;
 
 // 1. Central Genkit Instance
-// GENKIT_DEFAULT_MODEL env override lets ops swap without a code change.
-// Default is `gemini-2.5-flash` — `gemini-2.0-flash` was moved off because
-// its free-tier per-minute quota was saturating in production (quiz flow
-// calls the API 3× in parallel, one per difficulty, which hits the cap
-// fast). 2.5-flash has the same pricing class with better throughput.
-// Vertex AI is the default provider: billed via Cloud Billing (startup credits
-// apply), authenticated via ADC/service identity — no API keys, no prepay.
-// Rollback lever: set GENKIT_DEFAULT_MODEL='googleai/gemini-2.5-flash' on the
-// service to revert to the AI Studio key-pool path without a redeploy.
-export const DEFAULT_MODEL = 'vertexai/gemini-2.5-flash';
-const activeModel = process.env.GENKIT_DEFAULT_MODEL || DEFAULT_MODEL;
+// Project, location and model IDs live in ./models (see the probe results
+// there). Vertex AI is the default provider: billed via Cloud Billing,
+// authenticated via ADC/service identity — no API keys, no prepay.
+// GENKIT_DEFAULT_MODEL overrides the default without a code change; a
+// `googleai/*` value switches back to the AI Studio key-pool path.
+//
+// The Vertex plugin comes from @genkit-ai/google-genai: the legacy
+// @genkit-ai/vertexai plugin rejects location `global`, which is the only
+// location that serves Gemini models in riya-outbound-staging.
+export { DEFAULT_MODEL };
+const activeModel = MODELS.flash;
 export const usingVertex = activeModel.startsWith('vertexai/');
 
 export const ai = genkit({
   plugins: [
-    vertexAI({ projectId: process.env.GCLOUD_PROJECT || 'sahayakai-b4248', location: 'us-central1' }),
-    googleAI(), // still serves googleai/* models (images, 2.5-pro) via the per-call key pool
+    vertexAI({ projectId: VERTEX_PROJECT, location: VERTEX_LOCATION }),
+    googleAI(), // serves googleai/* models only when an env override selects one
   ],
   model: activeModel,
   // promptDir: 'src/ai/prompts',  // TODO: Enable after migrating flows from inline definePrompt() to ai.prompt()

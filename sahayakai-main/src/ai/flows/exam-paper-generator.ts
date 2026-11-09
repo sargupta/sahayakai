@@ -16,6 +16,7 @@ import { isFeatureEnabled } from '@/lib/feature-flags';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 import type { Language } from '@/types/index';
 import { StructuredLogger } from '@/lib/logger/structured-logger';
+import { MODELS, modelName } from '@/ai/models';
 
 const ExamPaperInputSchema = z.object({
   board: z.string().max(100).describe("The education board (e.g., 'CBSE', 'ICSE')."),
@@ -422,7 +423,7 @@ function retryTemperature(attempt: number): number {
 // (Gemini 3.1 Flash Lite, ~500/day) instead of hard-failing — a degraded-but-working paper. The
 // Phase-1 guards protect the weaker model too, and the marks/completeness guards run afterward
 // regardless of model, so invariants hold. Empty string = disabled (revert to hard-fail). Env-tunable.
-const QUOTA_FALLBACK_MODEL = (process.env.EXAM_PAPER_QUOTA_FALLBACK_MODEL ?? 'googleai/gemini-3.1-flash-lite').trim();
+const QUOTA_FALLBACK_MODEL = (process.env.EXAM_PAPER_QUOTA_FALLBACK_MODEL ?? MODELS.flashLite).trim();
 
 // PYQ context budget. PYQ_TOTAL is a HARD CAP on the number of PYQs handed to the model as
 // context — distributed across chapters by blueprint weightage and shaped per chapter by
@@ -1844,7 +1845,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
           metadata: {
             attempt,
             temperature: attempt > 1 ? retryTemperature(attempt) : BASE_TEMPERATURE,
-            model: usedFallbackModel ? QUOTA_FALLBACK_MODEL : (process.env.GENKIT_DEFAULT_MODEL || 'googleai/gemini-2.5-flash'),
+            model: usedFallbackModel ? QUOTA_FALLBACK_MODEL : MODELS.flash,
             finishReason: finishReason ?? 'none',
             thinkingBudget: _thinkingBudget ?? 'unbounded',
             maxOutputTokens: _maxOutputTokens ?? 'unbounded',
@@ -1870,7 +1871,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
         throw new FlowExecutionError(
           'AI model returned null output',
           {
-            modelUsed: 'gemini-2.5-flash',
+            modelUsed: modelName(usedFallbackModel ? QUOTA_FALLBACK_MODEL : MODELS.flash),
             input: `${input.board} ${input.gradeLevel} ${input.subject}`
           }
         );

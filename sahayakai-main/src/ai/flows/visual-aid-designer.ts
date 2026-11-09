@@ -15,6 +15,7 @@ import { UsageTracker } from '@/lib/usage-tracker';
 import { validateTopicSafety } from '@/lib/safety';
 import { INJECTION_GUARD, frameUserInput } from '@/ai/prompt-hardening';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
+import { MODELS, modelName } from '@/ai/models';
 
 export const VisualAidInputSchema = z.object({
   prompt: z.string().max(1000).describe('A description of the visual aid to generate.'),
@@ -129,7 +130,7 @@ const visualAidFlow = ai.defineFlow(
       const { media } = await Promise.race([
         runResiliently(async (overrideConfig) => {
           return await ai.generate({
-            model: 'googleai/gemini-3-pro-image-preview',
+            model: MODELS.image,
             ...overrideConfig,
             prompt: `
               Create a blackboard chalk-style educational illustration.
@@ -176,7 +177,7 @@ const visualAidFlow = ai.defineFlow(
 
       const textResult = await runResiliently(async (overrideConfig) => {
         return await ai.generate({
-          model: 'vertexai/gemini-2.5-flash',
+          model: MODELS.flash,
           ...overrideConfig,
           output: { schema: MetadataSchema },
           prompt: `
@@ -198,7 +199,7 @@ const visualAidFlow = ai.defineFlow(
       }, 'visualAid.textGenerate');
 
       if (userId && (textResult as any).usage) {
-        UsageTracker.trackGemini(userId, (textResult as any).usage.totalTokens || 0, 'gemini-2.5-flash');
+        UsageTracker.trackGemini(userId, (textResult as any).usage.totalTokens || 0, modelName(MODELS.flash));
       }
 
       if (!textResult.output) {

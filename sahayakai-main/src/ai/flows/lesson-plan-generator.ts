@@ -127,7 +127,7 @@ async function auditMaterials(output: LessonPlanOutput, language?: string): Prom
 
     const auditResult = await runResiliently(async (resilienceConfig) => {
       return await ai.generate({
-        model: 'vertexai/gemini-2.5-flash',
+        model: MODELS.flash,
         prompt: `You are a lesson plan auditor.
   
   Materials Listed: ${materialsText}
@@ -267,6 +267,7 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { generateLessonPlanCacheKey, getCachedLessonPlan, setCachedLessonPlan } from '@/lib/lesson-plan-cache';
+import { MODELS, modelName } from '@/ai/models';
 
 const lessonPlanPrompt = ai.definePrompt({
   name: 'lessonPlanPrompt',
@@ -502,7 +503,7 @@ const lessonPlanFlow = ai.defineFlow(
         });
 
         if (normalizedInput.userId && usage) {
-          UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.5-flash');
+          UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, modelName(MODELS.flash));
         }
         genTimer.stop();
 
@@ -510,7 +511,7 @@ const lessonPlanFlow = ai.defineFlow(
           throw new FlowExecutionError(
             'AI model returned null output',
             {
-              modelUsed: 'gemini-2.5-flash',
+              modelUsed: modelName(MODELS.flash),
               input: input.topic
             }
           );

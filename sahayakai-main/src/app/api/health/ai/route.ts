@@ -31,7 +31,9 @@ export async function GET() {
         });
 
         const result = await Promise.race([
-            ai.generate({ prompt: 'ping', config: { maxOutputTokens: 1, temperature: 0 } }),
+            // thinkingBudget 0: Gemini 3 thinks before a 1-token reply
+            // otherwise, which pushed the ping past TIMEOUT_MS (7s seen).
+            ai.generate({ prompt: 'ping', config: { maxOutputTokens: 1, temperature: 0, thinkingConfig: { thinkingBudget: 0 } } }),
             timeout,
         ]);
 

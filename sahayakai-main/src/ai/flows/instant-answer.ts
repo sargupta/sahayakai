@@ -126,6 +126,7 @@ export async function instantAnswer(input: InstantAnswerInput): Promise<InstantA
 
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
+import { MODELS, modelName } from '@/ai/models';
 
 const instantAnswerPrompt = ai.definePrompt({
   name: 'instantAnswerPrompt',
@@ -207,7 +208,7 @@ const instantAnswerFlow = ai.defineFlow(
         if (normalizedInput.userId) {
           const usage = (result as any).usage;
           if (usage) {
-            UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.5-flash');
+            UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, modelName(MODELS.flash));
           }
           // A grounding call is a billable retrieval, and attaching the
           // `googleSearch` tool is not one: it returns `searchAvailable:
@@ -244,7 +245,7 @@ const instantAnswerFlow = ai.defineFlow(
         throw new FlowExecutionError(
           'AI model returned null output',
           {
-            modelUsed: 'gemini-2.5-flash',
+            modelUsed: modelName(MODELS.flash),
             input: input.question
           }
         );

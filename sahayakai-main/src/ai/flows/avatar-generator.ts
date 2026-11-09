@@ -11,6 +11,7 @@ import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
+import { MODELS } from '@/ai/models';
 
 const AvatarGeneratorInputSchema = z.object({
   name: z.string().max(200).describe("The name of the teacher for whom to generate an avatar."),
@@ -49,7 +50,7 @@ export async function generateAvatar(input: AvatarGeneratorInput): Promise<Avata
   try {
     const { media } = await runResiliently(async (overrideConfig) => {
       return await ai.generate({
-        model: 'googleai/gemini-2.5-flash-image',
+        model: MODELS.avatarImage,
         ...overrideConfig,
         prompt: `
           You are an expert portrait photographer who creates high-quality, professional, and friendly profile pictures for educators.
