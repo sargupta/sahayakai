@@ -185,7 +185,7 @@ void main() {
     });
 
     test(
-      'a single valid action becomes the pending navigation, no chips',
+      'a spoken single action waits for "Looks right", then navigates',
       () async {
         final container = _container(client: _happyClient());
         final vidya = container.read(vidyaControllerProvider.notifier);
@@ -193,7 +193,16 @@ void main() {
         await vidya.onMicTap();
         await vidya.onMicTap();
 
+        // Held: nothing routes until the teacher confirms what was heard.
+        final held = container.read(vidyaControllerProvider);
+        expect(held.pendingNavigation, isNull);
+        expect(held.awaitingConfirm, isTrue);
+        expect(held.heldNavigation?.flow, VidyaFlow.lessonPlan);
+        expect(held.conversing, isFalse);
+
+        vidya.confirmHeard();
         final state = container.read(vidyaControllerProvider);
+        expect(state.awaitingConfirm, isFalse);
         expect(state.pendingNavigation, isNotNull);
         expect(state.pendingNavigation!.flow, VidyaFlow.lessonPlan);
         expect(state.pendingNavigation!.params.topic, 'Fractions');
@@ -685,7 +694,32 @@ void main() {
       },
     );
 
-    test('a spoken request opens the screen too', () async {
+    test(
+      'a spoken request opens the screen too, after "Looks right"',
+      () async {
+        final container = _container(
+          client: FakeApiClient(
+            multipartResponse: {'text': 'प्रोफ़ाइल खोलो', 'language': 'hi'},
+          ),
+        );
+        final vidya = container.read(vidyaControllerProvider.notifier);
+
+        await vidya.onMicTap();
+        await vidya.onMicTap();
+
+        final held = container.read(vidyaControllerProvider);
+        expect(held.pendingScreen, isNull);
+        expect(held.heldScreen, VidyaScreen.profile);
+
+        vidya.confirmHeard();
+        expect(
+          container.read(vidyaControllerProvider).pendingScreen,
+          VidyaScreen.profile,
+        );
+      },
+    );
+
+    test('"Say it again" drops the held screen and listens afresh', () async {
       final container = _container(
         client: FakeApiClient(
           multipartResponse: {'text': 'प्रोफ़ाइल खोलो', 'language': 'hi'},
@@ -695,11 +729,13 @@ void main() {
 
       await vidya.onMicTap();
       await vidya.onMicTap();
+      expect(container.read(vidyaControllerProvider).awaitingConfirm, isTrue);
 
-      expect(
-        container.read(vidyaControllerProvider).pendingScreen,
-        VidyaScreen.profile,
-      );
+      await vidya.retryHeard();
+      final state = container.read(vidyaControllerProvider);
+      expect(state.awaitingConfirm, isFalse);
+      expect(state.pendingScreen, isNull);
+      expect(state.status, VidyaStatus.listening);
     });
 
     test('a tool request still goes to the classifier', () async {
@@ -713,6 +749,60 @@ void main() {
       final state = container.read(vidyaControllerProvider);
       expect(state.pendingScreen, isNull);
       expect(state.pendingNavigation?.flow, VidyaFlow.lessonPlan);
+    });
+  });
+
+  group('mic hint (words, never a graph)', () {
+    test('three clipping readings in a row say "too loud"', () async {
+      final recorder = FakeAudioRecorderService();
+      final container = _container(client: _happyClient(), recorder: recorder);
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap();
+      expect(
+        container.read(vidyaControllerProvider).micHint,
+        VidyaMicHint.none,
+      );
+
+      // One peak is not clipping; a sustained run is.
+      recorder.emitAmplitude(0.99);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(vidyaControllerProvider).micHint,
+        VidyaMicHint.none,
+      );
+      recorder
+        ..emitAmplitude(0.98)
+        ..emitAmplitude(0.99);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(vidyaControllerProvider).micHint,
+        VidyaMicHint.tooLoud,
+      );
+    });
+
+    test('a new capture starts without a hint', () async {
+      final recorder = FakeAudioRecorderService();
+      final container = _container(client: _happyClient(), recorder: recorder);
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap();
+      recorder
+        ..emitAmplitude(0.99)
+        ..emitAmplitude(0.99)
+        ..emitAmplitude(0.99);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(vidyaControllerProvider).micHint,
+        VidyaMicHint.tooLoud,
+      );
+
+      await vidya.onMicTap(); // stop and answer
+      await vidya.onMicTap(); // listen again
+      expect(
+        container.read(vidyaControllerProvider).micHint,
+        VidyaMicHint.none,
+      );
     });
   });
 

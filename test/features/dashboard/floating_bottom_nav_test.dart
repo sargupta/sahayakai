@@ -16,8 +16,8 @@ import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.da
 const _icons = <IconData>[
   LucideIcons.home,
   LucideIcons.folder,
-  LucideIcons.users,
-  LucideIcons.user,
+  LucideIcons.messagesSquare,
+  LucideIcons.userCircle2,
 ];
 
 /// Pumps a host that owns the selected index, mimicking the shell.
@@ -146,7 +146,7 @@ void main() {
       int? tapped;
       await _pumpNav(tester, onSelect: (i) => tapped = i);
 
-      await tester.tap(find.byIcon(LucideIcons.users));
+      await tester.tap(find.byIcon(LucideIcons.messagesSquare));
       await tester.pumpAndSettle();
 
       expect(tapped, 2);
@@ -274,7 +274,7 @@ void main() {
       expect(_button(tester, 0).duration, Duration.zero);
 
       // ...and a switch still lands on the new tab: final frame.
-      await tester.tap(find.byIcon(LucideIcons.user));
+      await tester.tap(find.byIcon(LucideIcons.userCircle2));
       await tester.pump();
       expect(_fill(tester, 3), AppColors.accentFill);
     });

@@ -9,7 +9,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/map_card.dart';
-import '../../../shared/widgets/map_segmented.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
@@ -21,125 +20,267 @@ import '../domain/connection.dart';
 import '../domain/teacher.dart';
 import 'community_network_screen.dart';
 import 'staffroom_screen.dart';
+import 'widgets/community_sections.dart';
 import 'widgets/connection_action.dart';
 import 'widgets/staffroom_avatar.dart';
 
 /// The **Community** hub (UX map `community`, route `/network`): the title
-/// with the Updates bell, the deck line, and a segmented control over three
+/// with the Updates bell, the deck line naming the open section, and three
 /// panes that all stay mounted:
 ///   - **Staffroom** → [StaffroomFeedView] (feed, composer, groups, people);
 ///   - **Messages**  → connection requests + the Pro Inbox conversations;
 ///   - **Updates**   → [NotificationsView], the per-teacher on-device record of
 ///     call outcomes, absence runs and queued generations.
 ///
+/// The sections are not a bar across the top: a slim grip on the left edge
+/// (with a dot while anything is unread) pulls out a side panel listing the
+/// three with their unread counts. Tap the grip or swipe in from the edge to
+/// open it; tap outside, the chevron, Back, or swipe left to close it.
+///
 /// The bell badges the unread Updates count and selects that pane, so the
 /// count is visible from the other two.
-class NetworkHubScreen extends StatefulWidget {
+class NetworkHubScreen extends ConsumerStatefulWidget {
   const NetworkHubScreen({super.key});
 
   @override
-  State<NetworkHubScreen> createState() => _NetworkHubScreenState();
+  ConsumerState<NetworkHubScreen> createState() => _NetworkHubScreenState();
 }
 
-class _NetworkHubScreenState extends State<NetworkHubScreen> {
+class _NetworkHubScreenState extends ConsumerState<NetworkHubScreen> {
   int _index = 0;
+  bool _sectionsOpen = false;
 
-  /// The Updates pane's index in both the segmented control and the pane stack.
+  /// Whether the panel is on screen at all: true while open and while it
+  /// slides away, false once it has gone (then it is Offstage, so its rows
+  /// are neither painted, tappable nor announced).
+  bool _panelShown = false;
+
+  /// The Updates pane's index in both the side panel and the pane stack.
   static const int _updatesIndex = 2;
+
+  /// Where the grip sits: beside the header, clear of the dock.
+  static const double _gripTop = 120;
+
+  void _select(int index) => setState(() {
+    _index = index;
+    _sectionsOpen = false;
+  });
+
+  void _setOpen(bool open) {
+    if (open == _sectionsOpen) return;
+    setState(() {
+      _sectionsOpen = open;
+      if (open) _panelShown = true;
+    });
+  }
+
+  /// The slide finished. With reduced motion it "finishes" inside the build
+  /// that started it, so the panel is taken off screen after that frame.
+  void _onPanelSettled() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_sectionsOpen && _panelShown) {
+        setState(() => _panelShown = false);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    // The UX map's Community header: the title with the Updates bell, the deck
-    // line, and the segmented control. No app bar: VIDYA is docked in the tab
-    // bar, so the sparkle launcher is not repeated here. The wash comes from
-    // AppBackground (app.dart), as on the other tabs.
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.mapGutter,
-                AppSpacing.space4,
-                AppSpacing.mapGutter,
-                0,
+    final motion = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 260);
+    final unreadMessages = ref
+        .watch(unreadConversationsProvider)
+        .maybeWhen(
+          data: (snapshot) => snapshot.isReady ? snapshot.data : 0,
+          orElse: () => 0,
+        );
+    final unreadUpdates = ref.watch(unreadNotificationCountProvider);
+    final sectionLabels = [
+      l10n.networkTabStaffroom,
+      l10n.networkTabMessages,
+      l10n.networkTabUpdates,
+    ];
+    final panelWidth = (MediaQuery.sizeOf(context).width * 0.72).clamp(
+      240.0,
+      320.0,
+    );
+    // The UX map's Community header: the title with the Updates bell and the
+    // deck line. No app bar: VIDYA is docked in the tab bar, so the sparkle
+    // launcher is not repeated here. The wash comes from AppBackground
+    // (app.dart), as on the other tabs.
+    return PopScope(
+      canPop: !_sectionsOpen,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _setOpen(false);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          bottom: false,
+          child: Stack(
+            children: [
+              _hubBody(context, sectionLabels),
+              // A thin strip on the left edge: a swipe in opens the panel.
+              PositionedDirectional(
+                start: 0,
+                top: 0,
+                bottom: 0,
+                width: 16,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onHorizontalDragEnd: (d) {
+                    if ((d.primaryVelocity ?? 0) > 150) _setOpen(true);
+                  },
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Semantics(
-                          header: true,
-                          child: Text(
-                            l10n.communityTitle,
-                            style: Theme.of(context).textTheme.displayLarge
-                                ?.copyWith(
-                                  fontSize: 27,
-                                  color: AppColors.textStrong,
-                                ),
-                          ),
-                        ),
+              PositionedDirectional(
+                start: 0,
+                top: _gripTop,
+                child: CommunitySectionsGrip(
+                  key: const ValueKey('community-sections-grip'),
+                  label: l10n.communitySectionsOpen(sectionLabels[_index]),
+                  showDot: unreadMessages > 0 || unreadUpdates > 0,
+                  onOpen: () => _setOpen(true),
+                ),
+              ),
+              // The scrim: a tap anywhere outside the panel closes it.
+              IgnorePointer(
+                ignoring: !_sectionsOpen,
+                child: AnimatedOpacity(
+                  opacity: _sectionsOpen ? 1 : 0,
+                  duration: motion,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _setOpen(false),
+                    child: ExcludeSemantics(
+                      child: ColoredBox(
+                        color: AppColors.ink900.withValues(alpha: 0.28),
+                        child: const SizedBox.expand(),
                       ),
-                      _NotificationsBell(
-                        onPressed: () => setState(() => _index = _updatesIndex),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    l10n.communityDeck,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 13,
-                      color: AppColors.textBody,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.space2),
-                  MapSegmented<int>(
-                    value: _index,
-                    onChanged: (value) => setState(() => _index = value),
-                    segments: [
-                      MapSegment<int>(
-                        value: 0,
-                        label: l10n.networkTabStaffroom,
-                      ),
-                      MapSegment<int>(value: 1, label: l10n.networkTabMessages),
-                      MapSegment<int>(
-                        value: _updatesIndex,
-                        label: l10n.networkTabUpdates,
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
-            // All three panes stay mounted (warm) via a Stack of Offstage panes:
-            // the inbox stream stays subscribed and the feed does not refetch
-            // on a switch, but only the selected pane is laid out and painted
-            // (so an offstage-respecting finder sees exactly the active pane).
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Offstage(
-                    offstage: _index != 0,
-                    child: const StaffroomFeedView(),
+              AnimatedPositionedDirectional(
+                duration: motion,
+                curve: Curves.easeOutCubic,
+                start: _sectionsOpen ? 0 : -(panelWidth + 40),
+                top: 0,
+                bottom: 0,
+                width: panelWidth + 34,
+                onEnd: _onPanelSettled,
+                child: Offstage(
+                  offstage: !_panelShown,
+                  child: ExcludeSemantics(
+                    excluding: !_sectionsOpen,
+                    child: GestureDetector(
+                      onHorizontalDragEnd: (d) {
+                        if ((d.primaryVelocity ?? 0) < -150) _setOpen(false);
+                      },
+                      child: Stack(
+                        children: [
+                          PositionedDirectional(
+                            start: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: panelWidth,
+                            child: CommunitySectionsPanel(
+                              selected: _index,
+                              labels: sectionLabels,
+                              unreadMessages: unreadMessages,
+                              unreadUpdates: unreadUpdates,
+                              onSelect: _select,
+                            ),
+                          ),
+                          PositionedDirectional(
+                            start: panelWidth,
+                            top: _gripTop,
+                            child: CommunitySectionsCloseTab(
+                              key: const ValueKey('community-sections-close'),
+                              label: l10n.communitySectionsClose,
+                              onClose: () => _setOpen(false),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  Offstage(offstage: _index != 1, child: const _MessagesTab()),
-                  Offstage(
-                    offstage: _index != _updatesIndex,
-                    child: const NotificationsView(),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _hubBody(BuildContext context, List<String> sectionLabels) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.mapGutter,
+            AppSpacing.space4,
+            AppSpacing.mapGutter,
+            0,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        l10n.communityTitle,
+                        style: Theme.of(context).textTheme.displayLarge
+                            ?.copyWith(
+                              fontSize: 27,
+                              color: AppColors.textStrong,
+                            ),
+                      ),
+                    ),
+                  ),
+                  _NotificationsBell(onPressed: () => _select(_updatesIndex)),
+                ],
+              ),
+              Text(
+                l10n.communityDeckWithSection(
+                  sectionLabels[_index],
+                  l10n.communityDeck,
+                ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize: 13,
+                  color: AppColors.textBody,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.space2),
+            ],
+          ),
+        ),
+        // All three panes stay mounted (warm) via a Stack of Offstage panes:
+        // the inbox stream stays subscribed and the feed does not refetch
+        // on a switch, but only the selected pane is laid out and painted
+        // (so an offstage-respecting finder sees exactly the active pane).
+        Expanded(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Offstage(offstage: _index != 0, child: const StaffroomFeedView()),
+              Offstage(offstage: _index != 1, child: const _MessagesTab()),
+              Offstage(
+                offstage: _index != _updatesIndex,
+                child: const NotificationsView(),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

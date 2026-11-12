@@ -13,6 +13,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import 'background_generation_controller.dart';
 import 'deliverables_controller.dart';
@@ -184,6 +185,14 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
     }
   }
 
+  /// What VIDYA will open once the teacher says "Looks right", or null when
+  /// nothing is held.
+  String? _heldLabel(VidyaState state, AppLocalizations l10n) {
+    final nav = state.heldNavigation;
+    if (nav != null) return vidyaFlowLabel(nav.flow, l10n);
+    return state.heldScreen?.label(l10n);
+  }
+
   /// The orb starts or stops listening in every state; only a denied mic
   /// sends the teacher to Settings, because a tap cannot fix that.
   void _onOrbTap(VidyaState state, VidyaController controller) {
@@ -343,8 +352,8 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                     const SizedBox(height: AppSpacing.space2),
                     _StatusLine(
                       status: state.status,
-                      visual: visual,
                       conversing: state.conversing,
+                      micHint: state.micHint,
                     ),
                   ],
                   if (pageLabel != null) ...[
@@ -362,12 +371,12 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                   else ...[
                     if (heard != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.space4),
-                        child: Text(
-                          '\u201C$heard\u201D',
-                          style: text.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        padding: const EdgeInsets.only(top: AppSpacing.space3),
+                        child: _HeardCard(
+                          heard: heard,
+                          willOpen: _heldLabel(state, l10n),
+                          onRetry: () => unawaited(controller.retryHeard()),
+                          onConfirm: controller.confirmHeard,
                         ),
                       ),
                     if (replies.isNotEmpty)
@@ -541,44 +550,76 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
 class _StatusLine extends StatelessWidget {
   const _StatusLine({
     required this.status,
-    required this.visual,
     this.conversing = false,
+    this.micHint = VidyaMicHint.none,
   });
 
   final VidyaStatus status;
-  final VidyaOrbVisual visual;
 
   /// In a conversation the listening line says how to end it.
   final bool conversing;
 
+  /// Too loud / too quiet: a short line of advice, only when it matters.
+  final VidyaMicHint micHint;
+
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.of(context).disableAnimations;
-    final text = _statusText(status, context.l10n);
+    final l10n = context.l10n;
     final listening =
         status == VidyaStatus.listening ||
         status == VidyaStatus.requestingPermission;
-
+    final line = listening
+        ? (conversing ? l10n.vidyaSayStop : l10n.vidyaListeningSpeakNow)
+        : _statusText(status, l10n);
     final style = Theme.of(
       context,
     ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted);
-    // At least the waveform's height; taller when a line wraps (Indic scripts
-    // at large text), never clipped or ellipsized.
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 24),
-      child: Row(
-        children: [
-          if (!listening && text != null)
-            Expanded(child: Text(text, style: style)),
-          if (listening) ...[
-            _Waveform(reduceMotion: reduceMotion),
-            if (conversing) ...[
-              const SizedBox(width: AppSpacing.space3),
-              Expanded(child: Text(context.l10n.vidyaSayStop, style: style)),
-            ],
-          ],
-        ],
-      ),
+    final hint = switch (micHint) {
+      VidyaMicHint.tooLoud => l10n.vidyaMicTooLoud,
+      VidyaMicHint.tooQuiet => l10n.vidyaMicTooQuiet,
+      VidyaMicHint.none => null,
+    };
+    // Words only, no graph: what to do, and a hint when the level is off.
+    // Lines wrap (Indic scripts at large text), never clipped or ellipsized.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (listening && hint != null)
+          Semantics(
+            liveRegion: true,
+            child: Container(
+              key: const ValueKey('vidya-mic-hint'),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: const BoxDecoration(
+                color: AppColors.tileAmberBg,
+                borderRadius: AppRadius.rPill,
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.volume1,
+                    size: 18,
+                    color: AppColors.saffron800,
+                  ),
+                  const SizedBox(width: AppSpacing.space2),
+                  Expanded(
+                    child: Text(
+                      hint,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.saffron800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (listening && hint != null && line != null)
+          const SizedBox(height: AppSpacing.space2),
+        if (line != null) Text(line, style: style),
+      ],
     );
   }
 
@@ -604,78 +645,94 @@ class _StatusLine extends StatelessWidget {
   }
 }
 
-class _Waveform extends StatefulWidget {
-  const _Waveform({required this.reduceMotion});
+/// "I heard": the teacher's words as VIDYA understood them. When a spoken
+/// request would open a tool or screen, it says which, and waits for "Looks
+/// right" (or "Say it again", which listens afresh) before acting.
+class _HeardCard extends StatelessWidget {
+  const _HeardCard({
+    required this.heard,
+    required this.willOpen,
+    required this.onRetry,
+    required this.onConfirm,
+  });
 
-  final bool reduceMotion;
+  final String heard;
 
-  @override
-  State<_Waveform> createState() => _WaveformState();
-}
-
-class _WaveformState extends State<_Waveform>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c;
-
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    if (!widget.reduceMotion) _c.repeat();
-  }
-
-  @override
-  void didUpdateWidget(covariant _Waveform old) {
-    super.didUpdateWidget(old);
-    if (widget.reduceMotion) {
-      _c.stop();
-      _c.value = 0;
-    } else if (!_c.isAnimating) {
-      _c.repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
+  /// The tool or screen VIDYA will open; null when nothing is waiting.
+  final String? willOpen;
+  final VoidCallback onRetry;
+  final VoidCallback onConfirm;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (context, _) {
-        final t = widget.reduceMotion ? 0.0 : _c.value;
-        final heights = [
-          8 + 12 * (0.5 + 0.5 * math.sin(t * 2 * math.pi)),
-          12 + 10 * (0.5 + 0.5 * math.sin(t * 2 * math.pi + 1)),
-          10 + 16 * (0.5 + 0.5 * math.sin(t * 2 * math.pi + 2)),
-          9 + 11 * (0.5 + 0.5 * math.sin(t * 2 * math.pi + 3)),
-        ];
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (final h in heights)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 1.5),
-                child: Container(
-                  width: 3,
-                  height: h,
-                  decoration: BoxDecoration(
-                    color: AppColors.accentFill,
-                    // Stadium cap on a 3 px bar (radius clamps to 1.5).
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final latin = Localizations.localeOf(context).languageCode == 'en';
+    final eyebrow = l10n.vidyaIHeard;
+    final held = willOpen;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          key: const ValueKey('vidya-heard-card'),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+          decoration: BoxDecoration(
+            color: AppColors.milk300,
+            borderRadius: AppRadius.rTile,
+            border: Border.all(color: AppColors.borderHairline),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                latin ? eyebrow.toUpperCase() : eyebrow,
+                style: text.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: latin ? 1.7 : 0,
+                  color: AppColors.textEyebrow,
                 ),
               ),
-          ],
-        );
-      },
+              const SizedBox(height: 4),
+              Text(
+                '\u201C$heard\u201D',
+                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              if (held != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  l10n.vidyaHeldWillOpen(held),
+                  style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (held != null) ...[
+          const SizedBox(height: AppSpacing.space3),
+          Row(
+            children: [
+              Expanded(
+                child: SecondaryButton(
+                  key: const ValueKey('vidya-say-again'),
+                  label: l10n.vidyaSayAgain,
+                  icon: LucideIcons.mic,
+                  onPressed: onRetry,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.space3),
+              Expanded(
+                child: PrimaryButton(
+                  key: const ValueKey('vidya-looks-right'),
+                  label: l10n.vidyaLooksRight,
+                  icon: LucideIcons.check,
+                  onPressed: onConfirm,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

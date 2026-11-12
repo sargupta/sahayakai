@@ -88,11 +88,13 @@ class FloatingBottomNav extends StatelessWidget {
       (AppSpacing.dockGap + AppSpacing.dockDividerMargin - _hit);
 
   /// The map's glyphs: a folder for Library (saved work), not a bookshelf.
+  /// Me is a person in a circle (the account idiom), not a lone person: next
+  /// to Community's group of people the two read as the same icon.
   static const List<IconData> _icons = [
     LucideIcons.home,
     LucideIcons.folder,
-    LucideIcons.users,
-    LucideIcons.user,
+    LucideIcons.messagesSquare,
+    LucideIcons.userCircle2,
   ];
 
   @override

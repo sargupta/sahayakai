@@ -4870,4 +4870,196 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get vidyaSuggestPostToWorksheet => 'किसी पोस्ट से वर्कशीट बनाएँ';
+
+  @override
+  String get aiReportAction => 'रिपोर्ट करें';
+
+  @override
+  String get aiReportTitle => 'इस AI सामग्री की रिपोर्ट करें';
+
+  @override
+  String get aiReportBody =>
+      'बताइए क्या गलत है। हमारी टीम हर रिपोर्ट देखती है।';
+
+  @override
+  String get aiReportReasonOffensive => 'आपत्तिजनक या हानिकारक';
+
+  @override
+  String get aiReportReasonWrong => 'गलत या भ्रामक';
+
+  @override
+  String get aiReportReasonUnsuitable => 'विद्यार्थियों के लिए उपयुक्त नहीं';
+
+  @override
+  String get aiReportReasonOther => 'कुछ और';
+
+  @override
+  String get aiReportNoteLabel => 'टिप्पणी जोड़ें (वैकल्पिक)';
+
+  @override
+  String get aiReportSend => 'रिपोर्ट भेजें';
+
+  @override
+  String get aiReportSent => 'धन्यवाद। हमारी टीम इसे देखेगी।';
+
+  @override
+  String get aiReportFailed => 'आपकी रिपोर्ट नहीं भेजी जा सकी';
+
+  @override
+  String get aiReportFailedBody => 'अपना कनेक्शन जाँचें और फिर कोशिश करें।';
+
+  @override
+  String get homeBriefingEyebrow => 'आज की ब्रीफ़िंग';
+
+  @override
+  String get homeBriefingListen => 'सुनें';
+
+  @override
+  String get homeBriefingStop => 'रोकें';
+
+  @override
+  String get homeGreetingMorning => 'सुप्रभात';
+
+  @override
+  String get homeGreetingAfternoon => 'शुभ दोपहर';
+
+  @override
+  String get homeGreetingEvening => 'शुभ संध्या';
+
+  @override
+  String homeGreetingNamed(String greeting, String name) {
+    return '$greeting, $name';
+  }
+
+  @override
+  String homeBriefingClasses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'आज $count कक्षाएँ।',
+      one: 'आज एक कक्षा।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeBriefingToMark(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count रजिस्टर भरने बाकी हैं।',
+      one: 'एक रजिस्टर भरना बाकी है।',
+      zero: 'सभी रजिस्टर भर दिए गए हैं।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeBriefingClassAbsent(String className, int count) {
+    return '$className · $count अनुपस्थित';
+  }
+
+  @override
+  String homeBriefingClassNotMarked(String className) {
+    return '$className · अभी हाज़िरी नहीं लगी';
+  }
+
+  @override
+  String homeBriefingClassAllPresent(String className) {
+    return '$className · सभी उपस्थित';
+  }
+
+  @override
+  String homeBriefingStreak(String name, int days) {
+    return '$name · लगातार $days दिन अनुपस्थित';
+  }
+
+  @override
+  String get homeBriefingActionCall => 'कॉल करें';
+
+  @override
+  String get homeBriefingActionMark => 'हाज़िरी लगाएँ';
+
+  @override
+  String get homeBriefingCommunityEyebrow => 'कम्युनिटी से · डेली ब्रीफ़िंग';
+
+  @override
+  String get homeBriefingReadMore => 'और पढ़ें';
+
+  @override
+  String get homeTileQuizSub => 'तीन कठिनाई स्तर';
+
+  @override
+  String get homeTileWorksheetSub => 'पाठ्यपुस्तक की फ़ोटो से';
+
+  @override
+  String get homeTileAnswerSub => 'कक्षा का कोई भी सवाल';
+
+  @override
+  String get homeTileExamSub => 'बोर्ड पैटर्न, उत्तर कुंजी सहित';
+
+  @override
+  String homeAllToolsExplore(int count) {
+    return 'सभी $count टूल देखें';
+  }
+
+  @override
+  String get homeAllToolsHint =>
+      'प्रश्न पत्र, कहानियाँ, फ़ील्ड ट्रिप और भी बहुत कुछ';
+
+  @override
+  String communitySectionsOpen(String section) {
+    return 'सेक्शन खोलें। अभी: $section';
+  }
+
+  @override
+  String get communitySectionsClose => 'सेक्शन बंद करें';
+
+  @override
+  String get communitySectionsEyebrow => 'कम्युनिटी';
+
+  @override
+  String get communitySectionsTitle => 'कहाँ जाना है?';
+
+  @override
+  String get communityStaffroomSub => 'फ़ीड, समूह और लोग';
+
+  @override
+  String get communityMessagesSub => 'अनुरोध और चैट';
+
+  @override
+  String get communityUpdatesSub => 'कॉल, अनुपस्थिति, नतीजे';
+
+  @override
+  String get communitySectionsHint =>
+      'यहाँ लौटने के लिए बाएँ किनारे से स्वाइप करें या टैब पर टैप करें।';
+
+  @override
+  String communityDeckWithSection(String section, String deck) {
+    return '$section · $deck';
+  }
+
+  @override
+  String get vidyaListeningSpeakNow =>
+      'अब बोलिए। आपके रुकते ही मैं सुनना बंद कर दूँगी।';
+
+  @override
+  String get vidyaMicTooLoud => 'आवाज़ थोड़ी तेज़ है। फ़ोन को थोड़ा दूर रखें।';
+
+  @override
+  String get vidyaMicTooQuiet => 'आवाज़ थोड़ी धीमी है। फ़ोन को थोड़ा पास रखें।';
+
+  @override
+  String get vidyaIHeard => 'मैंने सुना';
+
+  @override
+  String vidyaHeldWillOpen(String name) {
+    return 'मैं $name खोलूँगी।';
+  }
+
+  @override
+  String get vidyaSayAgain => 'फिर से बोलें';
+
+  @override
+  String get vidyaLooksRight => 'सही है';
 }

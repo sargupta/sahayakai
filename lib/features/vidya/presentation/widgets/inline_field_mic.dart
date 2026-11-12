@@ -180,12 +180,14 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
     if (_stale(gen)) return;
     // Silence / mis-tap reject before paying for STT.
     if (recording == null || recording.byteLength < kMinAudioBytes) {
+      unawaited(recording?.discard());
       _resetTo(gen, InlineMicPhase.idle);
       return;
     }
 
     try {
-      final bytes = await recording.readBytes();
+      // Read for upload, then delete: the voice never stays on the device.
+      final bytes = await recording.takeBytes();
       if (_stale(gen)) return;
       final transcript = await _stt.transcribe(
         audioBytes: bytes,

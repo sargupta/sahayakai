@@ -15,6 +15,7 @@ import 'package:sahayakai/features/profile/presentation/profile_controller.dart'
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
 import 'package:sahayakai/features/vidya/domain/deliverable.dart';
 import 'package:sahayakai/features/vidya/presentation/deliverables_controller.dart';
+import 'package:sahayakai/features/vidya/presentation/home_briefing.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/vidya_orb.dart';
@@ -277,9 +278,13 @@ void main() {
       expect(find.text('“Class 7 ka jal chakra lesson plan”'), findsOneWidget);
       expect(find.text('“Ten-question quiz, medium”'), findsOneWidget);
       expect(find.text('“Aaj ki attendance lagao”'), findsOneWidget);
-      expect(find.text('Lesson Plan'), findsOneWidget);
-      expect(find.text('Quiz'), findsOneWidget);
-      expect(find.text('Attendance'), findsOneWidget);
+      Finder inRow(String key, String text) => find.descendant(
+        of: find.byKey(ValueKey(key)),
+        matching: find.text(text),
+      );
+      expect(inRow('home-say-lesson', 'Lesson Plan'), findsOneWidget);
+      expect(inRow('home-say-quiz', 'Quiz'), findsOneWidget);
+      expect(inRow('home-say-attendance', 'Attendance'), findsOneWidget);
     });
 
     testWidgets('the lesson row opens Lesson Plan prefilled, not running', (
@@ -403,6 +408,17 @@ void main() {
       expect(find.text('WAITING FOR YOU'), findsOneWidget);
       expect(find.text('Nothing is waiting for you right now'), findsOneWidget);
       expect(find.textContaining('absentees'), findsNothing);
+      // The briefing card is not on Home.
+      expect(find.text("TODAY'S BRIEFING"), findsNothing);
+    });
+
+    test('the quoted Daily Briefing is cut at a word, with an ellipsis', () {
+      const short = 'Exams begin on the 20th.';
+      expect(briefingExcerpt(short), short);
+      final long = List.filled(40, 'timetable').join(' ');
+      final cut = briefingExcerpt(long);
+      expect(cut.length, lessThanOrEqualTo(171));
+      expect(cut.endsWith('timetable…'), isTrue);
     });
 
     testWidgets('a parent call left running waits here, and opens the call', (
@@ -470,7 +486,9 @@ void main() {
   });
 
   group('your tools', () {
-    testWidgets('four tiles, Call parents in the app language', (tester) async {
+    testWidgets('eight tiles, Call parents in the app language', (
+      tester,
+    ) async {
       await _pumpHome(tester);
 
       for (final title in const [
@@ -478,14 +496,31 @@ void main() {
         'Make a lesson',
         'Scan a test',
         'Call parents',
+        'Worksheet',
+        'Instant Answer',
+        'Exam Paper',
       ]) {
         expect(find.text(title), findsOneWidget, reason: 'tile "$title"');
       }
-      expect(find.text('Script in English'), findsOneWidget);
+      for (final sub in const [
+        'Script in English',
+        'Three difficulty levels',
+        'From a textbook photo',
+        'Any classroom question',
+        'Board pattern, with key',
+      ]) {
+        expect(find.text(sub), findsOneWidget, reason: 'subline "$sub"');
+      }
       expect(
         find.byWidgetPredicate((w) => w.runtimeType.toString() == '_Tile'),
-        findsNWidgets(4),
+        findsNWidgets(8),
       );
+    });
+
+    testWidgets('the Quiz tile opens the quiz generator', (tester) async {
+      await _pumpHomeWithRouter(tester);
+      await _tapVisible(tester, find.byKey(const ValueKey('home-tile-quiz')));
+      expect(find.byKey(const Key('dest-quiz')), findsOneWidget);
     });
 
     testWidgets('Roll call opens attendance; Scan a test opens the scanner', (
@@ -507,7 +542,14 @@ void main() {
     ) async {
       await _pumpHomeWithRouter(tester);
 
-      await _tapVisible(tester, find.text('All ${kToolRegistry.length} tools'));
+      expect(
+        find.text('Exam papers, stories, field trips and more'),
+        findsOneWidget,
+      );
+      await _tapVisible(
+        tester,
+        find.text('Explore all ${kToolRegistry.length} tools'),
+      );
 
       expect(find.byKey(const Key('dest-prep-desk')), findsOneWidget);
     });

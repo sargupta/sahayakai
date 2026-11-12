@@ -8431,6 +8431,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Turn a post into a worksheet'**
   String get vidyaSuggestPostToWorksheet;
+
+  /// Button on AI output (a VIDYA reply or a tool result) that opens the report sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get aiReportAction;
+
+  /// Report sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this AI content'**
+  String get aiReportTitle;
+
+  /// Report sheet: line under the title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what\'s wrong. Our team reviews every report.'**
+  String get aiReportBody;
+
+  /// Report reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Offensive or harmful'**
+  String get aiReportReasonOffensive;
+
+  /// Report reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong or misleading'**
+  String get aiReportReasonWrong;
+
+  /// Report reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Not suitable for students'**
+  String get aiReportReasonUnsuitable;
+
+  /// Report reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get aiReportReasonOther;
+
+  /// Report sheet: optional free-text field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note (optional)'**
+  String get aiReportNoteLabel;
+
+  /// Report sheet: send button.
+  ///
+  /// In en, this message translates to:
+  /// **'Send report'**
+  String get aiReportSend;
+
+  /// Snackbar after a report was stored.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. Our team will review this.'**
+  String get aiReportSent;
+
+  /// Report sheet: error title when the report could not be sent.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send your report'**
+  String get aiReportFailed;
+
+  /// Report sheet: error body.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get aiReportFailedBody;
+
+  /// Home: eyebrow of the Today's briefing card.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s briefing'**
+  String get homeBriefingEyebrow;
+
+  /// Home briefing: button that reads the briefing aloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get homeBriefingListen;
+
+  /// Home briefing: the Listen button while it is reading; stops it.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get homeBriefingStop;
+
+  /// Greeting before noon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get homeGreetingMorning;
+
+  /// Greeting from noon to 5 pm.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get homeGreetingAfternoon;
+
+  /// Greeting after 5 pm.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get homeGreetingEvening;
+
+  /// Greeting with the teacher's first name.
+  ///
+  /// In en, this message translates to:
+  /// **'{greeting}, {name}'**
+  String homeGreetingNamed(String greeting, String name);
+
+  /// Home briefing: how many of the teacher's classes there are.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One class today.} other{{count} classes today.}}'**
+  String homeBriefingClasses(int count);
+
+  /// Home briefing: how many of today's registers are not yet marked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Every register is marked.} =1{One register is still to mark.} other{{count} registers are still to mark.}}'**
+  String homeBriefingToMark(int count);
+
+  /// Home briefing row: a class's saved register with absences.
+  ///
+  /// In en, this message translates to:
+  /// **'{className} · {count} marked absent'**
+  String homeBriefingClassAbsent(String className, int count);
+
+  /// Home briefing row: a class whose register is not marked today.
+  ///
+  /// In en, this message translates to:
+  /// **'{className} · not marked yet'**
+  String homeBriefingClassNotMarked(String className);
+
+  /// Home briefing row: a class where everyone is present today.
+  ///
+  /// In en, this message translates to:
+  /// **'{className} · everyone present'**
+  String homeBriefingClassAllPresent(String className);
+
+  /// Home briefing row: a student absent several school days in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · absent {days} days in a row'**
+  String homeBriefingStreak(String name, int days);
+
+  /// Home briefing row action: call the parent.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get homeBriefingActionCall;
+
+  /// Home briefing row action: mark today's register.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark'**
+  String get homeBriefingActionMark;
+
+  /// Home briefing: label over the quoted Community Daily Briefing post.
+  ///
+  /// In en, this message translates to:
+  /// **'From Community · Daily Briefing'**
+  String get homeBriefingCommunityEyebrow;
+
+  /// Home briefing: opens the Daily Briefing post in Community.
+  ///
+  /// In en, this message translates to:
+  /// **'Read more'**
+  String get homeBriefingReadMore;
+
+  /// Home tool tile subline under Quiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Three difficulty levels'**
+  String get homeTileQuizSub;
+
+  /// Home tool tile subline under Worksheet.
+  ///
+  /// In en, this message translates to:
+  /// **'From a textbook photo'**
+  String get homeTileWorksheetSub;
+
+  /// Home tool tile subline under Instant Answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Any classroom question'**
+  String get homeTileAnswerSub;
+
+  /// Home tool tile subline under Exam Paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Board pattern, with key'**
+  String get homeTileExamSub;
+
+  /// Home button to every tool; count is the real number of tools.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore all {count} tools'**
+  String homeAllToolsExplore(int count);
+
+  /// Home: line under the Explore all tools button.
+  ///
+  /// In en, this message translates to:
+  /// **'Exam papers, stories, field trips and more'**
+  String get homeAllToolsHint;
+
+  /// Community: accessible name of the edge grip that opens the sections; section is the open one.
+  ///
+  /// In en, this message translates to:
+  /// **'Open sections. Now: {section}'**
+  String communitySectionsOpen(String section);
+
+  /// Community: closes the sections panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Close sections'**
+  String get communitySectionsClose;
+
+  /// Community sections panel: eyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Community'**
+  String get communitySectionsEyebrow;
+
+  /// Community sections panel: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Where to?'**
+  String get communitySectionsTitle;
+
+  /// Community sections panel: line under Staffroom.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed, groups and people'**
+  String get communityStaffroomSub;
+
+  /// Community sections panel: line under Messages.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests and chats'**
+  String get communityMessagesSub;
+
+  /// Community sections panel: line under Updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls, absences, results'**
+  String get communityUpdatesSub;
+
+  /// Community sections panel: how to get back to it.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe from the left edge, or tap the tab, to come back here.'**
+  String get communitySectionsHint;
+
+  /// Community header line: the open section, then the deck line.
+  ///
+  /// In en, this message translates to:
+  /// **'{section} · {deck}'**
+  String communityDeckWithSection(String section, String deck);
+
+  /// VIDYA sheet while listening (not in a conversation).
+  ///
+  /// In en, this message translates to:
+  /// **'Speak now. I\'ll stop when you pause.'**
+  String get vidyaListeningSpeakNow;
+
+  /// VIDYA sheet hint while listening: the input is clipping.
+  ///
+  /// In en, this message translates to:
+  /// **'A little loud. Hold the phone a bit further away.'**
+  String get vidyaMicTooLoud;
+
+  /// VIDYA sheet hint while listening: the input is faint.
+  ///
+  /// In en, this message translates to:
+  /// **'A little quiet. Hold the phone a bit closer.'**
+  String get vidyaMicTooQuiet;
+
+  /// VIDYA sheet: eyebrow over the teacher's transcribed words.
+  ///
+  /// In en, this message translates to:
+  /// **'I heard'**
+  String get vidyaIHeard;
+
+  /// VIDYA sheet: what VIDYA opens after Looks right; name is a tool or screen.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll open {name}.'**
+  String vidyaHeldWillOpen(String name);
+
+  /// VIDYA sheet: listen again instead of acting on what was heard.
+  ///
+  /// In en, this message translates to:
+  /// **'Say it again'**
+  String get vidyaSayAgain;
+
+  /// VIDYA sheet: confirm what was heard and act on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks right'**
+  String get vidyaLooksRight;
 }
 
 class _AppLocalizationsDelegate

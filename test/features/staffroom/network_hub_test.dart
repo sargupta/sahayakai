@@ -157,13 +157,21 @@ Future<ProviderContainer> _pumpHub(
 
 AppLocalizations _en() => lookupAppLocalizations(const Locale('en'));
 
+/// Pulls the sections panel out from the left-edge grip and picks [label].
+Future<void> _openSection(WidgetTester tester, String label) async {
+  await tester.tap(find.byKey(const ValueKey('community-sections-grip')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   final l10n = _en();
 
   // The Updates pane reads the on-device store, which touches prefs on build.
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
-  testWidgets('renders all three segments; defaults to the Staffroom feed', (
+  testWidgets('the sections pull out from the edge; Staffroom is the default', (
     tester,
   ) async {
     await _pumpHub(
@@ -174,13 +182,36 @@ void main() {
       ),
     );
 
-    // All three segment labels are present — the reserved third tab is filled.
-    expect(find.text(l10n.networkTabStaffroom), findsWidgets);
-    expect(find.text(l10n.networkTabMessages), findsWidgets);
-    expect(find.text(l10n.networkTabUpdates), findsWidgets);
-    // The Community hub title (UX map).
+    // No bar across the top: the sections sit behind the edge grip, and the
+    // deck line names the open one.
+    expect(find.text(l10n.networkTabMessages), findsNothing);
+    expect(
+      find.byKey(const ValueKey('community-sections-grip')),
+      findsOneWidget,
+    );
     expect(find.text(l10n.communityTitle), findsOneWidget);
-    expect(find.text(l10n.communityDeck), findsOneWidget);
+    expect(
+      find.text(
+        l10n.communityDeckWithSection(
+          l10n.networkTabStaffroom,
+          l10n.communityDeck,
+        ),
+      ),
+      findsOneWidget,
+    );
+
+    // Pulled out, the panel lists all three sections, Staffroom selected.
+    await tester.tap(find.byKey(const ValueKey('community-sections-grip')));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.communitySectionsTitle), findsOneWidget);
+    expect(find.text(l10n.networkTabStaffroom), findsOneWidget);
+    expect(find.text(l10n.networkTabMessages), findsOneWidget);
+    expect(find.text(l10n.networkTabUpdates), findsOneWidget);
+
+    // The chevron tab puts it away again, and it leaves the tree.
+    await tester.tap(find.byKey(const ValueKey('community-sections-close')));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.communitySectionsTitle), findsNothing);
     // The Staffroom tab is active → the feed body shows; the Messages tab is
     // offstage → its conversation is not found.
     expect(find.text('staffroom body'), findsOneWidget);
@@ -198,7 +229,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text(l10n.networkTabMessages));
+    await _openSection(tester, l10n.networkTabMessages);
     await tester.pumpAndSettle();
 
     // The inbox row (U-SI1 ConversationRow) is now visible; the staffroom feed
@@ -219,7 +250,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text(l10n.networkTabMessages));
+    await _openSection(tester, l10n.networkTabMessages);
     await tester.pumpAndSettle();
     expect(find.text(l10n.inboxSignInBody), findsOneWidget);
   });
@@ -237,7 +268,7 @@ void main() {
         router: true,
       );
 
-      await tester.tap(find.text(l10n.networkTabMessages));
+      await _openSection(tester, l10n.networkTabMessages);
       await tester.pumpAndSettle();
 
       // The dead end this unit fixes: the Network hub's reused Messages
@@ -266,7 +297,7 @@ void main() {
           ),
         );
 
-        await tester.tap(find.text(l10n.networkTabMessages));
+        await _openSection(tester, l10n.networkTabMessages);
         await tester.pumpAndSettle();
 
         expect(find.text(l10n.inboxEmptyTitle), findsOneWidget);
@@ -299,7 +330,7 @@ void main() {
         updates: [callRow()],
       );
 
-      await tester.tap(find.text(l10n.networkTabUpdates));
+      await _openSection(tester, l10n.networkTabUpdates);
       await tester.pumpAndSettle();
 
       expect(
@@ -324,7 +355,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text(l10n.networkTabUpdates));
+      await _openSection(tester, l10n.networkTabUpdates);
       await tester.pumpAndSettle();
 
       expect(find.text(l10n.notificationsEmptyTitle), findsOneWidget);
@@ -398,7 +429,7 @@ void main() {
         ],
       );
     await _pumpHub(tester, staffroom: staffroom, inbox: FakeInboxTransport());
-    await tester.tap(find.text(l10n.networkTabMessages));
+    await _openSection(tester, l10n.networkTabMessages);
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.staffroomConnectionWants), findsOneWidget);
@@ -435,7 +466,7 @@ void main() {
         ],
       );
     await _pumpHub(tester, staffroom: staffroom, inbox: FakeInboxTransport());
-    await tester.tap(find.text(l10n.networkTabMessages));
+    await _openSection(tester, l10n.networkTabMessages);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text(l10n.staffroomConnectionDecline));
@@ -454,7 +485,7 @@ void main() {
       );
     final inbox = FakeInboxTransport();
     await _pumpHub(tester, staffroom: staffroom, inbox: inbox, router: true);
-    await tester.tap(find.text(l10n.networkTabMessages));
+    await _openSection(tester, l10n.networkTabMessages);
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.staffroomConnectionAccept));
     await tester.pumpAndSettle();

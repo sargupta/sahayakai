@@ -796,6 +796,9 @@ class _DemoCommunityStore {
     _gScience7,
     _gMarathiMaths,
     _gWagholiStaff,
+    // Every teacher is auto-joined to her state's Daily Briefing (the
+    // backend's ensure-groups step), which Home's briefing quotes.
+    _gBriefing,
   };
   final List<GroupPost> _posts = <GroupPost>[];
   final List<FeedItem> _feedExtras = <FeedItem>[];

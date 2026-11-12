@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/auth/auth_providers.dart';
+import '../core/network/api_client.dart';
 import '../core/network/api_providers.dart';
 import '../features/attendance/data/attendance_repository.dart';
 import '../features/notifications/data/notifications_store.dart';
@@ -11,49 +9,44 @@ import '../features/profile/data/profile_doc_source.dart';
 import 'demo_api_client.dart';
 import 'demo_community.dart';
 import 'demo_core.dart';
-import 'demo_mode.dart';
-import 'demo_tools.dart';
 
-/// Every provider override the demo build mounts the app with.
+/// The provider overrides the demo build mounts the app with: sample data on
+/// top of the LIVE app.
 ///
-/// Each demo source is created ONCE here and bound with `overrideWithValue`, so
-/// what the teacher does during a presentation (a saved register, a placed
-/// call, an edited profile) survives screens being closed and reopened — an
-/// auto-disposed provider rebuilt from scratch would forget it.
+/// Firebase, sign-in and the backend stay real, so VIDYA, speech-to-text, her
+/// voice and every AI tool work exactly as in a normal build. Sample data
+/// fills what a fresh account would otherwise show empty: two classes and
+/// their students, parent calls (simulated — placing real calls needs the
+/// telephony keys), Community, Updates, the demo teacher's profile, and extra
+/// items in My work.
+///
+/// Each sample source is created ONCE here and bound with `overrideWithValue`,
+/// so what the teacher does during a presentation (a saved register, a placed
+/// call, an edited profile) survives screens being closed and reopened.
 List<Override> demoOverrides() {
-  final client = DemoApiClient();
-  final attendance = DemoAttendanceRepository(client, DateTime.now);
-  final hotline = DemoParentHotlineRepository(client);
+  // The sample repositories answer everything themselves; this client only
+  // satisfies their constructors and is never asked for a request.
+  final unused = ApiClient();
+  final attendance = DemoAttendanceRepository(unused, DateTime.now);
+  final hotline = DemoParentHotlineRepository(unused);
   final profileDocs = DemoProfileDocSource();
 
   return <Override>[
-    // Boot and identity: no Firebase, already signed in as the demo teacher.
-    appBootstrapProvider.overrideWith((ref) async {}),
-    authControllerProvider.overrideWith(DemoAuthController.new),
-    tokenProviderProvider.overrideWithValue(
-      ({bool forceRefresh = false}) async => _demoToken,
+    // The real client (the signed-in teacher's token), wrapped so a few
+    // routes are answered with samples and the rest reach the backend.
+    apiClientProvider.overrideWith(
+      (ref) => DemoApiClient(
+        ApiClient(
+          tokenProvider: ref.watch(tokenProviderProvider),
+          appCheckTokenProvider: ref.watch(appCheckTokenProviderProvider),
+        ),
+      ),
     ),
-    appCheckTokenProviderProvider.overrideWithValue(() async => null),
     ...demoIdentityOverrides,
-
-    // Data sources.
-    apiClientProvider.overrideWithValue(client),
     profileDocSourceProvider.overrideWithValue(profileDocs),
     attendanceRepositoryProvider.overrideWithValue(attendance),
     parentHotlineRepositoryProvider.overrideWithValue(hotline),
     notificationsProvider.overrideWith(DemoNotificationsStore.new),
     ...demoCommunityOverrides(),
-    ...demoToolOverrides(),
   ];
 }
-
-/// An unsigned token carrying the demo teacher's uid and a Pro plan claim, so
-/// the plan badge decodes the way it would for a real Pro teacher. Nothing in
-/// the app verifies the signature (the server does, and there is none here).
-final String _demoToken = () {
-  String seg(Map<String, Object> m) =>
-      base64Url.encode(utf8.encode(jsonEncode(m))).replaceAll('=', '');
-  return '${seg(<String, Object>{'alg': 'none'})}.'
-      '${seg(<String, Object>{'user_id': kDemoUid, 'sub': kDemoUid, 'planType': 'pro'})}'
-      '.demo';
-}();

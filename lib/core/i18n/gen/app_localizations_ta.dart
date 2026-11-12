@@ -4971,4 +4971,200 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get vidyaSuggestPostToWorksheet =>
       'இடுகையிலிருந்து பயிற்சித்தாள் உருவாக்கு';
+
+  @override
+  String get aiReportAction => 'புகார் செய்';
+
+  @override
+  String get aiReportTitle => 'இந்த AI உள்ளடக்கத்தைப் பற்றி புகார் செய்';
+
+  @override
+  String get aiReportBody =>
+      'என்ன தவறு என்று சொல்லுங்கள். ஒவ்வொரு புகாரையும் எங்கள் குழு பார்க்கும்.';
+
+  @override
+  String get aiReportReasonOffensive => 'புண்படுத்தும் அல்லது தீங்கானது';
+
+  @override
+  String get aiReportReasonWrong => 'தவறானது அல்லது தவறாக வழிநடத்துவது';
+
+  @override
+  String get aiReportReasonUnsuitable => 'மாணவர்களுக்கு ஏற்றதல்ல';
+
+  @override
+  String get aiReportReasonOther => 'வேறு ஏதாவது';
+
+  @override
+  String get aiReportNoteLabel => 'குறிப்பைச் சேர் (விருப்பத்தேர்வு)';
+
+  @override
+  String get aiReportSend => 'புகாரை அனுப்பு';
+
+  @override
+  String get aiReportSent => 'நன்றி. எங்கள் குழு இதைப் பார்க்கும்.';
+
+  @override
+  String get aiReportFailed => 'உங்கள் புகாரை அனுப்ப முடியவில்லை';
+
+  @override
+  String get aiReportFailedBody =>
+      'இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get homeBriefingEyebrow => 'இன்றைய சுருக்கம்';
+
+  @override
+  String get homeBriefingListen => 'கேளுங்கள்';
+
+  @override
+  String get homeBriefingStop => 'நிறுத்து';
+
+  @override
+  String get homeGreetingMorning => 'காலை வணக்கம்';
+
+  @override
+  String get homeGreetingAfternoon => 'மதிய வணக்கம்';
+
+  @override
+  String get homeGreetingEvening => 'மாலை வணக்கம்';
+
+  @override
+  String homeGreetingNamed(String greeting, String name) {
+    return '$greeting, $name';
+  }
+
+  @override
+  String homeBriefingClasses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'இன்று $count வகுப்புகள்.',
+      one: 'இன்று ஒரு வகுப்பு.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeBriefingToMark(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count வருகைப் பதிவுகள் இன்னும் பாக்கி.',
+      one: 'ஒரு வருகைப் பதிவு இன்னும் பாக்கி.',
+      zero: 'எல்லா வருகைப் பதிவுகளும் முடிந்தன.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeBriefingClassAbsent(String className, int count) {
+    return '$className · $count பேர் வரவில்லை';
+  }
+
+  @override
+  String homeBriefingClassNotMarked(String className) {
+    return '$className · இன்னும் வருகை பதியவில்லை';
+  }
+
+  @override
+  String homeBriefingClassAllPresent(String className) {
+    return '$className · எல்லோரும் வந்துள்ளனர்';
+  }
+
+  @override
+  String homeBriefingStreak(String name, int days) {
+    return '$name · தொடர்ந்து $days நாள் வரவில்லை';
+  }
+
+  @override
+  String get homeBriefingActionCall => 'அழை';
+
+  @override
+  String get homeBriefingActionMark => 'வருகை பதி';
+
+  @override
+  String get homeBriefingCommunityEyebrow =>
+      'சமூகத்திலிருந்து · தினசரி சுருக்கம்';
+
+  @override
+  String get homeBriefingReadMore => 'மேலும் படிக்க';
+
+  @override
+  String get homeTileQuizSub => 'மூன்று கடின நிலைகள்';
+
+  @override
+  String get homeTileWorksheetSub => 'பாடநூல் புகைப்படத்திலிருந்து';
+
+  @override
+  String get homeTileAnswerSub => 'வகுப்பறையின் எந்தக் கேள்வியும்';
+
+  @override
+  String get homeTileExamSub => 'வாரிய முறை, விடைகளுடன்';
+
+  @override
+  String homeAllToolsExplore(int count) {
+    return 'அனைத்து $count கருவிகளையும் பாருங்கள்';
+  }
+
+  @override
+  String get homeAllToolsHint =>
+      'வினாத்தாள்கள், கதைகள், களப் பயணங்கள் மற்றும் பல';
+
+  @override
+  String communitySectionsOpen(String section) {
+    return 'பிரிவுகளைத் திற. இப்போது: $section';
+  }
+
+  @override
+  String get communitySectionsClose => 'பிரிவுகளை மூடு';
+
+  @override
+  String get communitySectionsEyebrow => 'சமூகம்';
+
+  @override
+  String get communitySectionsTitle => 'எங்கே போக வேண்டும்?';
+
+  @override
+  String get communityStaffroomSub => 'ஃபீடு, குழுக்கள், நபர்கள்';
+
+  @override
+  String get communityMessagesSub => 'கோரிக்கைகள், அரட்டைகள்';
+
+  @override
+  String get communityUpdatesSub => 'அழைப்புகள், வருகையின்மை, முடிவுகள்';
+
+  @override
+  String get communitySectionsHint =>
+      'இங்கே திரும்ப இடது ஓரத்திலிருந்து ஸ்வைப் செய்யுங்கள் அல்லது டேபைத் தட்டுங்கள்.';
+
+  @override
+  String communityDeckWithSection(String section, String deck) {
+    return '$section · $deck';
+  }
+
+  @override
+  String get vidyaListeningSpeakNow =>
+      'இப்போது பேசுங்கள். நீங்கள் நிறுத்தியதும் நான் கேட்பதை நிறுத்துவேன்.';
+
+  @override
+  String get vidyaMicTooLoud =>
+      'சத்தம் கொஞ்சம் அதிகம். போனைச் சற்றுத் தள்ளிப் பிடியுங்கள்.';
+
+  @override
+  String get vidyaMicTooQuiet =>
+      'சத்தம் கொஞ்சம் குறைவு. போனைச் சற்று அருகில் பிடியுங்கள்.';
+
+  @override
+  String get vidyaIHeard => 'நான் கேட்டது';
+
+  @override
+  String vidyaHeldWillOpen(String name) {
+    return 'நான் $name திறப்பேன்.';
+  }
+
+  @override
+  String get vidyaSayAgain => 'மீண்டும் சொல்லுங்கள்';
+
+  @override
+  String get vidyaLooksRight => 'சரியாக உள்ளது';
 }

@@ -9,6 +9,7 @@ import '../../../../core/theme/app_icon_size.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/motion/animated_entrance.dart';
+import '../../../../shared/widgets/ai_report_sheet.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../data/dto/vidya_action.dart';
 import '../vidya_controller.dart';
@@ -171,6 +172,29 @@ class _VidyaBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (text.isNotEmpty) AiText(text),
+            // Google Play's AI-generated content policy: VIDYA's replies can
+            // be reported to the team from inside the app.
+            if (text.isNotEmpty)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TextButton.icon(
+                  onPressed: () => showAiReportSheet(
+                    context,
+                    content: text,
+                    feature: 'vidya',
+                  ),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.space2,
+                    ),
+                    foregroundColor: AppColors.textMuted,
+                    textStyle: Theme.of(context).textTheme.labelMedium,
+                  ),
+                  icon: const Icon(LucideIcons.flag, size: 14),
+                  label: Text(AppLocalizations.of(context).aiReportAction),
+                ),
+              ),
             if (directives.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.space3),
               Container(

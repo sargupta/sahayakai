@@ -32,10 +32,11 @@ import 'widgets/vidya_orb.dart';
 /// The Home tab: voice-first, the mic is the screen (UX map H-01).
 ///
 /// Top to bottom: the teacher's header (avatar → Me, the day, her name, the
-/// language pill, messages, and — only while VIDYA holds a thread — clear it); "Ask for anything in the app"; three example
-/// requests that open their tool prefilled ("Say it, she routes it"); VIDYA as
-/// a big orb that carries her state; the type box; then what is waiting and the
-/// four everyday tools.
+/// language pill, messages, and — only while VIDYA holds a thread — clear it);
+/// "Ask for anything in the app"; three example requests that open their tool
+/// prefilled ("Say it, she routes it"); VIDYA as a big orb that carries her
+/// state; the type box; then what is waiting, the eight everyday tools and
+/// "Explore all 15 tools".
 ///
 /// The big orb is VIDYA on Home, so the shell hides the docked orb on this tab.
 /// Everything "waiting" is real: ready results, unread messages and unread
@@ -884,6 +885,28 @@ class _ToolGrid extends ConsumerWidget {
         subtitle: l10n.homeTileCallSubLanguage(language.nativeLabel),
         onTap: () => context.push(Routes.parentHotline),
       ),
+      _Tile(
+        key: const ValueKey('home-tile-quiz'),
+        title: l10n.quizTitle,
+        subtitle: l10n.homeTileQuizSub,
+        onTap: () => context.push(Routes.quizGenerator),
+      ),
+      _Tile(
+        title: l10n.worksheetTitle,
+        subtitle: l10n.homeTileWorksheetSub,
+        onTap: () => context.push(Routes.worksheetWizard),
+      ),
+      _Tile(
+        title: l10n.instantAnswerTitle,
+        subtitle: l10n.homeTileAnswerSub,
+        onTap: () => context.push(Routes.instantAnswer),
+      ),
+      _Tile(
+        key: const ValueKey('home-tile-exam'),
+        title: l10n.examPaperTitle,
+        subtitle: l10n.homeTileExamSub,
+        onTap: () => context.push(Routes.examPaper),
+      ),
     ];
     // Two across; each row takes its taller tile's height, so long words in
     // any script wrap instead of being cut.
@@ -962,44 +985,83 @@ class _Tile extends StatelessWidget {
   }
 }
 
-/// "All 15 tools": every tool, counted from the registry the Prep desk lists.
+/// "Explore all 15 tools": every tool, counted from the registry the Prep desk
+/// lists, with a one-line hint of what else is in there.
+///
+/// A full-width pill in the map's white secondary style (`.btn.w`): the same
+/// 52dp stadium every other button in the app uses, so it reads as an action
+/// and not as a stray link. A MINIMUM height, so a long translation at a large
+/// text scale grows the pill instead of clipping.
 class _AllToolsLink extends StatelessWidget {
   const _AllToolsLink();
 
   @override
   Widget build(BuildContext context) {
-    final label = context.l10n.homeAllTools(kToolRegistry.length);
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: Semantics(
-        button: true,
-        label: label,
-        excludeSemantics: true,
-        child: InkWell(
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final label = l10n.homeAllToolsExplore(kToolRegistry.length);
+    final hint = l10n.homeAllToolsHint;
+    return Semantics(
+      button: true,
+      label: '$label, $hint',
+      excludeSemantics: true,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
           borderRadius: AppRadius.rPill,
-          onTap: () => context.push(Routes.prepDesk),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: AppSpacing.targetMin),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    LucideIcons.layoutGrid,
-                    size: 16,
-                    color: AppColors.textLink,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textLink,
+          boxShadow: [AppShadows.card],
+        ),
+        child: Material(
+          color: AppColors.milk50,
+          shape: const StadiumBorder(
+            side: BorderSide(color: AppColors.borderHairline),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            onTap: () => context.push(Routes.prepDesk),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 52),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.space5,
+                  vertical: AppSpacing.space3,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.layoutGrid,
+                      size: 18,
+                      color: AppColors.accentFill,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: AppSpacing.space3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            label,
+                            style: text.titleLarge?.copyWith(
+                              fontSize: 15,
+                              color: AppColors.textStrong,
+                            ),
+                          ),
+                          Text(
+                            hint,
+                            style: text.bodyMedium?.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.space2),
+                    const Icon(
+                      LucideIcons.chevronRight,
+                      size: 18,
+                      color: AppColors.textMuted,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

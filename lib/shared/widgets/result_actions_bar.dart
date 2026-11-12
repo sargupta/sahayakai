@@ -8,6 +8,7 @@ import '../../core/platform/share_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../features/vidya/domain/deliverable.dart';
 import '../../features/vidya/presentation/deliverables_controller.dart';
+import 'ai_report_sheet.dart';
 import 'inline_error.dart';
 import 'primary_button.dart';
 
@@ -245,6 +246,21 @@ class _ResultActionsBarState extends ConsumerState<ResultActionsBar> {
               style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
               icon: const Icon(LucideIcons.share2, size: AppIconSize.inline),
               label: Text(l10n.actionShare),
+            ),
+            // Google Play's AI-generated content policy: every AI result can
+            // be reported to the team from inside the app.
+            TextButton.icon(
+              onPressed: () => showAiReportSheet(
+                context,
+                content: widget.text,
+                feature: 'tool-result',
+              ),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 48),
+                foregroundColor: AppColors.textMuted,
+              ),
+              icon: const Icon(LucideIcons.flag, size: AppIconSize.inline),
+              label: Text(l10n.aiReportAction),
             ),
           ],
         ),

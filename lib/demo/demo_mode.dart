@@ -1,16 +1,16 @@
-/// Demo data mode: a build switch for presenting and testing the app with no
-/// backend, no Firebase and no sign-in.
+/// Demo data mode: sample data on top of the live app, for presenting.
 ///
 /// Turn it on with `--dart-define=DEMO_DATA=true` (flutter run / build). With
-/// it off — every normal build — nothing under `lib/demo/` is reachable: the
-/// only reference is the `if (kDemoData)` branch in `main.dart`, which the
-/// compiler drops as dead code.
+/// it off — every normal build — `main.dart` passes no overrides and nothing
+/// under `lib/demo/` is reachable.
 ///
-/// In demo mode `main()` skips Firebase, Crashlytics and FCM, and mounts the
-/// app with [demoOverrides] (`demo_overrides.dart`), which replace every remote
-/// data source with the static sample data in this folder. The sample data is
-/// one consistent story: one teacher, her two classes and their students, so
-/// attendance, parent calls, Home and the tools all agree with each other.
+/// The app stays fully live in demo mode: Firebase, Google sign-in and the
+/// backend are real, so VIDYA, speech-to-text, her voice and every AI tool
+/// behave exactly as in a normal build. `demoOverrides()` in
+/// `demo_overrides.dart` only replaces what a fresh account would show empty
+/// with one consistent sample story: one teacher, her two classes and their
+/// students, parent calls (simulated), Community, Updates and extra items in
+/// My work.
 library;
 
 /// True only in a build made with `--dart-define=DEMO_DATA=true`.

@@ -93,7 +93,9 @@ class _RollCallVoiceSheetState extends ConsumerState<RollCallVoiceSheet> {
         navigator.pop();
         return;
       }
-      final bytes = await recording.readBytes();
+      // Read for upload, then delete: the class's voices never stay on the
+      // device.
+      final bytes = await recording.takeBytes();
       final transcript = await stt.transcribe(
         audioBytes: bytes,
         expectedLanguage: lang,

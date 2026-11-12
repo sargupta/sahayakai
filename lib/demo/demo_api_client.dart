@@ -3,19 +3,22 @@ import 'package:dio/dio.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_exception.dart';
 
-/// The demo build's [ApiClient]: answers the routes the app reads directly
-/// through the client (library, plan usage, VIDYA, marks, profile save) from
-/// static sample data, and never opens a socket.
+/// The demo build's [ApiClient]: the REAL backend, with sample data layered on
+/// top where a fresh account would otherwise look empty.
 ///
-/// The repositories with richer behaviour (attendance, parent calls, the AI
-/// tools, Community) are replaced whole in their own demo files, so they never
-/// reach this client. Anything that still does and has no sample here fails
-/// the way an offline request would — loudly, with the route in the message —
-/// instead of inventing a response.
+/// Everything goes to [_live] (the signed-in teacher's real client): VIDYA,
+/// speech-to-text, her voice, every AI tool, saving, plan usage. Only these
+/// are answered here:
+/// - My work: the teacher's real items first, then sample items (ids start
+///   with [kDemoLibraryIdPrefix]); opening a sample item is served locally.
+/// - The marks parent-call evidence cites for the demo students (`s6-*`,
+///   `s7-*`), who exist only in the demo register.
+/// - Profile saves (`PATCH /api/user/profile`): the demo profile is local, so
+///   its values must never be written to the real account.
 class DemoApiClient extends ApiClient {
-  DemoApiClient() : super();
+  DemoApiClient(this._live) : super();
 
-  static const Duration _latency = Duration(milliseconds: 350);
+  final ApiClient _live;
 
   @override
   Future<T> get<T>(
@@ -23,66 +26,64 @@ class DemoApiClient extends ApiClient {
     Map<String, dynamic>? query,
     required T Function(dynamic json) decode,
   }) async {
-    await Future<void>.delayed(_latency);
     if (path == '/api/content/list') {
-      final items = _libraryItems();
-      final limit = query?['limit'];
-      final take = limit is int && limit > 0 ? limit : items.length;
-      final page = items.take(take).toList();
-      return decode(<String, dynamic>{
-        'items': page,
-        'count': page.length,
-        'nextCursor': null,
-      });
+      return decode(await _mergedLibrary(query));
     }
     if (path == '/api/content/get') {
       final id = query?['id'];
-      final all = _libraryItems();
-      for (final item in all) {
-        if (item['id'] == id) return decode(item);
+      if (id is String && id.startsWith(kDemoLibraryIdPrefix)) {
+        for (final item in _libraryItems()) {
+          if (item['id'] == id) return decode(item);
+        }
+        throw const ApiException(
+          ApiErrorKind.notFound,
+          'This item is no longer in your library.',
+          statusCode: 404,
+        );
       }
-      throw const ApiException(
-        ApiErrorKind.notFound,
-        'This item is no longer in your library.',
-        statusCode: 404,
-      );
-    }
-    if (path == '/api/usage') return decode(_usage);
-    if (path == '/api/vidya/session') {
-      return decode(const <String, dynamic>{
-        'sessionId': null,
-        'messages': <Object>[],
-      });
-    }
-    if (path == '/api/vidya/profile') {
-      return decode(const <String, dynamic>{'profile': null});
     }
     if (path.startsWith('/api/performance/student/')) {
-      return decode(_marksFor(path.split('/').last));
+      final studentId = path.split('/').last;
+      if (_isDemoStudent(studentId)) return decode(_marksFor(studentId));
     }
-    throw _noSample('GET', path);
+    return _live.get<T>(path, query: query, decode: decode);
   }
+
+  /// The real My work first (newest real work leads), then the samples. A
+  /// failed real read (offline) still shows the samples rather than an error.
+  Future<Map<String, dynamic>> _mergedLibrary(
+    Map<String, dynamic>? query,
+  ) async {
+    var real = const <dynamic>[];
+    try {
+      final json = await _live.get<dynamic>(
+        '/api/content/list',
+        query: query,
+        decode: (json) => json,
+      );
+      if (json is Map && json['items'] is List) real = json['items'] as List;
+    } catch (_) {
+      // Offline or signed out: the samples alone.
+    }
+    final items = <dynamic>[...real, ..._libraryItems()];
+    final limit = query?['limit'];
+    final page = limit is int && limit > 0 ? items.take(limit).toList() : items;
+    return <String, dynamic>{
+      'items': page,
+      'count': page.length,
+      'nextCursor': null,
+    };
+  }
+
+  static bool _isDemoStudent(String id) =>
+      id.startsWith('s6-') || id.startsWith('s7-');
 
   @override
   Future<T> post<T>(
     String path, {
     Object? data,
     required T Function(Map<String, dynamic> json) decode,
-  }) async {
-    await Future<void>.delayed(_latency);
-    switch (path) {
-      case '/api/assistant':
-        await Future<void>.delayed(const Duration(milliseconds: 900));
-        return decode(_assistantReply(data));
-      case '/api/tts':
-        // No audio in demo mode: VIDYA shows her reply as text instead.
-        return decode(const <String, dynamic>{'audioContent': ''});
-      case '/api/vidya/session':
-      case '/api/vidya/profile':
-        return decode(const <String, dynamic>{'success': true});
-    }
-    throw _noSample('POST', path);
-  }
+  }) => _live.post<T>(path, data: data, decode: decode);
 
   @override
   Future<T> patch<T>(
@@ -90,11 +91,11 @@ class DemoApiClient extends ApiClient {
     Object? data,
     required T Function(Map<String, dynamic> json) decode,
   }) async {
-    await Future<void>.delayed(_latency);
     if (path == '/api/user/profile') {
+      // The demo profile is local; never write its values to the real account.
       return decode(const <String, dynamic>{'success': true});
     }
-    throw _noSample('PATCH', path);
+    return _live.patch<T>(path, data: data, decode: decode);
   }
 
   @override
@@ -102,137 +103,23 @@ class DemoApiClient extends ApiClient {
     String path, {
     Object? data,
     required T Function(Map<String, dynamic> json) decode,
-  }) async {
-    await Future<void>.delayed(_latency);
-    throw _noSample('PUT', path);
-  }
+  }) => _live.put<T>(path, data: data, decode: decode);
 
   @override
-  Future<RawResponse> postRaw(String path, {Object? data}) async {
-    await Future<void>.delayed(_latency);
-    throw _noSample('POST', path);
-  }
+  Future<RawResponse> postRaw(String path, {Object? data}) =>
+      _live.postRaw(path, data: data);
 
   @override
   Future<T> postMultipart<T>(
     String path, {
     required FormData data,
     required T Function(Map<String, dynamic> json) decode,
-  }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    if (path.contains('voice-to-text')) {
-      // What a teacher typically asks the orb, so the demo can show the whole
-      // speak → plan → tool hand-off without a speech service.
-      return decode(const <String, dynamic>{
-        'text': 'Make a lesson plan on photosynthesis for Class 7',
-        'language': 'en',
-      });
-    }
-    throw _noSample('POST', path);
-  }
-
-  ApiException _noSample(String verb, String path) => ApiException(
-    ApiErrorKind.network,
-    'Demo mode has no sample data for $verb $path.',
-  );
+  }) => _live.postMultipart<T>(path, data: data, decode: decode);
 }
 
-// ── VIDYA ────────────────────────────────────────────────────────────────────
-
-/// A canned VIDYA turn. A request that names a tool gets the real hand-off
-/// shape (`NAVIGATE_AND_FILL`), so the demo shows VIDYA opening the tool with
-/// the topic filled in; anything else gets a short, honest answer.
-Map<String, dynamic> _assistantReply(Object? data) {
-  final message = data is Map ? '${data['message'] ?? ''}' : '';
-  final lower = message.toLowerCase();
-  final topic = _topicFrom(lower);
-
-  Map<String, dynamic> navigate(String flow, String reply) => <String, dynamic>{
-    'response': reply,
-    'action': <String, dynamic>{
-      'type': 'NAVIGATE_AND_FILL',
-      'flow': flow,
-      'params': <String, dynamic>{
-        'topic': topic,
-        'gradeLevel': 'Class 7',
-        'subject': 'Science',
-        'language': 'English',
-      },
-    },
-  };
-
-  if (lower.contains('quiz') || lower.contains('test')) {
-    return navigate(
-      'quiz-generator',
-      'Opening the quiz maker for $topic, Class 7.',
-    );
-  }
-  if (lower.contains('worksheet')) {
-    return navigate(
-      'worksheet-wizard',
-      'Opening the worksheet wizard for $topic.',
-    );
-  }
-  if (lower.contains('rubric')) {
-    return navigate('rubric-generator', 'Opening the rubric maker for $topic.');
-  }
-  if (lower.contains('lesson') || lower.contains('plan')) {
-    return navigate(
-      'lesson-plan',
-      'Opening the lesson planner for $topic, Class 7.',
-    );
-  }
-  if (lower.contains('attendance') || lower.contains('roll')) {
-    return const <String, dynamic>{
-      'response':
-          'Your Class 7 A roll call is ready on Home. Tap "Roll call" and read '
-          'the names aloud, or tap each row.',
-    };
-  }
-  return <String, dynamic>{
-    'response':
-        'I can plan a lesson, make a quiz or worksheet, take the roll call or '
-        'call a parent. Try "Make a quiz on $topic for Class 7".',
-  };
-}
-
-String _topicFrom(String lower) {
-  const topics = <String, String>{
-    'photosynth': 'Photosynthesis',
-    'fraction': 'Fractions',
-    'water cycle': 'The water cycle',
-    'nutrition': 'Nutrition in plants',
-    'heat': 'Heat',
-    'acid': 'Acids, bases and salts',
-    'motion': 'Motion and time',
-  };
-  for (final entry in topics.entries) {
-    if (lower.contains(entry.key)) return entry.value;
-  }
-  return 'Photosynthesis';
-}
-
-// ── Plan and usage ───────────────────────────────────────────────────────────
-
-const Map<String, dynamic> _usage = <String, dynamic>{
-  'plan': 'pro',
-  'canExport': true,
-  'canViewDetailedAnalytics': true,
-  'canAccessAbsenceRecords': true,
-  'canUseParentMessaging': true,
-  'model': 'Gemini 2.5 Flash',
-  'usage': <String, dynamic>{
-    'lesson-plan': <String, int>{'used': 18, 'limit': 100},
-    'quiz': <String, int>{'used': 9, 'limit': 100},
-    'worksheet': <String, int>{'used': 6, 'limit': 60},
-    'assessment-scanner': <String, int>{'used': 34, 'limit': 200},
-    'parent-message': <String, int>{'used': 5, 'limit': 50},
-    'rubric': <String, int>{'used': 2, 'limit': -1},
-    'instant-answer': <String, int>{'used': 23, 'limit': -1},
-    'assistant': <String, int>{'used': 41, 'limit': 300},
-    'voice-to-text': <String, int>{'used': 27, 'limit': 300},
-  },
-};
+/// Sample My work items carry this id prefix, so their detail is served
+/// locally and everything else reaches the real backend.
+const String kDemoLibraryIdPrefix = 'demo-lib-';
 
 // ── Marks the parent-call evidence step cites ────────────────────────────────
 

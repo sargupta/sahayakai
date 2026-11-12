@@ -4845,4 +4845,195 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vidyaSuggestPostToWorksheet => 'Turn a post into a worksheet';
+
+  @override
+  String get aiReportAction => 'Report';
+
+  @override
+  String get aiReportTitle => 'Report this AI content';
+
+  @override
+  String get aiReportBody =>
+      'Tell us what\'s wrong. Our team reviews every report.';
+
+  @override
+  String get aiReportReasonOffensive => 'Offensive or harmful';
+
+  @override
+  String get aiReportReasonWrong => 'Wrong or misleading';
+
+  @override
+  String get aiReportReasonUnsuitable => 'Not suitable for students';
+
+  @override
+  String get aiReportReasonOther => 'Something else';
+
+  @override
+  String get aiReportNoteLabel => 'Add a note (optional)';
+
+  @override
+  String get aiReportSend => 'Send report';
+
+  @override
+  String get aiReportSent => 'Thanks. Our team will review this.';
+
+  @override
+  String get aiReportFailed => 'We couldn\'t send your report';
+
+  @override
+  String get aiReportFailedBody => 'Check your connection and try again.';
+
+  @override
+  String get homeBriefingEyebrow => 'Today\'s briefing';
+
+  @override
+  String get homeBriefingListen => 'Listen';
+
+  @override
+  String get homeBriefingStop => 'Stop';
+
+  @override
+  String get homeGreetingMorning => 'Good morning';
+
+  @override
+  String get homeGreetingAfternoon => 'Good afternoon';
+
+  @override
+  String get homeGreetingEvening => 'Good evening';
+
+  @override
+  String homeGreetingNamed(String greeting, String name) {
+    return '$greeting, $name';
+  }
+
+  @override
+  String homeBriefingClasses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count classes today.',
+      one: 'One class today.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeBriefingToMark(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count registers are still to mark.',
+      one: 'One register is still to mark.',
+      zero: 'Every register is marked.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeBriefingClassAbsent(String className, int count) {
+    return '$className · $count marked absent';
+  }
+
+  @override
+  String homeBriefingClassNotMarked(String className) {
+    return '$className · not marked yet';
+  }
+
+  @override
+  String homeBriefingClassAllPresent(String className) {
+    return '$className · everyone present';
+  }
+
+  @override
+  String homeBriefingStreak(String name, int days) {
+    return '$name · absent $days days in a row';
+  }
+
+  @override
+  String get homeBriefingActionCall => 'Call';
+
+  @override
+  String get homeBriefingActionMark => 'Mark';
+
+  @override
+  String get homeBriefingCommunityEyebrow => 'From Community · Daily Briefing';
+
+  @override
+  String get homeBriefingReadMore => 'Read more';
+
+  @override
+  String get homeTileQuizSub => 'Three difficulty levels';
+
+  @override
+  String get homeTileWorksheetSub => 'From a textbook photo';
+
+  @override
+  String get homeTileAnswerSub => 'Any classroom question';
+
+  @override
+  String get homeTileExamSub => 'Board pattern, with key';
+
+  @override
+  String homeAllToolsExplore(int count) {
+    return 'Explore all $count tools';
+  }
+
+  @override
+  String get homeAllToolsHint => 'Exam papers, stories, field trips and more';
+
+  @override
+  String communitySectionsOpen(String section) {
+    return 'Open sections. Now: $section';
+  }
+
+  @override
+  String get communitySectionsClose => 'Close sections';
+
+  @override
+  String get communitySectionsEyebrow => 'Community';
+
+  @override
+  String get communitySectionsTitle => 'Where to?';
+
+  @override
+  String get communityStaffroomSub => 'Feed, groups and people';
+
+  @override
+  String get communityMessagesSub => 'Requests and chats';
+
+  @override
+  String get communityUpdatesSub => 'Calls, absences, results';
+
+  @override
+  String get communitySectionsHint =>
+      'Swipe from the left edge, or tap the tab, to come back here.';
+
+  @override
+  String communityDeckWithSection(String section, String deck) {
+    return '$section · $deck';
+  }
+
+  @override
+  String get vidyaListeningSpeakNow => 'Speak now. I\'ll stop when you pause.';
+
+  @override
+  String get vidyaMicTooLoud =>
+      'A little loud. Hold the phone a bit further away.';
+
+  @override
+  String get vidyaMicTooQuiet => 'A little quiet. Hold the phone a bit closer.';
+
+  @override
+  String get vidyaIHeard => 'I heard';
+
+  @override
+  String vidyaHeldWillOpen(String name) {
+    return 'I\'ll open $name.';
+  }
+
+  @override
+  String get vidyaSayAgain => 'Say it again';
+
+  @override
+  String get vidyaLooksRight => 'Looks right';
 }

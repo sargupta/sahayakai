@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/network/api_client.dart';
+import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/demo/demo_api_client.dart';
 import 'package:sahayakai/demo/demo_core.dart';
 import 'package:sahayakai/demo/demo_mode.dart';
@@ -15,6 +17,8 @@ import 'package:sahayakai/features/parent_hotline/data/dto/outreach_dtos.dart';
 import 'package:sahayakai/features/parent_hotline/domain/parent_outreach.dart';
 import 'package:sahayakai/shared/data/library_repository.dart';
 
+import '../support/fake_api_client.dart';
+
 /// The demo build's sample data must tell one consistent story, because a
 /// presentation walks across features: Home's reminder, the outreach list,
 /// the register and the call all have to agree.
@@ -25,7 +29,7 @@ void main() {
   final today = AttendanceDate.fromIstInstant(wednesday);
 
   DemoAttendanceRepository attendance() =>
-      DemoAttendanceRepository(DemoApiClient(), () => wednesday);
+      DemoAttendanceRepository(ApiClient(), () => wednesday);
 
   test('Class 6 B was marked this morning with two absences', () async {
     final repo = attendance();
@@ -81,7 +85,7 @@ void main() {
 
   test('a demo call is in flight, then ends with a summary', () async {
     final hotline = DemoParentHotlineRepository(
-      DemoApiClient(),
+      ApiClient(),
       callLength: const Duration(milliseconds: 300),
     );
     final id = await hotline.createOutreach(
@@ -116,13 +120,73 @@ void main() {
     expect(latest?.result.callStatus, CallStatus.completed);
   });
 
-  test('the library lists items whose detail opens', () async {
-    final repo = LibraryRepository(DemoApiClient());
+  test('offline, My work still lists the samples, and they open', () async {
+    final live = FakeApiClient(
+      error: const ApiException(ApiErrorKind.network, 'offline'),
+    );
+    final repo = LibraryRepository(DemoApiClient(live));
     final items = await repo.fetchRecent(limit: 20);
     expect(items, isNotEmpty);
+    expect(items.first.id, startsWith(kDemoLibraryIdPrefix));
     final detail = await repo.fetchItem(items.first.id);
     expect(detail.title, items.first.title);
     expect(detail.data, isNotNull);
+  });
+
+  test("the teacher's real work comes before the samples, and opens from "
+      'the backend', () async {
+    final real = <String, dynamic>{
+      'id': 'real-1',
+      'type': 'quiz',
+      'title': 'My real quiz',
+      'createdAt': '2026-11-09T10:00:00.000Z',
+      'updatedAt': '2026-11-09T10:00:00.000Z',
+    };
+    final live = FakeApiClient(
+      getResponsesByPath: <String, Object?>{
+        '/api/content/list': <String, dynamic>{
+          'items': [real],
+          'count': 1,
+          'nextCursor': null,
+        },
+        '/api/content/get': real,
+      },
+    );
+    final repo = LibraryRepository(DemoApiClient(live));
+    final items = await repo.fetchRecent(limit: 20);
+    expect(items.first.title, 'My real quiz');
+    expect(
+      items.skip(1).every((i) => i.id.startsWith(kDemoLibraryIdPrefix)),
+      isTrue,
+    );
+    await repo.fetchItem('real-1');
+    expect(live.gets.last.path, '/api/content/get');
+  });
+
+  test('VIDYA, speech and the AI tools reach the live backend', () async {
+    final live = FakeApiClient(
+      postResponse: const <String, dynamic>{'response': 'from the backend'},
+    );
+    final client = DemoApiClient(live);
+    final reply = await client.post<String>(
+      '/api/assistant',
+      data: const <String, dynamic>{'message': 'hello'},
+      decode: (json) => json['response'] as String,
+    );
+    expect(reply, 'from the backend');
+    expect(live.posts.single.path, '/api/assistant');
+  });
+
+  test('a demo profile save never reaches the real account', () async {
+    final live = FakeApiClient();
+    await DemoApiClient(live).patch<void>(
+      '/api/user/profile',
+      data: const <String, dynamic>{
+        'qualifications': <String>['B.Ed'],
+      },
+      decode: (_) {},
+    );
+    expect(live.patches, isEmpty);
   });
 
   testWidgets('a follow-up reminder reads as one in Updates', (tester) async {

@@ -14,15 +14,6 @@ import 'demo/demo_overrides.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Demo build (`--dart-define=DEMO_DATA=true`): static sample data, no
-  // Firebase, no backend, already signed in — for presenting and testing. A
-  // normal build compiles this branch away.
-  if (kDemoData) {
-    runApp(
-      ProviderScope(overrides: demoOverrides(), child: const SahayakApp()),
-    );
-    return;
-  }
   // No font warm-up. The Latin and Noto Sans Indic families are bundled in the
   // APK (pubspec.yaml `flutter.fonts`) and registered by the engine at startup.
   await FirebaseInit.ensureInitialized();
@@ -51,5 +42,13 @@ void main() async {
   try {
     await NotificationService.instance.initialize();
   } catch (_) {}
-  runApp(const ProviderScope(child: SahayakApp()));
+  // Demo build (`--dart-define=DEMO_DATA=true`): the live app with sample
+  // classes, students, calls and Community on top, for presenting. A normal
+  // build passes no overrides and compiles demoOverrides() away.
+  runApp(
+    ProviderScope(
+      overrides: kDemoData ? demoOverrides() : const <Override>[],
+      child: const SahayakApp(),
+    ),
+  );
 }

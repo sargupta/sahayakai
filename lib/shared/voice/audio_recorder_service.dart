@@ -46,6 +46,58 @@ class Recording {
   static const String uploadContentType = 'audio/wav';
 
   Future<Uint8List> readBytes() => File(path).readAsBytes();
+
+  /// Reads the WAV for upload and then deletes it from the device, whether or
+  /// not the read succeeded. A teacher's (and her class's) voice must not
+  /// outlive the request it was recorded for: every caller that sends a
+  /// recording to STT takes its bytes through here.
+  Future<Uint8List> takeBytes() async {
+    try {
+      return await readBytes();
+    } finally {
+      await discard();
+    }
+  }
+
+  /// Deletes the WAV without reading it — for a capture rejected before upload
+  /// (too short, abandoned). Best-effort and never throws: a file that is
+  /// already gone, or cannot be removed, must not break the voice flow.
+  Future<void> discard() async {
+    try {
+      final file = File(path);
+      if (file.existsSync()) await file.delete();
+    } catch (_) {
+      // Leftovers are swept on the next start (see RecordAudioRecorderService).
+    }
+  }
+}
+
+/// The temp-file name prefix every capture uses, so leftovers can be found.
+const String kUtterancePrefix = 'vidya_utterance_';
+
+/// Deletes capture files left in [dir] by a run that ended before it could
+/// clean up (the app was killed mid-request, or a build predating
+/// [Recording.takeBytes]). Best-effort; [keep] is the capture in progress.
+Future<void> sweepLeftoverUtterances(Directory dir, {String? keep}) async {
+  // Compared by file name: the listing and [keep] may spell the same
+  // directory differently (separators on Windows), and both live in [dir].
+  final keepName = keep == null ? null : File(keep).uri.pathSegments.last;
+  try {
+    await for (final entity in dir.list(followLinks: false)) {
+      if (entity is! File) continue;
+      final name = entity.uri.pathSegments.last;
+      if (name == keepName) continue;
+      if (name.startsWith(kUtterancePrefix) && name.endsWith('.wav')) {
+        try {
+          await entity.delete();
+        } catch (_) {
+          // A file another process holds is left for the next sweep.
+        }
+      }
+    }
+  } catch (_) {
+    // An unreadable cache directory must never stop the teacher speaking.
+  }
 }
 
 /// Captures the teacher's spoken request. The one seam tests override so no
@@ -95,7 +147,7 @@ abstract interface class AudioRecorderService {
 /// [normaliseAmplitudeDb] — onto a broadcast stream for the listening ring.
 class RecordAudioRecorderService implements AudioRecorderService {
   RecordAudioRecorderService([AudioRecorder? recorder])
-      : _recorder = recorder ?? AudioRecorder();
+    : _recorder = recorder ?? AudioRecorder();
 
   final AudioRecorder _recorder;
   final StreamController<double> _amplitude =
@@ -117,8 +169,11 @@ class RecordAudioRecorderService implements AudioRecorderService {
   Future<void> start() async {
     if (_isRecording) return;
     final dir = await getTemporaryDirectory();
+    // Old captures should already be gone (callers take bytes through
+    // [Recording.takeBytes]); this clears any a killed run left behind.
+    await sweepLeftoverUtterances(dir);
     final path =
-        '${dir.path}/vidya_utterance_${DateTime.now().millisecondsSinceEpoch}.wav';
+        '${dir.path}/$kUtterancePrefix${DateTime.now().millisecondsSinceEpoch}.wav';
     await _recorder.start(
       const RecordConfig(
         encoder: AudioEncoder.wav,
@@ -138,10 +193,10 @@ class RecordAudioRecorderService implements AudioRecorderService {
     _amplitudeSub = _recorder
         .onAmplitudeChanged(const Duration(milliseconds: 100))
         .listen((amp) {
-      if (!_amplitude.isClosed) {
-        _amplitude.add(normaliseAmplitudeDb(amp.current));
-      }
-    });
+          if (!_amplitude.isClosed) {
+            _amplitude.add(normaliseAmplitudeDb(amp.current));
+          }
+        });
   }
 
   @override

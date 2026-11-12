@@ -175,6 +175,27 @@ class ConversationBlock {
 
 const Object _unset = Object();
 
+/// What the mic level says about the capture in progress, shown in the sheet
+/// as a short line of words while listening (never a graph).
+enum VidyaMicHint {
+  none,
+
+  /// The input is clipping: the words get distorted before recognition.
+  tooLoud,
+
+  /// The input stays faint: recognition may miss words.
+  tooQuiet,
+}
+
+/// A 0..1 mic level at or above this is clipping (about −1 dBFS).
+const double kMicClipLevel = 0.97;
+
+/// Below this, a reading is room noise rather than a voice.
+const double kMicSoundLevel = 0.08;
+
+/// A capture whose loudest reading stays under this is "too quiet".
+const double kMicFaintLevel = 0.35;
+
 /// The single VIDYA store, mirroring the web `useJarvisStore` (SPEC §C.5). Held
 /// by a top-level Riverpod provider so it follows the teacher across every
 /// screen.
@@ -195,6 +216,9 @@ class VidyaState {
     this.pendingScreen,
     this.conversing = false,
     this.errorMessage,
+    this.micHint = VidyaMicHint.none,
+    this.heldNavigation,
+    this.heldScreen,
   });
 
   /// The current machine phase.
@@ -246,6 +270,19 @@ class VidyaState {
   /// User-safe copy for a terminal error phase.
   final String? errorMessage;
 
+  /// Too loud / too quiet, while [VidyaStatus.listening].
+  final VidyaMicHint micHint;
+
+  /// A tool VIDYA will open once the teacher confirms what she heard. Only a
+  /// SPOKEN request is held: "I heard … — Say it again / Looks right".
+  final VidyaDirective? heldNavigation;
+
+  /// A screen VIDYA will open once the teacher confirms (see [heldNavigation]).
+  final VidyaScreen? heldScreen;
+
+  /// VIDYA is waiting for "Looks right" before acting on a spoken request.
+  bool get awaitingConfirm => heldNavigation != null || heldScreen != null;
+
   bool get isBusy =>
       status == VidyaStatus.requestingPermission ||
       status == VidyaStatus.listening ||
@@ -270,6 +307,9 @@ class VidyaState {
     Object? pendingScreen = _unset,
     bool? conversing,
     Object? errorMessage = _unset,
+    VidyaMicHint? micHint,
+    Object? heldNavigation = _unset,
+    Object? heldScreen = _unset,
   }) {
     return VidyaState(
       status: status ?? this.status,
@@ -304,6 +344,13 @@ class VidyaState {
       errorMessage: identical(errorMessage, _unset)
           ? this.errorMessage
           : errorMessage as String?,
+      micHint: micHint ?? this.micHint,
+      heldNavigation: identical(heldNavigation, _unset)
+          ? this.heldNavigation
+          : heldNavigation as VidyaDirective?,
+      heldScreen: identical(heldScreen, _unset)
+          ? this.heldScreen
+          : heldScreen as VidyaScreen?,
     );
   }
 }
@@ -333,6 +380,15 @@ class VidyaController extends _$VidyaController {
   int _activeGen =
       0; // gen captured when listening started (for timer closures)
   bool _speechDetected = false;
+
+  /// Whether the turn being answered was spoken (held for "Looks right") or
+  /// typed (acted on at once).
+  bool _turnFromVoice = false;
+
+  /// Mic-hint bookkeeping for the capture in progress.
+  int _loudRun = 0;
+  double _peak = 0;
+  DateTime? _captureStart;
 
   /// This capture's levels against the room: when speech starts and stops.
   final SpeechActivity _speech = SpeechActivity();
@@ -578,6 +634,8 @@ class VidyaController extends _$VidyaController {
     _teardownCapture();
     await _recorder.cancel();
     await _player.stop();
+    _turnFromVoice = false;
+    _set(heldNavigation: null, heldScreen: null);
     await _converse(text, '', gen);
   }
 
@@ -755,7 +813,16 @@ class VidyaController extends _$VidyaController {
       await _recorder.cancel();
       return;
     }
-    _set(status: VidyaStatus.listening, amplitude: 0);
+    _loudRun = 0;
+    _peak = 0;
+    _captureStart = DateTime.now();
+    _set(
+      status: VidyaStatus.listening,
+      amplitude: 0,
+      micHint: VidyaMicHint.none,
+      heldNavigation: null,
+      heldScreen: null,
+    );
     _amplitudeSub = _recorder.amplitude.listen(_onAmplitude);
     if (state.conversing) {
       _playbackSub = _player.playback.listen((p) {
@@ -788,6 +855,7 @@ class VidyaController extends _$VidyaController {
     if (_stale(_activeGen)) return;
     if (state.status != VidyaStatus.listening) return;
     _set(amplitude: level);
+    _updateMicHint(level);
     if (_speech.add(level)) {
       if (!_speechDetected) {
         debugPrint(
@@ -804,6 +872,52 @@ class VidyaController extends _$VidyaController {
         }
       });
     }
+  }
+
+  /// Too loud: three readings in a row at the top of the scale (clipping).
+  /// Too quiet: after 1.5 s of sound the loudest reading is still faint. A
+  /// later strong reading clears "too quiet"; "too loud" stays for the take,
+  /// because the words already captured are the distorted ones.
+  void _updateMicHint(double level) {
+    if (level > _peak) _peak = level;
+    _loudRun = level >= kMicClipLevel ? _loudRun + 1 : 0;
+    final hint = state.micHint;
+    if (_loudRun >= 3 && hint != VidyaMicHint.tooLoud) {
+      _set(micHint: VidyaMicHint.tooLoud);
+      return;
+    }
+    if (hint == VidyaMicHint.tooLoud) return;
+    final started = _captureStart;
+    final long =
+        started != null &&
+        DateTime.now().difference(started) >=
+            const Duration(milliseconds: 1500);
+    if (hint == VidyaMicHint.none &&
+        long &&
+        _peak > kMicSoundLevel &&
+        _peak < kMicFaintLevel) {
+      _set(micHint: VidyaMicHint.tooQuiet);
+    } else if (hint == VidyaMicHint.tooQuiet && level >= kMicFaintLevel) {
+      _set(micHint: VidyaMicHint.none);
+    }
+  }
+
+  /// The teacher confirmed what VIDYA heard: carry out the held action.
+  void confirmHeard() {
+    final nav = state.heldNavigation;
+    final screen = state.heldScreen;
+    if (nav == null && screen == null) return;
+    if (nav != null) {
+      _set(heldNavigation: null, heldScreen: null, pendingNavigation: nav);
+    } else {
+      _set(heldNavigation: null, heldScreen: null, pendingScreen: screen);
+    }
+  }
+
+  /// Not what she meant: drop the held action and listen again.
+  Future<void> retryHeard() async {
+    _set(heldNavigation: null, heldScreen: null);
+    await onMicTap();
   }
 
   /// Nothing was said (initial silence elapsed): drop the capture and say so
@@ -837,12 +951,14 @@ class VidyaController extends _$VidyaController {
     if (_stale(gen)) return;
     // Silence / mis-tap reject before paying for STT.
     if (recording == null || recording.byteLength < kMinAudioBytes) {
+      unawaited(recording?.discard());
       _onNothingHeard(gen);
       return;
     }
 
     try {
-      final bytes = await recording.readBytes();
+      // Read for upload, then delete: the voice never stays on the device.
+      final bytes = await recording.takeBytes();
       if (_stale(gen)) return;
       final uiLang = _uiLanguage();
       final transcript = await _stt.transcribe(
@@ -855,6 +971,7 @@ class VidyaController extends _$VidyaController {
         _onNothingHeard(gen);
         return;
       }
+      _turnFromVoice = true;
       await _converse(transcript.text, transcript.language, gen);
     } on ApiException catch (e) {
       if (_stale(gen)) return;
@@ -875,7 +992,7 @@ class VidyaController extends _$VidyaController {
     _quietTurns = 0; // words were heard
     if (_endIfStopPhrase(message)) return;
     if (_openScreenIfAsked(message)) {
-      unawaited(_continueConversation(gen));
+      if (!state.awaitingConfirm) unawaited(_continueConversation(gen));
       return;
     }
     // Ink the teacher's words immediately, then think.
@@ -1013,10 +1130,17 @@ class VidyaController extends _$VidyaController {
 
     // 0 actions → speak only · 1 action → auto-navigate · 2–3 → confirm chips.
     final single = turn.directives.length == 1 ? turn.directives.single : null;
-    _set(status: VidyaStatus.idle, pendingNavigation: single);
+    // A spoken request waits for "Looks right"; a typed one routes at once.
+    final hold = single != null && _turnFromVoice;
+    _set(
+      status: VidyaStatus.idle,
+      pendingNavigation: hold ? null : single,
+      heldNavigation: hold ? single : null,
+      conversing: hold ? false : null,
+    );
 
     _persistTurn(message, turn.response, single);
-    unawaited(_continueConversation(gen));
+    if (!hold) unawaited(_continueConversation(gen));
   }
 
   /// "Stop" / "बस" / "that's all" (see [isVidyaStopPhrase]): inks the words and
@@ -1079,7 +1203,9 @@ class VidyaController extends _$VidyaController {
         ),
       ],
       chatHistory: _appendHistory(message, reply),
-      pendingScreen: screen,
+      pendingScreen: _turnFromVoice ? null : screen,
+      heldScreen: _turnFromVoice ? screen : null,
+      conversing: _turnFromVoice ? false : null,
     );
     return true;
   }
@@ -1451,6 +1577,9 @@ class VidyaController extends _$VidyaController {
     Object? pendingScreen = _unset,
     bool? conversing,
     Object? errorMessage = _unset,
+    VidyaMicHint? micHint,
+    Object? heldNavigation = _unset,
+    Object? heldScreen = _unset,
   }) {
     // A dead end (signed out, limit, failure, mic off) ends a conversation:
     // listening again could only fail the same way.
@@ -1475,6 +1604,9 @@ class VidyaController extends _$VidyaController {
       pendingScreen: pendingScreen,
       conversing: terminal ? false : conversing,
       errorMessage: errorMessage,
+      micHint: micHint,
+      heldNavigation: heldNavigation,
+      heldScreen: heldScreen,
     );
   }
 }
