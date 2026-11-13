@@ -7,6 +7,9 @@ import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/exam_paper/domain/exam_paper.dart';
 import 'package:sahayakai/features/exam_paper/presentation/exam_paper_controller.dart';
 import 'package:sahayakai/features/exam_paper/presentation/exam_paper_screen.dart';
+import 'package:sahayakai/features/profile/domain/profile_settings.dart';
+import 'package:sahayakai/features/profile/domain/teacher_profile.dart';
+import 'package:sahayakai/features/profile/presentation/profile_controller.dart';
 import 'package:sahayakai/shared/domain/tool_prefill.dart';
 import 'package:sahayakai/shared/voice/audio_player_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,16 +18,14 @@ import '../../support/fake_api_client.dart';
 import '../../support/fake_voice.dart';
 import 'exam_paper_fixtures.dart';
 
-/// The Exam Paper Generator's voice wiring (VOICE_FIRST_GAP §4 + §5.6). Unlike
-/// the eight fully voice-driven tools, the paper's blocking required field is
-/// the BOARD, and the classifier's params carry no board — so a voice directive:
-///   * SEEDS the grade/subject/chapter/language, then
-///   * WAITS on the pre-filled form for the teacher to pick the board — the
-///     RUN-verb auto-run guard deliberately never fires without a board (there
-///     is no honest "speak → result" for this tool), and
-///   * once the teacher picks the board and taps Generate, the voice-path spoken
-///     summary auto-speaks once, closing the loop.
-/// A manual (tile) open seeds nothing extra and never auto-speaks.
+/// The Exam Paper Generator's voice wiring (VOICE_FIRST_GAP §4 + §5.6). The
+/// classifier's params carry no board, so a voice directive:
+///   * SEEDS the grade/subject/chapter/language and the board (the teacher's
+///     own from her profile, else CBSE), then
+///   * GENERATES by itself, like every other tool: speak → result, no tap
+///     (class gate, 2026-11-13: it used to wait on the form for the board), and
+///   * auto-speaks the short summary once when the paper lands.
+/// A manual (tile) open seeds nothing extra, waits for Generate, never speaks.
 
 const String _b64 = 'ZmFrZS1tcDM=';
 
@@ -46,6 +47,14 @@ class _AutoExam extends ExamPaperController {
     await Future<void>.delayed(Duration.zero);
     state = AsyncData<ExamPaperResult?>(buildReady());
   }
+}
+
+/// A teacher whose profile names her board.
+class _KarnatakaTeacher extends ProfileController {
+  @override
+  Future<TeacherProfile> build() async => const TeacherProfile(
+    settings: ProfileSettings(educationBoard: 'Karnataka State Board (KSEEB)'),
+  );
 }
 
 Widget _host(Widget screen, List<Override> overrides) => ProviderScope(
@@ -85,9 +94,9 @@ void main() {
 
   final boardField = find.byType(DropdownButtonFormField<String?>).at(0);
 
-  group('P0 — the RUN verb seeds the form but waits for the board', () {
-    testWidgets('autoSubmit + grade/subject/chapter seeds the form but does NOT '
-        'auto-run (no board)', (tester) async {
+  group('P0 — a spoken request generates by itself', () {
+    testWidgets('autoSubmit + grade/subject/chapter generates at once, on CBSE '
+        'when the profile names no board', (tester) async {
       _tallPhone(tester);
       final log = <ExamPaperRequest>[];
 
@@ -113,13 +122,55 @@ void main() {
         find.widgetWithText(InputChip, 'Quadratic equations'),
         findsOneWidget,
       );
-      // But with no board, the voice path must NOT auto-fire an invalid submit —
-      // it lands on the form and waits for the teacher to pick the board.
+      // Speak → result: no tap for the board voice never carries.
       expect(
         log,
-        isEmpty,
-        reason: 'a board-less exam directive must wait, not generate',
+        hasLength(1),
+        reason: 'a spoken exam request must generate without a tap',
       );
+      expect(log.single.board, 'CBSE');
+      expect(log.single.gradeLevel, 'Class 10');
+      expect(log.single.subject, 'Mathematics');
+    });
+
+    testWidgets('the board on the teacher profile wins over the CBSE default', (
+      tester,
+    ) async {
+      _tallPhone(tester);
+      final log = <ExamPaperRequest>[];
+      final container = ProviderContainer(
+        overrides: [
+          profileControllerProvider.overrideWith(_KarnatakaTeacher.new),
+          examPaperControllerProvider.overrideWith(() => _RecordingExam(log)),
+        ],
+      );
+      addTearDown(container.dispose);
+      // The home screen has loaded the profile by the time VIDYA opens a tool.
+      await container.read(profileControllerProvider.future);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const ExamPaperScreen(
+              prefill: ToolPrefill(
+                topic: 'Quadratic equations',
+                gradeLevel: 'Class 10',
+                subject: 'Mathematics',
+                autoSubmit: true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(log, hasLength(1));
+      expect(log.single.board, 'Karnataka State Board (KSEEB)');
     });
 
     testWidgets('autoSubmit + no usable fields does NOT auto-run', (
@@ -162,16 +213,16 @@ void main() {
   });
 
   group('P1 — the voice-path spoken summary', () {
-    testWidgets('a voice open auto-speaks once when the paper lands '
-        '(after the board + Generate)', (tester) async {
+    testWidgets('a voice open generates and auto-speaks once when the paper '
+        'lands', (tester) async {
       _tallPhone(tester);
       final client = FakeApiClient(postResponse: {'audioContent': _b64});
       final player = FakeAudioPlayerService();
 
       await tester.pumpWidget(
         _host(
-          // CBSE Class 10 Mathematics is blueprinted, so no chapters are needed;
-          // only the board is missing after the voice seed.
+          // CBSE (the default board) Class 10 Mathematics is blueprinted, so
+          // no chapters are needed: the voice seed is enough to generate.
           const ExamPaperScreen(
             prefill: ToolPrefill(
               gradeLevel: 'Class 10',
@@ -188,15 +239,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Nothing auto-ran yet (no board), so nothing has spoken.
-      expect(player.played, isEmpty);
-
-      // Pick the one thing voice could not: the board, then Generate.
-      await _selectDropdown(tester, boardField, 'CBSE');
-      await tester.tap(find.text('Generate'));
-      await tester.pumpAndSettle();
-
-      // Exactly one utterance — the short summary — was synthesised and played.
+      // It generated by itself (no board pick, no Generate tap). Exactly one
+      // utterance — the short summary — was synthesised and played.
       expect(player.played, [_b64]);
       final tts = _ttsPosts(client);
       expect(tts, hasLength(1));

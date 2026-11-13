@@ -195,9 +195,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     }
   }
 
-  /// Abandon the running generation and return to the form.
-  void _stop() => ref.read(lessonPlanControllerProvider.notifier).clear();
-
   /// The plan on the Output screen as the deliver tray takes it. Keyed by the
   /// plan instance, so a regeneration is a new deliverable.
   Deliverable? _deliverableFor(LessonPlan? plan, AppLocalizations l10n) {
@@ -281,7 +278,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             ),
           );
 
-    return ToolScaffold(
+    final scaffold = ToolScaffold(
       wash: AppGradients.washComposer,
       title: l10n.lessonComposerTitle,
       subtitle: l10n.lessonComposerSubtitle,
@@ -295,10 +292,11 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       // Hide the sticky Generate button once a plan is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
-      // While generating, the busy button becomes "Minimise to orb / Stop"
-      // (v3 06) so the teacher can leave and let VIDYA finish.
-      onMinimise: _minimise,
-      onStop: _stop,
+      // No "working" panel (onMinimise/onStop) while the plan is written: it
+      // dimmed the page and every request had to be minimised by hand
+      // (founder report, 2026-11-13). The page shows its own loading state,
+      // like the other tools; going back hands the work to VIDYA (PopScope
+      // below).
       result: KeyedSubtree(
         key: _resultKey,
         child: AnimatedSwitcher(
@@ -361,6 +359,19 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
         ),
         index: 0,
       ),
+    );
+
+    // Going back while the plan is still being written hands it to VIDYA to
+    // finish in the background (what "Minimise to orb" did), so leaving never
+    // throws the work away.
+    return PopScope(
+      canPop: !state.isLoading,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && ref.read(lessonPlanControllerProvider).isLoading) {
+          _minimise();
+        }
+      },
+      child: scaffold,
     );
   }
 

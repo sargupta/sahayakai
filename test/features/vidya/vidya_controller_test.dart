@@ -184,39 +184,41 @@ void main() {
       expect(recorder.stopCount, 1);
     });
 
-    test(
-      'a spoken single action waits for "Looks right", then navigates',
-      () async {
-        final container = _container(client: _happyClient());
-        final vidya = container.read(vidyaControllerProvider.notifier);
+    // Class gate (founder report, 2026-11-13): "whenever I say something it
+    // makes me press a button to confirm… it repeats some answer, really long,
+    // then takes me to what I asked". A spoken tool request opens the tool at
+    // once, with no confirm step, and VIDYA says only "Opening <tool>" — never
+    // the whole model reply — before the tool runs.
+    test('a spoken single action opens the tool at once and says only '
+        '"Opening <tool>"', () async {
+      final client = _happyClient();
+      final container = _container(client: client);
+      final vidya = container.read(vidyaControllerProvider.notifier);
 
-        await vidya.onMicTap();
-        await vidya.onMicTap();
+      await vidya.onMicTap();
+      await vidya.onMicTap();
 
-        // Held: nothing routes until the teacher confirms what was heard.
-        final held = container.read(vidyaControllerProvider);
-        expect(held.pendingNavigation, isNull);
-        expect(held.awaitingConfirm, isTrue);
-        expect(held.heldNavigation?.flow, VidyaFlow.lessonPlan);
-        expect(held.conversing, isFalse);
+      final state = container.read(vidyaControllerProvider);
+      // No confirm step: nothing is held, the tool is already on its way.
+      expect(state.awaitingConfirm, isFalse);
+      expect(state.heldNavigation, isNull);
+      expect(state.conversing, isFalse, reason: 'no mic over the tool');
+      // Only the short line is spoken, not the model's reply.
+      final spoken = client.posts
+          .where((p) => p.path == '/api/tts')
+          .map((p) => (p.data! as Map)['text'] as String)
+          .toList();
+      expect(spoken, ['Opening Lesson Plan']);
+      expect(state.pendingNavigation, isNotNull);
+      expect(state.pendingNavigation!.flow, VidyaFlow.lessonPlan);
+      expect(state.pendingNavigation!.params.topic, 'Fractions');
+      // A single action auto-navigates; the reply block carries no confirm chip.
+      expect(state.conversation.last.directives, isEmpty);
 
-        vidya.confirmHeard();
-        final state = container.read(vidyaControllerProvider);
-        expect(state.awaitingConfirm, isFalse);
-        expect(state.pendingNavigation, isNotNull);
-        expect(state.pendingNavigation!.flow, VidyaFlow.lessonPlan);
-        expect(state.pendingNavigation!.params.topic, 'Fractions');
-        // A single action auto-navigates; the reply block carries no confirm chip.
-        expect(state.conversation.last.directives, isEmpty);
-
-        // The home consumes it and clears it.
-        vidya.consumeNavigation();
-        expect(
-          container.read(vidyaControllerProvider).pendingNavigation,
-          isNull,
-        );
-      },
-    );
+      // The home consumes it and clears it.
+      vidya.consumeNavigation();
+      expect(container.read(vidyaControllerProvider).pendingNavigation, isNull);
+    });
 
     test(
       'sends uiLanguage and learns grade/subject but NEVER the language',
@@ -695,7 +697,7 @@ void main() {
     );
 
     test(
-      'a spoken request opens the screen too, after "Looks right"',
+      'a spoken request opens the screen at once, with no confirm',
       () async {
         final container = _container(
           client: FakeApiClient(
@@ -707,36 +709,13 @@ void main() {
         await vidya.onMicTap();
         await vidya.onMicTap();
 
-        final held = container.read(vidyaControllerProvider);
-        expect(held.pendingScreen, isNull);
-        expect(held.heldScreen, VidyaScreen.profile);
-
-        vidya.confirmHeard();
-        expect(
-          container.read(vidyaControllerProvider).pendingScreen,
-          VidyaScreen.profile,
-        );
+        final state = container.read(vidyaControllerProvider);
+        expect(state.pendingScreen, VidyaScreen.profile);
+        expect(state.heldScreen, isNull);
+        expect(state.awaitingConfirm, isFalse);
+        expect(state.conversing, isFalse);
       },
     );
-
-    test('"Say it again" drops the held screen and listens afresh', () async {
-      final container = _container(
-        client: FakeApiClient(
-          multipartResponse: {'text': 'प्रोफ़ाइल खोलो', 'language': 'hi'},
-        ),
-      );
-      final vidya = container.read(vidyaControllerProvider.notifier);
-
-      await vidya.onMicTap();
-      await vidya.onMicTap();
-      expect(container.read(vidyaControllerProvider).awaitingConfirm, isTrue);
-
-      await vidya.retryHeard();
-      final state = container.read(vidyaControllerProvider);
-      expect(state.awaitingConfirm, isFalse);
-      expect(state.pendingScreen, isNull);
-      expect(state.status, VidyaStatus.listening);
-    });
 
     test('a tool request still goes to the classifier', () async {
       final client = _happyClient();
@@ -961,6 +940,40 @@ void main() {
         await vidya.onMicTap(); // nothing usable heard (2)
         expect(read().status, VidyaStatus.notHeard);
         expect(read().conversing, isFalse);
+      },
+    );
+
+    // Class gate (2026-11-13, on the emulator): with Keep listening on, a
+    // typed exam-paper request opened the tool and the mic reopened over it;
+    // 30 s of room talk went in as the next request. With no confirm step,
+    // that could open and run another tool. Opening a tool ends the
+    // conversation, whatever started it.
+    test(
+      'opening a tool ends the conversation: the mic stays shut over it',
+      () async {
+        final container = _container(
+          client: _happyClient(),
+          keepListening: true,
+        );
+        final vidya = container.read(vidyaControllerProvider.notifier);
+
+        await vidya.onMicTap(); // a conversation is going
+        expect(container.read(vidyaControllerProvider).conversing, isTrue);
+        await vidya.endConversation();
+
+        // Mid-conversation the teacher types a tool request instead.
+        await vidya.onMicTap();
+        await vidya.sendText('make a lesson plan on fractions');
+        await Future<void>.delayed(kConversationEchoGap * 2);
+
+        final state = container.read(vidyaControllerProvider);
+        expect(state.pendingNavigation?.flow, VidyaFlow.lessonPlan);
+        expect(state.conversing, isFalse);
+        expect(
+          state.status,
+          VidyaStatus.idle,
+          reason: 'the mic must not reopen',
+        );
       },
     );
 

@@ -29,6 +29,7 @@ import '../data/voice_to_text_repository.dart';
 import '../domain/vidya_screen_intent.dart';
 import '../domain/vidya_stop_phrase.dart';
 import 'vidya_status_ui.dart';
+import 'widgets/conversation_block.dart' show vidyaFlowLabel;
 
 // The language→BCP-47 helpers now live in shared voice infra (so the
 // read-aloud path resolves the same way); re-exported here for this feature's
@@ -831,6 +832,12 @@ class VidyaController extends _$VidyaController {
     }
     _hardCapTimer = Timer(kMaxCapture, () {
       if (!_stale(gen) && state.status == VidyaStatus.listening) {
+        // Normally the trailing silence ends a capture; reaching the cap means
+        // the room never fell below the onset (see SpeechActivity).
+        debugPrint(
+          '[Vidya] hard cap reached (room ${_speech.room.toStringAsFixed(2)}, '
+          'onset ${_speech.onset.toStringAsFixed(2)})',
+        );
         _stopAndProcess(gen);
       }
     });
@@ -1066,81 +1073,92 @@ class VidyaController extends _$VidyaController {
     );
     _learnProfile(turn.directives);
 
-    // Speak the reply. A TTS failure must not break the turn — the text is
-    // already inked — so it is swallowed, EXCEPT for the plan-gate 403 where
-    // we fall back to OS-level TTS so the free-plan teacher still hears VIDYA.
-    if (turn.response.isNotEmpty) {
-      _set(status: VidyaStatus.speaking);
-      try {
-        // Timebox cloud TTS so a slow synthesis falls back to local speech
-        // instead of leaving the teacher waiting for the audio.
-        final tts = await _tts
-            .synthesize(text: turn.response, targetLang: vidyaTtsBcp47(uiLang))
-            .timeout(const Duration(seconds: 4));
-        if (_stale(gen)) return;
-        if (tts.hasAudio) {
-          final session = await _player.playBase64Mp3(tts.audioContent);
-          // The player returns once playback STARTS. In a conversation the
-          // mic reopens next, so wait for the reply to finish first.
-          if (session != null && state.conversing) {
-            await _awaitPlaybackEnd(session, turn.response);
-          }
-        } else {
-          throw Exception('No audio');
-        }
-      } on ApiException catch (e) {
-        // Plan-gate 403 → OS TTS fallback (strictly additive, demo-safe).
-        if (e.errorCode == 'PLAN_UPGRADE_REQUIRED') {
-          if (_stale(gen)) return;
-          try {
-            await ref
-                .read(osTtsServiceProvider)
-                .initialize(vidyaTtsBcp47(uiLang));
-            await ref.read(osTtsServiceProvider).speak(turn.response);
-          } catch (_) {
-            // OS TTS also failed (language unavailable, engine missing) —
-            // swallow; the text is already inked and the upgrade panel shows.
-          }
-        }
-        // Other TTS errors (rate limit, quota, 500) → swallow, text is inked.
-      } on TimeoutException catch (_) {
-        if (_stale(gen)) return;
-        try {
-          await ref
-              .read(osTtsServiceProvider)
-              .initialize(vidyaTtsBcp47(uiLang));
-          await ref.read(osTtsServiceProvider).speak(turn.response);
-        } catch (_) {
-          // Local TTS also failed — swallow; the text is already inked.
-        }
-      } catch (_) {
-        // Cloud TTS returned no usable audio — try local speech.
-        if (_stale(gen)) return;
-        try {
-          await ref
-              .read(osTtsServiceProvider)
-              .initialize(vidyaTtsBcp47(uiLang));
-          await ref.read(osTtsServiceProvider).speak(turn.response);
-        } catch (_) {
-          // Local TTS also failed — swallow; the text is already inked.
-        }
-      }
+    // 0 actions → speak the reply · 1 action → open the tool now · 2–3 → chips.
+    final single = turn.directives.length == 1 ? turn.directives.single : null;
+    if (single != null) {
+      // The teacher asked for a tool, so the tool is the answer: open it at
+      // once (it generates by itself, see VidyaNavDispatcher.prefillFor) and
+      // say only "Opening Lesson Plan". Before (2026-11-13) a spoken request
+      // had the whole reply read aloud (~20 s), then waited for a "Looks
+      // right" tap: the teacher waited and tapped for what she had asked for.
+      // Opening a tool ends the conversation, spoken or typed: with the mic
+      // left open over a running tool, voices in the room went in as the next
+      // request (seen 2026-11-13), and with no confirm step that could open
+      // and run a second tool. The teacher taps the orb to talk again.
+      _set(
+        status: VidyaStatus.idle,
+        pendingNavigation: single,
+        conversing: false,
+      );
+      _persistTurn(message, turn.response, single);
+      final ui = _localizations(uiLang);
+      await _speak(
+        ui.vidyaOpeningScreen(vidyaFlowLabel(single.flow, ui)),
+        uiLang,
+        gen,
+      );
       if (_stale(gen)) return;
+      if (state.status == VidyaStatus.speaking) {
+        _set(status: VidyaStatus.idle);
+      }
+      return;
     }
 
-    // 0 actions → speak only · 1 action → auto-navigate · 2–3 → confirm chips.
-    final single = turn.directives.length == 1 ? turn.directives.single : null;
-    // A spoken request waits for "Looks right"; a typed one routes at once.
-    final hold = single != null && _turnFromVoice;
-    _set(
-      status: VidyaStatus.idle,
-      pendingNavigation: hold ? null : single,
-      heldNavigation: hold ? single : null,
-      conversing: hold ? false : null,
-    );
+    await _speak(turn.response, uiLang, gen);
+    if (_stale(gen)) return;
+    _set(status: VidyaStatus.idle);
 
-    _persistTurn(message, turn.response, single);
-    if (!hold) unawaited(_continueConversation(gen));
+    _persistTurn(message, turn.response, null);
+    unawaited(_continueConversation(gen));
+  }
+
+  /// Speaks [text]. A TTS failure must not break the turn — the text is
+  /// already inked — so it is swallowed, EXCEPT for the plan-gate 403 where
+  /// we fall back to OS-level TTS so the free-plan teacher still hears VIDYA.
+  Future<void> _speak(String text, String uiLang, int gen) async {
+    if (text.isEmpty) return;
+    _set(status: VidyaStatus.speaking);
+    try {
+      // Timebox cloud TTS so a slow synthesis falls back to local speech
+      // instead of leaving the teacher waiting for the audio.
+      final tts = await _tts
+          .synthesize(text: text, targetLang: vidyaTtsBcp47(uiLang))
+          .timeout(const Duration(seconds: 4));
+      if (_stale(gen)) return;
+      if (tts.hasAudio) {
+        final session = await _player.playBase64Mp3(tts.audioContent);
+        // The player returns once playback STARTS. In a conversation the
+        // mic reopens next, so wait for the reply to finish first.
+        if (session != null && state.conversing) {
+          await _awaitPlaybackEnd(session, text);
+        }
+      } else {
+        throw Exception('No audio');
+      }
+    } on ApiException catch (e) {
+      // Plan-gate 403 → OS TTS fallback (strictly additive, demo-safe).
+      if (e.errorCode == 'PLAN_UPGRADE_REQUIRED') {
+        if (_stale(gen)) return;
+        await _speakOnDevice(text, uiLang);
+      }
+      // Other TTS errors (rate limit, quota, 500) → swallow, text is inked.
+    } on TimeoutException catch (_) {
+      if (_stale(gen)) return;
+      await _speakOnDevice(text, uiLang);
+    } catch (_) {
+      // Cloud TTS returned no usable audio — try local speech.
+      if (_stale(gen)) return;
+      await _speakOnDevice(text, uiLang);
+    }
+  }
+
+  /// The phone's own voice. A failure here (language unavailable, engine
+  /// missing) is swallowed: the text is already inked.
+  Future<void> _speakOnDevice(String text, String uiLang) async {
+    try {
+      await ref.read(osTtsServiceProvider).initialize(vidyaTtsBcp47(uiLang));
+      await ref.read(osTtsServiceProvider).speak(text);
+    } catch (_) {}
   }
 
   /// "Stop" / "बस" / "that's all" (see [isVidyaStopPhrase]): inks the words and
@@ -1203,8 +1221,8 @@ class VidyaController extends _$VidyaController {
         ),
       ],
       chatHistory: _appendHistory(message, reply),
-      pendingScreen: _turnFromVoice ? null : screen,
-      heldScreen: _turnFromVoice ? screen : null,
+      // Opens at once, spoken or typed: no "Looks right" (see _converse).
+      pendingScreen: screen,
       conversing: _turnFromVoice ? false : null,
     );
     return true;

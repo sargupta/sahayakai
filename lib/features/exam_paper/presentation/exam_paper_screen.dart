@@ -18,6 +18,7 @@ import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../../notifications/data/notifications_store.dart';
 import '../../notifications/domain/teacher_notification.dart';
+import '../../profile/presentation/profile_controller.dart';
 import '../../vidya/domain/deliverable.dart';
 import '../domain/exam_paper.dart';
 import 'exam_paper_controller.dart';
@@ -89,13 +90,9 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     _applyPrefill(widget.prefill);
     // The voice path's RUN verb (VOICE_FIRST_GAP §4): a directive that arrives
     // with autoSubmit fires generation itself once every required field is
-    // present. The paper's blocking required field is the board, which the
-    // classifier's params never carry — so this guard holds and the form waits
-    // for the teacher to pick the board rather than flashing a "choose a board"
-    // error on open. Grade/subject/chapter are already seeded, so all that is
-    // left is the one tap the voice path cannot do for them. (The guard is kept
-    // parallel to the eight fully voice-driven tools so it "just works" the day
-    // a prefill can carry a board.)
+    // present. The classifier's params never carry a board, so _applyPrefill
+    // seeds it from the teacher's profile; the form still waits when the grade
+    // or subject is missing rather than flashing a validation error on open.
     if (widget.prefill?.autoSubmit == true && _readyToSubmit) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _submit();
@@ -113,6 +110,11 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   /// the pre-filled form.
   void _applyPrefill(ToolPrefill? p) {
     if (p == null) return;
+    // VIDYA never carries a board, so a spoken "make an exam paper" stopped
+    // on this form for one more tap (2026-11-13). The teacher's own board
+    // fills it, or CBSE when her profile has none; she can still change it
+    // and generate again.
+    if (p.autoSubmit) _board ??= _profileBoardOrDefault();
     if (p.gradeLevel != null && kGradeLevels.contains(p.gradeLevel)) {
       _grade = p.gradeLevel;
     }
@@ -129,6 +131,22 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     if (topic != null && topic.isNotEmpty) _chapters.add(topic);
     final locale = prefillLocale(p.language);
     if (locale != null) _language = locale;
+  }
+
+  /// The board on the teacher's profile when the picker offers it, else CBSE.
+  /// Read only when the profile is already loaded (the home screen loads it):
+  /// this screen must not start a profile fetch of its own.
+  String _profileBoardOrDefault() {
+    final board = ref.exists(profileControllerProvider)
+        ? ref
+              .read(profileControllerProvider)
+              .valueOrNull
+              ?.settings
+              .educationBoard
+        : null;
+    return board != null && kEducationBoards.contains(board)
+        ? board
+        : kEducationBoards.first;
   }
 
   /// Whether the required fields the validators guard are all present, so a

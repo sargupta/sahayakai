@@ -45,9 +45,53 @@ class _CapturingLessonController extends LessonPlanController {
   }
 }
 
+/// A controller that starts generating and never finishes, to look at the
+/// screen mid-generation.
+class _StillWritingController extends LessonPlanController {
+  bool started = false;
+
+  @override
+  Future<void> generate(LessonPlanRequest request) async {
+    started = true;
+    state = const AsyncLoading<LessonPlan?>();
+  }
+}
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
+  // Class gate (founder report, 2026-11-13): "if I ask it to make something
+  // the blue orb comes up and I have to minimise it manually every time". A
+  // request VIDYA opens generates by itself, and nothing covers the page that
+  // the teacher has to dismiss while it works.
+  testWidgets('a spoken request generates with no working panel to dismiss', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(420, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final controller = _StillWritingController();
+
+    await tester.pumpWidget(
+      _host(
+        prefill: const ToolPrefill(
+          topic: 'Water cycle',
+          gradeLevel: 'Class 7',
+          autoSubmit: true,
+        ),
+        overrides: [
+          lessonPlanControllerProvider.overrideWith(() => controller),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controller.started, isTrue, reason: 'it must generate by itself');
+    expect(find.text('Minimise to orb'), findsNothing);
+    expect(find.text('Working on it'), findsNothing);
   });
 
   testWidgets('a VIDYA prefill seeds topic, grade, subject and language', (
