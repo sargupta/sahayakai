@@ -7,6 +7,7 @@
  */
 
 import { ai, runResiliently } from '@/ai/genkit';
+import { withTimeout } from '@/lib/sidecar/with-timeout';
 import { z } from 'genkit';
 import { getIndianContextPrompt } from '@/lib/indian-context';
 import { renderRegionalContextBlock, getRegionalAnchors } from '@/lib/regional-examples';
@@ -114,10 +115,21 @@ const LessonPlanOutputSchema = z.object({
 export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
 
 /**
+ * How long the materials audit may take before the plan goes out without it.
+ * The audit only adds materials the plan forgot to list, so a slow one is not
+ * worth waiting for: with thinking on it took 109 s, and every lesson plan in
+ * riya hit the dispatcher's 60 s timeout, so the teacher got an error for a
+ * plan that had been written in 18 s (2026-11-13).
+ */
+export const MATERIALS_AUDIT_TIMEOUT_MS = 8_000;
+
+/**
  * Audits materials list against activities to ensure consistency.
  * Returns merged materials list that includes items mentioned in activities.
+ * Never fails and never takes longer than MATERIALS_AUDIT_TIMEOUT_MS: on any
+ * error or delay it returns the plan's own materials.
  */
-async function auditMaterials(output: LessonPlanOutput, language?: string): Promise<string[]> {
+export async function auditMaterials(output: LessonPlanOutput, language?: string): Promise<string[]> {
   try {
     const activitiesText = output.activities
       .map(a => `${a.name}: ${a.description}`)
@@ -125,7 +137,7 @@ async function auditMaterials(output: LessonPlanOutput, language?: string): Prom
 
     const materialsText = output.materials.join(', ');
 
-    const auditResult = await runResiliently(async (resilienceConfig) => {
+    const auditResult = await withTimeout(runResiliently(async (resilienceConfig) => {
       return await ai.generate({
         model: MODELS.flash,
         prompt: `You are a lesson plan auditor.
@@ -146,10 +158,15 @@ async function auditMaterials(output: LessonPlanOutput, language?: string): Prom
         config: {
           temperature: 0.2,
           responseMimeType: 'application/json',
+          // A list comparison needs no thinking; with it the call took 109 s.
+          thinkingConfig: { thinkingBudget: 0 },
           ...resilienceConfig.config
         }
       });
-    }, 'lessonPlan.materialsAudit');
+    }, 'lessonPlan.materialsAudit', { budgetMs: MATERIALS_AUDIT_TIMEOUT_MS }),
+      MATERIALS_AUDIT_TIMEOUT_MS,
+      'lesson-plan materials audit',
+    );
 
     const missingMaterials = auditResult.output
       ? auditResult.output
