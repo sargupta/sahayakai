@@ -101,10 +101,14 @@ void main() {
     },
   );
 
-  // Dark: unchanged (pre-existing failure, tracked separately).
+  // Dark: the app ships light-only (there is no AppTheme.dark), so this
+  // compared the LIGHT theme's label with the dark backdrop and could never
+  // pass. Skipped, not deleted: switch it back on with the real dark theme if
+  // dark mode returns (colour-scheme option D, on hold 2026-11).
   for (final brightness in [Brightness.dark]) {
     testWidgets(
       'AppSegmented unselected label clears AA on the track fill (${brightness.name})',
+      skip: true,
       (tester) async {
         // Build the theme INSIDE the test body — constructing it at collection
         // time (a top-level literal) would build a theme before the binding inits.

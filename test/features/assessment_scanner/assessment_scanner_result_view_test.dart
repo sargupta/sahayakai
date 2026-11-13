@@ -121,42 +121,51 @@ void main() {
 
   group('WCAG AA — computed against the actual rendered fills', () {
     for (final brightness in Brightness.values) {
-      test('marks badge + outcome chips clear 4.5:1 in ${brightness.name}', () {
-        final scheme =
-            (brightness == Brightness.dark ? AppTheme.light() : AppTheme.light())
-                .colorScheme;
-        final isDark = brightness == Brightness.dark;
+      test(
+        'marks badge + outcome chips clear 4.5:1 in ${brightness.name}',
+        // The app ships light-only (no AppTheme.dark): the dark case paired
+        // dark tokens with the LIGHT scheme and could never pass. Re-enable
+        // with the real dark theme if dark mode returns (option D, on hold).
+        skip: brightness == Brightness.dark ? 'App is light-only' : null,
+        () {
+          final scheme =
+              (brightness == Brightness.dark
+                      ? AppTheme.light()
+                      : AppTheme.light())
+                  .colorScheme;
+          final isDark = brightness == Brightness.dark;
 
-        // Marks badge: saffron-TEXT on the accent tint (primary@0.12) composited
-        // over the inset question card (surfaceContainerLow) — NOT the #E0924D
-        // fill, which as ink would fail AA.
-        final marksFg = isDark
-            ? AppColors.dPrimaryText
-            : AppColors.lPrimaryText;
-        final marksBg = Color.alphaBlend(
-          scheme.primary.withValues(alpha: 0.12),
-          scheme.surfaceContainerLow,
-        );
-        expect(
-          _ratio(marksFg, marksBg),
-          greaterThanOrEqualTo(4.5),
-          reason: 'marks badge label vs its actual fill (${brightness.name})',
-        );
+          // Marks badge: saffron-TEXT on the accent tint (primary@0.12) composited
+          // over the inset question card (surfaceContainerLow) — NOT the #E0924D
+          // fill, which as ink would fail AA.
+          final marksFg = isDark
+              ? AppColors.dPrimaryText
+              : AppColors.lPrimaryText;
+          final marksBg = Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.12),
+            scheme.surfaceContainerLow,
+          );
+          expect(
+            _ratio(marksFg, marksBg),
+            greaterThanOrEqualTo(4.5),
+            reason: 'marks badge label vs its actual fill (${brightness.name})',
+          );
 
-        // "Correct" chip: the green container pairing.
-        expect(
-          _ratio(scheme.onSecondaryContainer, scheme.secondaryContainer),
-          greaterThanOrEqualTo(4.5),
-          reason: 'correct chip (${brightness.name})',
-        );
+          // "Correct" chip: the green container pairing.
+          expect(
+            _ratio(scheme.onSecondaryContainer, scheme.secondaryContainer),
+            greaterThanOrEqualTo(4.5),
+            reason: 'correct chip (${brightness.name})',
+          );
 
-        // Partial / incorrect / review chips: full ink on the neutral fill.
-        expect(
-          _ratio(scheme.onSurface, scheme.surfaceContainerHigh),
-          greaterThanOrEqualTo(4.5),
-          reason: 'neutral outcome/review chip (${brightness.name})',
-        );
-      });
+          // Partial / incorrect / review chips: full ink on the neutral fill.
+          expect(
+            _ratio(scheme.onSurface, scheme.surfaceContainerHigh),
+            greaterThanOrEqualTo(4.5),
+            reason: 'neutral outcome/review chip (${brightness.name})',
+          );
+        },
+      );
     }
   });
 
@@ -168,7 +177,9 @@ void main() {
     for (final brightness in Brightness.values) {
       test('every fixed site clears 4.5:1 in ${brightness.name}', () {
         final scheme =
-            (brightness == Brightness.dark ? AppTheme.light() : AppTheme.light())
+            (brightness == Brightness.dark
+                    ? AppTheme.light()
+                    : AppTheme.light())
                 .colorScheme;
 
         // 1. Empty page-capture well prompt — on the well's surfaceContainerHigh.
@@ -286,10 +297,7 @@ void main() {
 
       // The VIDYA suggestion body + both actions, as the two pills of the
       // design (the long button labels were shortened).
-      expect(
-        find.textContaining('remedial worksheet'),
-        findsWidgets,
-      );
+      expect(find.textContaining('remedial worksheet'), findsWidgets);
       expect(find.text('Build it'), findsOneWidget);
       expect(find.text('Message parents'), findsOneWidget);
 
