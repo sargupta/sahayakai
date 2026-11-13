@@ -15,7 +15,7 @@
  * the shared window, so a new one cannot ship without one.
  */
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, posix } from 'node:path';
 
 import { CALLING_WINDOW_END_HOUR, CALLING_WINDOW_START_HOUR, checkCallingWindow } from '@/lib/calling-hours';
 
@@ -30,8 +30,9 @@ function callPathRoutes(): string[] {
     const vobizDir = join(ROOT, 'src/app/api/attendance/vobiz');
     const discovered = readdirSync(vobizDir, { withFileTypes: true })
         .filter((e) => e.isDirectory())
-        .map((e) => join('src/app/api/attendance/vobiz', e.name, 'route.ts'));
-    return [join('src/app/api/attendance/call', 'route.ts'), ...discovered];
+        // posix: the EXEMPT keys use '/', and `join` gives '\' on Windows.
+        .map((e) => posix.join('src/app/api/attendance/vobiz', e.name, 'route.ts'));
+    return [posix.join('src/app/api/attendance/call', 'route.ts'), ...discovered];
 }
 
 /** Routes that may legitimately skip the check, each with a stated reason. */

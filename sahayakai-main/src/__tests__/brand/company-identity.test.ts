@@ -15,7 +15,7 @@
  * files, or in any page or public file added later.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { extname, join, relative } from 'node:path';
+import { extname, join, relative, sep } from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { StructuredData } from '@/components/structured-data';
@@ -70,7 +70,8 @@ function walk(dir: string): string[] {
     const out: string[] = [];
     for (const entry of readdirSync(dir)) {
         const full = join(dir, entry);
-        const rel = relative(ROOT, full);
+        // '/' on every OS: SKIPPED_PATHS and IDENTITY_FILES are written with '/'.
+        const rel = relative(ROOT, full).split(sep).join('/');
         if (SKIPPED_PATHS.some((re) => re.test(rel))) continue;
         const st = statSync(full);
         if (st.isDirectory()) out.push(...walk(full));

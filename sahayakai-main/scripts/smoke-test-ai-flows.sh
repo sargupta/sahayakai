@@ -29,6 +29,10 @@
 
 set -uo pipefail
 
+# python3 where it exists (Linux, macOS); plain `python` on Windows Git Bash,
+# which has no python3.
+PYTHON=$(command -v python3 || command -v python || echo python3)
+
 BASE_URL="${BASE_URL:-http://localhost:3000}"
 TEST_TOKEN="${TEST_TOKEN:-dev-token}"
 TIMEOUT="${TIMEOUT:-90}"
@@ -87,7 +91,7 @@ probe_json() {
   body_file="$(mktemp -t smoke.XXXXXX)"
 
   local start_ms end_ms latency_ms status
-  start_ms=$(python3 -c 'import time; print(int(time.time()*1000))')
+  start_ms=$("$PYTHON" -c 'import time; print(int(time.time()*1000))')
 
   if [[ "$method" == "GET" ]]; then
     status=$(curl -s -o "$body_file" -w '%{http_code}' \
@@ -105,7 +109,7 @@ probe_json() {
       "$url")
   fi
 
-  end_ms=$(python3 -c 'import time; print(int(time.time()*1000))')
+  end_ms=$("$PYTHON" -c 'import time; print(int(time.time()*1000))')
   latency_ms=$((end_ms - start_ms))
 
   local notes result
@@ -129,7 +133,7 @@ probe_json() {
 # Falls back to byte length so we still know the body wasn't empty.
 extract_note() {
   local body_file="$1" field="$2"
-  python3 - "$body_file" "$field" <<'PYEOF' 2>/dev/null || true
+  "$PYTHON" - "$body_file" "$field" <<'PYEOF' 2>/dev/null || true
 import json, sys, os
 path, field = sys.argv[1], sys.argv[2]
 try:
@@ -163,7 +167,7 @@ PYEOF
 
 error_excerpt() {
   local body_file="$1"
-  python3 - "$body_file" <<'PYEOF' 2>/dev/null || head -c 80 "$body_file"
+  "$PYTHON" - "$body_file" <<'PYEOF' 2>/dev/null || head -c 80 "$body_file"
 import json, sys
 try:
     with open(sys.argv[1]) as f:
@@ -188,7 +192,7 @@ probe_sse() {
   body_file="$(mktemp -t smoke-sse.XXXXXX)"
 
   local start_ms end_ms latency_ms status
-  start_ms=$(python3 -c 'import time; print(int(time.time()*1000))')
+  start_ms=$("$PYTHON" -c 'import time; print(int(time.time()*1000))')
   status=$(curl -s -N -o "$body_file" -w '%{http_code}' \
     --max-time "$TIMEOUT" \
     -H "Authorization: Bearer $TEST_TOKEN" \
@@ -196,7 +200,7 @@ probe_sse() {
     -H "Accept: text/event-stream" \
     -X POST -d "$body" \
     "$url")
-  end_ms=$(python3 -c 'import time; print(int(time.time()*1000))')
+  end_ms=$("$PYTHON" -c 'import time; print(int(time.time()*1000))')
   latency_ms=$((end_ms - start_ms))
 
   local notes result
@@ -234,16 +238,21 @@ probe_voice_to_text() {
     return
   fi
 
+  # Git Bash's curl is a native Windows program: it cannot read a /c/...
+  # path given inside -F, so hand it the Windows form of the path.
+  local upload="$fixture"
+  if command -v cygpath >/dev/null 2>&1; then upload="$(cygpath -m "$fixture")"; fi
+
   local body_file
   body_file="$(mktemp -t smoke.XXXXXX)"
   local start_ms end_ms latency_ms status
-  start_ms=$(python3 -c 'import time; print(int(time.time()*1000))')
+  start_ms=$("$PYTHON" -c 'import time; print(int(time.time()*1000))')
   status=$(curl -s -o "$body_file" -w '%{http_code}' \
     --max-time "$TIMEOUT" \
     -H "Authorization: Bearer $TEST_TOKEN" \
-    -F "audio=@$fixture;type=audio/webm" \
+    -F "audio=@$upload;type=audio/webm" \
     "$BASE_URL/api/ai/voice-to-text")
-  end_ms=$(python3 -c 'import time; print(int(time.time()*1000))')
+  end_ms=$("$PYTHON" -c 'import time; print(int(time.time()*1000))')
   latency_ms=$((end_ms - start_ms))
 
   local notes result
@@ -294,7 +303,7 @@ probe_json "rubric" "POST" "/api/ai/rubric" \
   "title"
 
 # 6. worksheet (POST → title; needs imageDataUri)
-WS_BODY=$(python3 -c "import json, sys; print(json.dumps({'prompt':'Create a math multiplication worksheet for grade 4.','imageDataUri':'$TINY_PNG_DATA_URI','language':'English','gradeLevel':'Class 4','subject':'Mathematics'}))")
+WS_BODY=$("$PYTHON" -c "import json, sys; print(json.dumps({'prompt':'Create a math multiplication worksheet for grade 4.','imageDataUri':'$TINY_PNG_DATA_URI','language':'English','gradeLevel':'Class 4','subject':'Mathematics'}))")
 probe_json "worksheet" "POST" "/api/ai/worksheet" "$WS_BODY" "title"
 
 # 7. teacher-training (POST → introduction)
@@ -352,12 +361,12 @@ probe_sse "exam-paper/stream" "/api/ai/exam-paper/stream" \
 #     the harness stays green for normal CI; flip TEST_AS_ADMIN=1 to
 #     re-classify a 401/403 as FAIL.)
 QH_BODY_FILE="$(mktemp -t smoke.XXXXXX)"
-QH_START=$(python3 -c 'import time; print(int(time.time()*1000))')
+QH_START=$("$PYTHON" -c 'import time; print(int(time.time()*1000))')
 QH_STATUS=$(curl -s -o "$QH_BODY_FILE" -w '%{http_code}' \
   --max-time "$TIMEOUT" \
   -H "Authorization: Bearer $TEST_TOKEN" \
   "$BASE_URL/api/ai/quiz/health")
-QH_END=$(python3 -c 'import time; print(int(time.time()*1000))')
+QH_END=$("$PYTHON" -c 'import time; print(int(time.time()*1000))')
 QH_LAT=$((QH_END - QH_START))
 case "$QH_STATUS" in
   200)
