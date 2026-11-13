@@ -42,7 +42,7 @@ const GlobalVoiceInterface = dynamic(() => import("@/components/global-voice-int
   loading: () => null,
 });
 
-const MARKETING_PATHS = ["/for-schools", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about"];
+const MARKETING_PATHS = ["/for-schools", "/pricing", "/school-pricing", "/privacy-for-teachers", "/delete-account", "/terms", "/about"];
 
 function isMarketingPath(pathname: string | null): boolean {
   if (!pathname) return false;

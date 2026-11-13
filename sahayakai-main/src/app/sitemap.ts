@@ -55,6 +55,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'yearly',
       priority: 0.3,
     },
+    {
+      url: `${baseUrl}/delete-account`,
+      lastModified: '2026-11-13',
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
 
     // ââ Feature pages (public, pre-auth landing) ââ
     {
