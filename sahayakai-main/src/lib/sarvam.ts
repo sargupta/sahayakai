@@ -49,10 +49,33 @@ export function toSarvamLangCode(bcp47: string): string | null {
 
 let _apiKeyCache: string | null = null;
 
+/**
+ * A missing key is remembered for this long. Without it every request paid
+ * two Secret Manager round trips (~0.6 s) to learn again that the key is not
+ * there before falling back to Gemini; the 10-minute window still picks up a
+ * key added later without a redeploy.
+ */
+export const SARVAM_KEY_MISSING_TTL_MS = 10 * 60 * 1000;
+let _apiKeyMissing: { error: Error; until: number } | null = null;
+
 async function getApiKey(): Promise<string> {
     if (_apiKeyCache) return _apiKeyCache;
-    _apiKeyCache = await getSecret('SARVAM_AI_API_KEY');
-    return _apiKeyCache;
+    if (_apiKeyMissing && Date.now() < _apiKeyMissing.until) throw _apiKeyMissing.error;
+    try {
+        _apiKeyCache = await getSecret('SARVAM_AI_API_KEY');
+        _apiKeyMissing = null;
+        return _apiKeyCache;
+    } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        _apiKeyMissing = { error: err, until: Date.now() + SARVAM_KEY_MISSING_TTL_MS };
+        throw err;
+    }
+}
+
+/** Test seam: forget the cached key and any remembered "missing". */
+export function __resetSarvamKeyCacheForTests(): void {
+    _apiKeyCache = null;
+    _apiKeyMissing = null;
 }
 
 async function fetchWithRetry(

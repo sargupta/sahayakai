@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { normalizeIsoLang, scriptMatchesExpected } from '@/ai/flows/voice-to-text';
+import { wavLooksSilent, wavLoudestFrameDbfs } from '@/lib/audio/wav-silence';
 
 async function _handler(request: NextRequest) {
     try {
@@ -38,6 +39,18 @@ async function _handler(request: NextRequest) {
                 { error: `Audio file too large (max ${MAX_AUDIO_BYTES / 1024 / 1024} MB).` },
                 { status: 413 },
             );
+        }
+
+        // Silence gate: a WAV with no frame above the silence floor has no
+        // speech in it. Answer "nothing heard" here: sent on, Gemini invents
+        // a plausible teacher sentence for silent audio, and VIDYA answers
+        // words nobody said. Non-WAV / unreadable audio is not gated.
+        const audioBytes = new Uint8Array(await audioFile.arrayBuffer());
+        if (wavLooksSilent(audioBytes)) {
+            logger.info('[STT] Silent recording: skipping transcription', 'VOICE_TO_TEXT', {
+                loudestFrameDbfs: wavLoudestFrameDbfs(audioBytes),
+            });
+            return NextResponse.json({ text: '', language: normalizeIsoLang(expectedLanguage) ?? '' });
         }
 
         // --- Try Sarvam STT first (cheaper, purpose-built for Indian languages) ---
@@ -93,8 +106,7 @@ async function _handler(request: NextRequest) {
         // SAHAYAKAI_VOICE_TO_TEXT_MODE env (default: off → Genkit only).
         // Build the data URI form the sidecar (and Genkit) expect.
         logger.info('[STT] Using Gemini fallback (via dispatcher)', 'VOICE_TO_TEXT');
-        const arrayBuffer = await audioFile.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        const buffer = Buffer.from(audioBytes);
         const mimeType = audioFile.type || 'audio/webm';
         const audioDataUri = `data:${mimeType};base64,${buffer.toString('base64')}`;
         const dispatched = await dispatchVoiceToText({

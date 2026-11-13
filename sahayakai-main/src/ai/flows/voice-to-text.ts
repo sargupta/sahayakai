@@ -180,11 +180,14 @@ const VoiceToTextOutputSchema = z.object({
 });
 export type VoiceToTextOutput = z.infer<typeof VoiceToTextOutputSchema>;
 
-const voiceToTextPrompt = ai.definePrompt({
-  name: 'voiceToTextPrompt',
-  input: { schema: VoiceToTextInputSchema },
-  output: { schema: VoiceToTextOutputSchema },
-  prompt: `You are a multilingual speech-to-text engine optimized for Indian languages and English.
+/**
+ * The STT prompt. Exported so the class gate in
+ * `src/__tests__/ai/flows/voice-to-text.test.ts` can assert it never again
+ * tells the model to fill gaps: "infer from context" + Gemini on a silent or
+ * noisy clip produced invented teacher sentences ("Good morning, everyone…"),
+ * which VIDYA then answered as if the teacher had said them (2026-11-13).
+ */
+export const VOICE_TO_TEXT_PROMPT = `You are a multilingual speech-to-text engine optimized for Indian languages and English.
 
 Your task is to transcribe the audio and detect its language.
 
@@ -198,20 +201,31 @@ The user's app is set to **{{expectedLanguageName}}** ({{expectedLanguageScript}
 {{/if}}
 
 INSTRUCTIONS:
-1. **Transcribe**: Listen to the audio and transcribe exactly what is said. Focus on the primary speaker's voice.
-2. **Detect Language**: Handle English, Hindi, Hinglish, Tamil, Telugu, Kannada, Bengali, Marathi, Gujarati, Punjabi, Malayalam, or Odia. Output its 2-letter code (en, hi, ta, te, kn, bn, mr, gu, pa, ml, or).
-3. **Cleanup (Implicit)**:
-   - Remove filler words (uh, um, like, matlab, yani, etc.) UNLESS they are essential to meaning.
-   - Fix stutters and repetitions.
-   - Ensure grammatical correctness while preserving the speaker's original intent and tone.
-   - Preserve code-switching (e.g., Hindi + English mixed).
-4. **Formatting**: Ensure proper punctuation and capitalization.
-5. **Noisy Environments**: Audio may contain background noise (classrooms, traffic, fans, crowds). Ignore background sounds and focus solely on the teacher's speech. If a word is unclear due to noise, infer from context rather than leaving a gap.
-6. **Indic scripts**: Bengali, Tamil, Telugu, Kannada, Malayalam, Odia, Gujarati, Punjabi, Marathi all have distinct scripts. Always output in the native script — never romanize.
+1. **Transcribe only what is actually spoken.** Write the words you hear, in the order you hear them. Never add, guess or invent words, sentences or greetings that are not in the audio.
+2. **No speech → empty text.** If the audio is silent, only noise or breathing, or has no intelligible human speech, return "text": "" (an empty string). Do not describe the audio.
+3. **Unclear words**: if a word is genuinely unintelligible, leave it out rather than guessing. Do not paraphrase or reword what was said.
+4. **Detect Language**: English, Hindi, Hinglish, Tamil, Telugu, Kannada, Bengali, Marathi, Gujarati, Punjabi, Malayalam or Odia. Output its 2-letter code (en, hi, ta, te, kn, bn, mr, gu, pa, ml, or).
+5. **Light cleanup only**: drop filler sounds (uh, um, matlab, yani) and immediate stutters; keep every content word and the speaker's own wording. Preserve code-switching (Hindi + English mixed).
+6. **Formatting**: normal punctuation and capitalization. Numbers may be written as digits.
+7. **Background noise** (classrooms, traffic, fans): ignore it and transcribe only the main speaker.
+8. **Indic scripts**: Bengali, Tamil, Telugu, Kannada, Malayalam, Odia, Gujarati, Punjabi, Marathi and Hindi have their own scripts. Always output the native script — never romanize.
 
 Audio Input: {{media url=audioDataUri}}
 
-Output strictly valid JSON matching the schema.`,
+Output strictly valid JSON matching the schema.`;
+
+const voiceToTextPrompt = ai.definePrompt({
+  name: 'voiceToTextPrompt',
+  input: { schema: VoiceToTextInputSchema },
+  output: { schema: VoiceToTextOutputSchema },
+  config: {
+    temperature: 0,
+    // Transcription is listening, not reasoning. With thinking on, Gemini 3
+    // Flash took a median 4.7 s and up to 55 s per clip (bench 2026-11-13);
+    // with a 0 budget it took a median 2.3 s at the same accuracy.
+    thinkingConfig: { thinkingBudget: 0 },
+  },
+  prompt: VOICE_TO_TEXT_PROMPT,
 });
 
 function buildPromptInput(input: VoiceToTextInput, opts?: { forceScript?: boolean }) {

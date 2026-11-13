@@ -42,6 +42,7 @@ const mockPromptFn = (require('@/ai/genkit') as { __mockPromptFn: jest.Mock })._
 import {
   normalizeIsoLang,
   scriptMatchesExpected,
+  VOICE_TO_TEXT_PROMPT,
 } from '@/ai/flows/voice-to-text';
 
 describe('normalizeIsoLang', () => {
@@ -185,5 +186,36 @@ describe('voiceToText soft-empty handling', () => {
       expectedLanguage: 'en',
     });
     expect(result).toEqual({ text: '', language: 'en' });
+  });
+});
+
+// Class gate (2026-11-13): the STT prompt must never invite the model to fill
+// gaps. "Infer from context rather than leaving a gap" made Gemini invent a
+// whole teacher sentence for silent audio ("Good morning, everyone. Today we
+// will be starting a new chapter…"), which VIDYA then answered. Any wording
+// that asks for inference, completion or paraphrase fails this gate, and the
+// explicit "no speech -> empty text" rule must stay.
+describe('STT prompt: transcribe only, never invent (class gate)', () => {
+  const lower = VOICE_TO_TEXT_PROMPT.toLowerCase();
+
+  it.each([
+    'infer from context',
+    'infer the',
+    'fill in',
+    'fill the gap',
+    'complete the sentence',
+    'rather than leaving a gap',
+    'ensure grammatical correctness',
+  ])('does not ask the model to "%s"', (phrase) => {
+    expect(lower).not.toContain(phrase);
+  });
+
+  it('tells the model to return empty text when there is no speech', () => {
+    expect(VOICE_TO_TEXT_PROMPT).toMatch(/no speech/i);
+    expect(VOICE_TO_TEXT_PROMPT).toMatch(/"text":\s*""/);
+  });
+
+  it('forbids adding or inventing words', () => {
+    expect(lower).toMatch(/never add, guess or invent/);
   });
 });
