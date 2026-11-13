@@ -392,6 +392,17 @@ async function annotateAssistantValidation(
 // ─── Public API ───────────────────────────────────────────────────────────
 
 /**
+ * How long VIDYA's reply may spend on retries and waits. The dispatcher
+ * abandons the whole reply at 15 s (`FALLBACK_TIMEOUT_MS` in
+ * src/lib/sidecar/vidya-dispatch.ts). With the default 50 s retry budget a
+ * quota 429 started a 20 s wait inside those 15 s, so the teacher got a
+ * timeout 500 while the retry kept running (2026-11-13). Kept well under
+ * 15 s so a reply whose main model is out of quota still has time for one
+ * try on the lite model.
+ */
+export const VIDYA_RETRY_BUDGET_MS = 8_000;
+
+/**
  * Run the Genkit-side VIDYA orchestrator. Returns the final
  * `{response, action}` shape — caller wires this into the cache + the
  * HTTP response.
@@ -412,66 +423,104 @@ export async function runGenkitVidya(
     const systemPrompt = buildSystemPrompt(input);
     const chatContext = buildChatContext(input.chatHistory);
 
-    return await runResiliently(async (config) => {
-        const response = await ai.generate({
-            model: MODELS.flash,
-            prompt: `System: ${systemPrompt}\n\nChat History:\n${frameUserInput('chat_history', chatContext)}\n\nUser: ${frameUserInput('message', input.message)}\n\nOutput strictly the JSON response as required by the System prompt. Return ONLY a single JSON object, no prose, no markdown code fences.`,
-            ...config,
-            config: {
-                ...(config.config || {}),
-                temperature: 0.1,
-                // Force JSON output so Gemini does not wrap in ```json``` fences
-                // or prepend prose. Without this, the model occasionally emits
-                // "Sure! Here is the JSON: {…}" which crashes the regex parse
-                // and lands the SAFE_FALLBACK — the silent demo failure mode.
-                responseMimeType: 'application/json',
-            },
-        });
+    const prompt = `System: ${systemPrompt}\n\nChat History:\n${frameUserInput('chat_history', chatContext)}\n\nUser: ${frameUserInput('message', input.message)}\n\nOutput strictly the JSON response as required by the System prompt. Return ONLY a single JSON object, no prose, no markdown code fences.`;
 
-        const textOutput = response.text;
-
-        try {
-            const parsed = extractAndParseVidyaJson(textOutput);
-            // Phase N.1 — normalise the legacy / new shape into the
-            // v0.4+ wire shape (`plannedActions[]` always present, even
-            // if empty). This also lets the dispatcher emit the same
-            // shape regardless of which path served (Genkit off-mode
-            // vs sidecar canary/full).
-            const plannedActions = await annotateAssistantValidation(
-                normalisePlannedActions(parsed),
-            );
-            const out: AssistantOutput = {
-                response: parsed.response ?? '',
-                action: parsed.action ?? null,
-                plannedActions,
-            };
-            // [VIDYA Genkit] one-line structured trace so we can confirm
-            // every voice utterance produced a valid intent at the LLM
-            // boundary even when downstream navigation silently no-ops.
-            logger.info('vidya.genkit.parsed', 'VIDYA Genkit', {
-                hasResponse: Boolean(out.response),
-                responseLen: out.response.length,
-                actionType: out.action?.type ?? null,
-                actionFlow: (out.action as { flow?: string } | null)?.flow ?? null,
-                plannedCount: out.plannedActions?.length ?? 0,
-            });
-            return out;
-        } catch (err) {
-            // Match the legacy route: log + return safe fallback rather
-            // than 500. The OmniOrb client renders the fallback as a
-            // spoken hint to retry. Log the raw model output (truncated)
-            // so we can debug demo-day misfires from Cloud Run logs.
-            // eslint-disable-next-line no-console
-            console.error(
-                JSON.stringify({
-                    event: 'vidya.genkit.parse_failed',
-                    error: err instanceof Error ? err.message : String(err),
-                    rawOutputExcerpt: String(textOutput ?? '').slice(0, 500),
-                }),
-            );
-            return SAFE_FALLBACK;
+    const startedAt = Date.now();
+    const reply = (model: string, budgetMs: number, span: string) =>
+        runResiliently(
+            (config) => vidyaReplyAttempt(model, prompt, config),
+            span,
+            { budgetMs },
+        );
+    try {
+        return await reply(MODELS.flash, VIDYA_RETRY_BUDGET_MS, 'vidya.reply');
+    } catch (err) {
+        // The main model is out of quota (a 429 on the preview model's shared
+        // Vertex quota). The lite model has its own quota, so one try on it
+        // answers the teacher instead of failing the whole reply.
+        if ((err as Error)?.name !== 'AIQuotaExhaustedError' || MODELS.flashLite === MODELS.flash) {
+            throw err;
         }
+        logger.warn('vidya.reply: main model out of quota, answering with the lite model', 'VIDYA Genkit', {
+            model: MODELS.flashLite,
+            elapsedMs: Date.now() - startedAt,
+        });
+        return await reply(
+            MODELS.flashLite,
+            Math.max(0, VIDYA_RETRY_BUDGET_MS - (Date.now() - startedAt)),
+            'vidya.reply.lite',
+        );
+    }
+}
+
+/** One model call for a VIDYA reply, parsed into the wire shape. */
+async function vidyaReplyAttempt(
+    model: string,
+    prompt: string,
+    config: { config: { apiKey?: string } },
+): Promise<AssistantOutput> {
+    const response = await ai.generate({
+        model,
+        prompt,
+        ...config,
+        config: {
+            ...(config.config || {}),
+            temperature: 0.1,
+            // Force JSON output so Gemini does not wrap in ```json``` fences
+            // or prepend prose. Without this, the model occasionally emits
+            // "Sure! Here is the JSON: {…}" which crashes the regex parse
+            // and lands the SAFE_FALLBACK — the silent demo failure mode.
+            responseMimeType: 'application/json',
+            // No thinking: VIDYA picks a tool and writes one or two
+            // sentences. With thinking, replies took 4.5–11 s against the
+            // dispatcher's 15 s cap, and one ran over (2026-11-09).
+            thinkingConfig: { thinkingBudget: 0 },
+        },
     });
+
+    const textOutput = response.text;
+
+    try {
+        const parsed = extractAndParseVidyaJson(textOutput);
+        // Phase N.1 — normalise the legacy / new shape into the
+        // v0.4+ wire shape (`plannedActions[]` always present, even
+        // if empty). This also lets the dispatcher emit the same
+        // shape regardless of which path served (Genkit off-mode
+        // vs sidecar canary/full).
+        const plannedActions = await annotateAssistantValidation(
+            normalisePlannedActions(parsed),
+        );
+        const out: AssistantOutput = {
+            response: parsed.response ?? '',
+            action: parsed.action ?? null,
+            plannedActions,
+        };
+        // [VIDYA Genkit] one-line structured trace so we can confirm
+        // every voice utterance produced a valid intent at the LLM
+        // boundary even when downstream navigation silently no-ops.
+        logger.info('vidya.genkit.parsed', 'VIDYA Genkit', {
+            hasResponse: Boolean(out.response),
+            responseLen: out.response.length,
+            actionType: out.action?.type ?? null,
+            actionFlow: (out.action as { flow?: string } | null)?.flow ?? null,
+            plannedCount: out.plannedActions?.length ?? 0,
+        });
+        return out;
+    } catch (err) {
+        // Match the legacy route: log + return safe fallback rather
+        // than 500. The OmniOrb client renders the fallback as a
+        // spoken hint to retry. Log the raw model output (truncated)
+        // so we can debug demo-day misfires from Cloud Run logs.
+        // eslint-disable-next-line no-console
+        console.error(
+            JSON.stringify({
+                event: 'vidya.genkit.parse_failed',
+                error: err instanceof Error ? err.message : String(err),
+                rawOutputExcerpt: String(textOutput ?? '').slice(0, 500),
+            }),
+        );
+        return SAFE_FALLBACK;
+    }
 }
 
 /**

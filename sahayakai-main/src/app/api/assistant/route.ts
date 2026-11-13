@@ -4,6 +4,7 @@ import { withPlanCheck } from '@/lib/plan-guard';
 import { dispatchVidya } from '@/lib/sidecar/vidya-dispatch';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { logger } from '@/lib/logger';
+import { handleAIError } from '@/lib/ai-error-response';
 
 // ── L1: In-process intent cache (per server instance, sub-millisecond) ────────
 // Keyed on: normalised_message + "::" + screen_path
@@ -253,10 +254,14 @@ async function _handler(req: Request) {
         return NextResponse.json(wireResponse);
 
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        // eslint-disable-next-line no-console
-        console.error('[Assistant API] Error:', error);
-        return NextResponse.json({ error: message }, { status: 500 });
+        // A model out of quota or too slow is a busy service, not a bug:
+        // 503 + Retry-After, logged at the right severity. Never the raw
+        // provider message either: a Vertex 404 put the GCP project path in
+        // the reply the app received (2026-11-09).
+        return handleAIError(error, 'ASSISTANT', {
+            message: 'Assistant API failed',
+            userId: req.headers.get('x-user-id'),
+        });
     }
 }
 

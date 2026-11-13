@@ -155,6 +155,24 @@ function jittered(ms: number): number {
 }
 
 /**
+ * Default total time `runResiliently` may spend on attempts plus waits: under
+ * the 60 s `FALLBACK_TIMEOUT_MS` most dispatchers wrap a flow in.
+ */
+export const DEFAULT_RETRY_BUDGET_MS = 50_000;
+
+export interface ResilienceOptions {
+  /**
+   * Total time the retry loop may spend (attempts + waits) before it gives up
+   * with the typed `AIQuotaExhaustedError`. A wait that would run past it is
+   * never started. Set this BELOW the timeout the caller is wrapped in: with
+   * the 50 s default, a quota 429 waited 20 s inside VIDYA's 15 s timeout, so
+   * the teacher got a timeout 500 while the orphaned retry kept spending quota
+   * (2026-11-13). The first attempt always runs, whatever the budget.
+   */
+  budgetMs?: number;
+}
+
+/**
  * Executes an AI operation resiliently:
  *   1. Across the key pool (failover on 429/401/403)
  *   2. With longer same-key backoff if the pool is small — per-minute quota
@@ -168,6 +186,7 @@ function jittered(ms: number): number {
 export async function runResiliently<T>(
   fn: (overrideConfig: { config: { apiKey?: string } }) => Promise<T>,
   spanName?: string,
+  options: ResilienceOptions = {},
 ): Promise<T> {
   await ensureKeyPool();
   const poolSize = keyPool.length;
@@ -196,7 +215,8 @@ export async function runResiliently<T>(
   // scan saw quota failures surface as 500/ERROR rather than a clean 503.
   // Cap the loop below the 60s wrapper so we always break early and throw the
   // typed 503 first. Leaves ~10s headroom for the final attempt + response.
-  const MAX_TOTAL_BUDGET_MS = 50_000;
+  // A caller behind a SHORTER timeout passes its own `budgetMs` (VIDYA: 15s).
+  const MAX_TOTAL_BUDGET_MS = options.budgetMs ?? DEFAULT_RETRY_BUDGET_MS;
 
   for (let i = 0; i < maxAttempts; i++) {
     const currentIndex = (startIndex + i) % poolSize;
