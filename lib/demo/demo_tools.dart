@@ -127,6 +127,7 @@ class _NoNetworkApiClient extends ApiClient {
     String path, {
     required FormData data,
     required T Function(Map<String, dynamic> json) decode,
+    Duration? receiveTimeout,
   }) async => throw StateError(_offline);
 }
 

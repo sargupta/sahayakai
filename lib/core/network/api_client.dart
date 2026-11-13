@@ -166,16 +166,23 @@ class ApiClient {
   /// fields), not JSON: Dio must send `multipart/form-data` with its own
   /// boundary, overriding the client's default `application/json` content type.
   /// Same typed [ApiException] mapping as every other verb.
+  /// [receiveTimeout] overrides the client-wide [kReceiveTimeout] for this
+  /// call, for requests that must fail fast (a voice transcription) rather
+  /// than wait out the long ceiling AI generations need.
   Future<T> postMultipart<T>(
     String path, {
     required FormData data,
     required T Function(Map<String, dynamic> json) decode,
+    Duration? receiveTimeout,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         path,
         data: data,
-        options: Options(contentType: 'multipart/form-data'),
+        options: Options(
+          contentType: 'multipart/form-data',
+          receiveTimeout: receiveTimeout,
+        ),
       );
       return decode(res.data ?? const {});
     } on DioException catch (e) {

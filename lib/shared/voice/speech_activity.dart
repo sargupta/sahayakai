@@ -10,11 +10,15 @@ const double kSpeechMargin = 0.12;
 /// closes, is worth transcribing even though it never crossed the onset.
 const double kSoundHeardMargin = 0.05;
 
-/// How fast the room level drifts up towards a steady sound, per reading
-/// (readings come every 100 ms). Slow, so a teacher talking for a while is not
-/// mistaken for the room, but steady noise that rose after the first reading
-/// (a fan switched on) still becomes the room within seconds.
-const double kRoomRise = 0.004;
+/// How many recent readings (~4 s) the room level is learnt from: the room
+/// is the quietest of them. A window rather than "the quietest ever, drifting
+/// slowly up": the mic's first readings are near zero while it warms up, and
+/// with the old slow drift (0.4% a reading) a room learnt from them took
+/// ~25 s to rise to a normal background hum, so the hum counted as speech,
+/// the trailing silence never came and every capture ran to the 30 s cap
+/// (reproduced on the emulator, 2026-11-13). Long enough that the dips
+/// between a teacher's words keep the room down while she talks.
+const int kRoomWindow = 40;
 
 /// Readings at the onset, within the last [kOnsetWindow] readings, that start
 /// speech. One loud reading is a click or a knock; a spoken word spans several.
@@ -28,19 +32,22 @@ const int kOnsetWindow = 30;
 
 /// Follows one capture's mic levels (0..1, one every ~100 ms) and says which
 /// readings are speech, against the room's own level rather than a fixed
-/// threshold. The room level starts at the first reading, falls instantly to
-/// any quieter one and drifts slowly up towards steady sound.
+/// threshold. The room level is the quietest reading of the last
+/// [kRoomWindow], so it falls instantly to a quieter moment and rises to a
+/// louder steady sound within a few seconds. Readings of exactly 0 before
+/// the first sound are the mic warming up and are not the room.
 ///
 /// Shared by VIDYA's capture and the form-field mic so both stop listening the
 /// moment the teacher stops talking, in a quiet staffroom or a noisy class.
 class SpeechActivity {
-  double _room = double.infinity;
+  final List<double> _levels = [];
   double _peak = 0;
   final List<double> _recent = [];
   bool _started = false;
 
-  /// The room's current level (the quietest steady sound heard).
-  double get room => _room.isFinite ? _room : 0;
+  /// The room's current level (the quietest recent reading).
+  double get room =>
+      _levels.isEmpty ? 0 : _levels.reduce((a, b) => a < b ? a : b);
 
   /// The loudest reading so far.
   double get peak => _peak;
@@ -62,11 +69,10 @@ class SpeechActivity {
   /// when it is itself quiet (the talking came before the room was known).
   bool add(double level) {
     if (level > _peak) _peak = level;
-    if (!_room.isFinite || level < _room) {
-      _room = level;
-    } else {
-      _room += (level - _room) * kRoomRise;
-    }
+    // Mic warm-up: zeros before any sound say nothing about the room.
+    if (_levels.isEmpty && level <= 0) return false;
+    _levels.add(level);
+    if (_levels.length > kRoomWindow) _levels.removeAt(0);
     final threshold = onset;
     if (_started) return level >= threshold;
     _recent.add(level);
@@ -80,7 +86,7 @@ class SpeechActivity {
 
   /// Forgets everything, for the next capture.
   void reset() {
-    _room = double.infinity;
+    _levels.clear();
     _peak = 0;
     _recent.clear();
     _started = false;

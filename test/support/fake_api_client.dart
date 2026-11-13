@@ -121,6 +121,10 @@ class FakeApiClient extends ApiClient {
   final List<({String path, FormData data})> multiparts =
       <({String path, FormData data})>[];
 
+  /// The per-call receive timeout each multipart POST asked for (null = the
+  /// client-wide default), in the same order as [multiparts].
+  final List<Duration?> multipartTimeouts = <Duration?>[];
+
   /// Every [postRaw] this client received, in order.
   final List<({String path, Object? data})> postRaws =
       <({String path, Object? data})>[];
@@ -218,8 +222,10 @@ class FakeApiClient extends ApiClient {
     String path, {
     required FormData data,
     required T Function(Map<String, dynamic> json) decode,
+    Duration? receiveTimeout,
   }) async {
     multiparts.add((path: path, data: data));
+    multipartTimeouts.add(receiveTimeout);
     if (delay != null) await Future<void>.delayed(delay!);
     if (multipartError != null) throw multipartError!;
     final stub = multipartResponse;

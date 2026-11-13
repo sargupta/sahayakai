@@ -114,7 +114,13 @@ class DemoApiClient extends ApiClient {
     String path, {
     required FormData data,
     required T Function(Map<String, dynamic> json) decode,
-  }) => _live.postMultipart<T>(path, data: data, decode: decode);
+    Duration? receiveTimeout,
+  }) => _live.postMultipart<T>(
+    path,
+    data: data,
+    decode: decode,
+    receiveTimeout: receiveTimeout,
+  );
 }
 
 /// Sample My work items carry this id prefix, so their detail is served

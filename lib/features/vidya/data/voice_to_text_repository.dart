@@ -23,6 +23,12 @@ class VoiceToTextRepository {
 
   static const String _path = '/api/ai/voice-to-text';
 
+  /// How long a transcription may take before the teacher is told to try
+  /// again. A healthy one answers in about 2–5 s; without this cap a stuck
+  /// model call held the "thinking" state for the 125 s client-wide ceiling
+  /// (Gemini with thinking on took up to 55 s on a 4 s clip, 2026-11-13).
+  static const Duration timeout = Duration(seconds: 25);
+
   /// [audioBytes] is the WAV read from the recording (bytes, not a path, so no
   /// filesystem is touched in a unit test). [expectedLanguage] is the app's
   /// 2-letter locale — it biases detection and fires the script-mismatch retry.
@@ -49,6 +55,7 @@ class VoiceToTextRepository {
       _path,
       data: form,
       decode: Transcript.fromJson,
+      receiveTimeout: timeout,
     );
   }
 }

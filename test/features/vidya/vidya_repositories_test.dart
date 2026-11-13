@@ -70,6 +70,22 @@ void main() {
       );
     });
 
+    test('fails fast: its own 25 s timeout, not the 125 s AI-generation '
+        'ceiling', () async {
+      final client = FakeApiClient(
+        multipartResponse: {'text': 'namaste', 'language': 'hi'},
+      );
+      await VoiceToTextRepository(
+        client,
+      ).transcribe(audioBytes: Uint8List.fromList([1, 2]));
+
+      final timeout = client.multipartTimeouts.single;
+      expect(timeout, VoiceToTextRepository.timeout);
+      // A transcription that has not answered by then has stalled; the
+      // teacher gets "try again" instead of a long "thinking".
+      expect(timeout, lessThanOrEqualTo(const Duration(seconds: 30)));
+    });
+
     test('a 401 on the stub token surfaces as the typed exception', () async {
       final client = FakeApiClient(multipartError: _unauthorized);
       expect(
