@@ -124,6 +124,22 @@ class ApiClient {
     }
   }
 
+  /// DELETE with an optional JSON body. Mirrors [post] exactly (same decode
+  /// contract, same typed `ApiException` mapping). The unblock endpoint takes
+  /// its target in the body (`DELETE /api/moderation/block { blockedUid }`).
+  Future<T> delete<T>(
+    String path, {
+    Object? data,
+    required T Function(Map<String, dynamic> json) decode,
+  }) async {
+    try {
+      final res = await _dio.delete<Map<String, dynamic>>(path, data: data);
+      return decode(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<T> get<T>(
     String path, {
     Map<String, dynamic>? query,

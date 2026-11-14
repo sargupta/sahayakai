@@ -5062,4 +5062,78 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'सही है';
+
+  @override
+  String get moderationMoreActions => 'और विकल्प';
+
+  @override
+  String get moderationReportPost => 'पोस्ट की रिपोर्ट करें';
+
+  @override
+  String get moderationReportMessage => 'संदेश की रिपोर्ट करें';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$name की रिपोर्ट करें';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$name को ब्लॉक करें';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'उत्पीड़न या धमकाना';
+
+  @override
+  String get moderationReasonInappropriate => 'अनुचित सामग्री';
+
+  @override
+  String get moderationReasonSpam => 'स्पैम या भ्रामक';
+
+  @override
+  String get moderationReportLimit =>
+      'आज की रिपोर्ट सीमा पूरी हो गई। कल फिर कोशिश करें।';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return '$name को ब्लॉक करें?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'आपको उनकी पोस्ट या संदेश नहीं दिखेंगे, और वे आपको संदेश नहीं भेज पाएँगे। उन्हें इसकी सूचना नहीं दी जाएगी।';
+
+  @override
+  String get moderationBlockAction => 'ब्लॉक करें';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$name को ब्लॉक कर दिया गया।';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'ब्लॉक नहीं हो सका। अपना कनेक्शन जाँचें और फिर कोशिश करें।';
+
+  @override
+  String get moderationBlockedTitle => 'ब्लॉक किए गए शिक्षक';
+
+  @override
+  String get moderationBlockedEmpty => 'आपने किसी को ब्लॉक नहीं किया है।';
+
+  @override
+  String get moderationUnblock => 'अनब्लॉक करें';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$name को अनब्लॉक कर दिया गया।';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'अनब्लॉक नहीं हो सका। अपना कनेक्शन जाँचें और फिर कोशिश करें।';
+
+  @override
+  String get moderationUnnamedTeacher => 'यह शिक्षक';
 }

@@ -5096,4 +5096,78 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'సరిగ్గా ఉంది';
+
+  @override
+  String get moderationMoreActions => 'మరిన్ని ఎంపికలు';
+
+  @override
+  String get moderationReportPost => 'పోస్ట్‌ను నివేదించండి';
+
+  @override
+  String get moderationReportMessage => 'సందేశాన్ని నివేదించండి';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$name గురించి నివేదించండి';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$nameను బ్లాక్ చేయండి';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'వేధింపు లేదా బెదిరింపు';
+
+  @override
+  String get moderationReasonInappropriate => 'అనుచితమైన కంటెంట్';
+
+  @override
+  String get moderationReasonSpam => 'స్పామ్ లేదా తప్పుదారి పట్టించేది';
+
+  @override
+  String get moderationReportLimit =>
+      'ఈరోజు నివేదికల పరిమితి పూర్తయింది. రేపు మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return '$nameను బ్లాక్ చేయాలా?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'వారి పోస్ట్‌లు లేదా సందేశాలు మీకు కనిపించవు, వారు మీకు సందేశం పంపలేరు. వారికి ఈ విషయం తెలియజేయబడదు.';
+
+  @override
+  String get moderationBlockAction => 'బ్లాక్ చేయండి';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$nameను బ్లాక్ చేశారు.';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'బ్లాక్ చేయలేకపోయాం. కనెక్షన్ తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String get moderationBlockedTitle => 'బ్లాక్ చేసిన ఉపాధ్యాయులు';
+
+  @override
+  String get moderationBlockedEmpty => 'మీరు ఎవరినీ బ్లాక్ చేయలేదు.';
+
+  @override
+  String get moderationUnblock => 'అన్‌బ్లాక్ చేయండి';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$nameను అన్‌బ్లాక్ చేశారు.';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'అన్‌బ్లాక్ చేయలేకపోయాం. కనెక్షన్ తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String get moderationUnnamedTeacher => 'ఈ ఉపాధ్యాయులు';
 }

@@ -5075,4 +5075,78 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'ঠিক আছে';
+
+  @override
+  String get moderationMoreActions => 'আরও বিকল্প';
+
+  @override
+  String get moderationReportPost => 'পোস্ট রিপোর্ট করুন';
+
+  @override
+  String get moderationReportMessage => 'বার্তা রিপোর্ট করুন';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$name-কে রিপোর্ট করুন';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$name-কে ব্লক করুন';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'হয়রানি বা ভয় দেখানো';
+
+  @override
+  String get moderationReasonInappropriate => 'অনুপযুক্ত বিষয়বস্তু';
+
+  @override
+  String get moderationReasonSpam => 'স্প্যাম বা বিভ্রান্তিকর';
+
+  @override
+  String get moderationReportLimit =>
+      'আজকের রিপোর্টের সীমা পূর্ণ হয়েছে। কাল আবার চেষ্টা করুন।';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return '$name-কে ব্লক করবেন?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'আপনি তাঁর পোস্ট বা বার্তা দেখতে পাবেন না, এবং তিনি আপনাকে বার্তা পাঠাতে পারবেন না। তাঁকে জানানো হবে না।';
+
+  @override
+  String get moderationBlockAction => 'ব্লক করুন';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$name-কে ব্লক করা হয়েছে।';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'ব্লক করা যায়নি। সংযোগ দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get moderationBlockedTitle => 'ব্লক করা শিক্ষক';
+
+  @override
+  String get moderationBlockedEmpty => 'আপনি কাউকে ব্লক করেননি।';
+
+  @override
+  String get moderationUnblock => 'আনব্লক করুন';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$name-কে আনব্লক করা হয়েছে।';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'আনব্লক করা যায়নি। সংযোগ দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get moderationUnnamedTeacher => 'এই শিক্ষক';
 }

@@ -119,6 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       const _OrbHandSection(),
       if (signedIn) _profileSection(l10n) else const _SignedOutCard(),
       const _PrivacyRow(),
+      if (signedIn) const _BlockedTeachersRow(),
       if (signedIn) _deleteSection(l10n),
     ];
 
@@ -789,6 +790,38 @@ class _PrivacyRow extends StatelessWidget {
             Expanded(
               child: Text(
                 context.l10n.mePrivacyForTeachers,
+                style: text.bodyLarge?.copyWith(
+                  fontSize: 14,
+                  color: AppColors.textStrong,
+                ),
+              ),
+            ),
+            const _Chevron(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Settings → Blocked teachers (report/block for community content).
+class _BlockedTeachersRow extends StatelessWidget {
+  const _BlockedTeachersRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      child: MapCard(
+        key: const ValueKey('settings-blocked-teachers'),
+        onTap: () => context.push(Routes.blockedTeachers),
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 14, 10, 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                context.l10n.moderationBlockedTitle,
                 style: text.bodyLarge?.copyWith(
                   fontSize: 14,
                   color: AppColors.textStrong,

@@ -5095,4 +5095,78 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'ଠିକ୍ ଅଛି';
+
+  @override
+  String get moderationMoreActions => 'ଅଧିକ ବିକଳ୍ପ';
+
+  @override
+  String get moderationReportPost => 'ପୋଷ୍ଟ ରିପୋର୍ଟ କରନ୍ତୁ';
+
+  @override
+  String get moderationReportMessage => 'ବାର୍ତ୍ତା ରିପୋର୍ଟ କରନ୍ତୁ';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$nameଙ୍କୁ ରିପୋର୍ଟ କରନ୍ତୁ';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$nameଙ୍କୁ ବ୍ଲକ୍ କରନ୍ତୁ';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'ହଇରାଣ ବା ଧମକ';
+
+  @override
+  String get moderationReasonInappropriate => 'ଅନୁଚିତ ବିଷୟବସ୍ତୁ';
+
+  @override
+  String get moderationReasonSpam => 'ସ୍ପାମ୍ ବା ବିଭ୍ରାନ୍ତିକର';
+
+  @override
+  String get moderationReportLimit =>
+      'ଆଜିର ରିପୋର୍ଟ ସୀମା ପୂରଣ ହୋଇଗଲା। କାଲି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return '$nameଙ୍କୁ ବ୍ଲକ୍ କରିବେ?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'ଆପଣ ତାଙ୍କ ପୋଷ୍ଟ ବା ବାର୍ତ୍ତା ଦେଖିପାରିବେ ନାହିଁ, ଏବଂ ସେ ଆପଣଙ୍କୁ ବାର୍ତ୍ତା ପଠାଇପାରିବେ ନାହିଁ। ତାଙ୍କୁ ଏହା ଜଣାଯିବ ନାହିଁ।';
+
+  @override
+  String get moderationBlockAction => 'ବ୍ଲକ୍ କରନ୍ତୁ';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$nameଙ୍କୁ ବ୍ଲକ୍ କରାଗଲା।';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'ବ୍ଲକ୍ କରିହେଲା ନାହିଁ। ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get moderationBlockedTitle => 'ବ୍ଲକ୍ କରାଯାଇଥିବା ଶିକ୍ଷକ';
+
+  @override
+  String get moderationBlockedEmpty => 'ଆପଣ କାହାକୁ ବ୍ଲକ୍ କରିନାହାନ୍ତି।';
+
+  @override
+  String get moderationUnblock => 'ଅନବ୍ଲକ୍ କରନ୍ତୁ';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$nameଙ୍କୁ ଅନବ୍ଲକ୍ କରାଗଲା।';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'ଅନବ୍ଲକ୍ କରିହେଲା ନାହିଁ। ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get moderationUnnamedTeacher => 'ଏହି ଶିକ୍ଷକ';
 }

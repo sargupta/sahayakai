@@ -5036,4 +5036,78 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'Looks right';
+
+  @override
+  String get moderationMoreActions => 'More actions';
+
+  @override
+  String get moderationReportPost => 'Report post';
+
+  @override
+  String get moderationReportMessage => 'Report message';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return 'Report $name';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return 'Block $name';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'Harassment or bullying';
+
+  @override
+  String get moderationReasonInappropriate => 'Inappropriate content';
+
+  @override
+  String get moderationReasonSpam => 'Spam or misleading';
+
+  @override
+  String get moderationReportLimit =>
+      'You\'ve reached today\'s report limit. Try again tomorrow.';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return 'Block $name?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'You won\'t see their posts or messages, and they can\'t message you. They won\'t be told.';
+
+  @override
+  String get moderationBlockAction => 'Block';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$name is blocked.';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'Couldn\'t block. Check your connection and try again.';
+
+  @override
+  String get moderationBlockedTitle => 'Blocked teachers';
+
+  @override
+  String get moderationBlockedEmpty => 'You haven\'t blocked anyone.';
+
+  @override
+  String get moderationUnblock => 'Unblock';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$name is unblocked.';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'Couldn\'t unblock. Check your connection and try again.';
+
+  @override
+  String get moderationUnnamedTeacher => 'this teacher';
 }

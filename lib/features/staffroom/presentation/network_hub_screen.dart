@@ -11,7 +11,9 @@ import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/map_card.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../inbox/data/messages_stream_provider.dart';
+import '../../inbox/presentation/visible_conversations.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
+import '../../moderation/presentation/blocked_teachers_controller.dart';
 import '../../notifications/data/notifications_store.dart';
 import '../../notifications/presentation/notifications_view.dart';
 import '../data/staffroom_providers.dart';
@@ -410,7 +412,11 @@ class _MessagesTab extends ConsumerWidget {
             ),
           );
         }
-        final conversations = snapshot.data;
+        final conversations = withoutBlockedConversations(
+          snapshot.data,
+          myUid,
+          ref.watch(blockedUidsProvider),
+        );
         return RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(connectionsControllerProvider);

@@ -48,6 +48,9 @@ class Routes {
   /// Privacy explainer for teachers (Pillar 06). Pushed from Settings.
   static const String privacyForTeachers = '/privacy-for-teachers';
 
+  /// The teachers this teacher has blocked, with Unblock. Pushed from Settings.
+  static const String blockedTeachers = '/settings/blocked-teachers';
+
   // AI tools (pushed on top of the signed-in shell).
   static const String lessonPlan = '/lesson-plan';
   static const String quizGenerator = '/quiz-generator';

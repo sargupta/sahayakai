@@ -12,9 +12,11 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
+import '../../moderation/presentation/blocked_teachers_controller.dart';
 import '../data/block_c_transport.dart';
 import '../data/messages_stream_provider.dart';
 import '../domain/inbox_models.dart';
+import 'visible_conversations.dart';
 import 'widgets/conversation_row.dart';
 
 /// U-SI1 — the Pro Inbox list (SPEC §B3.1). A live `StreamProvider` of the
@@ -60,14 +62,14 @@ class InboxScreen extends ConsumerWidget {
   }
 }
 
-class _InboxBody extends StatelessWidget {
+class _InboxBody extends ConsumerWidget {
   const _InboxBody({required this.snapshot, required this.myUid});
 
   final TransportSnapshot<List<Conversation>> snapshot;
   final String? myUid;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (snapshot.hasError) {
       return const _InboxError();
     }
@@ -82,7 +84,11 @@ class _InboxBody extends StatelessWidget {
       return const _InboxSignIn();
     }
     // Ready.
-    final conversations = snapshot.data;
+    final conversations = withoutBlockedConversations(
+      snapshot.data,
+      myUid!,
+      ref.watch(blockedUidsProvider),
+    );
     if (conversations.isEmpty) {
       return const _InboxEmpty();
     }

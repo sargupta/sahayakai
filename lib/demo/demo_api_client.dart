@@ -86,6 +86,13 @@ class DemoApiClient extends ApiClient {
   }) => _live.post<T>(path, data: data, decode: decode);
 
   @override
+  Future<T> delete<T>(
+    String path, {
+    Object? data,
+    required T Function(Map<String, dynamic> json) decode,
+  }) => _live.delete<T>(path, data: data, decode: decode);
+
+  @override
   Future<T> patch<T>(
     String path, {
     Object? data,

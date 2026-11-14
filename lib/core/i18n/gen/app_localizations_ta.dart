@@ -5167,4 +5167,78 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'சரியாக உள்ளது';
+
+  @override
+  String get moderationMoreActions => 'மேலும் விருப்பங்கள்';
+
+  @override
+  String get moderationReportPost => 'பதிவைப் புகாரளி';
+
+  @override
+  String get moderationReportMessage => 'செய்தியைப் புகாரளி';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$name பற்றிப் புகாரளி';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$name அவர்களைத் தடு';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'துன்புறுத்தல் அல்லது மிரட்டல்';
+
+  @override
+  String get moderationReasonInappropriate => 'பொருத்தமற்ற உள்ளடக்கம்';
+
+  @override
+  String get moderationReasonSpam => 'ஸ்பேம் அல்லது தவறான தகவல்';
+
+  @override
+  String get moderationReportLimit =>
+      'இன்றைய புகார் வரம்பு முடிந்தது. நாளை மீண்டும் முயலவும்.';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return '$name அவர்களைத் தடுக்கவா?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'அவர்களின் பதிவுகளோ செய்திகளோ உங்களுக்குத் தெரியாது, அவர்களால் உங்களுக்குச் செய்தி அனுப்ப முடியாது. அவர்களுக்கு இது தெரிவிக்கப்படாது.';
+
+  @override
+  String get moderationBlockAction => 'தடு';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$name தடுக்கப்பட்டார்.';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'தடுக்க முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.';
+
+  @override
+  String get moderationBlockedTitle => 'தடுக்கப்பட்ட ஆசிரியர்கள்';
+
+  @override
+  String get moderationBlockedEmpty => 'நீங்கள் யாரையும் தடுக்கவில்லை.';
+
+  @override
+  String get moderationUnblock => 'தடையை நீக்கு';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$name மீதான தடை நீக்கப்பட்டது.';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'தடையை நீக்க முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.';
+
+  @override
+  String get moderationUnnamedTeacher => 'இந்த ஆசிரியர்';
 }

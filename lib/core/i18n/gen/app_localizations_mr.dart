@@ -5061,4 +5061,78 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'बरोबर आहे';
+
+  @override
+  String get moderationMoreActions => 'आणखी पर्याय';
+
+  @override
+  String get moderationReportPost => 'पोस्टची तक्रार करा';
+
+  @override
+  String get moderationReportMessage => 'संदेशाची तक्रार करा';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$name ची तक्रार करा';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$name ला ब्लॉक करा';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'छळ किंवा दादागिरी';
+
+  @override
+  String get moderationReasonInappropriate => 'अयोग्य मजकूर';
+
+  @override
+  String get moderationReasonSpam => 'स्पॅम किंवा दिशाभूल करणारे';
+
+  @override
+  String get moderationReportLimit =>
+      'आजची तक्रारींची मर्यादा पूर्ण झाली. उद्या पुन्हा प्रयत्न करा.';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return '$name ला ब्लॉक करायचे?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'तुम्हाला त्यांच्या पोस्ट किंवा संदेश दिसणार नाहीत, आणि ते तुम्हाला संदेश पाठवू शकणार नाहीत. त्यांना याची माहिती दिली जाणार नाही.';
+
+  @override
+  String get moderationBlockAction => 'ब्लॉक करा';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$name ला ब्लॉक केले.';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'ब्लॉक करता आले नाही. कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.';
+
+  @override
+  String get moderationBlockedTitle => 'ब्लॉक केलेले शिक्षक';
+
+  @override
+  String get moderationBlockedEmpty => 'तुम्ही कोणालाही ब्लॉक केलेले नाही.';
+
+  @override
+  String get moderationUnblock => 'अनब्लॉक करा';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$name ला अनब्लॉक केले.';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'अनब्लॉक करता आले नाही. कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.';
+
+  @override
+  String get moderationUnnamedTeacher => 'हे शिक्षक';
 }

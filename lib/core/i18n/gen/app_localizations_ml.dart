@@ -5138,4 +5138,79 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'ശരിയാണ്';
+
+  @override
+  String get moderationMoreActions => 'കൂടുതൽ ഓപ്ഷനുകൾ';
+
+  @override
+  String get moderationReportPost => 'പോസ്റ്റ് റിപ്പോർട്ട് ചെയ്യുക';
+
+  @override
+  String get moderationReportMessage => 'സന്ദേശം റിപ്പോർട്ട് ചെയ്യുക';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$name എന്നയാളെ റിപ്പോർട്ട് ചെയ്യുക';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$name എന്നയാളെ ബ്ലോക്ക് ചെയ്യുക';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'ഉപദ്രവമോ ഭീഷണിയോ';
+
+  @override
+  String get moderationReasonInappropriate => 'അനുചിതമായ ഉള്ളടക്കം';
+
+  @override
+  String get moderationReasonSpam =>
+      'സ്പാം അല്ലെങ്കിൽ തെറ്റിദ്ധരിപ്പിക്കുന്നത്';
+
+  @override
+  String get moderationReportLimit =>
+      'ഇന്നത്തെ റിപ്പോർട്ട് പരിധി കഴിഞ്ഞു. നാളെ വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return '$name എന്നയാളെ ബ്ലോക്ക് ചെയ്യണോ?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'അവരുടെ പോസ്റ്റുകളോ സന്ദേശങ്ങളോ നിങ്ങൾ കാണില്ല, അവർക്ക് നിങ്ങൾക്ക് സന്ദേശം അയയ്ക്കാനും കഴിയില്ല. അവരെ ഇത് അറിയിക്കില്ല.';
+
+  @override
+  String get moderationBlockAction => 'ബ്ലോക്ക് ചെയ്യുക';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$name എന്നയാളെ ബ്ലോക്ക് ചെയ്തു.';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'ബ്ലോക്ക് ചെയ്യാനായില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get moderationBlockedTitle => 'ബ്ലോക്ക് ചെയ്ത അധ്യാപകർ';
+
+  @override
+  String get moderationBlockedEmpty => 'നിങ്ങൾ ആരെയും ബ്ലോക്ക് ചെയ്തിട്ടില്ല.';
+
+  @override
+  String get moderationUnblock => 'അൺബ്ലോക്ക് ചെയ്യുക';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$name എന്നയാളെ അൺബ്ലോക്ക് ചെയ്തു.';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'അൺബ്ലോക്ക് ചെയ്യാനായില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get moderationUnnamedTeacher => 'ഈ അധ്യാപകൻ';
 }

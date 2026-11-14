@@ -8,6 +8,9 @@ import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/map_card.dart';
 import '../../../inbox/data/block_c_transport.dart';
 import '../../../inbox/presentation/inbox_time.dart';
+import '../../../moderation/domain/moderation.dart';
+import '../../../moderation/presentation/blocked_teachers_controller.dart';
+import '../../../moderation/presentation/moderation_actions.dart';
 import '../../data/staffroom_providers.dart';
 import '../../data/staffroom_transport.dart';
 import '../../domain/group.dart';
@@ -118,6 +121,13 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
     final text = theme.textTheme;
     final post = widget.post;
     final myUid = ref.watch(currentStaffroomUserIdProvider);
+    // A blocked teacher's post disappears at once (the server also filters
+    // the next feed read).
+    final blocked = ref.watch(
+      blockedUidsProvider.select((uids) => uids.contains(post.authorUid)),
+    );
+    if (blocked) return const SizedBox.shrink();
+    final othersPost = post.authorUid.isNotEmpty && post.authorUid != myUid;
 
     final group = widget.groupName?.trim() ?? '';
     final timestamp = inboxRelativeTime(post.createdAt, DateTime.now(), l10n);
@@ -167,6 +177,14 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
               ),
               const SizedBox(width: AppSpacing.space2),
               _TypePill(type: post.postType),
+              if (othersPost)
+                ModerationMenuButton(
+                  reportLabel: l10n.moderationReportPost,
+                  target: ReportTarget.post,
+                  targetId: post.id,
+                  authorUid: post.authorUid,
+                  authorName: post.authorName,
+                ),
             ],
           ),
           const SizedBox(height: 9),
@@ -193,7 +211,7 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                 ),
               ] else
                 const Spacer(),
-              if (post.authorUid.isNotEmpty && post.authorUid != myUid)
+              if (othersPost)
                 TeacherConnectionAction(
                   uid: post.authorUid,
                   displayName: post.authorName,

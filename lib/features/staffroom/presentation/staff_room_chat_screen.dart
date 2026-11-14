@@ -10,6 +10,8 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../inbox/data/block_c_transport.dart';
+import '../../moderation/presentation/blocked_teachers_controller.dart';
+import '../../moderation/presentation/moderation_actions.dart';
 import '../../vidya/presentation/vidya_cta_clearance.dart';
 import '../data/chat_stream_provider.dart';
 import '../data/staffroom_providers.dart';
@@ -144,7 +146,12 @@ class _StaffRoomChatScreenState extends ConsumerState<StaffRoomChatScreen> {
     ref.watch(personaPulseControllerProvider(_room));
 
     final sendState = ref.watch(chatSendControllerProvider(_room));
-    final display = mergeChatForDisplay(server, sendState.pending);
+    // Blocked teachers' messages are hidden at once.
+    final blocked = ref.watch(blockedUidsProvider);
+    final display = [
+      for (final m in mergeChatForDisplay(server, sendState.pending))
+        if (!blocked.contains(m.authorId)) m,
+    ];
     final knownServerIds = <String>{for (final s in server) s.id};
 
     return Column(
@@ -160,10 +167,25 @@ class _StaffRoomChatScreenState extends ConsumerState<StaffRoomChatScreen> {
                   itemCount: display.length,
                   itemBuilder: (context, index) {
                     final message = display[display.length - 1 - index];
-                    return ChatBubble(
+                    final bubble = ChatBubble(
                       key: ValueKey<String>('chat-${message.id}'),
                       message: message,
                       myUid: myUid,
+                    );
+                    if (message.authorId.isEmpty || message.authorId == myUid) {
+                      return bubble;
+                    }
+                    // Another teacher's message: long-press to report it or
+                    // block them.
+                    return GestureDetector(
+                      onLongPress: () => showMessageModerationSheet(
+                        context,
+                        ref,
+                        messageId: message.id,
+                        authorUid: message.authorId,
+                        authorName: message.authorName,
+                      ),
+                      child: bubble,
                     );
                   },
                 ),

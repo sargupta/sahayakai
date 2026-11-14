@@ -12,6 +12,8 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
+import '../../moderation/domain/moderation.dart';
+import '../../moderation/presentation/moderation_actions.dart';
 import '../../vidya/presentation/vidya_cta_clearance.dart';
 import '../data/block_c_transport.dart';
 import '../data/inbox_transport.dart';
@@ -271,9 +273,34 @@ class _ConversationThreadScreenState
       },
     );
 
+    // One-to-one: report or block the other teacher from the title bar.
+    final convo = widget.conversation;
+    final otherUid = (convo == null || myUid == null)
+        ? null
+        : convo.otherParticipantId(myUid);
+    final otherName = (otherUid == null || myUid == null)
+        ? ''
+        : convo?.otherParticipant(myUid)?.displayName ?? '';
+
     return Scaffold(
       appBar: GlassAppBar(
         title: _ThreadTitle(conversation: widget.conversation, myUid: myUid),
+        actions: [
+          if (otherUid != null && otherUid.isNotEmpty)
+            ModerationMenuButton(
+              reportLabel: context.l10n.moderationReportTeacher(
+                moderationName(context.l10n, otherName),
+              ),
+              target: ReportTarget.profile,
+              targetId: otherUid,
+              authorUid: otherUid,
+              authorName: otherName,
+              // They can no longer message each other: leave the thread.
+              onBlocked: () {
+                if (mounted) Navigator.of(context).maybePop();
+              },
+            ),
+        ],
       ),
       body: SafeArea(
         child: async.when(
@@ -344,15 +371,29 @@ class _ConversationThreadScreenState
                   itemBuilder: (context, index) {
                     if (index < ordered.length) {
                       final m = ordered[ordered.length - 1 - index];
+                      final bubble = MessageBubble(
+                        key: ValueKey<String>('msg-${m.id}'),
+                        message: m,
+                        myUid: myUid,
+                        otherParticipantIds: otherIds,
+                        isGroup: isGroup,
+                      );
                       return staggeredItem(
                         context,
-                        MessageBubble(
-                          key: ValueKey<String>('msg-${m.id}'),
-                          message: m,
-                          myUid: myUid,
-                          otherParticipantIds: otherIds,
-                          isGroup: isGroup,
-                        ),
+                        m.senderId.isEmpty || m.senderId == myUid
+                            ? bubble
+                            // Someone else's message: long-press to report it
+                            // or block them.
+                            : GestureDetector(
+                                onLongPress: () => showMessageModerationSheet(
+                                  context,
+                                  ref,
+                                  messageId: m.id,
+                                  authorUid: m.senderId,
+                                  authorName: m.senderName,
+                                ),
+                                child: bubble,
+                              ),
                         index: index,
                       );
                     }

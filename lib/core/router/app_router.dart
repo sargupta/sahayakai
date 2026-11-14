@@ -24,6 +24,7 @@ import '../../features/instant_answer/presentation/instant_answer_screen.dart';
 import '../../features/lesson_planner/presentation/lesson_plan_screen.dart';
 import '../../features/library/presentation/library_detail_screen.dart';
 import '../../features/library/presentation/library_screen.dart';
+import '../../features/moderation/presentation/blocked_teachers_screen.dart';
 import '../../features/onboarding/presentation/login_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/parent_hotline/domain/hotline_launch.dart';
@@ -338,6 +339,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.privacyForTeachers,
         builder: (context, state) => const PrivacyScreen(),
+      ),
+      GoRoute(
+        path: Routes.blockedTeachers,
+        builder: (context, state) => const BlockedTeachersScreen(),
       ),
       GoRoute(
         // The Library tab itself is mounted inside AppShell, so this route

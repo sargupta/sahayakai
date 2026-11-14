@@ -8737,6 +8737,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Looks right'**
   String get vidyaLooksRight;
+
+  /// Accessible label of the three-dot menu on a post or in a conversation (report / block).
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moderationMoreActions;
+
+  /// Menu item and sheet title: report a community post.
+  ///
+  /// In en, this message translates to:
+  /// **'Report post'**
+  String get moderationReportPost;
+
+  /// Menu item and sheet title: report a chat or direct message.
+  ///
+  /// In en, this message translates to:
+  /// **'Report message'**
+  String get moderationReportMessage;
+
+  /// Menu item and sheet title: report another teacher's profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Report {name}'**
+  String moderationReportTeacher(String name);
+
+  /// Menu item: block another teacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Block {name}'**
+  String moderationBlockTeacher(String name);
+
+  /// Report reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Harassment or bullying'**
+  String get moderationReasonHarassment;
+
+  /// Report reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Inappropriate content'**
+  String get moderationReasonInappropriate;
+
+  /// Report reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam or misleading'**
+  String get moderationReasonSpam;
+
+  /// Error when the daily report limit (10) is reached.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached today\'s report limit. Try again tomorrow.'**
+  String get moderationReportLimit;
+
+  /// Confirm dialog title before blocking a teacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Block {name}?'**
+  String moderationBlockConfirmTitle(String name);
+
+  /// Confirm dialog body: what blocking does.
+  ///
+  /// In en, this message translates to:
+  /// **'You won\'t see their posts or messages, and they can\'t message you. They won\'t be told.'**
+  String get moderationBlockConfirmBody;
+
+  /// Confirm button that blocks the teacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get moderationBlockAction;
+
+  /// Snackbar after a teacher is blocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is blocked.'**
+  String moderationBlockedSnack(String name);
+
+  /// Snackbar when blocking failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t block. Check your connection and try again.'**
+  String get moderationBlockFailed;
+
+  /// Settings row and screen title: the list of blocked teachers.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked teachers'**
+  String get moderationBlockedTitle;
+
+  /// Blocked teachers screen when the list is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t blocked anyone.'**
+  String get moderationBlockedEmpty;
+
+  /// Button that unblocks a teacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock'**
+  String get moderationUnblock;
+
+  /// Snackbar after a teacher is unblocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is unblocked.'**
+  String moderationUnblockedSnack(String name);
+
+  /// Snackbar when unblocking failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t unblock. Check your connection and try again.'**
+  String get moderationUnblockFailed;
+
+  /// Stands in for a teacher's name when it is unknown (inside 'Block {name}?').
+  ///
+  /// In en, this message translates to:
+  /// **'this teacher'**
+  String get moderationUnnamedTeacher;
 }
 
 class _AppLocalizationsDelegate

@@ -5082,4 +5082,78 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'ಸರಿಯಾಗಿದೆ';
+
+  @override
+  String get moderationMoreActions => 'ಇನ್ನಷ್ಟು ಆಯ್ಕೆಗಳು';
+
+  @override
+  String get moderationReportPost => 'ಪೋಸ್ಟ್ ವರದಿ ಮಾಡಿ';
+
+  @override
+  String get moderationReportMessage => 'ಸಂದೇಶ ವರದಿ ಮಾಡಿ';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$name ಅವರನ್ನು ವರದಿ ಮಾಡಿ';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$name ಅವರನ್ನು ಬ್ಲಾಕ್ ಮಾಡಿ';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'ಕಿರುಕುಳ ಅಥವಾ ಬೆದರಿಕೆ';
+
+  @override
+  String get moderationReasonInappropriate => 'ಅನುಚಿತ ವಿಷಯ';
+
+  @override
+  String get moderationReasonSpam => 'ಸ್ಪ್ಯಾಮ್ ಅಥವಾ ದಾರಿತಪ್ಪಿಸುವ';
+
+  @override
+  String get moderationReportLimit =>
+      'ಇಂದಿನ ವರದಿ ಮಿತಿ ಮುಗಿದಿದೆ. ನಾಳೆ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return '$name ಅವರನ್ನು ಬ್ಲಾಕ್ ಮಾಡಬೇಕೆ?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'ಅವರ ಪೋಸ್ಟ್‌ಗಳು ಅಥವಾ ಸಂದೇಶಗಳು ನಿಮಗೆ ಕಾಣುವುದಿಲ್ಲ, ಮತ್ತು ಅವರು ನಿಮಗೆ ಸಂದೇಶ ಕಳುಹಿಸಲು ಆಗುವುದಿಲ್ಲ. ಅವರಿಗೆ ಇದನ್ನು ತಿಳಿಸಲಾಗುವುದಿಲ್ಲ.';
+
+  @override
+  String get moderationBlockAction => 'ಬ್ಲಾಕ್ ಮಾಡಿ';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$name ಅವರನ್ನು ಬ್ಲಾಕ್ ಮಾಡಲಾಗಿದೆ.';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'ಬ್ಲಾಕ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get moderationBlockedTitle => 'ಬ್ಲಾಕ್ ಮಾಡಿದ ಶಿಕ್ಷಕರು';
+
+  @override
+  String get moderationBlockedEmpty => 'ನೀವು ಯಾರನ್ನೂ ಬ್ಲಾಕ್ ಮಾಡಿಲ್ಲ.';
+
+  @override
+  String get moderationUnblock => 'ಅನ್‌ಬ್ಲಾಕ್ ಮಾಡಿ';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$name ಅವರನ್ನು ಅನ್‌ಬ್ಲಾಕ್ ಮಾಡಲಾಗಿದೆ.';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'ಅನ್‌ಬ್ಲಾಕ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get moderationUnnamedTeacher => 'ಈ ಶಿಕ್ಷಕರು';
 }

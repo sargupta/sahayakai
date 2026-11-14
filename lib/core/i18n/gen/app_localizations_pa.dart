@@ -5063,4 +5063,78 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get vidyaLooksRight => 'ਠੀਕ ਹੈ';
+
+  @override
+  String get moderationMoreActions => 'ਹੋਰ ਵਿਕਲਪ';
+
+  @override
+  String get moderationReportPost => 'ਪੋਸਟ ਦੀ ਰਿਪੋਰਟ ਕਰੋ';
+
+  @override
+  String get moderationReportMessage => 'ਸੁਨੇਹੇ ਦੀ ਰਿਪੋਰਟ ਕਰੋ';
+
+  @override
+  String moderationReportTeacher(String name) {
+    return '$name ਦੀ ਰਿਪੋਰਟ ਕਰੋ';
+  }
+
+  @override
+  String moderationBlockTeacher(String name) {
+    return '$name ਨੂੰ ਬਲੌਕ ਕਰੋ';
+  }
+
+  @override
+  String get moderationReasonHarassment => 'ਤੰਗ ਕਰਨਾ ਜਾਂ ਧਮਕਾਉਣਾ';
+
+  @override
+  String get moderationReasonInappropriate => 'ਅਣਉਚਿਤ ਸਮੱਗਰੀ';
+
+  @override
+  String get moderationReasonSpam => 'ਸਪੈਮ ਜਾਂ ਗੁੰਮਰਾਹਕੁੰਨ';
+
+  @override
+  String get moderationReportLimit =>
+      'ਅੱਜ ਦੀ ਰਿਪੋਰਟ ਸੀਮਾ ਪੂਰੀ ਹੋ ਗਈ। ਕੱਲ੍ਹ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String moderationBlockConfirmTitle(String name) {
+    return 'ਕੀ $name ਨੂੰ ਬਲੌਕ ਕਰਨਾ ਹੈ?';
+  }
+
+  @override
+  String get moderationBlockConfirmBody =>
+      'ਤੁਹਾਨੂੰ ਉਨ੍ਹਾਂ ਦੀਆਂ ਪੋਸਟਾਂ ਜਾਂ ਸੁਨੇਹੇ ਨਹੀਂ ਦਿਸਣਗੇ, ਅਤੇ ਉਹ ਤੁਹਾਨੂੰ ਸੁਨੇਹਾ ਨਹੀਂ ਭੇਜ ਸਕਣਗੇ। ਉਨ੍ਹਾਂ ਨੂੰ ਇਸ ਬਾਰੇ ਨਹੀਂ ਦੱਸਿਆ ਜਾਵੇਗਾ।';
+
+  @override
+  String get moderationBlockAction => 'ਬਲੌਕ ਕਰੋ';
+
+  @override
+  String moderationBlockedSnack(String name) {
+    return '$name ਨੂੰ ਬਲੌਕ ਕਰ ਦਿੱਤਾ ਗਿਆ।';
+  }
+
+  @override
+  String get moderationBlockFailed =>
+      'ਬਲੌਕ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get moderationBlockedTitle => 'ਬਲੌਕ ਕੀਤੇ ਅਧਿਆਪਕ';
+
+  @override
+  String get moderationBlockedEmpty => 'ਤੁਸੀਂ ਕਿਸੇ ਨੂੰ ਬਲੌਕ ਨਹੀਂ ਕੀਤਾ।';
+
+  @override
+  String get moderationUnblock => 'ਅਨਬਲੌਕ ਕਰੋ';
+
+  @override
+  String moderationUnblockedSnack(String name) {
+    return '$name ਨੂੰ ਅਨਬਲੌਕ ਕਰ ਦਿੱਤਾ ਗਿਆ।';
+  }
+
+  @override
+  String get moderationUnblockFailed =>
+      'ਅਨਬਲੌਕ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get moderationUnnamedTeacher => 'ਇਹ ਅਧਿਆਪਕ';
 }

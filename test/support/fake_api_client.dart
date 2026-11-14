@@ -204,6 +204,25 @@ class FakeApiClient extends ApiClient {
     );
   }
 
+  /// Every DELETE this client received, in order.
+  final List<({String path, Object? data})> deletes =
+      <({String path, Object? data})>[];
+
+  /// Thrown from [delete] instead of returning. Null → `{ ok: true }`.
+  Object? deleteError;
+
+  @override
+  Future<T> delete<T>(
+    String path, {
+    Object? data,
+    required T Function(Map<String, dynamic> json) decode,
+  }) async {
+    deletes.add((path: path, data: data));
+    if (delay != null) await Future<void>.delayed(delay!);
+    if (deleteError != null) throw deleteError!;
+    return decode(const <String, dynamic>{'ok': true});
+  }
+
   @override
   Future<RawResponse> postRaw(String path, {Object? data}) async {
     postRaws.add((path: path, data: data));
