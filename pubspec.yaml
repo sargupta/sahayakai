@@ -8,7 +8,7 @@ publish_to: 'none'
 # artifacts sharing an applicationId and a versionCode is an ambiguity with no
 # upside. Provisional until H3 confirms the highest versionCode Play has seen
 # for com.sargvision.sahayakai. See docs/flutter/RELEASE.md.
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.11.4

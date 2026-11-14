@@ -29,19 +29,18 @@ It compares the AAB's signer certificate against the keystore's and exits non-ze
 
 ## Key identity
 
-This app shares its upload key with the Capacitor wrap at `sahayakai-android/`, because both declare `applicationId com.sargvision.sahayakai` and Play permits one app per package name. One key means one set of fingerprints in Firebase and one `assetlinks.json` entry, instead of two that silently disagree.
+The upload key was replaced on 2026-11-14. The old Capacitor `upload.keystore` (alias `sahayakai`, SHA-256 `09:3E:4C:1A…`) was not on hand, and Play had never received an upload for `com.sargvision.sahayakai`, so a fresh key was safe. Play App Signing re-signs every install with its own app signing key; register that key's SHA-1/SHA-256 in Firebase too (Play Console → Test and release → Setup → App signing).
 
 | | |
 |---|---|
-| Keystore (canonical) | `sahayakai-android/mobile/android/app/upload.keystore` |
-| Local copy used by Gradle | `android/app/upload.keystore` — gitignored by `**/*.keystore` |
+| Keystore | `C:/Users/shree/sahayakai-signing/sahayakai-upload.jks` (outside the repo) |
 | Credentials | `android/key.properties` — gitignored; see `android/key.properties.example` |
-| Alias | `sahayakai` |
-| Type | PKCS12, 1 entry, issued 2026-07-17 |
-| **Upload cert SHA-256** | `09:3E:4C:1A:71:2D:6D:40:A0:B6:A6:4B:56:F8:6F:67:00:10:16:C9:ED:44:6E:79:F2:DC:A8:DB:CF:E6:35:C3` |
-| **Upload cert SHA-1** | `96:13:21:91:C3:F6:0E:50:05:3C:E3:20:DA:62:C3:CF:21:39:F0:A0` |
+| Alias | `upload` |
+| Type | PKCS12, RSA 2048, issued 2026-11-14, valid 10,000 days |
+| **Upload cert SHA-256** | `27:25:DE:7A:4D:3B:24:9B:BC:01:B7:09:4D:7A:4A:D4:3B:6A:5C:9B:AF:2E:BB:43:FE:EE:2F:BC:4A:60:D9:9B` |
+| **Upload cert SHA-1** | `B2:E6:3C:83:CD:A2:D3:90:70:D9:26:F1:6C:35:15:CD:1D:E6:0C:55` |
 
-Back the keystore up. It exists in two places on one machine and nowhere else.
+Back the keystore up off-machine. It exists in one place on one PC and nowhere else.
 
 ---
 

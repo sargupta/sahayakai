@@ -39,8 +39,15 @@ fi
 # trusting things that merely ought to be true.
 KEYSTORE="$UPLOAD_KEYSTORE"
 PROPS="$UPLOAD_KEYSTORE_PROPS"
-if [ -f "android/key.properties" ] && [ -f "android/app/upload.keystore" ]; then
-  KEYSTORE="android/app/upload.keystore"
+if [ -f "android/key.properties" ]; then
+  # Same resolution as Gradle's file(): absolute paths as-is, relative ones
+  # from android/app/.
+  STORE_FILE="$(grep -E '^storeFile=' android/key.properties | head -1 | cut -d= -f2- | tr -d '\r')"
+  case "$STORE_FILE" in
+    /*|[A-Za-z]:*) KEYSTORE="$STORE_FILE" ;;
+    "") ;;
+    *) KEYSTORE="android/app/$STORE_FILE" ;;
+  esac
   PROPS="android/key.properties"
   say "  using the local signing config (android/key.properties)"
 fi

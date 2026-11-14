@@ -22,6 +22,38 @@
           }
         },
         {
+          "client_id": "966091633060-lrmi3tn8vvbkd6klnk4i0uhi4q0g2lnh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sargvision.sahayakai",
+            "certificate_hash": "478739ea369d735928fdcf2d705a40468136af89"
+          }
+        },
+        {
+          "client_id": "966091633060-mlojlvgn87jq9cmd0mh29gm3d7oaeig7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sargvision.sahayakai",
+            "certificate_hash": "b2e63c83cda2d39070d926f16c3515cd1de60c55"
+          }
+        },
+        {
+          "client_id": "966091633060-qbtakip6nvoqf99uucnrvnsdtlefulik.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sargvision.sahayakai",
+            "certificate_hash": "0e56f870c6db695b6411cd5290f879304726597a"
+          }
+        },
+        {
+          "client_id": "966091633060-v9gj3vgp0ovaq2dhi1e09eoc23ffidnf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sargvision.sahayakai",
+            "certificate_hash": "7d0989c66c6544fbffb9b9357b57b6cf117f817f"
+          }
+        },
+        {
           "client_id": "966091633060-0a0ltpb1v883q5h4qek1h40gor62vh15.apps.googleusercontent.com",
           "client_type": 3
         }

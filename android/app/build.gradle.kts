@@ -17,7 +17,7 @@ plugins {
 // `flutter build apk --release` to work.
 //
 // storeFile is resolved below with file(), which is relative to this module
-// directory (android/app/), so key.properties carries `storeFile=upload.keystore`.
+// directory (android/app/); an absolute storeFile path is used as-is.
 val keystorePropertiesFile = rootProject.file("key.properties")
 val hasKeystore = keystorePropertiesFile.exists()
 val keystoreProperties = Properties().apply {
