@@ -35,7 +35,7 @@ dependencies = [
   # parse `{{#if x}}...{{/if}}` (Handlebars-only). pybars3 is a real
   # Handlebars implementation that matches Genkit's Node renderer.
   "pybars3~=0.9",
-  "structlog~=24.4",
+  "structlog>=24.4,<27.0",
   "langdetect~=1.0",
   # Phase J.4 hot-fix (forensic P1 #19): per-process TTL cache for the
   # HMAC replay-guard nonce store. Pure-Python, zero deps, ~5 MB worst
