@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
+import 'package:sahayakai/core/network/web_pricing.dart';
 import 'package:sahayakai/core/platform/link_opener.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/assess_assignment/presentation/widgets/assess_assignment_error_view.dart';
@@ -11,6 +12,10 @@ import 'package:sahayakai/shared/widgets/error_view.dart';
 import 'package:sahayakai/shared/widgets/offline_view.dart';
 
 import 'assess_assignment_fixtures.dart';
+
+/// The web build's pricing link. App-store builds have none (see
+/// web_pricing_test.dart); these tests cover the web prompt.
+final Uri _webPricing = Uri.parse('https://sahayakai.com/pricing');
 
 /// Every failed assessment maps to the *right* recovery UI — retry, re-upload,
 /// upgrade, wait or sign in — not one generic error. The headline case is the
@@ -28,6 +33,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          webPricingUriProvider.overrideWithValue(_webPricing),
           if (linkOpener != null)
             linkOpenerProvider.overrideWithValue(linkOpener),
         ],

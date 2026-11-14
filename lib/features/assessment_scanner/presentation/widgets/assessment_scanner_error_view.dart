@@ -5,7 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/network/dio_config.dart';
+import '../../../../core/network/web_pricing.dart';
 import '../../../../core/platform/link_opener.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -53,7 +53,12 @@ class AssessmentScannerErrorView extends ConsumerWidget {
     }
 
     final api = error as ApiException;
-    void openPricing() => ref.read(linkOpenerProvider).open(_pricingUri);
+    // Null in Android/iOS builds (store payment rules): the prompt then shows
+    // no pricing link.
+    final pricing = ref.watch(webPricingUriProvider);
+    final VoidCallback? openPricing = pricing == null
+        ? null
+        : () => ref.read(linkOpenerProvider).open(pricing);
 
     switch (api.kind) {
       case ApiErrorKind.network:
@@ -121,8 +126,6 @@ class AssessmentScannerErrorView extends ConsumerWidget {
 
 const String _dailyLimitCode = 'DAILY_LIMIT_REACHED';
 
-/// The web app's pricing page — the one place plans are explained.
-final Uri _pricingUri = Uri.parse('$kApiBaseUrl/pricing');
 
 /// The machine-readable `error` code from the plan guard's body. Read from the
 /// raw response first; [ApiException.message] is the fallback because the client

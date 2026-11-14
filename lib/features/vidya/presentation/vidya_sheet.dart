@@ -10,6 +10,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/network/web_pricing.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
@@ -922,7 +923,8 @@ class _SheetTerminalPanel extends ConsumerWidget {
         icon: LucideIcons.refreshCw,
         onPressed: controller.onMicTap,
       );
-    } else if (status == VidyaStatus.upgradeRequired) {
+    } else if (status == VidyaStatus.upgradeRequired &&
+        ref.watch(webPricingUriProvider) != null) {
       action = SecondaryButton(
         label: l10n.vidyaSeePricing,
         icon: LucideIcons.creditCard,

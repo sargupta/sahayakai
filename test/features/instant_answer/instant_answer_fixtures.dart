@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/network/web_pricing.dart';
 import 'package:sahayakai/core/platform/link_opener.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/instant_answer/domain/instant_answer.dart';
@@ -47,10 +48,16 @@ Widget hostResult(
 }) {
   return ProviderScope(
     overrides: [
+      // The web build's pricing link (app-store builds have none).
+      webPricingUriProvider.overrideWithValue(
+        Uri.parse('https://sahayakai.com/pricing'),
+      ),
       if (linkOpener != null) linkOpenerProvider.overrideWithValue(linkOpener),
     ],
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

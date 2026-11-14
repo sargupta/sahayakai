@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/gen/app_localizations.dart';
-import '../../../core/network/dio_config.dart';
+import '../../../core/network/web_pricing.dart';
 import '../../../core/platform/link_opener.dart';
 import 'vidya_controller.dart';
 import 'widgets/seal_mic.dart';
@@ -10,15 +10,13 @@ import 'widgets/seal_mic.dart';
 /// everywhere VIDYA sheet so the two surfaces render the same seal phase,
 /// caption and terminal copy for a given machine state (they cannot drift).
 
-/// The pricing page behind [VidyaStatus.upgradeRequired]. Defined once here for
-/// the same non-drift reason as the copy above: the home panel and the sheet
-/// panel must not disagree about where "See plans and pricing" goes.
-final Uri _pricingUri = Uri.parse('$kApiBaseUrl/pricing');
-
-/// Opens [_pricingUri] for the upgrade prompt, so a surface only has to name
-/// the status rather than re-derive the link.
-void openVidyaPricing(WidgetRef ref) =>
-    ref.read(linkOpenerProvider).open(_pricingUri);
+/// Opens the web pricing page for the upgrade prompt. Does nothing in a build
+/// that must not link to it (see [webPricingUriProvider]); the sheet hides the
+/// button there anyway.
+void openVidyaPricing(WidgetRef ref) {
+  final pricing = ref.read(webPricingUriProvider);
+  if (pricing != null) ref.read(linkOpenerProvider).open(pricing);
+}
 
 /// The Seal Mic's visual phase for a controller [status]. Every non-active phase
 /// (idle / requesting / and the terminal errors) rests on the idle seal.

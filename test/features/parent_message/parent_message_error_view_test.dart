@@ -4,10 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
+import 'package:sahayakai/core/network/web_pricing.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/parent_message/presentation/widgets/parent_message_error_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
 import 'package:sahayakai/shared/widgets/offline_view.dart';
+
+/// The web build's pricing link. App-store builds have none (see
+/// web_pricing_test.dart); these tests cover the web prompt.
+final Uri _webPricing = Uri.parse('https://sahayakai.com/pricing');
 
 /// Every failed request maps to the *right* recovery UI — retry, fill-a-field,
 /// upgrade, wait or sign in — not one generic error. Pins the typed
@@ -17,6 +22,7 @@ void main() {
   Future<void> pump(WidgetTester tester, Object error) async {
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [webPricingUriProvider.overrideWithValue(_webPricing)],
         child: MaterialApp(
           theme: AppTheme.light(),
           locale: const Locale('en'),
