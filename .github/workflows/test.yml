@@ -106,7 +106,7 @@ jobs:
 
       - name: Upload coverage
         if: matrix.node-version == 20 && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: sahayakai-main/coverage/
