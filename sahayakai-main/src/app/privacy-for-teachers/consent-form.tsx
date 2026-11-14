@@ -16,7 +16,7 @@ import { useLanguage } from '@/context/language-context';
  * page changes materially so signed-in teachers are re-prompted to re-confirm
  * the new version (even if they accepted an older one). Format: YYYY-MM-DD-vN.
  */
-const PRIVACY_VERSION = '2026-04-24-v1';
+const PRIVACY_VERSION = '2026-11-14-v2';
 
 function formatAcceptedDate(d: Date | undefined): string {
     if (!d) return 'earlier';
@@ -121,7 +121,7 @@ export function PrivacyConsentForm() {
     // the useEffect above will transition us to the signed-in form.
     if (user && !profileLoaded) {
         return (
-            <div className="mt-12 pt-10 border-t border-black/[0.08]">
+            <div className="mt-12 pt-10 border-t border-border">
                 <div className="h-24 animate-pulse bg-muted/40 rounded-xl" />
             </div>
         );
@@ -129,8 +129,8 @@ export function PrivacyConsentForm() {
 
     if (!user) {
         return (
-            <div className="mt-12 pt-10 border-t border-black/[0.08]">
-                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary mb-3">
+            <div className="mt-12 pt-10 border-t border-border">
+                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground mb-3">
                     {t("Record your acceptance")}
                 </div>
                 <h3 className="font-headline text-[22px] sm:text-[26px] font-bold tracking-tight text-foreground mb-3">
@@ -162,10 +162,10 @@ export function PrivacyConsentForm() {
         // the primary "Go to my dashboard" button, and auto-redirect in 5s as
         // fallback. The legal version stamp stays as a small muted line.
         return (
-            <div className="mt-12 pt-10 border-t border-black/[0.08]">
+            <div className="mt-12 pt-10 border-t border-border">
                 <div className="rounded-[16px] bg-saffron-50 border border-saffron-200 px-6 py-8 sm:p-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
                     <div className="flex items-start gap-4 mb-5">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-saffron text-white">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                             <CheckCircle2 className="h-6 w-6" strokeWidth={2.2} />
                         </div>
                         <div>
@@ -184,19 +184,19 @@ export function PrivacyConsentForm() {
                         <Button
                             onClick={() => router.push('/')}
                             size="lg"
-                            className="rounded-full px-6 font-medium bg-saffron text-white hover:bg-saffron-600 shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)]"
+                            className="rounded-full px-6 font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
                         >
                             {t('Go to my dashboard')}
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                         {justAccepted && redirectSeconds > 0 && (
-                            <span className="text-[13px] text-neutral-600">
+                            <span className="text-[13px] text-muted-foreground">
                                 {t('Taking you there in')} {redirectSeconds}…
                             </span>
                         )}
                     </div>
 
-                    <p className="mt-6 text-[12px] text-neutral-500 leading-[1.55] max-w-[58ch]">
+                    <p className="mt-6 text-[12px] text-muted-foreground leading-[1.55] max-w-[58ch]">
                         {t('Saved on')} {formatAcceptedDate(acceptedAt)}.
                         {' '}
                         {t('We will ask you again only if we change anything important.')}
@@ -210,8 +210,8 @@ export function PrivacyConsentForm() {
 
     // Signed-in, not yet accepted (or accepted an older version)
     return (
-        <div className="mt-12 pt-10 border-t border-black/[0.08]">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary mb-3">
+        <div className="mt-12 pt-10 border-t border-border">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground mb-3">
                 {alreadyAccepted ? 'Re-confirm these commitments' : 'Record your acceptance'}
             </div>
             <h3 className="font-headline text-[22px] sm:text-[26px] font-bold tracking-tight text-foreground mb-3">
