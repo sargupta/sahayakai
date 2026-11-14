@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowUpRight, Bot, CalendarClock, ChevronsUpDown, Megaphone, Menu, Phone, School, Settings, Sun, Users } from "lucide-react";
 import { AuthButton } from "@/components/auth/auth-button";
 import { LanguagePill } from "@/components/language-pill";
+import { ProviderSwitchPill } from "@/components/sampark/provider-switch-pill";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ProductSideNav, type NavSection } from "@/components/shell/side-nav";
@@ -211,7 +212,7 @@ export function SamparkFrame({ children }: { children: ReactNode }) {
 
     return (
         <FrameDataContext.Provider value={setData}>
-        <div className="flex min-h-svh w-full bg-milk-200">
+        <div className="flex min-h-svh w-full bg-wash-screen">
             {nav(false)}
             <div className="flex min-w-0 flex-1 flex-col">
                 <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line-hairline bg-surface-chrome px-3 md:h-topbar md:px-6">
@@ -233,6 +234,7 @@ export function SamparkFrame({ children }: { children: ReactNode }) {
                         </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                        <ProviderSwitchPill />
                         <LanguagePill />
                         <AuthButton />
                     </div>

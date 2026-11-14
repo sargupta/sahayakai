@@ -46,6 +46,12 @@ export const VOBIZ_DOMAINS = {
     STREAM: 'vobiz-call',
     /** Authorises reporting ring/hangup progress for one outreach record. */
     STATUS: 'vobiz-status',
+    /** Sampark Riya over Vobiz: call-control XML for one Sampark call (sampark~org~call). */
+    SAMPARK_RIYA_ANSWER: 'sampark-riya-answer',
+    /** Sampark Riya over Vobiz: ring/hangup progress for one Sampark call. */
+    SAMPARK_RIYA_STATUS: 'sampark-riya-status',
+    /** Sampark Riya over Vobiz: the bridge fetching one call's variables. */
+    SAMPARK_RIYA_CONTEXT: 'sampark-riya-context',
 } as const;
 
 export type VobizDomain = (typeof VOBIZ_DOMAINS)[keyof typeof VOBIZ_DOMAINS];

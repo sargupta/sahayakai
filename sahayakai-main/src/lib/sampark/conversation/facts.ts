@@ -4,8 +4,10 @@
  * Every fact is TYPED (dates, whole/half-hour times, closed enums). No free text a
  * staff member types ever reaches the agent: the words Riya hears are produced here
  * by the same reviewed Indian-English speller the notice calls use
- * (src/lib/sampark/scripts/spoken.ts, locales/call-scripts/english.json). The agent
- * is English-only (prompt §5), so every phrase is rendered in English.
+ * (src/lib/sampark/scripts/spoken.ts, locales/call-scripts/english.json), or, for the
+ * outreach workflows (academic, behaviour, achievement), assembled from the closed
+ * sentences in riya-purposes.ts. The agent is English-only (prompt §5), so every phrase
+ * is rendered in English.
  *
  * Who and which school are NEVER taken from the request: `school_name` comes from the
  * school's reviewed spoken name, `student_name` / `class_name` / `section_name` from
@@ -23,10 +25,19 @@ import { ScriptRenderError } from '@/lib/sampark/scripts/types';
 import type { ClosureReason, EventType, SamparkSchool, SamparkStudent, SpokenTime } from '@/types/sampark';
 
 import {
+    ACADEMIC_CONCERNS,
+    ACHIEVEMENTS,
+    achievementNeedsSubject,
+    BEHAVIOUR_OBSERVATIONS,
     CLOSURE_REASONS,
     EVENT_TYPES,
     EXAM_SUBJECTS,
     emptyRiyaVariables,
+    MAX_ACADEMIC_SUBJECTS,
+    MAX_BEHAVIOUR_OBSERVATIONS,
+    type AcademicConcern,
+    type Achievement,
+    type BehaviourObservation,
     type ExamSubject,
     riyaPurposeSpec,
     type RiyaPurpose,
@@ -57,6 +68,11 @@ const SpokenTimeSchema = z
     .strict();
 
 const EXAM_SUBJECT_IDS = Object.keys(EXAM_SUBJECTS) as [ExamSubject, ...ExamSubject[]];
+const ACADEMIC_CONCERN_IDS = Object.keys(ACADEMIC_CONCERNS) as [AcademicConcern, ...AcademicConcern[]];
+const BEHAVIOUR_IDS = Object.keys(BEHAVIOUR_OBSERVATIONS) as [BehaviourObservation, ...BehaviourObservation[]];
+const ACHIEVEMENT_IDS = Object.keys(ACHIEVEMENTS) as [Achievement, ...Achievement[]];
+
+const unique = <T>(xs: readonly T[]) => new Set(xs).size === xs.length;
 
 export { CLOSURE_REASONS, EVENT_TYPES, EXAM_SUBJECTS, type ExamSubject };
 
@@ -90,6 +106,27 @@ export const RiyaFactsSchema = z.discriminatedUnion('purpose', [
             busesRunning: z.boolean().nullable(),
         })
         .strict(),
+    z
+        .object({
+            purpose: z.literal('academic_performance'),
+            subjects: z.array(z.enum(EXAM_SUBJECT_IDS)).min(1).max(MAX_ACADEMIC_SUBJECTS).refine(unique, 'subjects must be different'),
+            concern: z.enum(ACADEMIC_CONCERN_IDS),
+        })
+        .strict(),
+    z
+        .object({
+            purpose: z.literal('classroom_behaviour'),
+            observations: z.array(z.enum(BEHAVIOUR_IDS)).min(1).max(MAX_BEHAVIOUR_OBSERVATIONS).refine(unique, 'observations must be different'),
+        })
+        .strict(),
+    z
+        .object({
+            purpose: z.literal('student_achievement'),
+            achievement: z.enum(ACHIEVEMENT_IDS),
+            /** Required when the achievement names a subject (achievementNeedsSubject), otherwise null. */
+            subject: z.enum(EXAM_SUBJECT_IDS).nullable(),
+        })
+        .strict(),
 ]);
 
 export type RiyaFacts = z.infer<typeof RiyaFactsSchema>;
@@ -103,6 +140,7 @@ export type RiyaFactProblem =
     | { code: 'NOT_A_SCHOOL_HOLIDAY'; date: string }
     | { code: 'ABSENCE_DATE_OUT_OF_RANGE'; date: string }
     | { code: 'UNSAYABLE'; detail: string }
+    | { code: 'SUBJECT_NOT_EXPECTED' }
     | { code: 'PURPOSE_MISMATCH' };
 
 export type RiyaBuildResult =
@@ -159,6 +197,24 @@ function examSchedule(entries: { subject: ExamSubject; date: string; time: Spoke
         .join('; ');
 }
 
+/** "Mathematics", "Mathematics and Science", "Mathematics, Science and English". */
+export function spokenList(items: readonly string[]): string {
+    if (items.length <= 1) return items[0] ?? '';
+    return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+function academicUpdate(subjects: readonly ExamSubject[], concern: AcademicConcern): string {
+    return ACADEMIC_CONCERNS[concern].replace('{subjects}', spokenList(subjects.map((s) => EXAM_SUBJECTS[s])));
+}
+
+function behaviourSummary(observations: readonly BehaviourObservation[]): string {
+    return `Your child ${spokenList(observations.map((o) => BEHAVIOUR_OBSERVATIONS[o]))}.`;
+}
+
+function achievementDetails(achievement: Achievement, subject: ExamSubject | null): string {
+    return ACHIEVEMENTS[achievement].replace('{subject}', subject ? EXAM_SUBJECTS[subject] : '');
+}
+
 /**
  * The line Riya says once the listener has confirmed they are the parent or guardian,
  * mirroring each workflow node's wording, so staff review exactly what will be said.
@@ -177,6 +233,12 @@ function announcementFor(purpose: RiyaPurpose, v: RiyaVariables): string {
             return `Your child was marked absent on ${v.absence_date}. Is your child with you right now?`;
         case 'emergency_closure':
             return `I'm calling to inform you that the school will be closed on ${v.closure_date} due to ${v.closure_reason}.${v.transport_information ? ` ${v.transport_information}` : ''}`;
+        case 'academic_performance':
+            return `I'm calling with a brief academic progress update. ${v.academic_update}`;
+        case 'classroom_behaviour':
+            return `I'm calling to share a classroom update. ${v.behaviour_summary}`;
+        case 'student_achievement':
+            return `I'm calling to share a positive update. ${v.achievement_details}`;
     }
 }
 
@@ -236,6 +298,18 @@ export function buildRiyaVariables(input: RiyaBuildInput): RiyaBuildResult {
                 v.closure_date = formatDate(facts.date, ENGLISH);
                 v.closure_reason = closureReason(facts.reason);
                 v.transport_information = busesLine(facts.busesRunning);
+                break;
+            case 'academic_performance':
+                v.academic_update = academicUpdate(facts.subjects, facts.concern);
+                break;
+            case 'classroom_behaviour':
+                v.behaviour_summary = behaviourSummary(facts.observations);
+                break;
+            case 'student_achievement':
+                // A subject-naming achievement without a subject leaves the variable empty (refused below).
+                if (achievementNeedsSubject(facts.achievement) && !facts.subject) break;
+                if (!achievementNeedsSubject(facts.achievement) && facts.subject) problems.push({ code: 'SUBJECT_NOT_EXPECTED' });
+                v.achievement_details = achievementDetails(facts.achievement, facts.subject);
                 break;
         }
     } catch (err) {

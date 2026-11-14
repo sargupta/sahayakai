@@ -96,14 +96,16 @@ export function sargvisionRecords(roster: Roster, nowIso: string, crypto: PhoneC
             importedAt: nowIso,
         });
         // The team agreed to these local test calls (user's instruction, 2026-10-29); recorded here
-        // so the calling gate's consent rule passes for this roster only.
+        // so the calling gate's consent rule passes for this roster only. Progress consent (the four
+        // outreach reasons: absence, academic, behaviour, achievement) confirmed by the user for the
+        // Sargvision team on 2026-11-09. hpc_input stays unknown: never asked.
         preferences.push({
             orgId: roster.orgId,
             guardianId,
             language: 'English',
             consent: {
                 notices: consent('granted'),
-                progress: consent('unknown'),
+                progress: consent('granted'),
                 recorded_conversation: consent('granted'),
                 hpc_input: consent('unknown'),
             },

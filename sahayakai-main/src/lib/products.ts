@@ -129,6 +129,17 @@ export function samparkEntryPath(env: Record<string, string | undefined> = { NEX
     return env.NEXT_PUBLIC_SAMPARK_DEMO_ENABLED === 'true' ? '/demo' : '/workspace';
 }
 
+/**
+ * The URL SahayakAI links to for "enter SamparkAI": ALWAYS the calling-provider choice first
+ * (ElevenLabs Calls or Vobiz Calls, src/lib/sampark/provider-choice.ts), which then opens
+ * `path` (SamparkAI-relative, default the entry page). One chooser, one SamparkAI after it.
+ */
+export function samparkEntryUrl(path: string = samparkEntryPath()): string {
+    const target = samparkUrl(path);
+    const next = target.startsWith('http') ? new URL(target).pathname + new URL(target).search : target;
+    return `${samparkUrl('/choose-provider')}?next=${encodeURIComponent(next)}`;
+}
+
 /** URL of a SahayakAI page from inside SamparkAI. */
 export function sahayakUrl(path: string = '/'): string {
     const p = path.startsWith('/') ? path : `/${path}`;

@@ -48,6 +48,11 @@ function extraAdmins(argv: string[]): string[] {
     return uids;
 }
 
+function argValue(argv: string[], flag: string): string | undefined {
+    const i = argv.indexOf(flag);
+    return i >= 0 ? argv[i + 1] : undefined;
+}
+
 function out(line: string): void {
     process.stdout.write(`${line}\n`);
 }
@@ -160,7 +165,15 @@ async function main(): Promise<void> {
             await repo.upsertGuardians(SARGVISION_ORG_ID, guardians);
             await repo.upsertPreferences(preferences);
             // Test mode on the school's normal hours (10:00–20:00 IST is the most the rules allow).
-            await repo.upsertSchool({ ...school, mode: 'test', callingWindow: { ...school.callingWindow, startHour: 10, endHour: 20 }, updatedAt: nowIso });
+            // `--sargvision-mode practice` (the launcher without --real-call): simulated calls only.
+            const mode = argValue(process.argv, '--sargvision-mode') === 'practice' ? 'practice' : 'test';
+            // `--sargvision-provider vobiz` (launcher --vobiz-call): Settings → Calling provider = Vobiz Calls.
+            const provider = argValue(process.argv, '--sargvision-provider');
+            await repo.upsertSchool({
+                ...school, mode, callingWindow: { ...school.callingWindow, startHour: 10, endHour: 20 },
+                ...(provider === 'vobiz' || provider === 'elevenlabs' ? { conversationProvider: provider } : {}),
+                updatedAt: nowIso,
+            });
             // Read every contact back: the stored ciphertext must decrypt to its roster number.
             let ok = 0;
             for (const c of roster.contacts) {
@@ -169,12 +182,12 @@ async function main(): Promise<void> {
                 if (good) ok += 1;
                 out(`    ${c.id.padEnd(14)} ${c.name.padEnd(10)} …${c.phone.slice(-4)}  ${before.has(c.id) ? 'reused ' : 'created'}  read back ${good ? 'OK' : 'FAILED'}`);
             }
-            out(`  sampark_schools/${SARGVISION_ORG_ID}: ${ok}/${roster.contacts.length} contacts verified; mode test`);
+            out(`  sampark_schools/${SARGVISION_ORG_ID}: ${ok}/${roster.contacts.length} contacts verified; mode ${mode}${provider ? `; calling provider ${provider}` : ''}`);
             if (ok !== roster.contacts.length) process.exitCode = 1;
         }
         if (process.argv.includes('--arm-sargvision-after-hours')) {
             const fresh = (await repo.getSchool(SARGVISION_ORG_ID)) ?? school;
-            const until = new Date(Date.now() + 120 * 60_000).toISOString();
+            const until = new Date(Date.now() + 175 * 60_000).toISOString(); // just under the 3-hour cap (STAGING_TEST_WINDOW_MAX_MS)
             await repo.upsertSchool({ ...fresh, localAfterHoursTest: { armedAt: nowIso, until }, updatedAt: nowIso });
             out(`  sampark_schools/${SARGVISION_ORG_ID}: local after-hours test window armed until ${until} (roster contacts only)`);
         }

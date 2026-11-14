@@ -1,5 +1,8 @@
 {
-  "_source": "Derived from the live published Main branch of the Riya agent (version agtvrsn_9401m66kazcdf7m94tq3gsdvdded, read 30 Oct 2026; Varunesh updated JSON imported into the same agent). Names and structure only: no phone numbers, credentials, or sample student data.",
+  "_source": "Derived from the live unified SARGVISION agent \"Riya SARGVISION Unified (Sampark + Athithi Vani)\" (agent_0601m6hcjz53fa8rbc8mkn46vmw8, version agtvrsn_0601m6hcy8x9fgksafvk9080h920, read 4 Nov 2026) and the Vobiz number assigned to it. Names and structure only: no phone numbers, credentials, or sample student data.",
+  "agentId": "agent_0601m6hcjz53fa8rbc8mkn46vmw8",
+  "agentPhoneNumberId": "phnum_5301m6hd2e5de5qaqf79txqf1hbq",
+  "phoneNumberAssignedAgentId": "agent_0601m6hcjz53fa8rbc8mkn46vmw8",
   "callPurposeEdgeValues": [
     "absence_notice",
     "academic_performance",
@@ -13,6 +16,29 @@
     "student_achievement",
     "student_support"
   ],
+  "productContext": {
+    "variable": "product_context",
+    "samparkValue": "sampark",
+    "callPurposeEdgesGatedOnSampark": [
+      "absence_notice",
+      "academic_performance",
+      "classroom_behaviour",
+      "emergency_closure",
+      "event_invitation",
+      "exam_schedule_notice",
+      "holiday_notice",
+      "homework_followup",
+      "ptm_invitation",
+      "student_achievement",
+      "student_support"
+    ],
+    "productValuesRouted": [
+      "athithi",
+      "sampark"
+    ],
+    "fallbackNodeLabel": "Context Missing Safe Exit",
+    "fallbackIsUnconditionalAndLast": true
+  },
   "nodeVariables": {
     "event_invitation": [
       "event_date",
@@ -127,8 +153,8 @@
     "ptm_preferred_time"
   ],
   "clientOverridesAllowed": {
-    "first_message": false,
+    "first_message": true,
     "prompt": false,
-    "voice_id": false
+    "voice_id": true
   }
 }

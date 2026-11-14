@@ -67,7 +67,8 @@ export interface DemoStudent {
      * contact, not a pupil. It has no attendance, marks or notes, and its Call button places a real
      * Riya call through the Sampark server (school `sargvision-local`), never the simulated one.
      */
-    rosterContact?: { orgId: string; guardianId: string };
+    /** realCall: Test mode + live dialling (rings a real phone); otherwise a simulated Practice call. */
+    rosterContact?: { orgId: string; guardianId: string; realCall?: boolean; notAllowListed?: boolean };
 }
 
 export interface DemoSchool {

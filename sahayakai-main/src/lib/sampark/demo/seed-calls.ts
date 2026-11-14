@@ -211,6 +211,25 @@ const SCRIPTED: Scripted[] = [
             callQuality: 'productive',
         }),
     },
+    {
+        // Film demo record (14 Nov 2026): the outcome of a real Riya call placed through the
+        // call bridge against a synthetic parent voice; summary written from that transcript.
+        studentId: '7A-17',
+        reason: 'poor_performance',
+        hoursAgo: 0.1,
+        durationSeconds: 55,
+        summary: summary({
+            parentResponse: 'The mother listened to the Science update and asked what the family can do at home to help Aman.',
+            parentConcerns: ["Aman's recent Science marks have dropped"],
+            parentCommitments: ['Will encourage a regular study routine at home'],
+            actionItemsForTeacher: ["Rai ma'am to call the mother back after 6 pm", 'Share which Science topics Aman finds difficult'],
+            guidanceGiven: ['Suggested a regular study routine and practice on the difficult topics'],
+            parentSentiment: 'concerned',
+            callQuality: 'productive',
+            followUpNeeded: true,
+            followUpSuggestion: 'The mother asked for a callback from the class teacher, evening after 6.',
+        }),
+    },
     { studentId: '6A-8', reason: 'consecutive_absences', hoursAgo: 4, status: 'no_answer' },
     { studentId: '6B-3', reason: 'behavioral_concern', hoursAgo: 26, status: 'busy' },
     { studentId: '7B-12', reason: 'poor_performance', hoursAgo: 30, status: 'no_answer' },

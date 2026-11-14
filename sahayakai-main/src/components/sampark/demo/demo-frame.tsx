@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeftRight, ArrowUpRight, CalendarDays, ClipboardList, GraduationCap, LayoutDashboard, Megaphone, Menu, MessageSquareWarning, Phone, PhoneCall, School, Sun, Users } from "lucide-react";
 import { LanguagePill } from "@/components/language-pill";
+import { ProviderSwitchPill } from "@/components/sampark/provider-switch-pill";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ProductSideNav, type NavSection } from "@/components/shell/side-nav";
@@ -205,7 +206,7 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
     );
 
     return (
-        <div className="theme-sampark flex min-h-svh w-full bg-milk-200">
+        <div className="theme-sampark flex min-h-svh w-full bg-wash-screen">
             {nav(false)}
             <div className="flex min-w-0 flex-1 flex-col">
                 <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line-hairline bg-surface-chrome px-3 md:h-topbar md:px-6">
@@ -224,7 +225,7 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
                         </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-                        {sargvision.length > 0 ? (
+                        {sargvision.some((c) => c.realCall) ? (
                             <StatusPill tone="warning" title={t("Demo classes play in the browser. The Sargvision sample class places REAL calls by Riya to its allow-listed contacts, after confirmation, on this local machine only.")}>
                                 {t("Demo · Sargvision rings real phones")}
                             </StatusPill>
@@ -233,6 +234,7 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
                                 {t("Demo · no phone rings")}
                             </StatusPill>
                         )}
+                        <ProviderSwitchPill />
                         <LanguagePill />
                     </div>
                 </header>

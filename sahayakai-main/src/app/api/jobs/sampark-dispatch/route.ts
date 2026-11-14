@@ -18,6 +18,9 @@
  * Then:   due callbacks (src/server/sampark/callbacks.ts runCallbackTick) under their
  *         own single-flight lock, when Riya is on: claim → re-check → startRiyaCall.
  *         Reported as `callbacks`. A callback failure never fails the dispatch tick.
+ *         Then class-wide batch campaigns (src/server/sampark/batch-calls.ts runBatchTick) under
+ *         their own single-flight lock: mirror call outcomes, dial the next queued families within
+ *         the configured concurrency and gap. Reported as `batches`; never fails the tick.
  *         Then, at most hourly across all instances (lease 'riya-transcript-purge'): the Riya
  *         transcript retention sweep (runScheduledTranscriptPurge; reads also delete expired
  *         ones). Reported as `transcriptsPurged` (null on ticks that skip it).
@@ -30,6 +33,7 @@ import { errorResponse, samparkContext, samparkDisabledResponse } from '@/server
 import { dispatchJob } from '@/server/sampark/jobs';
 import { callbackDeps, runCallbackTick, type CallbackTickReport } from '@/server/sampark/callbacks';
 import { riyaDeps, runScheduledTranscriptPurge } from '@/server/sampark/conversation';
+import { batchDeps, runBatchTick, type BatchTickReport } from '@/server/sampark/batch-calls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +53,14 @@ export async function POST(req: NextRequest) {
             console.error('[SAMPARK_CALLBACKS] tick failed', err);
             callbacks = { error: 'callback tick failed' };
         }
+        // Class-wide batch campaigns: mirror outcomes, dial the next queued families. Never fails the tick.
+        let batches: BatchTickReport | { error: string };
+        try {
+            batches = await runBatchTick(await batchDeps(ctx));
+        } catch (err) {
+            console.error('[SAMPARK_BATCH] tick failed', err);
+            batches = { error: 'batch tick failed' };
+        }
         // Hourly, single-flight across instances (a Firestore lease); null when this tick skipped it.
         let transcriptsPurged: number | null = null;
         try {
@@ -56,7 +68,7 @@ export async function POST(req: NextRequest) {
         } catch (err) {
             console.error('[SAMPARK_RIYA] transcript purge failed', err);
         }
-        return NextResponse.json({ ...dispatch, callbacks, transcriptsPurged });
+        return NextResponse.json({ ...dispatch, callbacks, batches, transcriptsPurged });
     } catch (err) {
         return errorResponse(err, 'SAMPARK_DISPATCH_JOB');
     }

@@ -16,7 +16,7 @@ import crypto from 'node:crypto';
 
 import { createMemoryConversationRepo } from '@/lib/sampark/conversation/repo';
 import type { RiyaFacts } from '@/lib/sampark/conversation/facts';
-import { RIYA_PURPOSES, type RiyaPurpose } from '@/lib/sampark/conversation/riya-purposes';
+import { OUTREACH_REASON_PURPOSE, RIYA_PURPOSES, type RiyaPurpose } from '@/lib/sampark/conversation/riya-purposes';
 import { encryptPhone, hashPhone } from '@/lib/sampark/phone';
 import type { AuditEntry, SamparkRepo } from '@/lib/sampark/ports';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
@@ -63,6 +63,9 @@ const FACTS: Record<RiyaPurpose, RiyaFacts> = {
     exam_schedule_notice: { purpose: 'exam_schedule_notice', entries: [{ subject: 'mathematics', date: '2026-11-02', time: { hour: 9, minute: 30 } }] },
     absence_notice: { purpose: 'absence_notice', date: '2026-10-07' },
     emergency_closure: { purpose: 'emergency_closure', date: '2026-10-08', reason: 'rain_landslide', busesRunning: true },
+    academic_performance: { purpose: 'academic_performance', subjects: ['mathematics'], concern: 'marks_dropped' },
+    classroom_behaviour: { purpose: 'classroom_behaviour', observations: ['incomplete_classwork'] },
+    student_achievement: { purpose: 'student_achievement', achievement: 'great_improvement', subject: 'science' },
 };
 
 interface Setup {
@@ -438,6 +441,28 @@ describe('Test mode — ElevenLabs (mocked network)', () => {
         expect(body.conversation_initiation_client_data.user_id).toBe(`${ORG}~${call.id}`);
         expect(body.conversation_initiation_client_data.dynamic_variables).toMatchObject({ call_purpose: 'ptm_invitation', student_name: 'Asha', school_name: 'Hillview Demo School' });
         expect(call).toMatchObject({ state: 'initiated', destination: 'test_phone', phoneLast4: '0001', providerConversationId: 'conv_abc123', agentId: '…mf5yr2' });
+    });
+
+    it.each([
+        ['consecutive_absences', 'absence_notice', 'absence_date', 'Wednesday, the seventh of October'],
+        ['poor_performance', 'academic_performance', 'academic_update', "Your child's recent marks in Mathematics have dropped compared with earlier in the term."],
+        ['behavioral_concern', 'classroom_behaviour', 'behaviour_summary', 'Your child has not been completing classwork in class.'],
+        ['positive_feedback', 'student_achievement', 'achievement_details', 'Your child has shown excellent improvement in Science.'],
+    ] as const)('outreach %s: the unified agent gets product_context=sampark, call_purpose %s and %s; the call is recorded against the child', async (reason, purpose, variable, spoken) => {
+        expect(OUTREACH_REASON_PURPOSE[reason]).toBe(purpose);
+        const s = await setup({ mode: 'test' });
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps, purpose));
+        expect(s.fetchImpl).toHaveBeenCalledTimes(1);
+        const [url, init] = s.fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+        expect(url).toBe('https://api.elevenlabs.io/v1/convai/sip-trunk/outbound-call');
+        const body = JSON.parse(String(init.body));
+        expect(body.agent_id).toBe(AGENT);
+        expect(body.agent_phone_number_id).toBe(PHONE_ID);
+        const vars = body.conversation_initiation_client_data.dynamic_variables;
+        expect(vars).toMatchObject({ product_context: 'sampark', call_purpose: purpose, [variable]: spoken, student_name: 'Asha', school_name: 'Hillview Demo School' });
+        expect(body.conversation_initiation_client_data).not.toHaveProperty('conversation_config_override');
+        expect(call).toMatchObject({ riyaPurpose: purpose, guardianId: 'g1', studentId: 's1', state: 'initiated', providerConversationId: 'conv_abc123' });
+        expect(call.variables[variable]).toBe(spoken);
     });
 
     it('a test phone whose stored hash does not match is never dialled', async () => {

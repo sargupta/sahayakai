@@ -32,6 +32,12 @@ param(
     [switch]$Persist,
     # Run without the interactive menu (stop with -Stop).
     [switch]$NoMenu,
+    # Skip the VIDYA voice sidecar (started by default when .env.development.local turns Live VIDYA on).
+    [switch]$NoVoice,
+    # next dev uses Turbopack (pages compile in 1-4 s instead of 10-40 s); -Webpack falls back to webpack.
+    [switch]$Webpack,
+    # Skip the background warm-up that pre-compiles the Sampark pages right after start.
+    [switch]$NoWarm,
     [int]$Port = 3000
 )
 
@@ -90,6 +96,9 @@ if ($RealCall) {
 }
 if ($Persist) { $launcherArgs += '--persist' }
 if ($NoMenu) { $launcherArgs += '--no-menu' }
+if ($NoVoice) { $launcherArgs += '--no-voice' }
+if ($Webpack) { $launcherArgs += '--webpack' }
+if ($NoWarm) { $launcherArgs += '--no-warm' }
 
 & node @launcherArgs
 exit $LASTEXITCODE

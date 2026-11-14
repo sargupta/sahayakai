@@ -20,6 +20,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { riyaDeps, riyaOverview, RiyaStartSchema, startRiyaCall } from '@/server/sampark/conversation';
 import { guardRiyaRoute } from '@/server/sampark/conversation-http';
+import { providerChoiceFromCookieHeader } from '@/lib/sampark/provider-choice';
 import { errorResponse, parseBody, samparkContext } from '@/server/sampark/http';
 
 export const runtime = 'nodejs';
@@ -29,7 +30,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ orgI
     const guard = await guardRiyaRoute(req, (await params).orgId);
     if ('response' in guard) return guard.response;
     try {
-        return NextResponse.json(await riyaOverview(await riyaDeps(await samparkContext()), guard.orgId));
+        const deps = await riyaDeps(await samparkContext());
+        deps.providerChoice = providerChoiceFromCookieHeader(req.headers.get('cookie'));
+        return NextResponse.json(await riyaOverview(deps, guard.orgId));
     } catch (err) {
         return errorResponse(err, 'SAMPARK_RIYA');
     }
@@ -42,6 +45,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
     if ('response' in body) return body.response;
     try {
         const deps = await riyaDeps(await samparkContext());
+        // The provider this person chose at the SamparkAI entry (server-side cookie): the call dials with it.
+        deps.providerChoice = providerChoiceFromCookieHeader(req.headers.get('cookie'));
         const result = await startRiyaCall(deps, guard.orgId, guard.uid, body.data);
         return NextResponse.json(result, { status: result.duplicate ? 200 : 201 });
     } catch (err) {

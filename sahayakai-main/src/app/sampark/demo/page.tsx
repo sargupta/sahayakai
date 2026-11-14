@@ -44,9 +44,11 @@ function RolePicker() {
                 eyebrow={t("SamparkAI demo")}
                 title={fmt(t("Sign in to {school}"), { school: school.name })}
                 description={
-                    school.classes.some((c) => c.id === SARGVISION_CLASS_ID)
+                    school.students.some((s) => s.rosterContact?.realCall)
                         ? t("A demo school: every name is made up, and calls play in your browser. No phone rings — except the Sargvision sample class (local test), where Call places a REAL call by Riya after you confirm.")
-                        : t("A demo school: every name is made up, and calls play in your browser. You speak as the parent, the AI answers. No phone rings.")
+                        : school.classes.some((c) => c.id === SARGVISION_CLASS_ID)
+                          ? t("A demo school: every name is made up, and calls play in your browser. The Sargvision sample class (local test) is in Practice mode: Riya's calls are simulated and no phone rings.")
+                          : t("A demo school: every name is made up, and calls play in your browser. You speak as the parent, the AI answers. No phone rings.")
                 }
             />
             <div className="grid grid-cols-3 gap-3 sm:max-w-xl">

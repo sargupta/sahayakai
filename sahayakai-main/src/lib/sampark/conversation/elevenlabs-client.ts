@@ -11,8 +11,13 @@
  * Request fields are exactly the documented ones (API reference, 15 Oct 2026):
  * agent_id, agent_phone_number_id, to_number, conversation_initiation_client_data
  * { dynamic_variables, user_id }, telephony_call_config { ringing_timeout_secs }.
- * The agent does not allow prompt, first-message or voice overrides from the client
- * (platform_settings.overrides all false), and none are sent.
+ *
+ * The agent is the unified SARGVISION agent (Sampark + Athithi Vani on one Vobiz number).
+ * Its workflow routes on `product_context`, so dynamic_variables always carry
+ * product_context = "sampark", set last so no caller-built variable can replace it. The
+ * agent allows first-message and voice overrides for Athithi Vani calls only; Sampark
+ * sends no conversation_config_override at all, so Riya keeps the agent's own greeting,
+ * voice, model and prompt.
  *
  * Outcome classes — the same rule the Vobiz notice carrier follows:
  *   accepted              2xx with success !== false and a conversation id
@@ -24,6 +29,8 @@
  */
 
 import { z } from 'zod';
+
+import { SAMPARK_PRODUCT_CONTEXT } from './riya-purposes';
 
 export const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io';
 /**
@@ -55,6 +62,7 @@ export type ElevenLabsConfigProblem =
     | 'ELEVENLABS_AGENT_ID_INVALID'
     | 'ELEVENLABS_AGENT_PHONE_NUMBER_ID_MISSING'
     | 'ELEVENLABS_AGENT_PHONE_NUMBER_ID_INVALID'
+    | 'ELEVENLABS_PHONE_NUMBER_ID_CONFLICT'
     | 'ELEVENLABS_AGENT_BRANCH_ID_INVALID'
     | 'ELEVENLABS_SOURCE_AGENT_ID_MISSING'
     | 'ELEVENLABS_AGENT_ID_IS_SOURCE_EXPORT';
@@ -73,7 +81,12 @@ export function readElevenLabsConfig(
     const problems: ElevenLabsConfigProblem[] = [];
     const apiKey = env.ELEVENLABS_API_KEY?.trim() ?? '';
     const agentId = env.ELEVENLABS_AGENT_ID?.trim() ?? '';
-    const phoneId = env.ELEVENLABS_AGENT_PHONE_NUMBER_ID?.trim() ?? '';
+    // ELEVENLABS_AGENT_PHONE_NUMBER_ID is the established name; ELEVENLABS_PHONE_NUMBER_ID is
+    // accepted as an alias. Both set to different numbers is refused rather than guessed.
+    const phoneIdPrimary = env.ELEVENLABS_AGENT_PHONE_NUMBER_ID?.trim() ?? '';
+    const phoneIdAlias = env.ELEVENLABS_PHONE_NUMBER_ID?.trim() ?? '';
+    const phoneId = phoneIdPrimary || phoneIdAlias;
+    if (phoneIdPrimary && phoneIdAlias && phoneIdPrimary !== phoneIdAlias) problems.push('ELEVENLABS_PHONE_NUMBER_ID_CONFLICT');
     const branchId = env.ELEVENLABS_AGENT_BRANCH_ID?.trim() || null;
     const sourceAgentId = env.ELEVENLABS_SOURCE_AGENT_ID?.trim() ?? '';
     if (!apiKey) problems.push('ELEVENLABS_API_KEY_MISSING');
@@ -165,7 +178,7 @@ export async function startRiyaOutboundCall(config: ElevenLabsConfig, req: Outbo
         agent_phone_number_id: config.agentPhoneNumberId,
         to_number: req.toNumberE164,
         conversation_initiation_client_data: {
-            dynamic_variables: req.dynamicVariables,
+            dynamic_variables: { ...req.dynamicVariables, product_context: SAMPARK_PRODUCT_CONTEXT },
             user_id: req.userId,
             ...(config.branchId ? { branch_id: config.branchId } : {}),
         },

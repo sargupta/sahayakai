@@ -14,7 +14,7 @@ import {
     startRiyaOutboundCall,
     type ElevenLabsConfig,
 } from '@/lib/sampark/conversation/elevenlabs-client';
-import { emptyRiyaVariables } from '@/lib/sampark/conversation/riya-purposes';
+import { emptyRiyaVariables, SAMPARK_PRODUCT_CONTEXT } from '@/lib/sampark/conversation/riya-purposes';
 import { applyRiyaEvent, applyRiyaSnapshot } from '@/lib/sampark/conversation/state';
 import type { ConversationCall } from '@/lib/sampark/conversation/types';
 import {
@@ -58,6 +58,13 @@ describe('readElevenLabsConfig', () => {
     it('requires the source agent id to be declared, so the clone check cannot be skipped', () => {
         expect(readElevenLabsConfig({ ...ENV, ELEVENLABS_SOURCE_AGENT_ID: undefined })).toEqual({ ok: false, problems: ['ELEVENLABS_SOURCE_AGENT_ID_MISSING'] });
     });
+    it('accepts ELEVENLABS_PHONE_NUMBER_ID as an alias, and refuses two different numbers', () => {
+        const { ELEVENLABS_AGENT_PHONE_NUMBER_ID: _primary, ...rest } = ENV;
+        expect(readElevenLabsConfig({ ...rest, ELEVENLABS_PHONE_NUMBER_ID: PHONE_ID })).toMatchObject({ ok: true, config: { agentPhoneNumberId: PHONE_ID } });
+        expect(readElevenLabsConfig({ ...ENV, ELEVENLABS_PHONE_NUMBER_ID: PHONE_ID }).ok).toBe(true);
+        expect(readElevenLabsConfig({ ...ENV, ELEVENLABS_PHONE_NUMBER_ID: 'phnum_9999otherotherotherother99' })).toEqual({ ok: false, problems: ['ELEVENLABS_PHONE_NUMBER_ID_CONFLICT'] });
+        expect(readElevenLabsConfig({ ...rest })).toMatchObject({ ok: false, problems: ['ELEVENLABS_AGENT_PHONE_NUMBER_ID_MISSING'] });
+    });
     it('masks ids for display', () => {
         expect(maskId(AGENT)).toBe('…mf5yr2');
         expect(maskId(null)).toBeNull();
@@ -79,6 +86,38 @@ describe('startRiyaOutboundCall', () => {
         expect(body).toMatchObject({ agent_id: AGENT, agent_phone_number_id: PHONE_ID, to_number: '+919800000001' });
         expect(Object.keys(body.conversation_initiation_client_data).sort()).toEqual(['dynamic_variables', 'user_id']);
         expect(String(init.body)).not.toContain(KEY);
+    });
+
+    it('routes every call to the unified agent\'s Sampark workflows: product_context=sampark, no override of greeting, voice or prompt', async () => {
+        const fetchImpl = jest.fn(async () => jsonResponse(200, { success: true, conversation_id: 'conv_1' }));
+        await startRiyaOutboundCall(config(), req, { fetchImpl: fetchImpl as unknown as typeof fetch });
+        const body = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+        expect(body.conversation_initiation_client_data.dynamic_variables).toEqual({ ...emptyRiyaVariables('ptm_invitation'), product_context: SAMPARK_PRODUCT_CONTEXT });
+        expect(SAMPARK_PRODUCT_CONTEXT).toBe('sampark');
+        expect(body.conversation_initiation_client_data).not.toHaveProperty('conversation_config_override');
+    });
+
+    it('product_context cannot be replaced by the variables a caller builds (e.g. "athithi")', async () => {
+        const fetchImpl = jest.fn(async () => jsonResponse(200, { success: true, conversation_id: 'conv_1' }));
+        const sneaky = { ...req, dynamicVariables: { ...req.dynamicVariables, product_context: 'athithi' } };
+        await startRiyaOutboundCall(config(), sneaky, { fetchImpl: fetchImpl as unknown as typeof fetch });
+        const body = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+        expect(body.conversation_initiation_client_data.dynamic_variables.product_context).toBe('sampark');
+    });
+
+    it('a destination is sent exactly as resolved (E.164), and is never our own Vobiz caller number', async () => {
+        const fetchImpl = jest.fn(async () => jsonResponse(200, { success: true, conversation_id: 'conv_1' }));
+        await startRiyaOutboundCall(config(), { ...req, toNumberE164: '+919800000002' }, { fetchImpl: fetchImpl as unknown as typeof fetch });
+        const body = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+        expect(body.to_number).toBe('+919800000002');
+        expect(body.to_number).not.toBe('+917965853645');
+    });
+
+    it('network failure and timeout are "unknown" (never retried automatically); nothing is thrown', async () => {
+        const network = async () => { throw new TypeError('fetch failed'); };
+        expect(await startRiyaOutboundCall(config(), req, { fetchImpl: network as unknown as typeof fetch })).toEqual({ kind: 'unknown', category: 'network', httpStatus: null });
+        const hang = (_url: string, init: RequestInit) => new Promise<Response>((_, reject) => init.signal?.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+        expect(await startRiyaOutboundCall(config(), req, { fetchImpl: hang as unknown as typeof fetch, timeoutMs: 5 })).toEqual({ kind: 'unknown', category: 'timeout', httpStatus: null });
     });
 
     it.each([

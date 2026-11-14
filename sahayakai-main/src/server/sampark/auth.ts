@@ -27,6 +27,38 @@ export async function requireOrgAdmin(orgId: string, uid: string): Promise<boole
     return memberSnap.exists && (memberSnap.data() as { role?: string }).role === 'admin';
 }
 
+/** The member record's class list key for a class: `${grade}-${section}` (e.g. "7-A"). */
+export function memberClassKey(grade: number, section: string): string {
+    return `${grade}-${section}`;
+}
+
+/**
+ * Class authority for class-wide outreach: an org admin manages every class; a teacher manages
+ * the classes the school assigned to them on their SERVER-MANAGED member record
+ * (organizations/{orgId}/members/{uid} with role 'teacher' and `samparkClasses: ["7-A", …]`;
+ * firestore.rules make members write-only through the Admin SDK). Nothing self-editable (the
+ * user profile, a request body) can widen it.
+ */
+export async function canManageClass(orgId: string, uid: string, grade: number, section: string): Promise<boolean> {
+    if (!orgId || !uid) return false;
+    if (await requireOrgAdmin(orgId, uid)) return true;
+    const db = await getDb();
+    const member = await db.collection('organizations').doc(orgId).collection('members').doc(uid).get();
+    if (!member.exists) return false;
+    const data = member.data() as { role?: string; samparkClasses?: unknown };
+    return data.role === 'teacher' && Array.isArray(data.samparkClasses) && data.samparkClasses.includes(memberClassKey(grade, section));
+}
+
+/** Org admin, or a teacher member with at least one assigned class (route shell for class-wide outreach). */
+export async function isSchoolStaffForOutreach(orgId: string, uid: string): Promise<boolean> {
+    if (!orgId || !uid) return false;
+    if (await requireOrgAdmin(orgId, uid)) return true;
+    const db = await getDb();
+    const member = await db.collection('organizations').doc(orgId).collection('members').doc(uid).get();
+    const data = member.exists ? (member.data() as { role?: string; samparkClasses?: unknown }) : null;
+    return data?.role === 'teacher' && Array.isArray(data.samparkClasses) && data.samparkClasses.length > 0;
+}
+
 export interface AdministeredOrg {
     orgId: string;
     name: string;

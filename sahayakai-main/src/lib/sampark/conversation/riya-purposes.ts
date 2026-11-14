@@ -1,15 +1,19 @@
 /**
- * The Riya workflows: the six `call_purpose` values of the hosted ElevenLabs agent
- * "Riya School Calling Assistant" (Varunesh's export, 15 Oct 2026), and how each maps
- * onto the Sampark catalogue.
+ * The Riya workflows: the `call_purpose` values of the hosted ElevenLabs agent, and how each
+ * maps onto the Sampark catalogue.
  *
- * The agent routes on `call_purpose` with six exact string-equality edges out of its
- * start node (workflow.edges[*].forward_condition: eq_operator(dynamic_variable
- * call_purpose, string_literal …)). A value that matches no edge leaves the call on
- * the start node with only the generic prompt, so the identifiers below are the wire
- * contract and are pinned by a test against the export's edge labels. A UI label can
- * never reach the wire: the console sends a `RiyaPurpose`, validated by
- * `RiyaPurposeSchema`, and nothing else.
+ * Since 4 Nov 2026 the agent is the unified SARGVISION agent ("Riya SARGVISION Unified
+ * (Sampark + Athithi Vani)"), which serves two products from one Vobiz number. Its start node
+ * routes first on `product_context` and then on `call_purpose`: every Sampark edge is
+ * and_operator(product_context == "sampark", call_purpose == …). A call without
+ * product_context "sampark" never reaches a school workflow (it lands on the agent's
+ * "Context Missing Safe Exit" node), so the ElevenLabs client always sends
+ * SAMPARK_PRODUCT_CONTEXT and nothing the caller supplies can change it.
+ *
+ * A call_purpose that matches no edge leaves the call on the agent's generic Sampark node,
+ * so the identifiers below are the wire contract and are pinned by a test against the live
+ * agent's edges. A UI label can never reach the wire: the console sends a `RiyaPurpose`,
+ * validated by `RiyaPurposeSchema`, and nothing else.
  *
  * Variables: the agent's prompt references nineteen `{{…}}` variables. ElevenLabs
  * refuses to start a conversation whose prompt references a variable the caller did
@@ -20,7 +24,14 @@
 
 import { z } from 'zod';
 
+import type { OutreachReason } from '@/types/attendance';
 import type { PurposeId } from '@/types/sampark';
+
+/**
+ * The unified agent's routing key for every Sahayak AI / Sampark call. "athithi" belongs to
+ * the Athithi Vani product and is never sent from here.
+ */
+export const SAMPARK_PRODUCT_CONTEXT = 'sampark' as const;
 
 export const RIYA_PURPOSES = [
     'event_invitation',
@@ -29,30 +40,52 @@ export const RIYA_PURPOSES = [
     'exam_schedule_notice',
     'absence_notice',
     'emergency_closure',
+    'academic_performance',
+    'classroom_behaviour',
+    'student_achievement',
 ] as const;
 
 export type RiyaPurpose = (typeof RIYA_PURPOSES)[number];
 
 /**
- * Workflows the updated agent (version …dvdded, 30 Oct 2026) also routes on, which Sahayak
- * does NOT offer: each speaks a child-specific academic, behaviour, homework, achievement or
- * support fact, and Sahayak has no verified record to fill it from. Never sent as a
- * call_purpose; listed so the contract test knows every edge on the agent.
+ * Workflows the agent also routes on, which Sahayak does NOT offer: homework and
+ * teacher-support follow-ups speak assignment or support details Sahayak has no record or
+ * closed vocabulary for. Never sent as a call_purpose; listed so the contract test knows
+ * every edge on the agent.
  */
 export const RIYA_AGENT_PURPOSES_NOT_OFFERED = [
-    'academic_performance',
-    'classroom_behaviour',
     'homework_followup',
-    'student_achievement',
     'student_support',
 ] as const;
+
+/**
+ * The four parent-outreach reasons of the attendance / Sampark demo views
+ * (`OutreachReason`, src/types/attendance.ts) and the agent workflow each one is spoken
+ * through. One reason, one workflow, so a call's reason is always recoverable from its
+ * stored `riyaPurpose`.
+ */
+export const OUTREACH_REASON_PURPOSE: Readonly<Record<OutreachReason, RiyaPurpose>> = Object.freeze({
+    consecutive_absences: 'absence_notice',
+    poor_performance: 'academic_performance',
+    behavioral_concern: 'classroom_behaviour',
+    positive_feedback: 'student_achievement',
+});
+
+export const OUTREACH_REASONS = Object.keys(OUTREACH_REASON_PURPOSE) as OutreachReason[];
+
+export function outreachReasonForPurpose(purpose: RiyaPurpose): OutreachReason | null {
+    return OUTREACH_REASONS.find((r) => OUTREACH_REASON_PURPOSE[r] === purpose) ?? null;
+}
 
 export const RiyaPurposeSchema = z.enum(RIYA_PURPOSES);
 
 /**
- * Every `{{variable}}` the agent prompt and workflow nodes reference (live agent, 30 Oct 2026).
- * The last five are read only by the RIYA_AGENT_PURPOSES_NOT_OFFERED nodes and are always
- * sent as the empty string, never filled with an invented fact.
+ * Every `{{variable}}` the agent prompt and workflow nodes reference (unified agent, 4 Nov 2026;
+ * unchanged from the 30 Oct Sampark agent). academic_update, behaviour_summary and
+ * achievement_details are filled only by their outreach workflows from closed sentences;
+ * assignment_details and followup_details belong to RIYA_AGENT_PURPOSES_NOT_OFFERED and are
+ * always sent as the empty string, never filled with an invented fact. product_context is not a
+ * prompt variable: it only routes, and the ElevenLabs client adds it to every call.
  */
 export const RIYA_VARIABLES = [
     'school_name',
@@ -154,6 +187,30 @@ const SPECS: Record<RiyaPurpose, RiyaPurposeSpec> = {
         requiredVariables: ['closure_date', 'closure_reason'],
         risk: 'high',
     },
+    // The three outreach workflows speak a child-specific observation. It is assembled from the
+    // closed phrases below (never staff free text) and goes through the same consent, quiet-hours
+    // and frequency gate as every Riya call, under the catalogue's request-to-talk purposes.
+    academic_performance: {
+        id: 'academic_performance',
+        samparkPurpose: 'academic_talk',
+        factVariables: ['academic_update'],
+        requiredVariables: ['academic_update'],
+        risk: 'high',
+    },
+    classroom_behaviour: {
+        id: 'classroom_behaviour',
+        samparkPurpose: 'conduct_talk',
+        factVariables: ['behaviour_summary'],
+        requiredVariables: ['behaviour_summary'],
+        risk: 'high',
+    },
+    student_achievement: {
+        id: 'student_achievement',
+        samparkPurpose: 'recognition',
+        factVariables: ['achievement_details'],
+        requiredVariables: ['achievement_details'],
+        risk: 'medium',
+    },
 };
 
 export function riyaPurposeSpec(id: RiyaPurpose): RiyaPurposeSpec {
@@ -215,3 +272,44 @@ export const EXAM_SUBJECTS = {
     general_knowledge: 'General Knowledge',
 } as const;
 export type ExamSubject = keyof typeof EXAM_SUBJECTS;
+
+/**
+ * What a poor-performance outreach call may say about the named subjects. Closed, reviewed
+ * English sentences: `{subjects}` is replaced by the EXAM_SUBJECTS names ("Mathematics and
+ * Science"); nothing else is inserted.
+ */
+export const ACADEMIC_CONCERNS = {
+    below_expected: "Your child's recent work in {subjects} has been below the expected level.",
+    marks_dropped: "Your child's recent marks in {subjects} have dropped compared with earlier in the term.",
+    missed_assessments: 'Your child has missed recent tests or assignments in {subjects}.',
+} as const;
+export type AcademicConcern = keyof typeof ACADEMIC_CONCERNS;
+export const MAX_ACADEMIC_SUBJECTS = 3;
+
+/** Classroom observations a behaviour outreach call may share; each completes "Your child …". */
+export const BEHAVIOUR_OBSERVATIONS = {
+    attention: 'has been having difficulty paying attention in class',
+    disturbing_others: 'has been disturbing other students during lessons',
+    incomplete_classwork: 'has not been completing classwork in class',
+    low_participation: 'has been taking less part in class activities',
+    late_to_class: 'has been arriving late to class',
+} as const;
+export type BehaviourObservation = keyof typeof BEHAVIOUR_OBSERVATIONS;
+export const MAX_BEHAVIOUR_OBSERVATIONS = 3;
+
+/**
+ * What a positive-feedback call may celebrate. `{subject}` marks the ones that name a subject
+ * (an EXAM_SUBJECTS name); the others take none.
+ */
+export const ACHIEVEMENTS = {
+    top_marks: 'Your child scored among the highest marks in the class in {subject}.',
+    great_improvement: 'Your child has shown excellent improvement in {subject}.',
+    active_participation: 'Your child has been taking a very active part in class activities.',
+    helpful_to_classmates: 'Your child has been very helpful and kind to classmates.',
+    full_attendance: 'Your child has had excellent attendance this term.',
+} as const;
+export type Achievement = keyof typeof ACHIEVEMENTS;
+
+export function achievementNeedsSubject(a: Achievement): boolean {
+    return ACHIEVEMENTS[a].includes('{subject}');
+}

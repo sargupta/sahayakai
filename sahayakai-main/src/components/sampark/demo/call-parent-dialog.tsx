@@ -138,7 +138,8 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
 
     if (!student || !cls || !teacher) return null;
 
-    // A Sargvision roster contact: a real call by Riya through the Sampark server, never the simulator.
+    // A Sargvision roster contact: a call by Riya through the Sampark server, never the browser
+    // simulator. Real only in Test mode with live dialling; in Practice the server simulates it.
     if (student.rosterContact) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,10 +147,12 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                     <DialogHeader>
                         <DialogTitle>{fmt(t("Call {name}"), { name: student.name })}</DialogTitle>
                         <DialogDescription>
-                            {fmt(t("{class} sample class · phone ending {last4} · a REAL call by Riya. Nothing rings until you confirm Trigger Call."), { class: cls.name, last4: student.guardian.phoneLast4 })}
+                            {student.rosterContact.realCall
+                                ? fmt(t("{class} sample class · phone ending {last4} · a REAL call by Riya. Nothing rings until you confirm Trigger Call."), { class: cls.name, last4: student.guardian.phoneLast4 })
+                                : fmt(t("{class} sample class · phone ending {last4} · Practice mode: Riya's call is simulated and nothing rings."), { class: cls.name, last4: student.guardian.phoneLast4 })}
                         </DialogDescription>
                     </DialogHeader>
-                    {open && <SargvisionRiyaCall orgId={student.rosterContact.orgId} guardianId={student.rosterContact.guardianId} studentId={student.id} />}
+                    {open && <SargvisionRiyaCall orgId={student.rosterContact.orgId} guardianId={student.rosterContact.guardianId} studentId={student.id} reason={initialReason ?? signals[0]?.reason ?? null} />}
                 </DialogContent>
             </Dialog>
         );

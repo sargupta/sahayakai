@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Loader2, Smartphone, ShieldCheck } from "lucide-react";
+import { Loader2, PhoneCall, Smartphone, ShieldCheck } from "lucide-react";
 import { SectionCard } from "@/components/layout";
 import {
     AlertDialog,
@@ -19,7 +19,12 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
-import { ApiError, setMode, updateSchool, type SamparkSchoolView } from "@/lib/api/sampark";
+import { ApiError, getProviderChoice, setMode, updateSchool, type SamparkSchoolView } from "@/lib/api/sampark";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSamparkHref } from "@/components/shell/product-paths";
+import { CHOOSER_SEGMENT, PROVIDER_LABEL, switchProviderHref } from "@/lib/sampark/provider-choice";
+import { useSamparkQuery } from "./use-sampark-query";
 import type { SamparkMode } from "@/types/sampark";
 import { useSamparkSchool } from "./school-context";
 import { StatusPill } from "./status-pill";
@@ -353,6 +358,38 @@ export function ModeSection() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+        </SectionCard>
+    );
+}
+
+/**
+ * Settings → Calling provider. The provider is chosen at the SamparkAI entry (ElevenLabs Calls or
+ * Vobiz Calls) and applies to calls started in this browser session; this card shows it and is the
+ * way back to that one choice. Scheduled callbacks use the provider of the call they follow.
+ */
+export function ConversationProviderSection() {
+    const { t } = useLanguage();
+    const samparkHref = useSamparkHref();
+    const pathname = usePathname() ?? "";
+    const state = useSamparkQuery((signal) => getProviderChoice({ signal }), []);
+    const choice = state.data?.choice ?? null;
+    const href = switchProviderHref(samparkHref(`/${CHOOSER_SEGMENT}`), pathname);
+    return (
+        <SectionCard
+            title={t("Calling provider")}
+            icon={PhoneCall}
+            description={t("You choose the calling provider when you enter SamparkAI. It applies to the calls you start in this session; the screens, the rules every call passes, the call history and callbacks stay the same.")}
+        >
+            <div className="flex flex-wrap items-center gap-3">
+                <span className="type-body font-semibold text-foreground">{choice ? PROVIDER_LABEL[choice] : t("Not chosen yet")}</span>
+                {choice && <StatusPill tone="info">{t("This session")}</StatusPill>}
+                <Button asChild variant="outline" size="sm">
+                    <Link href={href}>{t("Switch provider")}</Link>
+                </Button>
+            </div>
+            <p className="type-body text-muted-foreground">
+                {t("Scheduled callbacks use the provider of the call they follow.")}
+            </p>
         </SectionCard>
     );
 }

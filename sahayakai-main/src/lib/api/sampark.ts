@@ -186,6 +186,22 @@ export function setMode(orgId: string, mode: SamparkMode): Promise<SamparkSchool
     return apiFetch<SamparkSchoolView>(orgPath(orgId, '/mode'), { method: 'PUT', body: { mode } });
 }
 
+export interface ProviderChoiceState {
+    choice: 'elevenlabs' | 'vobiz' | null;
+    options: { id: 'elevenlabs' | 'vobiz'; available: boolean }[];
+}
+
+/** GET /api/sampark/provider — this session's calling-provider choice and what the deployment offers. */
+export function getProviderChoice(opts: Opts = {}): Promise<ProviderChoiceState> {
+    return apiFetch<ProviderChoiceState>(`${BASE}/provider`, { signal: opts.signal });
+}
+
+/** POST /api/sampark/provider — choose the provider for this session (server-side cookie). */
+export function chooseProvider(provider: 'elevenlabs' | 'vobiz'): Promise<{ choice: 'elevenlabs' | 'vobiz' }> {
+    return apiFetch<{ choice: 'elevenlabs' | 'vobiz' }>(`${BASE}/provider`, { method: 'POST', body: { provider } });
+}
+
+
 export type SetPauseInput =
     | { paused: true; reason: string; scope: SchoolPause['scope'] }
     | { paused: false };

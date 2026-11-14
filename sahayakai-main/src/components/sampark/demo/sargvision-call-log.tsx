@@ -18,8 +18,8 @@ import { SARGVISION_ORG_ID } from "@/lib/sampark/sargvision";
 const DAY = 86_400_000;
 
 /**
- * "My calls" for the Sargvision sample class: the REAL Riya calls from the Sampark server (school
- * `sargvision-local`), with live status, the outcome, Riya's collected answers (good time to talk,
+ * "My calls" for the Sargvision sample class: the Riya calls from the Sampark server (school
+ * `sargvision-local`; real in Test mode with live dialling, simulated in Practice), with live status, the outcome, Riya's collected answers (good time to talk,
  * attendance…), its synopsis and callback status (never the transcript); then the class's callbacks — a listener's "call
  * me back" arrives as a proposed callback and rings only after a person confirms a time in the
  * school calendar. The demo's simulated calls stay in the list below it.
@@ -39,7 +39,7 @@ export function SargvisionCallLog() {
     const cbRows = callbacks.data ? [...callbacks.data.proposed, ...callbacks.data.callbacks.filter((c) => c.status !== "proposed")] : [];
     return (
         <SectionCard
-            title={t("Sargvision · real calls by Riya")}
+            title={riya.data?.availability.provider === "elevenlabs" ? t("Sargvision · real calls by Riya") : t("Sargvision · Riya practice calls (simulated)")}
             action={<Button type="button" size="sm" variant="ghost" onClick={reload}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />{t("Refresh")}</Button>}
         >
             {riya.error ? <ErrorPanel error={riya.error} onRetry={riya.reload} /> : !riya.data ? <LoadingBlock rows={2} /> : (

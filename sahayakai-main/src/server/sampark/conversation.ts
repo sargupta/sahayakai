@@ -50,12 +50,16 @@ import { enabledRiyaPurposes, riyaOpening, riyaPurposeSpec, RiyaPurposeSchema, t
 import { simulateRiyaCall, SimulationScenarioSchema, type SimulationScenario } from '@/lib/sampark/conversation/simulated-provider';
 import { applyRiyaEvent, applyRiyaSnapshot } from '@/lib/sampark/conversation/state';
 import {
+    isRealProvider,
     isTerminalConversationState,
+    REAL_CONVERSATION_PROVIDERS,
     type ConversationCall,
     type ConversationCallView,
     type ConversationProviderKind,
     type ConversationTranscriptTurn,
+    type RealConversationProvider,
 } from '@/lib/sampark/conversation/types';
+import { readVobizRiyaConfig, startVobizRiyaCall, VOBIZ_RIYA_AGENT_ID, type VobizRiyaConfig } from '@/lib/sampark/conversation/vobiz-provider';
 import { MAX_WEBHOOK_BYTES, parseRiyaWebhook, verifyElevenLabsSignature, type RiyaWebhookEvent } from '@/lib/sampark/conversation/webhook';
 import { hashId } from '@/lib/sampark/intents';
 import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
@@ -66,6 +70,7 @@ import { acceptSynopsis, rulesSynopsis, spokenTurns, synopsisNeedsWrite, type Ri
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 import { type Clock, type SamparkRepo, systemClock } from '@/lib/sampark/ports';
 import type { BlockReason, CallDestination, Campaign, SamparkGuardian, SamparkSchool, SamparkStudent } from '@/types/sampark';
+import { wakeBatchForCall } from '@/server/sampark/batch-wake';
 import { badRequest, conflict, notFound, SamparkServiceError } from '@/server/sampark/errors';
 import { getSchoolOrThrow } from '@/server/sampark/school';
 import { getCallbackRepo } from '@/lib/sampark/callbacks/factory';
@@ -102,6 +107,12 @@ export interface RiyaDeps {
     callbacks?: CallbackRepo;
     /** Writes a call synopsis with the model (real calls only). Absent or failing: the rules synopsis. */
     synopsis?: (input: SynopsisInput) => Promise<{ bullets: string[]; callbackRequest: string | null }>;
+    /**
+     * The calling provider this person chose when entering SamparkAI (the session cookie, read
+     * server-side by the Riya routes; or, for a scheduled callback, its source call's provider).
+     * Absent: the school's default. It only picks the backend: every gate still applies.
+     */
+    providerChoice?: RealConversationProvider | null;
 }
 
 export async function riyaDeps(ctx: { repo: SamparkRepo; clock: Clock }): Promise<RiyaDeps> {
@@ -147,6 +158,7 @@ export type RiyaBlocker =
     | 'LIVE_MODE_NOT_AVAILABLE'
     | 'LIVE_DIAL_DISABLED'
     | 'ELEVENLABS_UNCONFIGURED'
+    | 'VOBIZ_UNCONFIGURED'
     | 'NONPROD_DATABASE_REQUIRED'
     | 'DEMO_SCHOOL_PRACTICE_ONLY'
     | 'TEST_PHONE_MISSING'
@@ -156,6 +168,8 @@ export interface RiyaAvailability {
     enabled: boolean;
     mode: SamparkSchool['mode'];
     provider: ConversationProviderKind | null;
+    /** The school's chosen real provider (Settings → Calling provider); used in Test mode. */
+    selectedProvider: RealConversationProvider;
     blocker: RiyaBlocker | null;
     /** Problems with the ElevenLabs configuration (names only, never values). */
     configProblems: string[];
@@ -179,7 +193,29 @@ export interface RiyaAvailability {
     localAfterHoursUntil: string | null;
 }
 
-function providerFor(school: SamparkSchool, env: Env): { provider: ConversationProviderKind; config: ElevenLabsConfig | null } | { blocker: RiyaBlocker; problems: string[] } {
+/**
+ * The real provider for this request: the person's session choice when there is one, else the
+ * school's default (missing or anything unexpected = ElevenLabs, the reference).
+ */
+export function selectedProvider(school: Pick<SamparkSchool, 'conversationProvider'>, choice?: RealConversationProvider | null): RealConversationProvider {
+    if (choice === 'vobiz' || choice === 'elevenlabs') return choice;
+    return school.conversationProvider === 'vobiz' ? 'vobiz' : 'elevenlabs';
+}
+
+/** Which providers this deployment can offer at the SamparkAI entry (names of missing settings only). */
+export function providerOptions(env: Env = process.env): { id: RealConversationProvider; available: boolean; problems: string[] }[] {
+    if (!riyaEnabled(env)) return REAL_CONVERSATION_PROVIDERS.map((id) => ({ id, available: false, problems: ['SAMPARK_ELEVENLABS_ENABLED'] }));
+    const el = readElevenLabsConfig(env);
+    const vb = readVobizRiyaConfig(env);
+    return [
+        { id: 'elevenlabs', available: el.ok, problems: el.ok ? [] : el.problems },
+        { id: 'vobiz', available: vb.ok, problems: vb.ok ? [] : vb.problems },
+    ];
+}
+
+type ProviderConfig = ElevenLabsConfig | VobizRiyaConfig;
+
+function providerFor(school: SamparkSchool, env: Env, choice?: RealConversationProvider | null): { provider: ConversationProviderKind; config: ProviderConfig | null } | { blocker: RiyaBlocker; problems: string[] } {
     if (!riyaEnabled(env)) return { blocker: 'RIYA_DISABLED', problems: [] };
     if (school.mode === 'practice') return { provider: 'simulated', config: null };
     if (school.mode !== 'test') return { blocker: 'LIVE_MODE_NOT_AVAILABLE', problems: [] };
@@ -187,8 +223,18 @@ function providerFor(school: SamparkSchool, env: Env): { provider: ConversationP
     // its families are synthetic and it exists to rehearse. Real test calls need a non-demo school.
     if (school.isDemo) return { blocker: 'DEMO_SCHOOL_PRACTICE_ONLY', problems: [] };
     if (env.SAMPARK_LIVE_DIAL_ENABLED !== 'true') return { blocker: 'LIVE_DIAL_DISABLED', problems: [] };
-    const cfg = readElevenLabsConfig(env);
-    if (!cfg.ok) return { blocker: 'ELEVENLABS_UNCONFIGURED', problems: cfg.problems };
+    // Which backend runs the call is the school's choice; every rule below applies to both.
+    const chosen = selectedProvider(school, choice);
+    let cfg: { ok: true; config: ProviderConfig } | { ok: false; problems: string[] };
+    if (chosen === 'vobiz') {
+        const v = readVobizRiyaConfig(env);
+        if (!v.ok) return { blocker: 'VOBIZ_UNCONFIGURED', problems: v.problems };
+        cfg = v;
+    } else {
+        const e = readElevenLabsConfig(env);
+        if (!e.ok) return { blocker: 'ELEVENLABS_UNCONFIGURED', problems: e.problems };
+        cfg = e;
+    }
     // The preview/staging service runs with NODE_ENV=production in the PRODUCTION Firestore project, so
     // Sampark's own environment guard lets it read the default database. A real Riya call sends a
     // child's name and school facts to ElevenLabs, so it additionally requires the separate
@@ -198,10 +244,10 @@ function providerFor(school: SamparkSchool, env: Env): { provider: ConversationP
         return { blocker: 'NONPROD_DATABASE_REQUIRED', problems: [] };
     }
     // The local Sargvision roster rings each contact's own number; its allow-list is checked per call.
-    if (sargvisionRosterMode(env, school)) return { provider: 'elevenlabs', config: cfg.config };
+    if (sargvisionRosterMode(env, school)) return { provider: chosen, config: cfg.config };
     if (!school.testPhoneEnc || !school.testPhoneHash || !school.testPhoneLast4) return { blocker: 'TEST_PHONE_MISSING', problems: [] };
     if (!allowedTestNumbers(env).some((e164) => hashPhone(e164) === school.testPhoneHash)) return { blocker: 'TEST_PHONE_NOT_ALLOWED', problems: [] };
-    return { provider: 'elevenlabs', config: cfg.config };
+    return { provider: chosen, config: cfg.config };
 }
 
 /**
@@ -313,15 +359,18 @@ export function stagingTestWindowOverride(
     return { active: true, until, inactiveReason: null };
 }
 
-export function riyaAvailability(school: SamparkSchool, env: Env = process.env, now: Date = new Date()): RiyaAvailability {
-    const p = providerFor(school, env);
+export function riyaAvailability(school: SamparkSchool, env: Env = process.env, now: Date = new Date(), choice?: RealConversationProvider | null): RiyaAvailability {
+    const p = providerFor(school, env, choice);
     const cfg = readElevenLabsConfig(env);
+    const chosen = selectedProvider(school, choice);
+    const vobizCfg = chosen === 'vobiz' ? readVobizRiyaConfig(env) : null;
     return {
         enabled: riyaEnabled(env),
         mode: school.mode,
         provider: 'provider' in p ? p.provider : null,
+        selectedProvider: chosen,
         blocker: 'blocker' in p ? p.blocker : null,
-        configProblems: cfg.ok ? [] : cfg.problems,
+        configProblems: vobizCfg ? (vobizCfg.ok ? [] : vobizCfg.problems) : cfg.ok ? [] : cfg.problems,
         purposes: riyaEnabled(env) ? enabledRiyaPurposes(env) : [],
         agentId: cfg.ok ? maskId(cfg.config.agentId) : null,
         agentPhoneNumberId: cfg.ok ? maskId(cfg.config.agentPhoneNumberId) : null,
@@ -332,7 +381,10 @@ export function riyaAvailability(school: SamparkSchool, env: Env = process.env, 
         recordingConsentRequired: !recordingOffConfirmed(env),
         agentBranchId: cfg.ok ? maskId(cfg.config.branchId ?? null) : null,
         nonProductionDatabase: env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE,
-        webhookSecretConfigured: Boolean(env.ELEVENLABS_WEBHOOK_SECRET?.trim()),
+        // Vobiz results are signed by the bridge with the shared request-signing key.
+        webhookSecretConfigured: chosen === 'vobiz'
+            ? Boolean(env.SAHAYAKAI_REQUEST_SIGNING_KEY?.trim())
+            : Boolean(env.ELEVENLABS_WEBHOOK_SECRET?.trim()),
         testWindowOverride: stagingTestWindowOverride(env, school, school.mode === 'test' ? 'test_phone' : null, now),
         rosterMode: sargvisionRosterMode(env, school),
         localAfterHoursUntil: school.localAfterHoursTest && Date.parse(school.localAfterHoursTest.until) > now.getTime() && Boolean(env.FIRESTORE_EMULATOR_HOST?.trim()) && env.NODE_ENV !== 'production'
@@ -346,6 +398,7 @@ const BLOCKER_MESSAGE: Record<RiyaBlocker, string> = {
     LIVE_MODE_NOT_AVAILABLE: 'Live mode is not available in this release; Riya calls run in Practice or Test mode only',
     LIVE_DIAL_DISABLED: 'Live dialling is disabled for this deployment',
     ELEVENLABS_UNCONFIGURED: 'The Riya agent is not configured for this deployment',
+    VOBIZ_UNCONFIGURED: 'Vobiz calling (the SahayakAI voice bridge) is not configured for this deployment',
     NONPROD_DATABASE_REQUIRED: 'Riya test calls need the separate non-production database on this deployment',
     TEST_PHONE_MISSING: 'Test mode needs a test phone number for this school',
     TEST_PHONE_NOT_ALLOWED: 'The school test phone is not on the list of numbers Riya may call on this deployment',
@@ -515,7 +568,12 @@ function destinationOf(school: SamparkSchool, guardian: SamparkGuardian, env: En
     return { destination: 'guardian', phoneHash: guardian.phoneHash, phoneLast4: guardian.phoneLast4 };
 }
 
-async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput): Promise<{ preview: RiyaPreview; resolved: Resolved; config: ElevenLabsConfig | null }> {
+/** The ElevenLabs agent ids, when the provider is ElevenLabs (Vobiz calls have no hosted agent). */
+function elevenLabsConfigOf(config: ProviderConfig | null): ElevenLabsConfig | null {
+    return config && 'agentId' in config ? config : null;
+}
+
+async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput): Promise<{ preview: RiyaPreview; resolved: Resolved; config: ProviderConfig | null }> {
     const env = deps.env ?? process.env;
     const now = deps.clock.now();
     const refusals: RiyaRefusal[] = [];
@@ -524,7 +582,7 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
 
     if (!enabledRiyaPurposes(env).includes(input.purpose)) refusals.push({ code: 'PURPOSE_NOT_ENABLED' });
 
-    const p = providerFor(school, env);
+    const p = providerFor(school, env, deps.providerChoice);
     if ('blocker' in p) refusals.push({ code: 'PROVIDER_UNAVAILABLE', blocker: p.blocker, message: BLOCKER_MESSAGE[p.blocker] });
     const provider = 'provider' in p ? p.provider : null;
     const config = 'provider' in p ? p.config : null;
@@ -551,8 +609,9 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         preferences,
         suppression,
         recentCallsToPhone,
-        // An ElevenLabs call rides the agent's Vobiz SIP trunk: a real carrier for every gate rule.
-        carrierKind: provider === 'elevenlabs' ? 'vobiz' : 'simulated',
+        // Both real providers ring over Vobiz (ElevenLabs via its SIP trunk, ours directly): a real
+        // carrier for every gate rule.
+        carrierKind: isRealProvider(provider) ? 'vobiz' : 'simulated',
         ...(sargvisionRosterMode(env, school) ? { destination: 'guardian' as const } : {}),
         now,
         stage: 'dispatch',
@@ -561,14 +620,14 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
     // Riya speaks English only (agent prompt §5): a family whose language is another is not called by her.
     if (verdict.kind === 'allow' && verdict.language !== 'English') refusals.push({ code: 'LANGUAGE_NOT_SUPPORTED', language: verdict.language });
     const destPreview = provider ? destinationOf(school, guardian, env) : null;
-    const stagingOverride = stagingTestWindowOverride(env, school, provider === 'elevenlabs' ? destPreview?.destination ?? null : null, now);
+    const stagingOverride = stagingTestWindowOverride(env, school, isRealProvider(provider) ? destPreview?.destination ?? null : null, now);
     const armedAt = school.localAfterHoursTest?.armedAt;
-    const windowOverride = stagingOverride.active || !armedAt || provider !== 'elevenlabs'
+    const windowOverride = stagingOverride.active || !armedAt || !isRealProvider(provider)
         ? stagingOverride
         : sargvisionRosterMode(env, school)
         ? sargvisionAfterHoursOverride(env, school, guardian, destPreview?.destination ?? null, now)
         : localAfterHoursTestOverride(env, school, student.id, destPreview?.destination ?? null, now,
-            (await deps.calls.listCalls(orgId, 100)).filter((c) => c.provider === 'elevenlabs' && c.createdAt >= armedAt).length);
+            (await deps.calls.listCalls(orgId, 100)).filter((c) => isRealProvider(c.provider) && c.createdAt >= armedAt).length);
     let gateLanguage = verdict.kind === 'allow' ? verdict.language : null;
     if (verdict.kind === 'defer' && windowOverride.active) {
         // Only rule 15 deferred (it runs last); re-read the verdict without it for the language.
@@ -586,7 +645,7 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         refusals.push({ code: 'LANGUAGE_NOT_SUPPORTED', language: gateLanguage });
     }
 
-    if (provider === 'elevenlabs' && sargvisionRosterMode(env, school) && !rosterNumberAllowed(env, guardian)) refusals.push({ code: 'NUMBER_NOT_ALLOWED' });
+    if (isRealProvider(provider) && sargvisionRosterMode(env, school) && !rosterNumberAllowed(env, guardian)) refusals.push({ code: 'NUMBER_NOT_ALLOWED' });
 
     // The agent records audio and keeps transcripts unless the operator has turned that off.
     if (!recordingOffConfirmed(env) && preferences?.consent?.recorded_conversation?.status !== 'granted') {
@@ -613,7 +672,7 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         provider,
         destination: dest?.destination ?? null,
         destinationLast4: dest?.phoneLast4 ?? null,
-        destinationE164: provider !== 'elevenlabs' ? null
+        destinationE164: !isRealProvider(provider) ? null
             : dest?.destination === 'test_phone' ? displayTestPhone(school, env)
             : sargvisionRosterMode(env, school) ? displayRosterContact(guardian, env)
             : null,
@@ -628,9 +687,9 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         variables,
         announcement,
         opening: variables ? riyaOpening(variables.school_name) : null,
-        agentId: maskId(config?.agentId),
-        agentPhoneNumberId: maskId(config?.agentPhoneNumberId),
-        agentBranchId: maskId(config?.branchId ?? null),
+        agentId: provider === 'vobiz' ? VOBIZ_RIYA_AGENT_ID : maskId(elevenLabsConfigOf(config)?.agentId),
+        agentPhoneNumberId: maskId(elevenLabsConfigOf(config)?.agentPhoneNumberId),
+        agentBranchId: maskId(elevenLabsConfigOf(config)?.branchId ?? null),
         nonProductionDatabase: env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE,
         testWindowOverride: windowOverride.active && verdict.kind === 'defer' ? { until: windowOverride.until as string } : null,
     };
@@ -657,8 +716,25 @@ export function riyaUserId(orgId: string, callId: string): string {
     return `${orgId}~${callId}`;
 }
 
-function lockName(orgId: string): string {
-    return `riya:${orgId}`;
+/**
+ * The per-school in-flight lock. Slot 0 is the original single-flight lock every individual call
+ * uses; a class-wide batch may take up to `lockSlots` slots (SAMPARK_BATCH_MAX_CONCURRENCY), so at
+ * most that many Riya calls ring for one school at once. A call remembers its slot to release it.
+ */
+export function riyaLockName(orgId: string, slot = 0): string {
+    return slot > 0 ? `riya:${orgId}#${slot}` : `riya:${orgId}`;
+}
+
+function lockName(orgId: string, slot?: number | null): string {
+    return riyaLockName(orgId, slot ?? 0);
+}
+
+/** Internal options for callers that place calls on a person's behalf (the class-wide batch). */
+export interface RiyaStartOptions {
+    /** How many per-school lock slots this call may take (default 1: the original single-flight rule). */
+    lockSlots?: number;
+    /** The class-wide campaign and recipient this call belongs to, stored on the call record. */
+    batch?: { campaignId: string; recipientId: string };
 }
 
 export interface RiyaStartResult {
@@ -689,7 +765,7 @@ function refusalError(refusals: RiyaRefusal[]): SamparkServiceError {
     return conflict(first.code, `${message[first.code]}${detail}`);
 }
 
-export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, input: RiyaStartInput): Promise<RiyaStartResult> {
+export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, input: RiyaStartInput, opts: RiyaStartOptions = {}): Promise<RiyaStartResult> {
     const env = deps.env ?? process.env;
     const now = deps.clock.now();
     const callId = riyaCallId(orgId, input.idempotencyKey);
@@ -697,7 +773,8 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
     // 8. Idempotency first: a double-click or a retried request returns the original call.
     const existing = await deps.calls.getCall(orgId, callId);
     if (existing) {
-        if (existing.createdBy !== uid || existing.guardianId !== input.guardianId || existing.studentId !== input.studentId || existing.riyaPurpose !== input.purpose) {
+        if (existing.createdBy !== uid || existing.guardianId !== input.guardianId || existing.studentId !== input.studentId || existing.riyaPurpose !== input.purpose
+            || (existing.batch?.campaignId ?? null) !== (opts.batch?.campaignId ?? null)) {
             throw conflict('IDEMPOTENCY_KEY_REUSED', 'This request key was already used for a different call');
         }
         return { call: await viewOf(deps, existing), duplicate: true };
@@ -729,25 +806,33 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
     if (unresolved) throw conflict('UNRESOLVED_PREVIOUS_CALL', 'An earlier call to this family about the same thing has no confirmed outcome yet; check it before calling again');
 
     // 9b. Test mode: a small daily cap on calls to the test phone.
-    if (provider === 'elevenlabs') {
+    if (isRealProvider(provider)) {
         const dayAgo = new Date(now.getTime() - 24 * 60 * 60_000);
-        // A call ElevenLabs refused outright (4xx, no conversation) never rang, so it does not use the
+        // A call the provider refused outright (4xx, no conversation) never rang, so it does not use the
         // allowance. Accepted and unknown outcomes always count. Refusals older than `recent` stay
-        // counted, so this can only over-count.
-        const refused = recent.filter((c) => c.provider === 'elevenlabs' && c.createdAt >= dayAgo.toISOString()
+        // counted, so this can only over-count. ONE cap across both real providers: switching
+        // provider never resets the allowance.
+        const refused = recent.filter((c) => isRealProvider(c.provider) && c.createdAt >= dayAgo.toISOString()
             && c.state === 'failed' && !c.providerConversationId && (c.failureReason ?? '').startsWith('rejected:')).length;
+        let realCallsToday = 0;
+        for (const p of REAL_CONVERSATION_PROVIDERS) realCallsToday += await deps.calls.countCallsSince(orgId, dayAgo, p);
         if (sargvisionRosterMode(env, school)) {
             // Roster: the cap is per contact (their own number), counted the same way.
-            const toContact = recent.filter((c) => c.provider === 'elevenlabs' && c.createdAt >= dayAgo.toISOString() && c.phoneHash === dest.phoneHash
+            const toContact = recent.filter((c) => isRealProvider(c.provider) && c.createdAt >= dayAgo.toISOString() && c.phoneHash === dest.phoneHash
                 && !(c.state === 'failed' && !c.providerConversationId && (c.failureReason ?? '').startsWith('rejected:'))).length;
             if (toContact >= testDailyCap(env)) throw conflict('TEST_CALL_CAP_REACHED', 'The daily cap on Riya test calls to this contact has been reached');
-        } else if ((await deps.calls.countCallsSince(orgId, dayAgo, 'elevenlabs')) - refused >= testDailyCap(env)) {
+        } else if (realCallsToday - refused >= testDailyCap(env)) {
             throw conflict('TEST_CALL_CAP_REACHED', 'The daily cap on Riya test calls for this school has been reached');
         }
     }
 
-    // 9c. One Riya call in flight per school.
-    if (!(await deps.repo.acquireLock(lockName(orgId), callId, now, RIYA_LOCK_TTL_MS))) {
+    // 9c. One Riya call in flight per school (a class-wide batch may use a few configured slots).
+    const slots = Math.min(Math.max(Math.floor(opts.lockSlots ?? 1), 1), 10);
+    let lockSlot = -1;
+    for (let slot = 0; slot < slots && lockSlot < 0; slot += 1) {
+        if (await deps.repo.acquireLock(lockName(orgId, slot), callId, now, RIYA_LOCK_TTL_MS)) lockSlot = slot;
+    }
+    if (lockSlot < 0) {
         throw conflict('RIYA_CALL_IN_PROGRESS', 'Another Riya call for this school is still in progress');
     }
 
@@ -774,8 +859,8 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
         leaseUntil: new Date(now.getTime() + INITIATING_LEASE_MS).toISOString(),
         providerConversationId: null,
         providerCallId: null,
-        agentId: config?.agentId ?? null,
-        agentPhoneNumberId: config?.agentPhoneNumberId ?? null,
+        agentId: provider === 'vobiz' ? VOBIZ_RIYA_AGENT_ID : elevenLabsConfigOf(config)?.agentId ?? null,
+        agentPhoneNumberId: elevenLabsConfigOf(config)?.agentPhoneNumberId ?? null,
         durationSeconds: null,
         providerStatus: null,
         terminationReason: null,
@@ -794,18 +879,20 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
         createdAt: nowIso,
         updatedAt: nowIso,
         endedAt: null,
+        ...(lockSlot > 0 ? { lockSlot } : {}),
+        ...(opts.batch ? { batch: { campaignId: opts.batch.campaignId, recipientId: opts.batch.recipientId } } : {}),
     };
 
     // 10. Create-only record BEFORE any provider contact.
     if (!(await deps.calls.createCallIfAbsent(call))) {
-        await deps.repo.releaseLock(lockName(orgId), callId);
+        await deps.repo.releaseLock(lockName(orgId, lockSlot), callId);
         const again = await deps.calls.getCall(orgId, callId);
         if (!again) throw conflict('RIYA_CALL_IN_PROGRESS', 'Please try again');
         return { call: await viewOf(deps, again), duplicate: true };
     }
     await deps.repo.appendAudit(orgId, {
         at: nowIso, actor: uid, action: 'riya_call.start', target: `riya_call/${callId}`,
-        detail: { purpose: input.purpose, provider, mode: school.mode, destination: dest.destination, guardianId: guardian.id, studentId: student.id, ...(preview.testWindowOverride ? { testWindowOverride: preview.testWindowOverride.until } : {}) },
+        detail: { purpose: input.purpose, provider, mode: school.mode, destination: dest.destination, guardianId: guardian.id, studentId: student.id, ...(opts.batch ? { batchCampaignId: opts.batch.campaignId } : {}), ...(preview.testWindowOverride ? { testWindowOverride: preview.testWindowOverride.until } : {}) },
     });
     logger.info('Riya call starting', LOG, { orgId, callId, purpose: input.purpose, provider, destination: dest.destination });
 
@@ -823,11 +910,16 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
             await finishBeforeDial(deps, call, 'failed', `destination_unavailable: ${(err as Error).message.split(':')[0]}`);
             throw conflict('TEST_PHONE_MISMATCH', 'The school test phone could not be verified; nothing was dialled');
         }
-        result = await startRiyaOutboundCall(config as ElevenLabsConfig, {
-            toNumberE164: toNumber,
-            dynamicVariables: preview.variables,
-            userId: riyaUserId(orgId, callId),
-        }, deps.http);
+        if (provider === 'vobiz') {
+            // Our bridge: Vobiz rings the same number; the bridge fetches the variables by call id.
+            result = await startVobizRiyaCall(config as VobizRiyaConfig, { toNumberE164: toNumber, orgId, callId }, deps.http?.fetchImpl);
+        } else {
+            result = await startRiyaOutboundCall(config as ElevenLabsConfig, {
+                toNumberE164: toNumber,
+                dynamicVariables: preview.variables,
+                userId: riyaUserId(orgId, callId),
+            }, deps.http);
+        }
     }
 
     const after = await recordStartResult(deps, call, result);
@@ -869,7 +961,7 @@ function displayTestPhone(school: SamparkSchool, env: Env): string | null {
 async function finishBeforeDial(deps: RiyaDeps, call: ConversationCall, state: 'failed', reason: string): Promise<void> {
     const at = deps.clock.now().toISOString();
     await deps.calls.mutateCall(call.orgId, call.id, (c) => (c.state === 'initiating' ? { ...c, state, failureReason: reason, endedAt: at, updatedAt: at } : null));
-    await deps.repo.releaseLock(lockName(call.orgId), call.id);
+    await deps.repo.releaseLock(lockName(call.orgId, call.lockSlot), call.id);
 }
 
 async function recordStartResult(deps: RiyaDeps, call: ConversationCall, result: OutboundCallResult): Promise<ConversationCall> {
@@ -899,7 +991,7 @@ async function recordStartResult(deps: RiyaDeps, call: ConversationCall, result:
         ...c, state, failureReason: reason, endedAt: at, updatedAt: at,
     });
     // A rejected call never rang, so the school may place another; an unknown one keeps the lock until it expires.
-    if (result.kind === 'rejected') await deps.repo.releaseLock(lockName(call.orgId), call.id);
+    if (result.kind === 'rejected') await deps.repo.releaseLock(lockName(call.orgId, call.lockSlot), call.id);
     await deps.repo.appendAudit(call.orgId, { at, actor: 'riya', action: `riya_call.${state}`, target: `riya_call/${call.id}`, detail: { reason } });
     logger.warn('Riya call not accepted', LOG, { orgId: call.orgId, callId: call.id, outcome: result.kind, category: result.category, httpStatus: result.httpStatus, providerMessage });
     return updated ?? call;
@@ -907,16 +999,28 @@ async function recordStartResult(deps: RiyaDeps, call: ConversationCall, result:
 
 // ── Events (webhooks, Practice, reconciliation) ─────────────────────────────
 
+/**
+ * The ONE reducer entry, for provider adapters outside this file (the Vobiz bridge's events,
+ * server/sampark/vobiz-riya.ts). Same idempotent apply → settle → synopsis as every webhook.
+ */
+export async function applyConversationEvent(deps: RiyaDeps, orgId: string, callId: string, event: RiyaWebhookEvent): Promise<ConversationCall | null> {
+    return applyEvent(deps, orgId, callId, event);
+}
+
 async function applyEvent(deps: RiyaDeps, orgId: string, callId: string, event: RiyaWebhookEvent): Promise<ConversationCall | null> {
     const env = deps.env ?? process.env;
     const now = deps.clock.now();
     let changed = false;
+    let settles = false;
     const after = await deps.calls.mutateCall(orgId, callId, (c) => {
         const next = applyRiyaEvent(c, event, { now, storeTranscript: storeTranscripts(env), transcriptDays: transcriptDays(env) });
         changed = next !== null;
+        // Settle (free the slot, wake the batch, audit, callback proposal) only on the transition
+        // INTO a final outcome: a duplicate or late event for a call already settled never runs it twice.
+        settles = next !== null && settlesOn(c.state, next.state);
         return next;
     });
-    if (after && changed && isTerminalConversationState(after.state)) await settle(deps, after);
+    if (after && changed && settles) await settle(deps, after);
     if (after && !changed && event.kind === 'post_call' && after.state === 'completed') {
         // Already applied, e.g. a status check recorded the result before the provider had the
         // transcript: a later delivery (webhook or status check) may only fill what is missing.
@@ -950,6 +1054,9 @@ const PURPOSE_TEXT: Record<RiyaPurpose, string> = {
     exam_schedule_notice: 'Exam schedule notice',
     absence_notice: 'Absence notice',
     emergency_closure: 'Emergency closure',
+    academic_performance: 'Academic performance update',
+    classroom_behaviour: 'Classroom behaviour update',
+    student_achievement: 'Student achievement',
 };
 
 function synopsisOutcome(state: ConversationCall['state']): SynopsisInput['outcome'] {
@@ -980,7 +1087,7 @@ async function ensureSynopsis(deps: RiyaDeps, orgId: string, callId: string, tra
         transcript,
     };
     let synopsis: RiyaSynopsis | null = null;
-    if (call.provider === 'elevenlabs' && deps.synopsis && turns > 0) {
+    if (isRealProvider(call.provider) && deps.synopsis && turns > 0) {
         try {
             synopsis = acceptSynopsis(await deps.synopsis(input), now);
         } catch (err) {
@@ -1014,10 +1121,67 @@ function mayBackfillTranscript(call: ConversationCall, now: Date, days: number, 
     return now.getTime() < ended + days * 86_400_000;
 }
 
+/**
+ * The PROVIDER says the phone line of an answered call has ended (Vobiz hangup callback, or a
+ * lookup with an end time) while the bridge's result is still on its way. Nothing is connected any
+ * more, so the call's line slot is given back now and its batch is woken; the call itself stays
+ * 'initiated' until the bridge's result (or the documented recovery) gives it a final outcome.
+ * Idempotent: a repeated hangup changes nothing and releases nothing twice.
+ */
+export async function noteCarrierEnded(deps: RiyaDeps, orgId: string, callId: string, durationSeconds: number | null = null): Promise<void> {
+    const at = deps.clock.now().toISOString();
+    let changed = false;
+    const after = await deps.calls.mutateCall(orgId, callId, (c) => {
+        changed = false; // a transaction may run this more than once: only the last run counts
+        if (isTerminalConversationState(c.state) || c.providerStatus === 'carrier_ended') return null;
+        changed = true;
+        return { ...c, providerStatus: 'carrier_ended', durationSeconds: durationSeconds && durationSeconds > 0 ? durationSeconds : c.durationSeconds, updatedAt: at };
+    });
+    if (!after || !changed) return;
+    await deps.repo.releaseLock(lockName(orgId, after.lockSlot), callId);
+    if (after.batch) await wakeBatchForCall(deps, after);
+}
+
+/**
+ * Whether moving a call from `before` to `after` reaches a final outcome for the first time: from a
+ * live state, or an 'unknown' outcome later resolved by an authentic result. Exported for tests.
+ */
+export function settlesOn(before: ConversationCall['state'], after: ConversationCall['state']): boolean {
+    if (!isTerminalConversationState(after)) return false;
+    if (!isTerminalConversationState(before)) return true;
+    return before === 'unknown' && after !== 'unknown';
+}
+
+/**
+ * Safe recovery for a call that never reported an end. Used only when the provider can no longer be
+ * connected — the call's own provider-enforced time limit has passed AND a provider lookup either
+ * found the line ended or could not find the call at all. The call becomes 'unknown' (a person
+ * reviews it; it is never re-dialled automatically), which frees its slot. A late authentic result
+ * still lands on it. Returns true when this changed the call.
+ */
+export async function expireRiyaCallUnknown(deps: RiyaDeps, orgId: string, callId: string, reason: string): Promise<boolean> {
+    const at = deps.clock.now().toISOString();
+    let changed = false;
+    const after = await deps.calls.mutateCall(orgId, callId, (c) => {
+        changed = false; // a transaction may run this more than once: only the last run counts
+        if (isTerminalConversationState(c.state)) return null;
+        changed = true;
+        return { ...c, state: 'unknown', failureReason: `no_result:${reason}`.slice(0, 120), endedAt: c.endedAt ?? at, updatedAt: at };
+    });
+    if (!after || !changed) return false;
+    await deps.repo.appendAudit(orgId, { at, actor: 'system', action: 'riya_call.expired_unknown', target: `riya_call/${callId}`, detail: { reason } });
+    await settle(deps, after);
+    await ensureSynopsis(deps, orgId, callId, []);
+    return true;
+}
+
 /** Terminal side effects: free the school's slot, note a stop request, audit. Idempotent. */
 async function settle(deps: RiyaDeps, call: ConversationCall): Promise<void> {
     const at = deps.clock.now().toISOString();
-    await deps.repo.releaseLock(lockName(call.orgId), call.id);
+    await deps.repo.releaseLock(lockName(call.orgId, call.lockSlot), call.id);
+    // The slot this call held is free: if it belonged to a class-wide batch, let that campaign
+    // launch the next family now rather than at the next scheduler tick. Never fails this call.
+    if (call.batch) await wakeBatchForCall(deps, call);
     await deps.repo.appendAudit(call.orgId, {
         at, actor: 'riya', action: `riya_call.${call.state}`, target: `riya_call/${call.id}`,
         detail: { durationSeconds: call.durationSeconds, stopRequested: call.stopRequested, provider: call.provider },
@@ -1210,7 +1374,7 @@ export async function listRiyaCalls(deps: RiyaDeps, orgId: string, limit = 50): 
 /** GET /riya: what this school can do with Riya now, and its latest calls. */
 export async function riyaOverview(deps: RiyaDeps, orgId: string): Promise<{ availability: RiyaAvailability; calls: ConversationCallView[] }> {
     const school = await getSchoolOrThrow({ repo: deps.repo, clock: deps.clock }, orgId);
-    return { availability: riyaAvailability(school, deps.env ?? process.env, deps.clock.now()), calls: await listRiyaCalls(deps, orgId, 50) };
+    return { availability: riyaAvailability(school, deps.env ?? process.env, deps.clock.now(), deps.providerChoice), calls: await listRiyaCalls(deps, orgId, 50) };
 }
 
 /** A call for the console. The transcript is never included: it stays in the database (see synopsis). */
@@ -1225,10 +1389,56 @@ export async function getRiyaCall(deps: RiyaDeps, orgId: string, callId: string)
     return { call: await viewOf(deps, current) };
 }
 
+/**
+ * "Check status" for a Vobiz call: ask Vobiz (read-only) what happened to the call when the bridge's
+ * post-call event or the hangup callback never arrived. A call that never connected is settled as an
+ * initiation failure through the same reducer; a connected call keeps waiting for the bridge's report
+ * (its transcript and answers exist only there), so nothing is invented here.
+ */
+async function reconcileVobizRiyaCall(deps: RiyaDeps, call: ConversationCall): Promise<RiyaCallDetail> {
+    const env = deps.env ?? process.env;
+    const cfg = readVobizRiyaConfig(env);
+    if (!cfg.ok) throw conflict('VOBIZ_UNCONFIGURED', BLOCKER_MESSAGE.VOBIZ_UNCONFIGURED);
+    const uuid = call.providerConversationId?.startsWith('vobiz:') ? call.providerConversationId.slice(6) : null;
+    if (!uuid || uuid.startsWith('unknown-')) throw conflict('NO_PROVIDER_ID', 'The provider never returned an id for this call; it cannot be looked up');
+    const v = cfg.config.vobiz;
+    let body: Record<string, unknown> | null = null;
+    try {
+        const res = await (deps.http?.fetchImpl ?? fetch)(`${v.baseUrl}/Account/${v.authId}/Call/${encodeURIComponent(uuid)}/`, {
+            headers: { 'X-Auth-ID': v.authId, 'X-Auth-Token': v.authToken, Accept: 'application/json' },
+            signal: AbortSignal.timeout(20_000),
+        });
+        if (res.status === 404) throw conflict('PROVIDER_NOT_FOUND', 'Vobiz has no record of this call');
+        if (!res.ok) throw conflict('PROVIDER_ERROR', `Vobiz could not be reached (http ${res.status})`);
+        body = (await res.json()) as Record<string, unknown>;
+    } catch (err) {
+        if (err instanceof SamparkServiceError) throw err;
+        throw conflict('PROVIDER_ERROR', 'Vobiz could not be reached (network)');
+    }
+    const ended = typeof body?.end_time === 'string' && body.end_time !== '';
+    const billed = Number(body?.bill_duration ?? 0);
+    if (ended && !(billed > 0) && !body?.answer_time) {
+        const cause = String(body?.hangup_cause_name ?? body?.hangup_cause ?? '').toUpperCase().replace(/\s+/g, '_');
+        const failure = cause.includes('BUSY') ? 'busy' : cause.includes('NO_ANSWER') || cause.includes('TIMEOUT') || cause.includes('CANCEL') ? 'no-answer' : 'unknown';
+        await applyEvent(deps, call.orgId, call.id, {
+            kind: 'initiation_failure',
+            eventId: `vobiz-hangup:${uuid}`,
+            eventTimestamp: Math.floor(deps.clock.now().getTime() / 1000),
+            agentId: VOBIZ_RIYA_AGENT_ID,
+            conversationId: call.providerConversationId as string,
+            failureReason: failure,
+        });
+    } else if (ended) {
+        await noteCarrierEnded(deps, call.orgId, call.id, billed > 0 ? billed : null);
+    }
+    return getRiyaCall(deps, call.orgId, call.id);
+}
+
 export async function reconcileRiyaCall(deps: RiyaDeps, orgId: string, callId: string): Promise<RiyaCallDetail> {
     const env = deps.env ?? process.env;
     const call = await deps.calls.getCall(orgId, callId);
     if (!call) throw notFound('CALL_NOT_FOUND', 'Call not found');
+    if (call.provider === 'vobiz') return reconcileVobizRiyaCall(deps, call);
     if (call.provider !== 'elevenlabs') return getRiyaCall(deps, orgId, callId);
     const cfg = readElevenLabsConfig(env);
     if (!cfg.ok) throw conflict('ELEVENLABS_UNCONFIGURED', BLOCKER_MESSAGE.ELEVENLABS_UNCONFIGURED);
@@ -1264,12 +1474,14 @@ export async function reconcileRiyaCall(deps: RiyaDeps, orgId: string, callId: s
         }
     }
     let changed = false;
+    let settles = false;
     const after = await deps.calls.mutateCall(orgId, callId, (c) => {
         const next = applyRiyaSnapshot(c, fetched.snapshot, deps.clock.now());
         changed = next !== null;
+        settles = next !== null && settlesOn(c.state, next.state);
         return next;
     });
-    if (after && changed && isTerminalConversationState(after.state)) await settle(deps, after);
+    if (after && changed && settles) await settle(deps, after);
     // Ended without a conversation (failed, busy, no answer): the synopsis says so; no transcript will come.
     if (after && isTerminalConversationState(after.state) && after.state !== 'completed') await ensureSynopsis(deps, orgId, callId, []);
     return getRiyaCall(deps, orgId, callId);
@@ -1281,7 +1493,7 @@ export async function reviewRiyaCall(deps: RiyaDeps, orgId: string, callId: stri
     if (!call) throw notFound('CALL_NOT_FOUND', 'Call not found');
     if (call.state !== 'unknown') throw conflict('NOT_UNKNOWN', 'Only a call with an unknown outcome needs a review');
     await deps.calls.mutateCall(orgId, callId, (c) => ({ ...c, reviewedAt: at, reviewedBy: uid, reviewNote: note, updatedAt: at }));
-    await deps.repo.releaseLock(lockName(orgId), callId);
+    await deps.repo.releaseLock(lockName(orgId, call.lockSlot), callId);
     await deps.repo.appendAudit(orgId, { at, actor: uid, action: 'riya_call.reviewed', target: `riya_call/${callId}`, detail: { note } });
     return getRiyaCall(deps, orgId, callId);
 }

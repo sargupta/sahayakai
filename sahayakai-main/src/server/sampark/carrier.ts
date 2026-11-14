@@ -71,7 +71,9 @@ export function liveDialBlocker(env: NodeJS.ProcessEnv = process.env): LiveDialB
 export function riyaTestDialReady(env: NodeJS.ProcessEnv = process.env): boolean {
     return env.SAMPARK_ELEVENLABS_ENABLED === 'true'
         && env.SAMPARK_LIVE_DIAL_ENABLED === 'true'
-        && ['ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'ELEVENLABS_AGENT_PHONE_NUMBER_ID'].every((k) => Boolean(env[k]?.trim()))
+        && ['ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID'].every((k) => Boolean(env[k]?.trim()))
+        // The number id under its established name or the ELEVENLABS_PHONE_NUMBER_ID alias.
+        && ['ELEVENLABS_AGENT_PHONE_NUMBER_ID', 'ELEVENLABS_PHONE_NUMBER_ID'].some((k) => Boolean(env[k]?.trim()))
         && Boolean(env.SAMPARK_RIYA_TEST_ALLOWED_NUMBERS?.trim());
 }
 

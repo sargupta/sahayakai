@@ -9,7 +9,9 @@ import crypto from 'node:crypto';
 import { join } from 'node:path';
 
 import { readRoster, sargvisionRecords, validateRoster, type Roster } from '../../../../scripts/sampark/sargvision-roster';
+import contract from './fixtures/riya-agent-contract.json';
 import { createMemoryConversationRepo } from '@/lib/sampark/conversation/repo';
+import { OUTREACH_REASON_PURPOSE, RIYA_PURPOSES } from '@/lib/sampark/conversation/riya-purposes';
 import { decryptPhone, encryptPhone, hashPhone } from '@/lib/sampark/phone';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
 import { SARGVISION_ORG_ID } from '@/lib/sampark/sargvision';
@@ -309,5 +311,62 @@ describe('Sargvision roster calls (Riya service)', () => {
         expect(first.call.state).toBe('unknown');
         expect(await code((await start(s.deps, 'sv-nischay')).run())).toMatch(/UNRESOLVED_PREVIOUS_CALL|RIYA_CALL_IN_PROGRESS/);
         expect(s.fetchImpl).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('Sargvision: Practice vs real calls, and Riya’s caller ID', () => {
+    const RIYA_CALLER_ID = '+917965853645'; // "Sahayak Riya - Vobiz Outbound" (ElevenLabs phone-number resource)
+    const repoRoot = join(__dirname, '..', '..', '..', '..');
+    const read = (p: string) => require('node:fs').readFileSync(join(repoRoot, p), 'utf8') as string;
+
+    afterEach(() => registerSargvisionRoster([]));
+
+    it('a call rings only in Test mode with live dialling on; Practice (the launcher default) never claims a real call', () => {
+        const { sargvisionCallsRing } = jest.requireActual('@/server/sampark/sargvision') as typeof import('@/server/sampark/sargvision');
+        expect(sargvisionCallsRing({ mode: 'practice' }, { SAMPARK_LIVE_DIAL_ENABLED: 'true' })).toBe(false);
+        expect(sargvisionCallsRing({ mode: 'test' }, {})).toBe(false);
+        expect(sargvisionCallsRing(null, { SAMPARK_LIVE_DIAL_ENABLED: 'true' })).toBe(false);
+        expect(sargvisionCallsRing({ mode: 'test' }, { SAMPARK_LIVE_DIAL_ENABLED: 'true' })).toBe(true);
+
+        // The flag reaches the roster rows; a contact without it is a Practice contact.
+        registerSargvisionRoster([{ studentId: 'sv-varunesh', guardianId: 'sv-varunesh-contact', name: 'Varunesh', phoneLast4: '7646' }]);
+        expect(getDemoSchool().students.find((s) => s.id === 'sv-varunesh')?.rosterContact?.realCall).toBe(false);
+        registerSargvisionRoster([{ studentId: 'sv-varunesh', guardianId: 'sv-varunesh-contact', name: 'Varunesh', phoneLast4: '7646', realCall: true }]);
+        expect(getDemoSchool().students.find((s) => s.id === 'sv-varunesh')?.rosterContact?.realCall).toBe(true);
+    });
+
+    it('Varunesh is one contact with his own number, never Riya’s outbound caller ID', () => {
+        const roster = readRoster(ROSTER_FILE);
+        expect(roster.contacts.filter((c) => c.name === 'Varunesh')).toEqual([{ id: 'sv-varunesh', name: 'Varunesh', phone: '+918300457646' }]);
+        expect(roster.contacts.map((c) => c.phone)).not.toContain(RIYA_CALLER_ID);
+    });
+
+    it('the launcher, .env.example and the setup doc name the same Riya phone-number resource', () => {
+        const launcherId = read('scripts/sampark/riya-local.mjs').match(/phoneNumberId: '(phnum_\w+)'/)?.[1];
+        const exampleId = read('.env.example').match(/^ELEVENLABS_AGENT_PHONE_NUMBER_ID=(phnum_\w+)/m)?.[1];
+        expect(launcherId).toMatch(/^phnum_\w{20,}$/);
+        expect(exampleId).toBe(launcherId);
+        expect(read('docs/sampark/RIYA_LOCAL_SETUP.md')).toContain(launcherId);
+    });
+
+    it('real calls use the unified SARGVISION agent and the Vobiz number assigned to it (live contract)', () => {
+        const launcherAgent = read('scripts/sampark/riya-local.mjs').match(/agentId: '(agent_\w+)'/)?.[1];
+        const launcherPhone = read('scripts/sampark/riya-local.mjs').match(/phoneNumberId: '(phnum_\w+)'/)?.[1];
+        const exampleAgent = read('.env.example').match(/^ELEVENLABS_AGENT_ID=(agent_\w+)/m)?.[1];
+        expect(launcherAgent).toBe(contract.agentId);
+        expect(exampleAgent).toBe(contract.agentId);
+        expect(launcherPhone).toBe(contract.agentPhoneNumberId);
+        expect(contract.phoneNumberAssignedAgentId).toBe(contract.agentId);
+    });
+
+    it('the real-call launcher enables the four outreach workflows', () => {
+        // PTM only for Practice; the full list for each real-call mode (--real-call ElevenLabs, --vobiz-call Vobiz).
+        const lists = [...read('scripts/sampark/riya-local.mjs').matchAll(/SAMPARK_RIYA_PURPOSES: '([a-z_,]+)'/g)].map((m) => m[1]);
+        expect(lists).toHaveLength(3);
+        for (const realCall of lists.slice(1)) {
+            for (const p of Object.values(OUTREACH_REASON_PURPOSE)) expect(realCall.split(',')).toContain(p);
+            expect(realCall.split(',').every((p) => (RIYA_PURPOSES as readonly string[]).includes(p))).toBe(true);
+        }
+        expect(lists[1]).toBe(lists[2]); // both providers offer the same workflows
     });
 });

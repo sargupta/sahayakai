@@ -159,6 +159,12 @@ export interface SamparkSchool {
      * `seed-emulator.ts --arm-after-hours-test`; ignored everywhere else.
      */
     localAfterHoursTest?: { armedAt: string; until: string } | null;
+    /**
+     * Which backend runs Riya's real (Test-mode) calls: the hosted ElevenLabs agent (default) or
+     * SahayakAI's own Vobiz + Gemini Live bridge. Same console, gates, records and callbacks either way;
+     * missing = 'elevenlabs'. Practice mode is always simulated.
+     */
+    conversationProvider?: 'elevenlabs' | 'vobiz' | null;
     createdAt: string;
     updatedAt: string;
 }

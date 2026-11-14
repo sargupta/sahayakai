@@ -21,7 +21,16 @@ import type { CallDestination, ParentLanguage, PurposeId, SamparkMode } from '@/
 
 import type { RiyaPurpose, RiyaVariables } from './riya-purposes';
 
-export type ConversationProviderKind = 'simulated' | 'elevenlabs';
+export type ConversationProviderKind = 'simulated' | 'elevenlabs' | 'vobiz';
+
+/** The two real backends a school can choose between (Settings → Calling provider). Same UI, gates and records. */
+export type RealConversationProvider = 'elevenlabs' | 'vobiz';
+export const REAL_CONVERSATION_PROVIDERS: readonly RealConversationProvider[] = ['elevenlabs', 'vobiz'];
+
+/** A real provider rings a real phone over a real carrier: every real-call rule (caps, gates, callbacks) applies. */
+export function isRealProvider(p: ConversationProviderKind | null | undefined): p is RealConversationProvider {
+    return p === 'elevenlabs' || p === 'vobiz';
+}
 
 export type ConversationCallState =
     | 'initiating'        // record created, provider being contacted
@@ -134,6 +143,10 @@ export interface ConversationCall {
     createdAt: string;
     updatedAt: string;
     endedAt: string | null;
+    /** The per-school lock slot this call holds while in flight (absent = slot 0, the single-flight lock). */
+    lockSlot?: number;
+    /** Set when the call was placed by a class-wide batch campaign: which campaign and recipient it serves. */
+    batch?: { campaignId: string; recipientId: string } | null;
 }
 
 /** The console's view of a call. Transcript only on the detail endpoint. */

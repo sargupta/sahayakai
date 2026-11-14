@@ -204,6 +204,56 @@ describe('Riya calls tab (Practice)', () => {
         expect(await deps.calls.listCalls(ORG, 10)).toHaveLength(0);
     });
 
+    it('opened from a roster (outreach): the four reasons come first, the roster reason is pre-selected, and the call runs that workflow', async () => {
+        env.SAMPARK_RIYA_PURPOSES = 'ptm_invitation,absence_notice,academic_performance,classroom_behaviour,student_achievement';
+        const view = await seed();
+        // Outreach calls are "progress" calls: the family must have agreed to them.
+        await deps.repo.upsertPreferences([prefs('g1', { notices: 'granted', progress: 'granted', recorded_conversation: 'granted' }, 'English')]);
+        render(
+            <SamparkSchoolProvider value={{ orgId: ORG, school: view, setSchool: () => undefined, reloadSchool: () => undefined }}>
+                <RiyaCallPanel fixedFamily={{ guardianId: 'g1', studentId: 's1' }} outreach={{ reason: 'behavioral_concern' }} />
+            </SamparkSchoolProvider>,
+        );
+        const purpose = (await screen.findByLabelText('What is the call about?')) as HTMLSelectElement;
+        await waitFor(() => expect(purpose.value).toBe('classroom_behaviour'));
+        const labels = Array.from(purpose.options).map((o) => o.textContent).filter((l) => l !== '—');
+        expect(labels.slice(0, 4)).toEqual(['Consecutive absences', 'Academic concern', 'Behavioural concern', 'Positive feedback']);
+        expect(labels).toContain('PTM invitation');
+        // The family is fixed by the roster: no picker.
+        expect(screen.queryByLabelText('Parent / Guardian')).toBeNull();
+
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Difficulty paying attention' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
+        expect(await screen.findByText(/I'm calling to share a classroom update\. Your child has been having difficulty paying attention in class\./)).toBeTruthy();
+
+        const place = screen.getByRole('button', { name: 'Run practice call' }) as HTMLButtonElement;
+        await waitFor(() => expect(place.disabled).toBe(false));
+        fireEvent.click(place);
+        fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Run practice call' }));
+        await waitFor(async () => expect(await deps.calls.listCalls(ORG, 10)).toHaveLength(1));
+        const [stored] = await deps.calls.listCalls(ORG, 10);
+        expect(stored).toMatchObject({ riyaPurpose: 'classroom_behaviour', guardianId: 'g1', studentId: 's1', provider: 'simulated' });
+        expect(stored.variables.behaviour_summary).toBe('Your child has been having difficulty paying attention in class.');
+        expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('an outreach call to a family without "progress" consent is refused before anything rings', async () => {
+        env.SAMPARK_RIYA_PURPOSES = 'student_achievement';
+        const view = await seed();
+        render(
+            <SamparkSchoolProvider value={{ orgId: ORG, school: view, setSchool: () => undefined, reloadSchool: () => undefined }}>
+                <RiyaCallPanel fixedFamily={{ guardianId: 'g1', studentId: 's1' }} outreach={{ reason: 'positive_feedback' }} />
+            </SamparkSchoolProvider>,
+        );
+        const purpose = (await screen.findByLabelText('What is the call about?')) as HTMLSelectElement;
+        await waitFor(() => expect(purpose.value).toBe('student_achievement'));
+        fireEvent.change(screen.getByLabelText('Subject'), { target: { value: 'english' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
+        expect(await screen.findByText(/No consent recorded/)).toBeTruthy();
+        expect((screen.getByRole('button', { name: 'Run practice call' }) as HTMLButtonElement).disabled).toBe(true);
+        expect(await deps.calls.listCalls(ORG, 10)).toHaveLength(0);
+    });
+
     it('a provider timeout in Practice shows the unknown state and the review action', async () => {
         renderPanel(await seed());
         await screen.findByText('Riya calling assistant');

@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { RIYA_OPENING_TEMPLATE, RIYA_VARIABLES, riyaOpening } from '@/lib/sampark/conversation/riya-purposes';
+import { RIYA_OPENING_TEMPLATE, RIYA_PURPOSES, RIYA_VARIABLES, riyaOpening } from '@/lib/sampark/conversation/riya-purposes';
 
 const script = readFileSync(join(process.cwd(), 'scripts/sampark/verify-riya-clone.mjs'), 'utf8');
 
@@ -22,6 +22,10 @@ function literal(name: string): string {
 describe('verify-riya-clone.mjs stays in step with the app', () => {
     it('has the same 14 variables, in order', () => {
         expect(JSON.parse(literal('SAHAYAK_VARIABLES').replace(/'/g, '"'))).toEqual([...RIYA_VARIABLES]);
+    });
+
+    it('checks the same call_purpose branches the app offers', () => {
+        expect(JSON.parse(literal('PURPOSES').replace(/'/g, '"'))).toEqual([...RIYA_PURPOSES].sort());
     });
 
     it('has the same preview opening', () => {

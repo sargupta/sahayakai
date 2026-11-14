@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify, importX509, createRemoteJWKSet } from 'jose';
+import { CHOOSER_SEGMENT, needsProviderChoice, parseProviderChoice, PROVIDER_COOKIE, skipChooserTarget } from '@/lib/sampark/provider-choice';
 import {
     PROFILE_COMPLETE_COOKIE,
     verifyProfileCompleteCookie,
@@ -160,14 +161,18 @@ export async function middleware(request: NextRequest) {
         (pathname === '/attendance' || pathname.startsWith('/attendance/'))
     ) {
         const url = request.nextUrl.clone();
-        url.pathname = `${SAMPARK_PREFIX}/demo/teacher`;
-        url.search = '?from=sahayak';
+        // Entering SamparkAI from SahayakAI: always through the provider choice first.
+        url.pathname = `${SAMPARK_PREFIX}/${CHOOSER_SEGMENT}`;
+        url.search = `?next=${encodeURIComponent(`${SAMPARK_PREFIX}/demo/teacher?from=sahayak`)}`;
         // Behind Cloud Run the container's :8080 and http leak into nextUrl
         // (see the apex redirect above): keep the scheme the browser used, no port.
         const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0].trim();
         if (forwardedProto) {
             url.protocol = `${forwardedProto}:`;
-            url.port = '';
+            // Drop the port only when the browser's own Host has none. `next dev` sets
+            // x-forwarded-proto too, and there the port (localhost:3000) is the real one:
+            // clearing it sent Attendance to http://localhost/… — a dead page.
+            if (!/:\d+$/.test(host ?? '')) url.port = '';
         }
         return NextResponse.redirect(url, 307);
     }
@@ -493,6 +498,34 @@ export async function middleware(request: NextRequest) {
                 redirectUrl.searchParams.set('next', pathname);
                 return NextResponse.redirect(redirectUrl);
             }
+        }
+    }
+
+    // SamparkAI provider choice (src/lib/sampark/provider-choice.ts): no workspace, school or
+    // demo page opens without one. A deep link without it goes to the chooser first and
+    // comes back afterwards. Pages only; the APIs read the same cookie server-side.
+    if (!pathname.startsWith('/api/') && !pathname.startsWith('/_next') && !/\.[a-z0-9]+$/i.test(pathname)) {
+        const samparkPath = samparkRewrite ? samparkRewrite.pathname : pathname;
+        // Already chose this browser session (and not an explicit "Switch"): go straight on
+        // instead of asking again. Built from the browser's own Host + scheme, so neither the
+        // dev port is dropped nor Cloud Run's internal :8080 leaks (see the Attendance redirect).
+        if (request.method === 'GET' && samparkPath === `${SAMPARK_PREFIX}/${CHOOSER_SEGMENT}`) {
+            const target = skipChooserTarget(
+                request.nextUrl.searchParams,
+                parseProviderChoice(request.cookies.get(PROVIDER_COOKIE)?.value),
+            );
+            if (target) {
+                const proto = request.headers.get('x-forwarded-proto')?.split(',')[0].trim() || request.nextUrl.protocol.replace(':', '');
+                const origin = host ? `${proto}://${host}` : request.nextUrl.origin;
+                return NextResponse.redirect(new URL(target, origin), 307);
+            }
+        }
+        if (needsProviderChoice(samparkPath) && !parseProviderChoice(request.cookies.get(PROVIDER_COOKIE)?.value)) {
+            const chooser = request.nextUrl.clone();
+            chooser.pathname = samparkRewrite ? `/${CHOOSER_SEGMENT}` : `${SAMPARK_PREFIX}/${CHOOSER_SEGMENT}`;
+            chooser.search = '';
+            chooser.searchParams.set('next', `${pathname}${request.nextUrl.search}`);
+            return NextResponse.redirect(chooser, 307);
         }
     }
 

@@ -45,6 +45,7 @@ import { formatInZone, isValidTimeZone, parseCallbackTime, type CallbackTimePars
 import type { CallbackView, SamparkCallback } from '@/lib/sampark/callbacks/types';
 import { RiyaFactsSchema, type RiyaFacts } from '@/lib/sampark/conversation/facts';
 import { RiyaPurposeSchema, type RiyaPurpose } from '@/lib/sampark/conversation/riya-purposes';
+import { isRealProvider } from '@/lib/sampark/conversation/types';
 import type { Clock } from '@/lib/sampark/ports';
 import { logger } from '@/lib/logger';
 import { requireOrgAdmin } from '@/server/sampark/auth';
@@ -190,7 +191,7 @@ async function checkAt(deps: CallbackDeps, orgId: string, target: Target, at: Da
     const preview = await previewRiyaCall({ ...deps, clock: atClock }, orgId, riyaInput(target));
     refusals.push(...preview.refusals);
     const env = deps.env ?? process.env;
-    if (preview.provider === 'elevenlabs' && !realProviderCallbacksEnabled(env)) refusals.push({ code: 'CALLBACKS_PRACTICE_ONLY' });
+    if (isRealProvider(preview.provider) && !realProviderCallbacksEnabled(env)) refusals.push({ code: 'CALLBACKS_PRACTICE_ONLY' });
     const outside = preview.refusals.find((r): r is Extract<RiyaRefusal, { code: 'OUTSIDE_CALLING_HOURS' }> => r.code === 'OUTSIDE_CALLING_HOURS');
     return {
         ok: refusals.length === 0,
@@ -516,8 +517,11 @@ async function runOne(deps: CallbackDeps, orgId: string, id: string, holder: str
     if (!cb.approvedBy || !cb.announcement) return failWith('CALLBACK_NOT_APPROVED', 'This callback was never approved');
     if (!(await deps.isOrgAdmin(orgId, cb.approvedBy))) return failWith('APPROVER_NO_LONGER_ADMIN', 'The person who scheduled this callback no longer administers the school');
     const input = riyaInput({ purpose: cb.riyaPurpose, guardianId: cb.guardianId, studentId: cb.studentId, facts: cb.facts, campaignId: cb.campaignId });
-    const preview = await previewRiyaCall(deps, orgId, input);
-    if (preview.provider === 'elevenlabs' && !realProviderCallbacksEnabled(env)) {
+    // No person's session here: a callback continues its source call, with the provider that call used.
+    const source = cb.sourceCallId ? await deps.calls.getCall(orgId, cb.sourceCallId) : null;
+    const runDeps = source && isRealProvider(source.provider) ? { ...deps, providerChoice: source.provider } : deps;
+    const preview = await previewRiyaCall(runDeps, orgId, input);
+    if (isRealProvider(preview.provider) && !realProviderCallbacksEnabled(env)) {
         return failWith('CALLBACKS_PRACTICE_ONLY', REFUSAL_MESSAGE.CALLBACKS_PRACTICE_ONLY as string);
     }
     if (!preview.ok) {
@@ -531,7 +535,7 @@ async function runOne(deps: CallbackDeps, orgId: string, id: string, holder: str
 
     const key = runIdempotencyKey(crypto.createHash('sha256').update(`${orgId}|${cb.id}|${cb.version}`).digest('hex'));
     try {
-        const result = await startRiyaCall(deps, orgId, cb.approvedBy, { ...input, idempotencyKey: key, confirmedAnnouncement: cb.announcement });
+        const result = await startRiyaCall(runDeps, orgId, cb.approvedBy, { ...input, idempotencyKey: key, confirmedAnnouncement: cb.announcement });
         report.completed += 1;
         await finish((c) => complete(c, { holder, now: deps.clock.now(), riyaCallId: result.call.id }), 'callback.started', { riyaCallId: result.call.id, duplicate: result.duplicate });
     } catch (err) {

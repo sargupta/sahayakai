@@ -9,6 +9,8 @@ import { useLanguage } from "@/context/language-context";
 import { DemoRoleGate, type DemoView } from "@/components/sampark/demo/use-demo";
 import { StudentRoster } from "@/components/sampark/demo/student-roster";
 import { CallParentDialog } from "@/components/sampark/demo/call-parent-dialog";
+import { SargvisionClassOutreach } from "@/components/sampark/demo/sargvision-call";
+import { SARGVISION_CLASS_ID, SARGVISION_ORG_ID } from "@/lib/sampark/sargvision";
 import { PageHeader, Panel } from "@/components/sampark/console-ui";
 import { studentById } from "@/lib/sampark/demo/school";
 import { DEMO_REASONS } from "@/lib/sampark/demo/script";
@@ -78,6 +80,16 @@ function TeacherClasses({ view }: { view: DemoView }) {
                         </button>
                     ))}
                 </div>
+                {/* Class-wide outreach needs school records: the Sargvision class has them on the Sampark server. */}
+                {shown.filter((c) => c.id === SARGVISION_CLASS_ID).map((c) => (
+                    <div key={c.id} className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-surface-sm border border-border p-3">
+                        <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground">{c.name}</p>
+                            <p className="text-xs text-muted-foreground">{t("Announce something to the whole class: Riya calls each eligible parent separately.")}</p>
+                        </div>
+                        <SargvisionClassOutreach orgId={SARGVISION_ORG_ID} grade={c.grade} section={c.section} label={c.name} />
+                    </div>
+                ))}
                 <StudentRoster classes={shown} students={view.school.students} calls={view.visibleCalls} showClass={tab === ALL} onCall={(student, reason) => setCalling({ student, reason })} />
             </Panel>
 

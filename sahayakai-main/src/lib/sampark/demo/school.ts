@@ -204,7 +204,7 @@ export const SARGVISION_TEACHER_ID = 't-rai';
  * changes nothing.
  */
 export function registerSargvisionRoster(contacts: SargvisionContact[]): void {
-    const key = (list: SargvisionContact[]) => list.map((c) => `${c.studentId}:${c.phoneLast4}`).join(',');
+    const key = (list: SargvisionContact[]) => list.map((c) => `${c.studentId}:${c.phoneLast4}:${c.realCall ? 1 : 0}:${c.notAllowListed ? 1 : 0}`).join(',');
     if (key(contacts) === key(roster)) return;
     roster = contacts;
     cached = null;
@@ -224,7 +224,7 @@ function sargvisionStudents(): DemoStudent[] {
         behaviourNote: null,
         achievement: null,
         guardian: { name: c.name, relation: 'Contact', phoneLast4: c.phoneLast4, language: 'en' },
-        rosterContact: { orgId: SARGVISION_ORG_ID, guardianId: c.guardianId },
+        rosterContact: { orgId: SARGVISION_ORG_ID, guardianId: c.guardianId, realCall: c.realCall === true, notAllowListed: c.notAllowListed === true },
     }));
 }
 

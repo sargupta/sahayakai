@@ -12,6 +12,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { previewRiyaCall, riyaDeps, RiyaPreviewSchema } from '@/server/sampark/conversation';
+import { providerChoiceFromCookieHeader } from '@/lib/sampark/provider-choice';
 import { guardRiyaRoute } from '@/server/sampark/conversation-http';
 import { errorResponse, parseBody, samparkContext } from '@/server/sampark/http';
 
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
     if ('response' in body) return body.response;
     try {
         const deps = await riyaDeps(await samparkContext());
+        deps.providerChoice = providerChoiceFromCookieHeader(req.headers.get('cookie'));
         return NextResponse.json(await previewRiyaCall(deps, guard.orgId, body.data));
     } catch (err) {
         return errorResponse(err, 'SAMPARK_RIYA_PREVIEW');

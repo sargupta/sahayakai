@@ -45,7 +45,26 @@ import {
 } from "@/lib/api/sampark-riya";
 import type { CallbackView } from "@/lib/api/sampark-callbacks";
 import type { RiyaFacts } from "@/lib/sampark/conversation/facts";
-import { CLOSURE_REASONS, EVENT_TYPES, EXAM_SUBJECTS, type ExamSubject, type RiyaPurpose } from "@/lib/sampark/conversation/riya-purposes";
+import {
+    ACADEMIC_CONCERNS,
+    ACHIEVEMENTS,
+    achievementNeedsSubject,
+    BEHAVIOUR_OBSERVATIONS,
+    CLOSURE_REASONS,
+    EVENT_TYPES,
+    EXAM_SUBJECTS,
+    MAX_ACADEMIC_SUBJECTS,
+    MAX_BEHAVIOUR_OBSERVATIONS,
+    OUTREACH_REASON_PURPOSE,
+    OUTREACH_REASONS,
+    type AcademicConcern,
+    type Achievement,
+    type BehaviourObservation,
+    type ExamSubject,
+    type RiyaPurpose,
+} from "@/lib/sampark/conversation/riya-purposes";
+import { REASON_LABEL } from "@/lib/sampark/demo/script";
+import type { OutreachReason } from "@/types/attendance";
 import { SIMULATION_SCENARIOS, type SimulationScenario } from "@/lib/sampark/conversation/simulated-provider";
 import type { ConversationCallState } from "@/lib/sampark/conversation/types";
 import type { BlockReason, ClosureReason, EventType, SpokenTime } from "@/types/sampark";
@@ -70,7 +89,44 @@ export function riyaPurposeLabel(t: Translate, p: RiyaPurpose): string {
         case "holiday_notice": return t("Holiday notice");
         case "exam_schedule_notice": return t("Exam schedule notice");
         case "absence_notice": return t("Absence notice");
+        // The outreach workflows carry the attendance view's reason names (REASON_LABEL).
+        case "academic_performance": return t("Academic concern");
+        case "classroom_behaviour": return t("Behavioural concern");
+        case "student_achievement": return t("Positive feedback");
         default: return p;
+    }
+}
+
+/** The outreach reason's own name (REASON_LABEL); absence_notice reads "Consecutive absences" here. */
+function outreachReasonLabel(t: Translate, reason: OutreachReason): string {
+    return t(REASON_LABEL[reason]);
+}
+
+function academicConcernLabel(t: Translate, c: AcademicConcern): string {
+    switch (c) {
+        case "below_expected": return t("Work below the expected level");
+        case "marks_dropped": return t("Marks have dropped");
+        case "missed_assessments": return t("Missed tests or assignments");
+    }
+}
+
+function behaviourLabel(t: Translate, o: BehaviourObservation): string {
+    switch (o) {
+        case "attention": return t("Difficulty paying attention");
+        case "disturbing_others": return t("Disturbing other students");
+        case "incomplete_classwork": return t("Not completing classwork");
+        case "low_participation": return t("Taking less part in class");
+        case "late_to_class": return t("Arriving late to class");
+    }
+}
+
+function achievementLabel(t: Translate, a: Achievement): string {
+    switch (a) {
+        case "top_marks": return t("Among the highest marks in a subject");
+        case "great_improvement": return t("Excellent improvement in a subject");
+        case "active_participation": return t("Very active in class");
+        case "helpful_to_classmates": return t("Helpful and kind to classmates");
+        case "full_attendance": return t("Excellent attendance this term");
     }
 }
 
@@ -107,7 +163,7 @@ function answerValueLabel(t: Translate, value: string): string {
     }
 }
 
-function stateLabel(t: Translate, s: ConversationCallState): string {
+export function stateLabel(t: Translate, s: ConversationCallState): string {
     switch (s) {
         case "initiating": return t("Initiating Call");
         case "initiated": return t("Call Initiated");
@@ -128,7 +184,7 @@ function stateTone(s: ConversationCallState) {
     return "neutral" as const;
 }
 
-function scenarioLabel(t: Translate, s: SimulationScenario): string {
+export function scenarioLabel(t: Translate, s: SimulationScenario): string {
     switch (s) {
         case "answered_positive": return t("Parent answers and agrees");
         case "answered_cannot_attend": return t("Parent cannot attend");
@@ -144,7 +200,7 @@ function scenarioLabel(t: Translate, s: SimulationScenario): string {
     }
 }
 
-function refusalText(t: Translate, r: RiyaPreview["refusals"][number]): string {
+export function refusalText(t: Translate, r: RiyaPreview["refusals"][number]): string {
     switch (r.code) {
         case "PURPOSE_NOT_ENABLED": return t("This workflow is not switched on yet.");
         case "FACTS_REQUIRED": return t("Enter the details for this call.");
@@ -169,9 +225,17 @@ function today(): string {
 
 // ── Facts form ───────────────────────────────────────────────────────────────
 
+/** A blank facts form (also used by class-wide outreach). */
+export function emptyFactsState(): FactsState {
+    return {
+        date: "", time: "10:00", eventType: "annual_day", holidays: [], exams: [{ subject: "english", date: "", time: "" }], reason: "heavy_rain", buses: "unknown",
+        subjects: [], concern: "below_expected", observations: [], achievement: "top_marks", achievementSubject: "",
+    };
+}
+
 type ExamRow = { subject: ExamSubject; date: string; time: string };
 
-interface FactsState {
+export interface FactsState {
     date: string;
     time: string;
     eventType: EventType;
@@ -179,9 +243,14 @@ interface FactsState {
     exams: ExamRow[];
     reason: ClosureReason;
     buses: "yes" | "no" | "unknown";
+    subjects: ExamSubject[];
+    concern: AcademicConcern;
+    observations: BehaviourObservation[];
+    achievement: Achievement;
+    achievementSubject: ExamSubject | "";
 }
 
-function factsFor(purpose: RiyaPurpose, f: FactsState): RiyaFacts {
+export function factsFor(purpose: RiyaPurpose, f: FactsState): RiyaFacts {
     switch (purpose) {
         case "ptm_invitation": return { purpose, date: f.date, time: parseTime(f.time) };
         case "event_invitation": return { purpose, eventType: f.eventType, date: f.date, time: parseTime(f.time) };
@@ -191,6 +260,10 @@ function factsFor(purpose: RiyaPurpose, f: FactsState): RiyaFacts {
         case "absence_notice": return { purpose, date: f.date };
         case "emergency_closure":
             return { purpose, date: f.date, reason: f.reason, busesRunning: f.buses === "unknown" ? null : f.buses === "yes" };
+        case "academic_performance": return { purpose, subjects: f.subjects, concern: f.concern };
+        case "classroom_behaviour": return { purpose, observations: f.observations };
+        case "student_achievement":
+            return { purpose, achievement: f.achievement, subject: achievementNeedsSubject(f.achievement) && f.achievementSubject ? f.achievementSubject : null };
     }
 }
 
@@ -198,7 +271,7 @@ function factsFor(purpose: RiyaPurpose, f: FactsState): RiyaFacts {
  * What the chosen workflow still needs before a preview can be asked for, or null when complete.
  * The server validates again; this only keeps an incomplete request from being sent.
  */
-function missingFact(t: Translate, purpose: RiyaPurpose, f: FactsState): string | null {
+export function missingFact(t: Translate, purpose: RiyaPurpose, f: FactsState): string | null {
     switch (purpose) {
         case "ptm_invitation":
         case "event_invitation":
@@ -210,7 +283,32 @@ function missingFact(t: Translate, purpose: RiyaPurpose, f: FactsState): string 
         case "absence_notice":
         case "emergency_closure":
             return !f.date ? t("Choose the date first.") : null;
+        case "academic_performance":
+            return f.subjects.length === 0 ? t("Choose at least one subject first.") : null;
+        case "classroom_behaviour":
+            return f.observations.length === 0 ? t("Choose at least one observation first.") : null;
+        case "student_achievement":
+            return achievementNeedsSubject(f.achievement) && !f.achievementSubject ? t("Choose the subject first.") : null;
     }
+}
+
+/** Up to `max` distinct choices from a closed list, as checkboxes. */
+function ChoiceList<K extends string>({ legend, ids, label, chosen, max, onChange }: { legend: string; ids: readonly K[]; label: (k: K) => string; chosen: K[]; max: number; onChange: (next: K[]) => void }) {
+    return (
+        <fieldset className="space-y-2">
+            <legend className="text-sm font-medium text-foreground">{legend}</legend>
+            {ids.map((k) => (
+                <label key={k} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                        checked={chosen.includes(k)}
+                        disabled={!chosen.includes(k) && chosen.length >= max}
+                        onCheckedChange={(on) => onChange(on ? [...chosen, k] : chosen.filter((x) => x !== k))}
+                    />
+                    {label(k)}
+                </label>
+            ))}
+        </fieldset>
+    );
 }
 
 function TimeSelect({ id, value, onChange, optional }: { id: string; value: string; onChange: (v: string) => void; optional?: boolean }) {
@@ -226,7 +324,7 @@ function TimeSelect({ id, value, onChange, optional }: { id: string; value: stri
     );
 }
 
-function FactsFields({ purpose, facts, setFacts, holidays }: { purpose: RiyaPurpose; facts: FactsState; setFacts: (f: FactsState) => void; holidays: string[] }) {
+export function FactsFields({ purpose, facts, setFacts, holidays }: { purpose: RiyaPurpose; facts: FactsState; setFacts: (f: FactsState) => void; holidays: string[] }) {
     const { t } = useLanguage();
     const f = useSamparkFormat();
     const set = (patch: Partial<FactsState>) => setFacts({ ...facts, ...patch });
@@ -247,6 +345,59 @@ function FactsFields({ purpose, facts, setFacts, holidays }: { purpose: RiyaPurp
                     </label>
                 ))}
             </fieldset>
+        );
+    }
+
+    const subjectIds = Object.keys(EXAM_SUBJECTS) as ExamSubject[];
+
+    if (purpose === "academic_performance") {
+        return (
+            <div className="space-y-3">
+                <div className="space-y-1">
+                    <Label htmlFor="riya-concern">{t("What Riya will say")}</Label>
+                    <Select value={facts.concern} onValueChange={(v) => set({ concern: v as AcademicConcern })}>
+                        <SelectTrigger id="riya-concern"><SelectValue /></SelectTrigger>
+                        <SelectContent>{(Object.keys(ACADEMIC_CONCERNS) as AcademicConcern[]).map((c) => <SelectItem key={c} value={c}>{academicConcernLabel(t, c)}</SelectItem>)}</SelectContent>
+                    </Select>
+                </div>
+                <ChoiceList legend={fmt(t("Subjects (up to {n})"), { n: String(MAX_ACADEMIC_SUBJECTS) })} ids={subjectIds} label={(s) => EXAM_SUBJECTS[s]} chosen={facts.subjects} max={MAX_ACADEMIC_SUBJECTS} onChange={(subjects) => set({ subjects })} />
+            </div>
+        );
+    }
+
+    if (purpose === "classroom_behaviour") {
+        return (
+            <ChoiceList
+                legend={fmt(t("Classroom observations (up to {n})"), { n: String(MAX_BEHAVIOUR_OBSERVATIONS) })}
+                ids={Object.keys(BEHAVIOUR_OBSERVATIONS) as BehaviourObservation[]}
+                label={(o) => behaviourLabel(t, o)}
+                chosen={facts.observations}
+                max={MAX_BEHAVIOUR_OBSERVATIONS}
+                onChange={(observations) => set({ observations })}
+            />
+        );
+    }
+
+    if (purpose === "student_achievement") {
+        return (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                    <Label htmlFor="riya-achievement">{t("Achievement")}</Label>
+                    <Select value={facts.achievement} onValueChange={(v) => set({ achievement: v as Achievement })}>
+                        <SelectTrigger id="riya-achievement"><SelectValue /></SelectTrigger>
+                        <SelectContent>{(Object.keys(ACHIEVEMENTS) as Achievement[]).map((a) => <SelectItem key={a} value={a}>{achievementLabel(t, a)}</SelectItem>)}</SelectContent>
+                    </Select>
+                </div>
+                {achievementNeedsSubject(facts.achievement) && (
+                    <div className="space-y-1">
+                        <Label htmlFor="riya-achievement-subject">{t("Subject")}</Label>
+                        <Select value={facts.achievementSubject || undefined} onValueChange={(v) => set({ achievementSubject: v as ExamSubject })}>
+                            <SelectTrigger id="riya-achievement-subject"><SelectValue placeholder={t("Choose")} /></SelectTrigger>
+                            <SelectContent>{subjectIds.map((s) => <SelectItem key={s} value={s}>{EXAM_SUBJECTS[s]}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
+                )}
+            </div>
         );
     }
 
@@ -383,6 +534,8 @@ function CallRow({ orgId, call, onChange, callback = null }: { orgId: string; ca
                         {f.dateTime(call.createdAt)} · {fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 })}
                         {call.destination === "test_phone" && <> · {t("Test phone")}</>}
                         {call.provider === "simulated" && <> · {t("Simulated")}</>}
+                        {call.provider === "elevenlabs" && <> · {"ElevenLabs"}</>}
+                        {call.provider === "vobiz" && <> · {"Vobiz"}</>}
                         {call.durationSeconds !== null && <> · {fmt(t("{seconds} s"), { seconds: Math.round(call.durationSeconds) })}</>}
                     </p>
                 </div>
@@ -400,7 +553,7 @@ function CallRow({ orgId, call, onChange, callback = null }: { orgId: string; ca
                         <p className="text-xs text-muted-foreground">{t("Provisional: written before the provider sent the conversation. It is replaced when the transcript arrives.")}</p>
                     )}
                 </>
-            ) : ended && call.provider === "elevenlabs" ? (
+            ) : ended && call.provider !== "simulated" ? (
                 <p className="text-sm text-muted-foreground">{t("The call synopsis is being written…")}</p>
             ) : null}
             {/* Collected answers are their own stored field, not the transcript. */}
@@ -415,7 +568,7 @@ function CallRow({ orgId, call, onChange, callback = null }: { orgId: string; ca
             <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => run(() => getRiyaCall(orgId, call.id))}>{t("Details")}</Button>
                 {/* An unknown call without an id is looked up by our own user id on the server. */}
-                {call.provider === "elevenlabs" && (call.state === "unknown" || (call.providerConversationId && call.state === "initiated")) && (
+                {call.provider !== "simulated" && (call.state === "unknown" || (call.providerConversationId && call.state === "initiated")) && (
                     <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => run(() => reconcileRiya(orgId, call.id))}>{t("Check status")}</Button>
                 )}
                 {call.state === "unknown" && !call.reviewedAt && (
@@ -452,7 +605,7 @@ const RESULT_WAIT_MS = 24 * 3_600_000;
 
 function pendingRealCalls(calls: ConversationCallView[], storeTranscripts: boolean): ConversationCallView[] {
     const since = Date.now() - RESULT_WAIT_MS;
-    return calls.filter((c) => c.provider === "elevenlabs" && (
+    return calls.filter((c) => c.provider !== "simulated" && (
         c.state === "initiating" || c.state === "initiated" || (c.state === "unknown" && !c.reviewedAt)
         // A finished call whose result is still incomplete: no synopsis, a provisional one, or no transcript yet.
         || (c.state === "completed" && Boolean(c.providerConversationId) && !c.transcriptPurgedAt && Date.parse(c.endedAt ?? c.createdAt) > since
@@ -520,7 +673,12 @@ export interface RiyaFixedFamily {
     studentId: string;
 }
 
-export function RiyaCallPanel({ fixedFamily }: { fixedFamily?: RiyaFixedFamily } = {}) {
+/**
+ * `outreach`: opened from a class roster's "Call parent" (attendance outreach). The four outreach
+ * reasons are listed first under their own names, `outreach.reason` is pre-selected when this
+ * deployment allows its workflow, and the school-notice workflows follow.
+ */
+export function RiyaCallPanel({ fixedFamily, outreach }: { fixedFamily?: RiyaFixedFamily; outreach?: { reason: OutreachReason | null } } = {}) {
     const { t } = useLanguage();
     const { toast } = useToast();
     const { orgId, school } = useSamparkSchool();
@@ -531,7 +689,13 @@ export function RiyaCallPanel({ fixedFamily }: { fixedFamily?: RiyaFixedFamily }
     const [purpose, setPurpose] = useState<RiyaPurpose | "">("");
     const [familyKey, setFamilyKey] = useState(fixedFamily ? `${fixedFamily.guardianId}|${fixedFamily.studentId}` : "");
     const [query, setQuery] = useState("");
-    const [facts, setFacts] = useState<FactsState>({ date: "", time: "10:00", eventType: "annual_day", holidays: [], exams: [{ subject: "english", date: "", time: "" }], reason: "heavy_rain", buses: "unknown" });
+    const [facts, setFacts] = useState<FactsState>(emptyFactsState);
+    const enabledPurposes = riya.data?.availability.purposes;
+    // Pre-select the roster's outreach reason once the deployment's enabled workflows are known.
+    const initialOutreachPurpose = outreach?.reason ? OUTREACH_REASON_PURPOSE[outreach.reason] : null;
+    useEffect(() => {
+        if (initialOutreachPurpose && enabledPurposes?.includes(initialOutreachPurpose)) setPurpose((p) => p || initialOutreachPurpose);
+    }, [initialOutreachPurpose, enabledPurposes]);
     const [scenario, setScenario] = useState<SimulationScenario>("answered_positive");
     const [preview, setPreview] = useState<RiyaPreview | null>(null);
     const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
@@ -555,6 +719,12 @@ export function RiyaCallPanel({ fixedFamily }: { fixedFamily?: RiyaFixedFamily }
     if (riya.error) return <ErrorPanel error={riya.error} onRetry={riya.reload} />;
     if (!riya.data) return <LoadingBlock rows={4} />;
     const { availability } = riya.data;
+    // Only workflows this deployment enables (SAMPARK_RIYA_PURPOSES); outreach reasons first when opened from a roster.
+    const outreachPurposes = outreach ? OUTREACH_REASONS.map((r) => ({ purpose: OUTREACH_REASON_PURPOSE[r], label: outreachReasonLabel(t, r) })).filter((c) => availability.purposes.includes(c.purpose)) : [];
+    const purposeChoices = [
+        ...outreachPurposes,
+        ...availability.purposes.filter((p) => !outreachPurposes.some((c) => c.purpose === p)).map((p) => ({ purpose: p, label: riyaPurposeLabel(t, p) })),
+    ];
     const calls = fixedFamily ? riya.data.calls.filter((c) => c.guardianId === fixedFamily.guardianId && c.studentId === fixedFamily.studentId) : riya.data.calls;
 
     if (!availability.enabled) {
@@ -581,9 +751,10 @@ export function RiyaCallPanel({ fixedFamily }: { fixedFamily?: RiyaFixedFamily }
         }
     };
 
-    const realCall = availability.provider === "elevenlabs";
+    // ElevenLabs or Vobiz: the same confirmation, checks and history for both.
+    const realCall = availability.provider === "elevenlabs" || availability.provider === "vobiz";
     // A real call still ringing, or one whose outcome nobody has checked, blocks the next one.
-    const callInProgress = calls.some((c) => c.provider === "elevenlabs" && (c.state === "initiating" || c.state === "initiated" || (c.state === "unknown" && !c.reviewedAt)));
+    const callInProgress = calls.some((c) => c.provider !== "simulated" && (c.state === "initiating" || c.state === "initiated" || (c.state === "unknown" && !c.reviewedAt)));
     const realReady = !realCall || (webhook === "ok" && preview?.nonProductionDatabase === true && Boolean(preview?.destinationE164) && !callInProgress);
 
     const openConfirm = async () => {
@@ -591,7 +762,8 @@ export function RiyaCallPanel({ fixedFamily }: { fixedFamily?: RiyaFixedFamily }
         if (!realCall) return;
         setWebhook("checking");
         try {
-            const res = await fetch("/api/webhooks/elevenlabs-riya", { method: "GET", cache: "no-store" });
+            // The result endpoint of the provider that will run this call.
+            const res = await fetch(availability.provider === "vobiz" ? "/api/webhooks/vobiz-riya/event" : "/api/webhooks/elevenlabs-riya", { method: "GET", cache: "no-store" });
             setWebhook(res.ok ? "ok" : "failed");
         } catch {
             setWebhook("failed");
@@ -627,6 +799,9 @@ export function RiyaCallPanel({ fixedFamily }: { fixedFamily?: RiyaFixedFamily }
                 description={t("Riya is an AI assistant that calls one parent about one school notice. She says she is an AI if asked, never shares a child's details before the listener confirms they are the parent or guardian, and only says the facts you enter here.")}
             >
                 <p className="text-sm text-foreground">{availability.rosterMode ? t("Local test roster: each call rings the chosen contact's own number, only if it is on this machine's allow-list.") : modeBannerText(t, availability.mode, availability.destinationLast4)}</p>
+                {(availability.provider === "vobiz" || availability.provider === "elevenlabs") && (
+                    <p className="text-sm font-medium text-foreground">{fmt(t("Real-call mode is on: {provider} places this call and a real phone rings."), { provider: availability.provider === "vobiz" ? "Vobiz Calls" : "ElevenLabs Calls" })}</p>
+                )}
                 {availability.localAfterHoursUntil && (
                     <p className="text-sm font-medium text-destructive">{fmt(t("Local after-hours test window is open until {time}. Real calls can ring outside school calling hours."), { time: f.dateTime(availability.localAfterHoursUntil) })}</p>
                 )}
@@ -640,7 +815,7 @@ export function RiyaCallPanel({ fixedFamily }: { fixedFamily?: RiyaFixedFamily }
                         <Label htmlFor="riya-purpose">{t("What is the call about?")}</Label>
                         <Select value={purpose} onValueChange={(v) => { setPurpose(v as RiyaPurpose); reset(); }}>
                             <SelectTrigger id="riya-purpose"><SelectValue placeholder={t("Choose")} /></SelectTrigger>
-                            <SelectContent>{availability.purposes.map((p) => <SelectItem key={p} value={p}>{riyaPurposeLabel(t, p)}</SelectItem>)}</SelectContent>
+                            <SelectContent>{purposeChoices.map((c) => <SelectItem key={c.purpose} value={c.purpose}>{c.label}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     {!fixedFamily && <div className="space-y-1">

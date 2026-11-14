@@ -10,7 +10,7 @@ export const SARGVISION_ORG_ID = 'sargvision-local';
 export const SARGVISION_SCHOOL_NAME = 'Sargvision (sample class, local test)';
 /** The demo school's class id for the roster. */
 export const SARGVISION_CLASS_ID = 'SV';
-export const SARGVISION_CLASS_NAME = 'Sargvision';
+export const SARGVISION_CLASS_NAME = 'Sargvision Class';
 /** Sampark student record shape for the roster: one sample class. */
 export const SARGVISION_GRADE = 10;
 export const SARGVISION_SECTION = 'A';
@@ -22,6 +22,13 @@ export interface SargvisionContact {
     guardianId: string;
     name: string;
     phoneLast4: string;
+    /**
+     * True only when a call to this contact can really ring: the school is in Test mode and live
+     * dialling is on. Otherwise (Practice) the call is simulated and the UI must say so.
+     */
+    realCall?: boolean;
+    /** Test mode is on but this contact's number is NOT on the call allow-list: a call is refused. */
+    notAllowListed?: boolean;
 }
 
 export function sargvisionGuardianId(contactId: string): string {

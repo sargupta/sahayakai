@@ -193,6 +193,16 @@ export function buildSeedCallbacks(now: number, calls: DemoCall[]): DemoCallback
             sourceCallId: callFor('9A-11'),
             createdHoursAgo: 26,
         },
+        {
+            studentId: '7A-17',
+            reason: 'poor_performance',
+            status: 'proposed',
+            scheduledAt: null,
+            note: '“Could his class teacher call me about this? Evening after six is best for me.”',
+            source: 'parent_request',
+            sourceCallId: callFor('7A-17'),
+            createdHoursAgo: 0.1,
+        },
         ...(request
             ? [
                   {

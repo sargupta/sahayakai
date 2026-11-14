@@ -48,6 +48,10 @@ export function applyRiyaEvent(call: ConversationCall, event: RiyaWebhookEvent, 
     if (event.kind === 'initiation_failure') {
         // A conversation already recorded wins; keep the record of having seen the event.
         if (call.state === 'completed') return { ...call, ...withEvent(call, event.eventId, at) };
+        // Terminal-state protection: a late or repeated ring failure from another source (the
+        // hangup callback vs a status lookup) never rewrites a final outcome (busy → no answer …).
+        // Only 'unknown' may still be resolved by it.
+        if (isTerminalConversationState(call.state) && call.state !== 'unknown') return { ...call, ...withEvent(call, event.eventId, at) };
         const state: ConversationCallState = event.failureReason === 'busy' ? 'busy' : event.failureReason === 'no-answer' ? 'no_answer' : 'failed';
         return {
             ...call,

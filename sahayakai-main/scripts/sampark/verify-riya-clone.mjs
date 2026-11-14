@@ -34,7 +34,10 @@ const args = {};
 for (let i = 0; i < argv.length; i++) if (argv[i].startsWith('--')) args[argv[i].slice(2)] = argv[i + 1];
 const KEY = process.env.ELEVENLABS_API_KEY?.trim();
 const BASE = 'https://api.elevenlabs.io';
-const PURPOSES = ['absence_notice', 'emergency_closure', 'event_invitation', 'exam_schedule_notice', 'holiday_notice', 'ptm_invitation'];
+// Copy of RIYA_PURPOSES (riya-purposes.ts), sorted; riya-agent-sync.test.ts fails if they drift.
+export const PURPOSES = ['absence_notice', 'academic_performance', 'classroom_behaviour', 'emergency_closure', 'event_invitation', 'exam_schedule_notice', 'holiday_notice', 'ptm_invitation', 'student_achievement'];
+/** The unified SARGVISION agent routes Sampark calls on product_context === this value. */
+const PRODUCT_CONTEXT = 'sampark';
 // Copies of src/lib/sampark/conversation/riya-purposes.ts (RIYA_VARIABLES, RIYA_OPENING_TEMPLATE);
 // riya-agent-sync.test.ts fails if they drift.
 export const SAHAYAK_VARIABLES = ['school_name', 'call_purpose', 'student_name', 'class_name', 'section_name', 'event_name', 'event_date', 'event_time', 'holiday_dates', 'exam_schedule', 'absence_date', 'closure_date', 'closure_reason', 'transport_information', 'academic_update', 'behaviour_summary', 'assignment_details', 'achievement_details', 'followup_details'];
@@ -84,10 +87,17 @@ function workflowShape(a) {
     const nodes = get(a, 'workflow.nodes') ?? {};
     const edges = get(a, 'workflow.edges') ?? {};
     const purposeOfNode = {};
+    // Unified agent: a call_purpose edge is and_operator(product_context == "sampark", call_purpose == …).
+    const productGated = {};
     for (const e of Object.values(edges)) {
-        const left = get(e, 'forward_condition.expression.left.name');
-        const value = get(e, 'forward_condition.expression.right.value');
-        if (left === 'call_purpose' && value) purposeOfNode[e.target] = value;
+        const expr = get(e, 'forward_condition.expression');
+        const parts = expr?.type === 'and_operator' ? expr.children ?? [] : expr ? [expr] : [];
+        const eq = (name) => parts.find((c) => c?.type === 'eq_operator' && get(c, 'left.name') === name);
+        const value = get(eq('call_purpose'), 'right.value');
+        if (value) {
+            purposeOfNode[e.target] = value;
+            productGated[value] = get(eq('product_context'), 'right.value') === PRODUCT_CONTEXT;
+        }
     }
     const label = (id) => (nodes[id]?.type === 'start' ? 'start' : purposeOfNode[id] ?? `node:${nodes[id]?.type ?? '?'}`);
     const nodeShape = Object.entries(nodes).map(([id, n]) => ({
@@ -108,7 +118,7 @@ function workflowShape(a) {
     const branchPrompts = {};
     for (const [id, p] of Object.entries(purposeOfNode)) branchPrompts[p] = { sha: sha(nodes[id]?.additional_prompt), variables: vars(nodes[id]?.additional_prompt) };
     const fallback = Object.values(edges).some((e) => e.source && nodes[e.source]?.type === 'start' && get(e, 'forward_condition.type') !== 'expression');
-    return { nodeShape, edgeShape, edgeConditions, branchPrompts, fallback };
+    return { nodeShape, edgeShape, edgeConditions, branchPrompts, fallback, productGated };
 }
 
 function fingerprint(a) {
@@ -180,7 +190,9 @@ function checks(src, dst, phone, phoneId, liveSource) {
     cmp('6b voice and TTS settings', src.voice, dst.voice);
     cmp('6c pronunciation dictionaries', src.pronunciation, dst.pronunciation);
     cmp('6d ASR and turn settings', [src.asr, src.turn], [dst.asr, dst.turn], false);
-    add('7 six call_purpose branches', PURPOSES.every((p) => dst.workflow.branchPrompts[p]) ? 'PASS' : 'FAIL', PURPOSES.filter((p) => !dst.workflow.branchPrompts[p]).join(', ') || 'all six present');
+    add('7 call_purpose branches Sahayak offers', PURPOSES.every((p) => dst.workflow.branchPrompts[p]) ? 'PASS' : 'FAIL', PURPOSES.filter((p) => !dst.workflow.branchPrompts[p]).join(', ') || `all ${PURPOSES.length} present`);
+    const ungated = PURPOSES.filter((p) => dst.workflow.branchPrompts[p] && !dst.workflow.productGated[p]);
+    add('7b branches routed on product_context=sampark', ungated.length === 0 ? 'PASS' : 'FAIL', ungated.length ? `not gated on product_context=${PRODUCT_CONTEXT}: ${ungated.join(', ')}` : `every offered branch requires product_context=${PRODUCT_CONTEXT} (Sahayak always sends it)`);
     cmp('8a dynamic-variable placeholders', src.placeholders, dst.placeholders);
     cmp('8b prompt variables', src.promptVariables, dst.promptVariables, false);
     cmp('8c data-collection fields', src.dataCollection, dst.dataCollection, false);
@@ -218,7 +230,10 @@ function checks(src, dst, phone, phoneId, liveSource) {
     add('12c post-call webhook', dst.webhooks?.post_call_webhook_id ? 'PASS' : 'FAIL', `webhook ${short(dst.webhooks?.post_call_webhook_id)}, events ${JSON.stringify(dst.webhooks?.events ?? [])}, audio ${dst.webhooks?.send_audio}`);
     add('12d call limits', (dst.callLimits?.daily_limit ?? 1e9) <= 1000 && (dst.callLimits?.agent_concurrency_limit ?? -1) > 0 ? 'PASS' : 'FAIL', JSON.stringify(dst.callLimits));
     add('12e AI disclosure in first message', /\bAI\b/.test(dst.firstMessage ?? '') ? 'PASS' : 'FAIL', 'the first message must say Riya is an AI assistant');
-    add('12f client overrides locked', !JSON.stringify(dst.overrides ?? {}).match(/"(first_message|prompt|voice_id|llm)":true/) ? 'PASS' : 'FAIL', 'first message, prompt, LLM and voice may not be overridden by a caller');
+    add('12f client overrides locked', !JSON.stringify(dst.overrides ?? {}).match(/"(prompt|llm)":true/) ? 'PASS' : 'FAIL', 'prompt and LLM may not be overridden by a caller');
+    // The unified agent lets Athithi Vani calls override the greeting and voice; Sahayak sends no override.
+    const greetingOpen = JSON.stringify(dst.overrides ?? {}).match(/"(first_message|voice_id)":true/);
+    add('12i greeting / voice overrides', greetingOpen ? 'UNVERIFIED' : 'PASS', greetingOpen ? 'first message or voice may be overridden per call (used by Athithi Vani); Sahayak never sends conversation_config_override' : 'locked');
     add('12g fallback for unknown call_purpose', dst.workflow.fallback ? 'PASS' : 'FAIL', 'a start-node edge that catches values other than the six');
     return out;
 }
