@@ -29,8 +29,10 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import os
 import re
+from array import array
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -43,6 +45,7 @@ from ..config import get_settings
 from .audio import (
     ULAW_SILENCE,
     DecimatorState,
+    pcm16_to_ulaw,
     pcm24k_to_ulaw8k,
     ulaw8k_to_pcm16k,
     ulaw_to_pcm16,
@@ -65,6 +68,11 @@ from .flow import (
     line,
 )
 from .privacy import ProtectedTerms
+from .riya import Act as RiyaAct
+from .riya import _STOP as _RIYA_STOP_WORDS
+from .riya import RiyaCall, reveals_detail
+from . import sampark_link
+from .dedicated_asr import ChirpStream, dedicated_asr_model, min_confidence
 from .prompt import (
     CallContext,
     build_parent_call_instruction,
@@ -502,17 +510,15 @@ async def _load_context(outreach_id: str, language: str) -> tuple[CallContext, C
     Never fatal. A call that connects with a generic instruction is far better
     than a parent hearing dead air because a read timed out.
     """
+    if sampark_link.is_sampark(outreach_id):
+        # A Sampark call's data lives in Sampark (riya context below), never here.
+        return CallContext(language=language), None
     try:
         # `google.cloud.firestore`, matching `session_store` — NOT firebase_admin,
         # which nothing in this service initialises. The first version used
         # firebase_admin and every call silently fell back to a generic prompt
         # with "The default Firebase app does not exist" in the logs.
-        from google.cloud import firestore
-
-        client = firestore.Client(
-            project=get_settings().gcp_project,
-            database=get_settings().firestore_database,
-        )
+        client = await _firestore_client()
         # `to_thread` keeps the blocking Firestore read off the event loop, which
         # is relaying audio. The cast is because the sync and async clients share
         # a return annotation; this is the sync client, so the snapshot is not
@@ -700,6 +706,63 @@ class _Bridge:
         self.detect_to_stop_ms: list[float] = []
         self.stale_chunks_dropped = 0
 
+        # ---- Riya workflow (riya.py), when the outreach record asks for it ----
+        self.riya: RiyaCall | None = None
+        #: Set once the record has been read, so the greeter knows which opener.
+        self.riya_ready = asyncio.Event()
+        self.riya_checked = False
+        #: Until then the opening line is not interruptible (first_message rule).
+        self.protect_until = 0.0
+        self.riya_net_armed = False
+        self.riya_budget_noted = False
+        self.riya_max_warned = False
+        self.riya_eval: asyncio.Task[Any] | None = None
+        self.riya_pending_new = False
+        self.riya_session: Any = None
+        self.riya_corrected = False
+        self.riya_soft_end_task: asyncio.Task[Any] | None = None
+        self.riya_unheard_handled = 0.0
+        self.riya_parent_count = 0
+        self.riya_soft_cancels = 0
+        self.riya_reask_at = -1
+        #: A cached Riya line is playing until this time: nothing the model says may
+        #: play or be transcribed over it (s14: a competing reply leaked, the guard
+        #: fired and cut the line the parent was hearing).
+        self.riya_line_until = 0.0
+        #: Drop the model's turn that competes with a cached line, until it ends.
+        self.riya_drop_turn = False
+        self.riya_goodbye_muted = False
+        #: Dedicated recogniser (chirp_2) when VOBIZ_RIYA_DEDICATED_ASR=chirp_2: the authoritative transcript.
+        self.asr: ChirpStream | None = None
+        self.asr_low_conf = 0
+        self.asr_inflight = 0
+        #: end_call refusals in a row with no Riya turn in between (the model went silent).
+        self.silent_refusals = 0
+        self.asr_seq = 0
+        #: A reply Riya owes the parent (monotonic time it became owed; 0 = none) and recovery level.
+        self.reply_owed_since = 0.0
+        self.reply_owed_said = ""
+        self.recover_level = 0
+        #: Live session resumption: latest handle, resumes used, absolute call deadline.
+        self.resume_handle: str | None = None
+        self.resumes = 0
+        self.call_deadline = 0.0
+        self.goodbye_muted_note = False
+        #: When the current model turn began, and when Riya first asked the guardian question.
+        self.turn_started_at = 0.0
+        self.guardian_q_at = 0.0
+        self.refusal_agent_turns = -1
+        self.live_heard: list[str] = []
+        self.last_transcript_at = 0.0
+        self.last_parent_speech_end = 0.0
+        #: Event timeline (riyaWorkflow.timeline): what happened, when.
+        self.timeline: list[dict[str, Any]] = []
+        self.tl_playing = False
+        self.vad_loud = 0
+        self.vad_quiet = 0
+        self.vad_speaking = False
+        self.call_started = time.monotonic()
+
         # ---- dialogue and tools ----
         self.dialogue = DialogueState()
         #: VIDYA's words for the turn in progress. Committed to the transcript
@@ -815,16 +878,137 @@ async def _greet_and_drain(bridge: _Bridge, language: str) -> None:
         except Exception:  # noqa: BLE001 — the caller owns the socket's lifetime
             return
         frame = parse_inbound(raw)
+        if frame.kind is InboundKind.MEDIA and frame.audio and bridge.asr is not None:
+            bridge.asr.feed(frame.audio)
         if frame.media_format:
             bridge.media_format = frame.media_format
         if frame.stream_id and not bridge.stream_id:
             bridge.stream_id = frame.stream_id
+        if not greeted and bridge.stream_id and language == _RIYA_GREETER:
+            # Riya: her own first message, never VIDYA's recording. It needs the
+            # record (school name), so wait for it briefly, then play the cached
+            # rendering if one exists; otherwise the model speaks it at kickoff.
+            greeted = True
+            _spawn(bridge, _play_riya_opener(bridge))
         if not greeted and bridge.stream_id:
             opener = opener_for(language)
             if opener:
                 _queue_ulaw(bridge, opener)
                 bridge.opener_queued_at = time.monotonic()
             greeted = True
+
+
+#: `_greet_and_drain` language sentinel for a Riya call (`agent=riya` on the stream URL).
+_RIYA_GREETER = "__riya__"
+#: Pre-rendered Riya openers: <dir>/<sha1(text|voice|model)>.ulaw (see scripts/render_riya_opener.py).
+_RIYA_OPENER_DIR = os.environ.get("VOBIZ_RIYA_OPENER_DIR", "")
+
+
+def riya_opener_key(text: str, voice: str, model: str) -> str:
+    import hashlib
+
+    return hashlib.sha1(f"{text}|{voice}|{model}".encode()).hexdigest()
+
+
+def _riya_live_settings() -> tuple[str, str, str]:
+    """(model, location, voice) for Riya calls."""
+    return (
+        os.environ.get("VOBIZ_RIYA_LIVE_MODEL", "gemini-live-2.5-flash-native-audio"),
+        os.environ.get("VOBIZ_RIYA_LIVE_LOCATION", "us-central1"),
+        os.environ.get("VOBIZ_RIYA_VOICE", "Aoede"),
+    )
+
+
+def _org_of(ref: str) -> str:
+    parts = (ref or "").split("~")
+    return parts[1] if len(parts) == 3 and parts[0] == "sampark" else ""
+
+
+def _org_openers_path() -> Path | None:
+    return Path(_RIYA_OPENER_DIR) / "org_openers.json" if _RIYA_OPENER_DIR else None
+
+
+def _org_opener_text(org: str) -> str:
+    p = _org_openers_path()
+    if not org or p is None or not p.is_file():
+        return ""
+    try:
+        return str(json.loads(p.read_text(encoding="utf-8")).get(org) or "")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def _remember_org_opener(org: str, text: str) -> None:
+    """The opener names only the school: remember it per school so the next call can greet at once."""
+    p = _org_openers_path()
+    if not org or not text or p is None:
+        return
+    try:
+        data = json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+        if data.get(org) != text:
+            data[org] = text
+            p.write_text(json.dumps(data, ensure_ascii=False, indent=0), encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _opener_audio(text: str) -> bytes | None:
+    if not _RIYA_OPENER_DIR or not text:
+        return None
+    model, _, voice = _riya_live_settings()
+    path = Path(_RIYA_OPENER_DIR) / f"{riya_opener_key(text, voice, model)}.ulaw"
+    return path.read_bytes() if path.is_file() else None
+
+
+async def _play_riya_opener(bridge: _Bridge) -> None:
+    """Greet the moment the stream is up. The opener names only the school, so for a school seen
+    before it plays at once; the call record (fetched from Sampark, 0.4-2.3 s measured) is not
+    waited for. Real calls 2026-11-10: the parent heard ~3.7 s of silence after picking up."""
+    org = _org_of(bridge.outreach_id)
+    early_text = _org_opener_text(org)
+    early_audio = _opener_audio(early_text)
+    queued_at = 0.0
+    if early_audio:
+        _queue_ulaw(bridge, early_audio)
+        _flush_ulaw(bridge)
+        queued_at = time.monotonic()
+        bridge.opener_queued_at = queued_at
+        bridge.protect_until = queued_at + len(early_audio) / 8000.0
+        _tl(bridge, "opener_early")
+    with contextlib.suppress(asyncio.TimeoutError):
+        await asyncio.wait_for(bridge.riya_ready.wait(), timeout=4.0)
+    riya = bridge.riya
+    if riya is None or riya.is_safe_exit or not _RIYA_OPENER_DIR:
+        return
+    if early_audio:
+        if riya.first_message() != early_text:
+            # The school's name changed since it was remembered: what was said stands; remember the new one.
+            log.warning("telephony.riya_opener_changed", outreach_id=bridge.outreach_id)
+        _remember_org_opener(org, riya.first_message())
+        audio, now, said = early_audio, queued_at, early_text
+    else:
+        audio = _opener_audio(riya.first_message())
+        if audio is None:
+            log.info("telephony.riya_opener_missing", outreach_id=bridge.outreach_id)
+            return
+        _remember_org_opener(org, riya.first_message())
+        _queue_ulaw(bridge, audio)
+        _flush_ulaw(bridge)
+        now = time.monotonic()
+        said = riya.first_message()
+    bridge.opener_queued_at = now
+    # The opener IS the model's first turn as far as the silence timers go:
+    # quiet starts when it has finished playing.
+    played_by = now + len(audio) / 8000.0
+    bridge.model_has_spoken = True
+    bridge.model_last_audio = played_by
+    bridge.last_activity = played_by
+    # disable_first_message_interruptions: the opening is not cut off.
+    if riya.workflow.get("disable_first_message_interruptions"):
+        bridge.protect_until = now + len(audio) / 8000.0
+    bridge.dialogue.on_agent_turn(said, scripted=True)
+    _record_turn(bridge, "agent", said)
+    riya.on_agent(said)
 
 
 async def _send_director(session: Any, text: str) -> None:
@@ -933,6 +1117,11 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
             or bool(getattr(bridge.engine, "busy", False))
             or bool(bridge.verdict_hold_until)
         )
+        if getattr(bridge, "riya", None) is not None:
+            # The duration limit runs even while someone is speaking.
+            if await _riya_watchdog_tick(bridge, session, 0.0 if speaking else quiet_for):
+                break
+            continue
         if speaking:
             continue
 
@@ -1047,6 +1236,8 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
             bridge.bytes_up += len(frame.audio)
             bridge.last_voice = time.monotonic()
             _note_parent_audio(bridge, frame.audio)
+            if bridge.asr is not None:
+                bridge.asr.feed(frame.audio)
             await session.send_realtime_input(
                 audio=genai_types.Blob(data=ulaw8k_to_pcm16k(frame.audio), mime_type=_PCM_IN_MIME)
             )
@@ -1179,6 +1370,24 @@ def _commit_agent_turn(bridge: _Bridge, *, interrupted: bool = False) -> None:
         )
     _record_turn(bridge, "agent", f"{text} …" if interrupted else text)
     bridge.last_turn_interrupted = interrupted
+    if getattr(bridge, "riya", None) is not None:
+        bridge.riya.on_agent(text, interrupted=interrupted)
+        bridge.riya_parent_count = len(bridge.parent_said)
+        _note_guardian_question(bridge, getattr(bridge, "turn_started_at", 0.0) or time.monotonic())
+        if not interrupted and bridge.riya_session is not None:
+            cue = bridge.riya.time_followup_cue() or bridge.riya.attendance_followup_cue()
+            if cue:
+                _tl(bridge, "followup_cue", "")
+                _spawn(bridge, _riya_cue_after_playback(bridge, cue))
+        # Riya said her goodbye and the end_call rules allow it, but the model
+        # did not call end_call: end after it plays (same net as VIDYA's).
+        if not interrupted and not bridge.closing and _RIYA_FAREWELL.search(text):
+            ok, why = bridge.riya.may_end()
+            if ok and why in bridge.riya.SOFT_ENDS:
+                _riya_soft_end(bridge, why)
+            elif ok:
+                _spawn(bridge, _end_if_model_forgets(bridge, time.monotonic()))
+        return
     _tell_engine_the_state(bridge)
     # Gemini Live only: on the cascade a model "goodbye" must not end the call;
     # closings there are the bridge's own decision and fixed line.
@@ -1232,6 +1441,8 @@ async def _persist_engine_failure(bridge: _Bridge, error_type: str) -> None:
     this the record reads as a normal finished call while the parent heard only
     the opener and then a hangup. Never fatal; the log line is the alert source.
     """
+    if sampark_link.is_sampark(bridge.outreach_id):
+        return  # Sampark keeps its own record (post-call event)
     try:
         from google.cloud import firestore
 
@@ -1265,6 +1476,8 @@ async def _persist_opt_out(bridge: _Bridge) -> bool:
     been noted" gets called again. Returns True when the suppression record was
     written.
     """
+    if sampark_link.is_sampark(bridge.outreach_id):
+        return True  # reported as stop_requested in the post-call event
     try:
         from google.cloud import firestore
 
@@ -1312,6 +1525,8 @@ async def _persist_transcript(bridge: _Bridge) -> None:
 
     Never fatal: losing the record must not also lose the call.
     """
+    if sampark_link.is_sampark(bridge.outreach_id):
+        return  # Sampark keeps its own record (post-call event)
     if not bridge.transcript:
         return
     try:
@@ -1360,6 +1575,8 @@ async def _generate_call_summary(bridge: _Bridge, context: CallContext, seconds:
     Never fatal. A missing summary is a gap; a failed call is a parent who was
     phoned for nothing.
     """
+    if sampark_link.is_sampark(bridge.outreach_id):
+        return  # Sampark keeps its own record (post-call event)
     if len(bridge.transcript) < 2:
         return
     try:
@@ -1485,6 +1702,44 @@ def _ai_audible(bridge: _Bridge, now: float) -> bool:
     )
 
 
+#: Parent speech start/end estimate for the timeline and latency metrics.
+_VAD_LEVEL = int(os.environ.get("VOBIZ_VAD_LEVEL", "300"))
+
+
+def _vad_estimate(bridge: _Bridge, level: float, now: float) -> None:
+    if not hasattr(bridge, "vad_loud"):
+        return
+    if level >= _VAD_LEVEL:
+        bridge.vad_loud += 1
+        bridge.vad_quiet = 0
+        if not bridge.vad_speaking and bridge.vad_loud >= 3:
+            bridge.vad_speaking = True
+            _tl(bridge, "parent_speech_start")
+    else:
+        bridge.vad_quiet += 1
+        bridge.vad_loud = 0
+        if bridge.vad_speaking and bridge.vad_quiet >= 20:  # 400 ms of quiet
+            bridge.vad_speaking = False
+            end = now - 0.4
+            _tl(bridge, "parent_speech_end")
+            bridge.last_parent_speech_end = end
+            if getattr(bridge, "asr", None) is not None:
+                _spawn(bridge, _asr_flush_if_quiet(bridge))
+            if not bridge.awaiting_reply_since:
+                bridge.awaiting_reply_since = end
+
+
+_ASR_FLUSH_EXTRA_QUIET = float(os.environ.get("VOBIZ_ASR_FLUSH_EXTRA_QUIET_SECONDS", "0.3"))
+
+
+async def _asr_flush_if_quiet(bridge: _Bridge) -> None:
+    """The parent stopped (400 ms quiet): after a little more quiet, ask chirp_2 for the final now
+    instead of its own ~1.5 s endpointing. A shorter wait split "Wait, actually | I am not the parent"."""
+    await asyncio.sleep(_ASR_FLUSH_EXTRA_QUIET)
+    if bridge.asr is not None and not getattr(bridge, "vad_speaking", False):
+        bridge.asr.flush()
+
+
 def _feed_barge_in(bridge: _Bridge, ulaw: bytes) -> None:
     """Run each 20 ms of the parent's audio through the barge-in detector.
 
@@ -1502,7 +1757,11 @@ def _feed_barge_in(bridge: _Bridge, ulaw: bytes) -> None:
         audible = _ai_audible(bridge, now)
         level = frame_level(ulaw_to_pcm16(data[start : start + _FRAME_BYTES]))
         bridge.inbound.level(level, ai_audible=audible)
+        _vad_estimate(bridge, level, now)
         action = bridge.barge.on_frame(level, now, ai_audible=audible)
+        if now < bridge.protect_until:
+            # Riya's opening line is not interruptible (first_message rule).
+            continue
         _apply_barge_action(bridge, action, by_model=False)
     bridge.inbound_pending = data[complete:]
 
@@ -1613,6 +1872,12 @@ def _cancel_response(bridge: _Bridge, *, by_model: bool) -> None:
         if callable(note):
             note(_heard_text(bridge))
     bridge.dialogue.on_interrupted()
+    if getattr(bridge, "riya", None) is not None and getattr(bridge, "asr", None) is not None:
+        # Riya was cut off: she owes the parent a continuation. Real words from the parent replace
+        # this (their final sets what is owed); if it was only noise, recovery has her carry on
+        # (synthetic e04: 9 s of silence after noise cut her details mid-sentence).
+        bridge.riya_was_cut = True
+        _owe_reply(bridge, "")
     log.info(
         "telephony.barge_in",
         outreach_id=bridge.outreach_id,
@@ -1635,6 +1900,15 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
     said = (getattr(heard, "text", "") or "").strip() if heard else ""
     if not said:
         return
+    if bridge.asr is not None:
+        # The dedicated recogniser is authoritative (its finals arrive via _on_asr_final).
+        # What Gemini heard is kept for comparison only and never drives the workflow.
+        bridge.engaged = True
+        bridge.last_activity = time.monotonic()
+        bridge.live_heard.append(said)
+        if _TRANSCRIPT_DEBUG:
+            log.info("telephony.live_heard", outreach_id=bridge.outreach_id, text=said)
+        return
 
     bridge.engaged = True
     bridge.last_activity = time.monotonic()
@@ -1643,7 +1917,8 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
     # one long sentence count as several turns: it tripped the 6-turn ceiling
     # and ended calls mid-conversation, satisfied the 2-turn minimum on a single
     # "haan", and showed the question veto only the last fragment of a question.
-    if bridge.agent_spoke_since_parent or not bridge.parent_said:
+    new_utterance = bridge.agent_spoke_since_parent or not bridge.parent_said
+    if new_utterance:
         bridge.parent_said.append(said)
         bridge.agent_spoke_since_parent = False
     else:
@@ -1660,6 +1935,8 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
     # work on speech as people actually produce it.
     bridge.recent_speech = f"{bridge.recent_speech} {said}".strip()[-_SPEECH_TAIL_CHARS:]
 
+    _tl(bridge, "parent_transcript", said if _TRANSCRIPT_DEBUG else f"{len(said)} chars")
+    bridge.last_transcript_at = time.monotonic()
     if _TRANSCRIPT_DEBUG:
         # Off by default and must stay off in production: this is a parent's
         # own speech about their child.
@@ -1668,6 +1945,14 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
     if bridge.last_parent_voice_at:
         bridge.eos_to_final_ms.append((time.monotonic() - bridge.last_parent_voice_at) * 1000)
 
+    if getattr(bridge, "riya", None) is not None:
+        # Debounced: Live transcribes in fragments, and "No," alone must not
+        # close a call whose utterance continues "...problem, I'm his mother".
+        bridge.riya_pending_new = bridge.riya_pending_new or new_utterance
+        if bridge.riya_eval is not None and not bridge.riya_eval.done():
+            bridge.riya_eval.cancel()
+        bridge.riya_eval = _spawn(bridge, _riya_eval_later(bridge, session))
+        return
     if _scripted(bridge):
         # The cascade delivers ONE final transcript per utterance: the state
         # machine decides what happens; the model is only asked when it says so.
@@ -1784,6 +2069,9 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
     and each answers for itself when done.
     """
     if tool_call is None or not getattr(tool_call, "function_calls", None):
+        return
+    if getattr(bridge, "riya", None) is not None:
+        await _riya_tool_call(bridge, session, tool_call)
         return
     from google.genai import types as genai_types
 
@@ -1930,6 +2218,1163 @@ async def _run_lookup(bridge: _Bridge, session: Any, fc: Any) -> None:
     finally:
         if fc.id:
             bridge.tool_tasks.pop(fc.id, None)
+
+
+# ---- Riya workflow (riya.py) on Gemini Live -----------------------------------
+#
+# The model holds the conversation in Riya's own words; this section is the
+# part of her workflow that is code: verification before any detail, the
+# closing branches, end_call validation, silence and the duration limit.
+
+
+def _tl(bridge: _Bridge, event: str, detail: str = "") -> None:
+    """One entry on the call's event timeline (ms since the socket opened)."""
+    timeline = getattr(bridge, "timeline", None)
+    if timeline is None or len(timeline) >= 600:
+        return
+    timeline.append(
+        {"ms": round((time.monotonic() - bridge.call_started) * 1000), "event": event, "detail": detail[:160]}
+    )
+
+
+#: A goodbye phrase anywhere in a reply (not only at its end).
+_RIYA_GOODBYE_IN_REPLY = re.compile(
+    r"(thank you for your time|have a (good|nice|great|wonderful) day|good ?bye)", re.IGNORECASE
+)
+
+
+def _riya_mute_early_goodbye(bridge: _Bridge, text: str) -> bool:
+    """Riya may not say goodbye while the call must stay open.
+
+    On the angry-parent runs (s04) the model answered "He is not like that" with
+    "I understand your concern … Thank you for your time. Have a good day." The
+    bridge refused end_call, so the call stayed open, but the parent had already
+    HEARD the goodbye, three times. Now the goodbye itself is cut while it is
+    still queued: the reply is trimmed back to just before the farewell, and the
+    rest of that turn is dropped. Only when end_call would be refused.
+    """
+    riya = bridge.riya
+    if riya is None or bridge.closing or getattr(bridge, "riya_goodbye_muted", False):
+        return False
+    if riya.stage.value not in ("verified", "delivered", "callback", "availability_ok", "identity_asked"):
+        return False
+    m = _RIYA_GOODBYE_IN_REPLY.search(text)
+    if not m:
+        return False
+    parent_last = bridge.parent_said[-1] if bridge.parent_said else ""
+    ok, why = riya.may_end(pending=text, parent_last=parent_last)
+    if ok:
+        return False
+    bridge.riya_goodbye_muted = True
+    frac = m.start() / max(1, len(text))
+    keep = max(0, int(bridge.turn_frames_generated * frac) - bridge.turn_frames_played - 10)
+    kept: list[Any] = []
+    while not bridge.out.empty():
+        with contextlib.suppress(asyncio.QueueEmpty):
+            kept.append(bridge.out.get_nowait())
+    for item in kept[:keep]:
+        bridge.out.put_nowait(item)
+    bridge.pending = b""
+    if bridge.model_turn_open:
+        bridge.discard_model_audio = True  # the rest of this turn is the goodbye
+    bridge.agent_turn_text = text[: m.start()].rstrip(" ,.")
+    bridge.goodbye_muted_note = True
+    _tl(bridge, "goodbye_muted", why)
+    log.info("telephony.riya_goodbye_muted", outreach_id=bridge.outreach_id, why=why, kept_frames=min(keep, len(kept)))
+    return True
+
+
+def _riya_check_output(bridge: _Bridge) -> None:
+    """Riya's output guard, run on every transcription fragment of her turn.
+
+    Before verification: a date, time, number or other call detail (or a
+    locked value) is stopped at once, and Riya is told to ask the guardian
+    question instead, so the parent never hears dead air. The guardian question
+    itself, which names the child, is allowed.
+    After verification: a date or time that is not in the record is corrected.
+    """
+    riya = bridge.riya
+    assert riya is not None
+    text = bridge.agent_turn_text
+    if _riya_mute_early_goodbye(bridge, text):
+        return
+    if riya.identity_state != "confirmed" and riya.stage.value not in ("closing", "ended"):
+        if riya.stage.value == "callback":
+            # Repeating the parent's own callback time back ("tomorrow at 6") is
+            # the point of this stage (s07/s08 muted it). Only the call's locked
+            # details stay blocked.
+            leaked = bool(bridge.protected and bridge.protected.leaks(text))
+        else:
+            leaked = reveals_detail(text, riya.pre_verification_allowed()) or bool(
+                bridge.protected and bridge.protected.leaks(text)
+            )
+        if leaked:
+            bridge.privacy_blocks += 1
+            log.warning("telephony.privacy_block", outreach_id=bridge.outreach_id, where="riya_pre_verification")
+            _tl(bridge, "privacy_block", text)
+            bridge.agent_turn_text = ""
+            _silence_current_reply(bridge, model_still_sending=bridge.model_turn_open)
+            decision = riya.on_privacy_block() if riya.stage.value != "callback" else None
+            if decision is None:
+                if bridge.riya_session is not None:
+                    _spawn(bridge, _send_director(bridge.riya_session, riya.callback_confirm_cue()))
+            elif bridge.riya_session is not None:
+                if decision.act is RiyaAct.REASK:
+                    _riya_reask(bridge, bridge.riya_session, decision.line)
+                elif not bridge.riya_net_armed:
+                    bridge.riya_net_armed = True
+                    _spawn(bridge, _riya_close_net(bridge, bridge.riya_session, decision.line))
+        return
+    if not bridge.riya_corrected:
+        wrong = riya.detail_mismatch(text)
+        if wrong and bridge.riya_session is not None:
+            bridge.riya_corrected = True
+            log.warning("telephony.riya_detail_mismatch", outreach_id=bridge.outreach_id, wrong=wrong)
+            _tl(bridge, "detail_mismatch", wrong)
+            _spawn(bridge, _send_director(bridge.riya_session, riya.correction_cue(wrong)))
+
+
+#: After Riya's goodbye has PLAYED, listen this long before hanging up.
+_RIYA_GOODBYE_LISTEN_SECONDS = float(os.environ.get("VOBIZ_RIYA_GOODBYE_LISTEN_SECONDS", "3.0"))
+#: The parent spoke (our VAD) but Live sent no transcript and no reply: re-ask
+#: after this long. Was 3.5 s (Sir call: 5 s of silence). 2.0 s was too eager:
+#: in the synthetic suite Live's final transcript sometimes landed 2.3-2.7 s after
+#: speech ended and Riya said "Sorry, I didn't catch that" over a good answer.
+_RIYA_UNHEARD_SECONDS = float(os.environ.get("VOBIZ_RIYA_UNHEARD_SECONDS", "2.2"))
+#: With the dedicated recogniser: a final that Riya has not started answering this long after it
+#: arrived gets an answer forced (real call 2026-11-10: 12 s of silence after noise cut her off).
+_ASR_REPLY_GRACE = float(os.environ.get("VOBIZ_ASR_REPLY_GRACE_SECONDS", "0.5"))
+
+
+def _riya_soft_end(bridge: _Bridge, why: str) -> None:
+    """Riya said goodbye: hang up only if the parent then stays quiet.
+
+    The first version hung up 2.5 s after the goodbye was GENERATED, while it
+    was still playing, so a parent asking "can you repeat the date?" spoke
+    into a dead line. Now: let the goodbye play, then listen; if the parent
+    speaks, the call simply carries on.
+    """
+    task = getattr(bridge, "riya_soft_end_task", None)
+    if task is not None and not task.done():
+        return
+    bridge.riya_soft_end_task = _spawn(bridge, _riya_soft_end_run(bridge, why))
+
+
+async def _riya_soft_end_run(bridge: _Bridge, why: str) -> None:
+    riya = bridge.riya
+    assert riya is not None
+    _tl(bridge, "soft_end_wait", why)
+    deadline = time.monotonic() + _CLOSING_GRACE_SECONDS + 15
+    while time.monotonic() < deadline and (
+        bridge.model_turn_open or not bridge.out.empty() or bridge.pending
+    ):
+        await asyncio.sleep(0.1)
+    if bridge.riya_soft_cancels and _riya_awaiting(bridge):
+        # Riya already said goodbye, the parent answered ("Okay", "Hello"), and
+        # the model ends again without a word. On the 2026-11-07 21:55 handset
+        # call that left the parent 10 s in silence. Close now, with her line.
+        while bridge.model_turn_open or not bridge.out.empty() or bridge.pending:
+            await asyncio.sleep(0.05)
+        if _riya_awaiting(bridge):
+            _riya_play_line(bridge, riya.closing_line())
+        riya.confirm_soft_end(why)
+        _tl(bridge, "soft_end_hangup", f"{why}:after_reply")
+        bridge.closing = True
+        bridge.dialogue.begin_closing()
+        await _drain_then_stop(bridge)
+        return
+    if why == "parent_ended":
+        # The parent said goodbye. Give the model a moment to say its own
+        # closing line; if it does not start, play Riya's line ourselves.
+        started = time.monotonic()
+        while time.monotonic() - started < 1.2 and _riya_awaiting(bridge) and not bridge.model_turn_open:
+            await asyncio.sleep(0.05)
+        while bridge.model_turn_open or not bridge.out.empty() or bridge.pending:
+            await asyncio.sleep(0.1)
+        if _riya_awaiting(bridge) and _riya_play_line(bridge, riya.closing_line()):
+            pass
+        riya.confirm_soft_end(why)
+        _tl(bridge, "soft_end_hangup", why)
+        bridge.closing = True
+        bridge.dialogue.begin_closing()
+        await _drain_then_stop(bridge)
+        return
+    listen_from = time.monotonic()
+    while time.monotonic() - listen_from < _RIYA_GOODBYE_LISTEN_SECONDS:
+        if bridge.closing or bridge.stop:
+            return
+        if bridge.vad_speaking or bridge.last_parent_voice_at > listen_from:
+            _tl(bridge, "soft_end_cancelled", "parent spoke")
+            bridge.riya_soft_cancels += 1
+            log.info("telephony.riya_soft_end_cancelled", outreach_id=bridge.outreach_id)
+            from google.genai import types as genai_types
+
+            with contextlib.suppress(Exception):
+                await bridge.riya_session.send_client_content(
+                    turns=genai_types.Content(
+                        role="user",
+                        parts=[genai_types.Part(text=(
+                            "(System note: the call is still open and the parent is speaking. "
+                            "Answer them normally; never say the call has ended.)"
+                        ))],
+                    ),
+                    turn_complete=False,
+                )
+            return
+        await asyncio.sleep(0.05)
+    if bridge.vad_speaking or bridge.last_parent_voice_at > listen_from:
+        # Started speaking on the very edge of the window (Sir call: 16 ms
+        # before the hangup). Keep the line open; the model answers.
+        _tl(bridge, "soft_end_cancelled", "parent spoke at the edge")
+        bridge.riya_soft_cancels += 1
+        return
+    if _riya_awaiting(bridge):
+        # The parent said goodbye and the model hung up without a word: Riya
+        # still says her closing line (end_call rules: goodbye first, then end).
+        _tl(bridge, "closing_line_cue", why)
+        cue_sent = time.monotonic()
+        with contextlib.suppress(Exception):
+            await _send_director(bridge.riya_session, riya.close_cue(riya.closing_line()))
+        while time.monotonic() - cue_sent < _CLOSING_GRACE_SECONDS and bridge.model_last_audio <= cue_sent:
+            await asyncio.sleep(0.1)
+        while time.monotonic() - cue_sent < _CLOSING_GRACE_SECONDS and (
+            bridge.model_turn_open or not bridge.out.empty() or bridge.pending
+        ):
+            await asyncio.sleep(0.1)
+    riya.confirm_soft_end(why)
+    _tl(bridge, "soft_end_hangup", why)
+    bridge.closing = True
+    bridge.dialogue.begin_closing()
+    await _drain_then_stop(bridge)
+
+
+def _riya_protected(riya: RiyaCall) -> ProtectedTerms:
+    """What Riya may not say before verification: her locked details only.
+
+    VIDYA's guard protects the child's name, but Riya's verification question
+    names the child by design ("...parent or guardian of Aarav?"). Using VIDYA's
+    terms muted that question on the 2026-11-07 handset call, so the parent
+    heard silence. Riya's guard covers the purpose details instead.
+    """
+    locked = " ".join((riya.variables.get(k) or "") for k in sorted(riya.locked_vars()))
+    return ProtectedTerms.build(
+        student_name=None,
+        class_name=None,
+        message=locked,
+        extra=None,
+        allowed=f"{riya.variables.get('school_name') or ''} {riya.variables.get('student_name') or ''}",
+    )
+
+
+async def _riya_kickoff(bridge: _Bridge, session: Any) -> None:
+    riya = bridge.riya
+    assert riya is not None
+    bridge.last_activity = time.monotonic()
+    if riya.is_safe_exit:
+        # The safe-exit node speaks only when the person speaks.
+        return
+    if bridge.opener_queued_at:
+        return  # already played from the cache; the instruction says so
+    first = riya.first_message()
+    bridge.next_turn_scripted = True
+    with contextlib.suppress(Exception):
+        await _send_director(session, f'(Say exactly this, and nothing else: "{first}")')
+    riya._event("opening", "spoken_by_model")
+
+
+#: Quiet after the last transcription fragment before the utterance is judged.
+_RIYA_UTTERANCE_SETTLE_SECONDS = float(os.environ.get("VOBIZ_RIYA_SETTLE_SECONDS", "0.5"))
+
+
+#: Stages where a misheard word changes what Riya does next (consent to talk, identity, stop, callback).
+_ASR_CRITICAL_STAGES = {"opening", "availability_ok", "identity_asked", "callback"}
+
+
+def _start_dedicated_asr(bridge: _Bridge, riya: RiyaCall) -> None:
+    loop = asyncio.get_running_loop()
+    hints = [riya.variables.get(k) or "" for k in ("school_name", "student_name", "class_name", "event_name")]
+
+    def on_final(text: str, conf: float | None, at: float) -> None:
+        _spawn(bridge, _on_asr_final(bridge, text, conf, at))
+
+    project = os.environ.get("VOBIZ_ASR_PROJECT") or get_settings().gcp_project
+    bridge.asr = ChirpStream(loop, on_final, [h for h in hints if h], project=project,
+                             location=os.environ.get("VOBIZ_ASR_LOCATION", "asia-southeast1"))
+    bridge.asr.start()
+    _tl(bridge, "asr_started", "chirp_2")
+
+
+async def _on_asr_final(bridge: _Bridge, said: str, conf: float | None, at: float) -> None:
+    """One FINAL result from the dedicated recogniser: the parent's words, authoritatively."""
+    bridge.asr_inflight += 1
+    try:
+        await _on_asr_final_inner(bridge, said, conf, at)
+    finally:
+        bridge.asr_inflight -= 1
+
+
+_NUMBER_RUN = re.compile(r"^[\d\s.,]+$")
+
+
+def _asr_noise(said: str, conf: float | None) -> bool:
+    """A final that is almost certainly line noise, not words."""
+    if conf is None or conf >= 0.4:
+        return False
+    words = re.findall(r"[\w']+", said)
+    return bool(_NUMBER_RUN.match(said.strip())) or len(words) <= 2
+
+
+def _note_guardian_question(bridge: _Bridge, started: float) -> None:
+    """Remember when Riya first asked the guardian question (the turn that moved her there)."""
+    riya = bridge.riya
+    if riya is not None and riya.stage.value == "identity_asked" and not getattr(bridge, "guardian_q_at", 0.0):
+        bridge.guardian_q_at = started
+
+
+def _stale_identity_answer(bridge: _Bridge, said: str, spoke_at: float) -> bool:
+    """A final the parent began BEFORE Riya asked the guardian question cannot answer it.
+    Test 2026-11-09 (s12): chirp_2 delivered "Yes, go ahead" (to "good time to talk?") 4.6 s
+    late, after the guardian question, and it verified identity. A stop request still counts."""
+    riya = bridge.riya
+    if riya is None or riya.stage.value != "identity_asked" or not bridge.guardian_q_at:
+        return False
+    if spoke_at >= bridge.guardian_q_at - 0.3:
+        return False
+    return not (is_optout(said) or _RIYA_STOP_WORDS.search(said.lower()))
+
+
+async def _await_asr_final(bridge: _Bridge, timeout: float = 2.5) -> None:
+    """Before a decision that depends on the parent's last words (ending the call), let a final
+    that is still on its way land first: chirp_2 reports ~1 s after the parent stops, often
+    after Gemini (which heard the audio directly) has already called end_call."""
+    waited = time.monotonic()
+    if waited - bridge.last_parent_voice_at > 3.0 and not bridge.asr_inflight:
+        return
+    while time.monotonic() - waited < timeout and not bridge.stop and (
+        bridge.asr_inflight or bridge.last_parent_voice_at > bridge.last_transcript_at
+    ):
+        await asyncio.sleep(0.05)
+
+
+async def _on_asr_final_inner(bridge: _Bridge, said: str, conf: float | None, at: float) -> None:
+    if bridge.stop or not said:
+        return
+    bridge.engaged = True
+    bridge.last_activity = time.monotonic()
+    new_utterance = bridge.agent_spoke_since_parent or not bridge.parent_said
+    if new_utterance:
+        bridge.parent_said.append(said)
+        bridge.agent_spoke_since_parent = False
+    else:
+        bridge.parent_said[-1] = f"{bridge.parent_said[-1]} {said}"
+    _record_turn(bridge, "parent", said)
+    bridge.recent_speech = f"{bridge.recent_speech} {said}".strip()[-_SPEECH_TAIL_CHARS:]
+    _tl(bridge, "parent_transcript", (said if _TRANSCRIPT_DEBUG else f"{len(said)} chars") + f" [asr conf {conf if conf is None else round(conf, 2)}]")
+    bridge.last_transcript_at = time.monotonic()
+    if _TRANSCRIPT_DEBUG:
+        log.info("telephony.heard", outreach_id=bridge.outreach_id, text=said, source="chirp_2", confidence=conf)
+    if bridge.last_parent_voice_at:
+        bridge.eos_to_final_ms.append((time.monotonic() - bridge.last_parent_voice_at) * 1000)
+    riya = bridge.riya
+    if riya is None:
+        return
+    session = await _riya_session_ready(bridge)
+    if session is None:
+        return
+    if _asr_noise(said, conf) and not bridge.live_heard and not getattr(bridge, "last_turn_interrupted", False):
+        # chirp_2 turns line noise into "1 2 3 4 5 6 7 8 9 10" (confidence ~0.3). Gemini heard nothing
+        # either and Riya was not cut off: nothing was said. Asking "could you say that again?" about
+        # noise (twice, real call 2026-11-10) is worse than letting the conversation continue.
+        _tl(bridge, "asr_noise_ignored", f"{round(conf or 0, 2)}")
+        log.info("telephony.asr_noise_ignored", outreach_id=bridge.outreach_id)
+        if bridge.parent_said and bridge.parent_said[-1] == said:
+            bridge.parent_said.pop()
+        return
+    if _stale_identity_answer(bridge, said, at):
+        # Recorded in the transcript, but it answered the previous question: wait for the real answer.
+        _tl(bridge, "asr_stale_final", "before guardian question")
+        bridge.agent_spoke_since_parent = True  # the real answer is a new utterance, never merged with this
+        log.info("telephony.asr_stale_final", outreach_id=bridge.outreach_id,
+                 early_s=round(bridge.guardian_q_at - at, 2))
+        return
+    if conf is not None and conf < min_confidence() and riya.stage.value in _ASR_CRITICAL_STAGES:
+        # Unsure on a turn that decides something: never act on a guess. Riya asks again.
+        bridge.asr_low_conf += 1
+        _tl(bridge, "asr_low_confidence", f"{round(conf, 2)} stage={riya.stage.value}")
+        _spawn(bridge, _asr_ask_to_repeat(bridge, session, len(bridge.parent_said)))
+        return
+    bridge.riya_pending_new = bridge.riya_pending_new or new_utterance
+    new, bridge.riya_pending_new = bridge.riya_pending_new, False
+    gemini_heard = " ".join(bridge.live_heard)
+    bridge.live_heard = []
+    bridge.asr_seq += 1
+    spoke_end = bridge.last_parent_speech_end or (time.monotonic() - 1.0)
+    _owe_reply(bridge, said)
+    await _riya_parent(bridge, session, new)
+    if not gemini_heard.strip():
+        # Only when Gemini heard nothing of it: then it will not answer on its own. When it did hear,
+        # a forced cue would interrupt the reply it is still composing (seen when Vertex was slow).
+        _spawn(bridge, _asr_reply_guard(bridge, session, said, conf, bridge.asr_seq, spoke_end))
+    if _words_differ(said, gemini_heard):
+        # Gemini acted on its own hearing; it gets the correct words only when they differ.
+        # (Sending every transcript made it reply to the note itself.)
+        _tl(bridge, "asr_corrected_model", "")
+        _spawn(bridge, _asr_context_to_model(bridge, session, said))
+
+
+def _riya_replying_since(bridge: _Bridge, since: float) -> bool:
+    return (
+        bridge.model_turn_open
+        or not bridge.out.empty()
+        or bridge.model_last_audio > since
+        or _riya_line_guard(bridge)
+    )
+
+
+async def _asr_reply_guard(
+    bridge: _Bridge, session: Any, said: str, conf: float | None, seq: int, spoke_end: float
+) -> None:
+    """Riya must never go quiet after the parent spoke. Gemini answers from its own hearing; when
+    it heard nothing it waits (noise cut Riya off, then 12 s of silence, real call 2026-11-10).
+    If chirp_2 has a final and Riya has not started replying, the bridge makes her reply."""
+    await asyncio.sleep(_ASR_REPLY_GRACE)
+    riya = bridge.riya
+    if bridge.stop or bridge.closing or riya is None or bridge.asr_seq != seq:
+        return
+    if riya.stage.value in ("closing", "ended") or _riya_replying_since(bridge, spoke_end):
+        return
+    if getattr(bridge, "vad_speaking", False) or time.monotonic() - bridge.last_parent_speech_end < 0.6:
+        return  # the parent is still talking (a fragment such as "Wait, actually")
+    if getattr(bridge, "live_heard", None):
+        return  # Gemini's own hearing caught up meanwhile: it is answering
+    if bridge.riya_reask_at == len(bridge.parent_said):
+        return  # the bridge is already speaking for her
+    if conf is not None and conf < 0.55 and (riya.last_agent_cut or getattr(bridge, "last_turn_interrupted", False)):
+        kind, cue = "resume", (
+            "(System: you were cut off by noise on the line; the parent did not say anything clear. "
+            "Continue now: finish what you were saying, briefly, without a long apology.)"
+        )
+    elif conf is not None and conf < min_confidence():
+        kind, cue = "unclear", (
+            "(System: the parent's words were not clear on the line. Briefly ask them to say it again.)"
+        )
+    else:
+        kind, cue = "reply", (
+            f'(System: the parent just said: "{said}". You have not answered yet. Reply to them now, '
+            "briefly, following your rules.)"
+        )
+    _tl(bridge, "asr_reply_guard", kind)
+    log.info("telephony.asr_reply_guard", outreach_id=bridge.outreach_id, kind=kind)
+    bridge.last_activity = time.monotonic()
+    with contextlib.suppress(Exception):
+        await _send_director(session, cue)
+
+
+def _words_differ(asr: str, live: str) -> bool:
+    """True when what Gemini heard is materially different from the authoritative transcript."""
+    a = set(re.findall(r"[a-z0-9']+", asr.lower()))
+    b = set(re.findall(r"[a-z0-9']+", (live or "").lower()))
+    if not a:
+        return False
+    if not b:
+        return True
+    return len(a & b) / len(a) < 0.6
+
+
+async def _riya_session_ready(bridge: _Bridge, timeout: float = 8.0) -> Any:
+    waited = time.monotonic()
+    while bridge.riya_session is None and not bridge.stop and time.monotonic() - waited < timeout:
+        await asyncio.sleep(0.1)
+    return bridge.riya_session
+
+
+async def _model_idle(bridge: _Bridge, timeout: float = 4.0) -> None:
+    waited = time.monotonic()
+    while time.monotonic() - waited < timeout and (bridge.model_turn_open or not bridge.out.empty() or bridge.pending):
+        await asyncio.sleep(0.05)
+
+
+async def _asr_context_to_model(bridge: _Bridge, session: Any, said: str) -> None:
+    """Give Gemini the authoritative words as context (no reply requested) once it is idle, so its
+    next turns follow what the parent actually said rather than its own hearing of the phone audio."""
+    from google.genai import types as genai_types
+
+    await _model_idle(bridge)
+    if bridge.stop:
+        return
+    with contextlib.suppress(Exception):
+        await session.send_client_content(
+            turns=genai_types.Content(role="user", parts=[genai_types.Part(text=(
+                f'(System correction, not the parent speaking: the parent\'s last words were "{said}". '
+                "Use this wording from now on. Do not reply to this note and do not mention it.)"
+            ))]),
+            turn_complete=False,
+        )
+
+
+async def _asr_ask_to_repeat(bridge: _Bridge, session: Any, utterance_no: int) -> None:
+    await _model_idle(bridge)
+    if bridge.stop or len(bridge.parent_said) != utterance_no:
+        return  # the parent already spoke again
+    last = (bridge.riya.last_agent_text if bridge.riya else "").lower()
+    if re.search(r"(say (that|it) again|repeat|didn'?t (catch|hear|get))", last):
+        return  # Riya already asked
+    with contextlib.suppress(Exception):
+        await _send_director(session, (
+            "(System: the parent's last reply was not clear on the phone line. Briefly ask them to say it "
+            "again. Do not guess what they said and do not move on.)"
+        ))
+
+
+async def _riya_eval_later(bridge: _Bridge, session: Any) -> None:
+    await asyncio.sleep(_RIYA_UTTERANCE_SETTLE_SECONDS)
+    new_utterance, bridge.riya_pending_new = bridge.riya_pending_new, False
+    await _riya_parent(bridge, session, new_utterance)
+
+
+async def _riya_parent(bridge: _Bridge, session: Any, new_utterance: bool) -> None:
+    """One parent fragment: let the workflow decide (on the whole utterance)."""
+    riya = bridge.riya
+    assert riya is not None
+    said = bridge.parent_said[-1] if bridge.parent_said else ""
+    decision = riya.on_parent(said, new_utterance=new_utterance)
+    _tl(bridge, "riya_decision", f"{decision.act.value}:{decision.branch} stage={riya.stage.value}")
+    if decision.act is RiyaAct.UNLOCK:
+        _unlock(bridge)
+        bridge.dialogue.identity = Identity.CONFIRMED
+        from google.genai import types as genai_types
+
+        if bridge.asr is not None:
+            # With the dedicated recogniser the decision lands after Gemini has begun its reply
+            # ("Thank you."): let it finish GENERATING (never cut mid-word), but do not wait for it to
+            # play: the details then queue right behind it instead of after a fresh ~1.3 s gap.
+            waited = time.monotonic()
+            while bridge.model_turn_open and time.monotonic() - waited < 3.0:
+                await asyncio.sleep(0.03)
+
+        riya.unlock_cue_sent = True
+        with contextlib.suppress(Exception):
+            await session.send_client_content(
+                turns=genai_types.Content(
+                    role="user", parts=[genai_types.Part(text=riya.unlock_cue())]
+                ),
+                turn_complete=True,
+            )
+        bridge.dialogue.on_message_delivered()
+    elif decision.act in (RiyaAct.REASK, RiyaAct.SAY) and time.monotonic() < bridge.protect_until:
+        # The opener is still playing (it is never interrupted): it already asks the question.
+        _tl(bridge, "reask_skipped_opener_playing", decision.branch)
+    elif decision.act in (RiyaAct.REASK, RiyaAct.SAY):
+        if bridge.riya_reask_at != len(bridge.parent_said):
+            bridge.riya_reask_at = len(bridge.parent_said)
+            _riya_reask(bridge, session, decision.line)
+    elif decision.act is RiyaAct.CUE:
+        if bridge.riya_reask_at != len(bridge.parent_said):
+            bridge.riya_reask_at = len(bridge.parent_said)
+            _tl(bridge, "riya_cue", decision.branch)
+            _spawn(bridge, _riya_cue_now(bridge, session, decision.line))
+    elif decision.act is RiyaAct.PARENT_DONE:
+        _riya_soft_end(bridge, "parent_ended")
+    elif decision.act is RiyaAct.CLOSE and not bridge.riya_net_armed:
+        bridge.riya_net_armed = True
+        if decision.branch == "stop":
+            bridge.opted_out = is_optout(said)
+        log.info("telephony.riya_close", outreach_id=bridge.outreach_id, branch=decision.branch)
+        _spawn(bridge, _riya_close_net(bridge, session, decision.line))
+
+
+def _end_call_refusal(bridge: _Bridge, riya: RiyaCall, why: str) -> tuple[str, bool]:
+    """What the model must do after end_call is refused, and whether it must speak now."""
+    muted = bridge.goodbye_muted_note
+    bridge.goodbye_muted_note = False
+    lead = "Your goodbye was NOT played: the parent is still on the line. " if muted else ""
+    speak_now = {
+        "parent_still_engaged": "The parent is still talking with you. Do not say goodbye. Reply now, briefly, to what they just said.",
+        "answered_check_anything_else": "You have answered the parent. Do not say goodbye yet: ask briefly whether there is anything else they would like to know, then wait for their reply.",
+        "parent_question_open": "The parent just asked something. Answer it now, briefly, using only the call details. Do not mention ending the call.",
+        "attendance_unanswered": 'The parent has not said whether they can attend. Ask once, briefly: "Will you be able to attend the meeting on the date I mentioned?" Then listen. Do not say goodbye yet.',
+        "update_not_delivered": "You have not shared the call details yet. Share them now, briefly.",
+        "callback_in_progress": "You are arranging a call back. Ask for, or confirm, the day and time now. Do not say goodbye yet.",
+        "no_goodbye_spoken": "If the conversation is finished, say one short goodbye now; otherwise reply to the parent.",
+    }
+    wait = {
+        "parent_not_yet_responded": "Do not end yet: wait for the parent's reply to what you just said.",
+        "riya_question_open": "Do not end yet: you asked a question; wait for the parent's answer.",
+        "purpose_not_reached": "Do not end the call: the parent agreed to talk. The guardian question is being asked.",
+    }
+    if why in speak_now:
+        return lead + speak_now[why], True
+    if muted:
+        # The parent heard Riya stop mid-sentence: she must carry on, never wait in silence.
+        return lead + "Continue the conversation now, briefly.", True
+    return wait.get(why, "Do not end the call yet."), False
+
+
+def _owe_reply(bridge: _Bridge, said: str) -> None:
+    """Riya owes the parent a reply: the watchdog recovers if none is heard."""
+    if bridge.closing or bridge.stop:
+        return
+    bridge.reply_owed_since = time.monotonic()
+    bridge.reply_owed_said = said
+
+
+def _reply_given(bridge: _Bridge) -> None:
+    bridge.reply_owed_since = 0.0
+    bridge.recover_level = 0
+    bridge.riya_was_cut = False
+
+
+#: A reply owed this long with no audio from Riya is a stalled turn (normal: audio ~1 s after the final).
+_REPLY_OWED_SECONDS = float(os.environ.get("VOBIZ_RIYA_REPLY_OWED_SECONDS", "3.0"))
+
+
+async def _riya_reply_recovery(bridge: _Bridge, session: Any) -> None:
+    """Every owed reply is either played or recovered; a turn is never left unresolved.
+
+    1st: the model is told what the parent said and to reply. 2nd: again, with the conversation
+    state. 3rd: the session is treated as stuck: the bridge closes politely itself."""
+    owed = bridge.reply_owed_since
+    if not owed or bridge.closing or bridge.stop:
+        return
+    now = time.monotonic()
+    busy = (
+        not bridge.out.empty()
+        or getattr(bridge, "vad_speaking", False)
+        or _riya_line_guard(bridge)
+        or (bridge.model_turn_open and now - owed < 2 * _REPLY_OWED_SECONDS)
+    )
+    if busy or now - owed < _REPLY_OWED_SECONDS:
+        return
+    riya = bridge.riya
+    bridge.recover_level += 1
+    bridge.reply_owed_since = now
+    level = bridge.recover_level
+    _tl(bridge, "reply_recovery", str(level))
+    log.info("telephony.reply_recovery", outreach_id=bridge.outreach_id, level=level, owed_s=round(now - owed, 1))
+    if level >= 3 and riya is not None and not bridge.riya_net_armed:
+        decision = riya.stalled_close()
+        bridge.riya_net_armed = True
+        log.info("telephony.riya_close", outreach_id=bridge.outreach_id, branch=decision.branch)
+        _spawn(bridge, _riya_close_net(bridge, session, decision.line))
+        return
+    said = bridge.reply_owed_said
+    cut = getattr(bridge, "riya_was_cut", False) or (
+        riya is not None and (riya.last_agent_cut or getattr(bridge, "last_turn_interrupted", False)))
+    if said:
+        cue = (f'(System: the parent said: "{said}". You have not replied and the parent is waiting. '
+               "Reply now, briefly, following your rules.)")
+    elif cut:
+        cue = "(System: you were cut off. Continue now: finish what you were saying, briefly.)"
+    else:
+        cue = "(System: the parent is waiting for you. Continue the conversation now, briefly.)"
+    with contextlib.suppress(Exception):
+        await _send_director(session, cue)
+
+
+def _riya_unstick(bridge: _Bridge, session: Any, riya: RiyaCall) -> None:
+    """Refused end_calls with no speech in between mean the model believes the call is over
+    and has gone silent. Second time: tell it to speak. Fourth: the bridge closes politely."""
+    if riya.agent_turns == bridge.refusal_agent_turns:
+        bridge.silent_refusals += 1
+    else:
+        bridge.silent_refusals = 1
+        bridge.refusal_agent_turns = riya.agent_turns
+        bridge.first_silent_refusal_at = time.monotonic()
+    if bridge.silent_refusals == 2:
+        _tl(bridge, "unstick", "cue")
+        _spawn(bridge, _send_director(session, (
+            "(System: the parent is still on the line and has heard nothing from you. Speak now: "
+            "reply in one short sentence to what they last said. If you have nothing to add, say "
+            "\"Thank you for your time. Have a good day.\")"
+        )))
+    elif (bridge.silent_refusals >= 4 and not bridge.riya_net_armed
+          and time.monotonic() - getattr(bridge, "first_silent_refusal_at", 0.0) >= 6.0):
+        decision = riya.stalled_close()
+        bridge.riya_net_armed = True
+        _tl(bridge, "unstick", "close")
+        log.info("telephony.riya_close", outreach_id=bridge.outreach_id, branch=decision.branch)
+        _spawn(bridge, _riya_close_net(bridge, session, decision.line))
+
+
+async def _riya_close_net(bridge: _Bridge, session: Any, line: str) -> None:
+    """A closing branch: Riya's prompt has the model say `line` and call end_call.
+
+    Give the model its turn first (a second cue would make her say goodbye
+    twice). If that turn is a farewell, end after it plays; if the model did
+    not close, have it say the branch's exact line, then end.
+    """
+    riya = bridge.riya
+    assert riya is not None
+    armed = riya.agent_turns
+    started = time.monotonic()
+    while time.monotonic() - started < _GOODBYE_NET_MAX_WAIT_SECONDS:
+        if bridge.closing or bridge.stop:
+            return
+        replied = riya.agent_turns > armed
+        if replied and not bridge.model_turn_open:
+            break
+        if not replied and not bridge.model_turn_open and time.monotonic() - started > 1.5:
+            break
+        await asyncio.sleep(0.1)
+    if bridge.closing or bridge.stop:
+        return
+    last = riya.last_agent_text if riya.agent_turns > armed else ""
+    bridge.closing = True
+    bridge.dialogue.begin_closing()
+    if last and _RIYA_FAREWELL.search(last):
+        log.info("telephony.riya_close_net", outreach_id=bridge.outreach_id, action="model_closed")
+        await _drain_then_stop(bridge)
+        return
+    if _riya_play_line(bridge, line):
+        log.info("telephony.riya_close_net", outreach_id=bridge.outreach_id, action="fixed_line")
+        await _drain_then_stop(bridge)
+        return
+    log.info("telephony.riya_close_net", outreach_id=bridge.outreach_id, action="cue")
+    cue_sent = time.monotonic()
+    with contextlib.suppress(Exception):
+        await _send_director(session, riya.close_cue(line))
+    deadline = cue_sent + _CLOSING_GRACE_SECONDS
+    while time.monotonic() < deadline and bridge.model_last_audio <= cue_sent and bridge.out.empty():
+        await asyncio.sleep(0.1)
+    await _drain_then_stop(bridge)
+
+
+#: Riya's closing lines all end with one of these.
+_RIYA_FAREWELL = re.compile(
+    r"(have a (good|nice|great) day|good ?bye|bye|thank you\.?)[\W\s]*$", re.IGNORECASE
+)
+
+
+async def _riya_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> None:
+    """end_call and skip_turn, validated here; anything else is refused."""
+    from google.genai import types as genai_types
+
+    riya = bridge.riya
+    assert riya is not None
+    responses: list[Any] = []
+    for fc in tool_call.function_calls:
+        args = dict(fc.args or {})
+        if args:
+            # Both tools take no arguments; anything sent is ignored, never trusted.
+            log.info("telephony.riya_tool_args_ignored", tool=fc.name, keys=sorted(args))
+        if fc.name == "skip_turn":
+            parent_last = bridge.parent_said[-1] if bridge.parent_said else ""
+            allowed, why_skip = riya.skip_allowed(parent_last)
+            riya.on_skip_turn()
+            if not allowed and why_skip == "must_respond":
+                _riya_unstick(bridge, session, riya)
+            _tl(bridge, "skip_turn", f"{'ok' if allowed else 'refused'}:{why_skip}")
+            responses.append(
+                genai_types.FunctionResponse(
+                    id=fc.id,
+                    name=fc.name,
+                    response={"status": "ok"}
+                    if allowed
+                    else {
+                        "status": "refused",
+                        "instruction": (
+                            "Do not stay silent. The parent is confirmed: share the call details now, "
+                            "as the system message said."
+                            if why_skip == "deliver_details"
+                            else "Say only \"Thank you.\" now, nothing else; the details follow."
+                            if why_skip == "acknowledge"
+                            else "Do not stay silent. Answer what the parent just said "
+                            "now, briefly, using the call details (for example repeat the date if they "
+                            "asked). Ask them to repeat only if their words were truly unintelligible."
+                        ),
+                    },
+                    scheduling=genai_types.FunctionResponseScheduling.SILENT
+                    if allowed
+                    else genai_types.FunctionResponseScheduling.WHEN_IDLE,
+                )
+            )
+            continue
+        if fc.name != "end_call":
+            log.warning("telephony.riya_unknown_tool", tool=fc.name)
+            responses.append(
+                genai_types.FunctionResponse(id=fc.id, name=fc.name, response={"error": "unknown_tool"})
+            )
+            continue
+        if bridge.asr is not None:
+            await _await_asr_final(bridge)
+        ok, why = riya.on_end_call(
+            bridge.agent_turn_text, bridge.parent_said[-1] if bridge.parent_said else ""
+        )
+        _tl(bridge, "end_call", f"{'accepted' if ok else 'declined'}:{why}")
+        log.info("telephony.end_call_tool", outreach_id=bridge.outreach_id, accepted=ok, why=why)
+        if not ok:
+            bridge.end_call_declined += 1
+            _riya_unstick(bridge, session, riya)
+            if why == "purpose_not_reached" and riya.good_time_to_talk == "yes":
+                line = riya.confirm_line() if riya.stage.value == "identity_asked" else riya.guardian_question()
+                if bridge.riya_reask_at != len(bridge.parent_said):
+                    bridge.riya_reask_at = len(bridge.parent_said)
+                    _riya_reask(bridge, session, line)
+            instruction, speak = _end_call_refusal(bridge, riya, why)
+            if speak:
+                _owe_reply(bridge, bridge.parent_said[-1] if bridge.parent_said else "")
+            responses.append(
+                genai_types.FunctionResponse(
+                    id=fc.id,
+                    name=fc.name,
+                    response={"status": "declined", "instruction": instruction},
+                    # WHEN_IDLE whenever Riya must say something next. The one-minute stall on
+                    # three real calls was a SILENT refusal after a muted goodbye: the model
+                    # believed the call was over and waited, and so did the parent.
+                    scheduling=genai_types.FunctionResponseScheduling.WHEN_IDLE
+                    if speak
+                    else genai_types.FunctionResponseScheduling.SILENT,
+                )
+            )
+            continue
+        responses.append(
+            genai_types.FunctionResponse(
+                id=fc.id,
+                name=fc.name,
+                response={"status": "ok"}
+                if why not in riya.SOFT_ENDS
+                else {
+                    "status": "ok",
+                    "note": "The line stays open for a moment. If the parent speaks again, "
+                    "the call has NOT ended: answer them normally and never say the call "
+                    "is closed.",
+                },
+                scheduling=genai_types.FunctionResponseScheduling.SILENT,
+            )
+        )
+        if why in riya.SOFT_ENDS:
+            _riya_soft_end(bridge, why)
+        elif not bridge.closing:
+            bridge.closing = True
+            bridge.dialogue.begin_closing()
+            _spawn(bridge, _drain_then_stop(bridge))
+    if responses:
+        with contextlib.suppress(Exception):
+            await session.send_tool_response(function_responses=responses)
+
+
+async def _riya_watchdog_tick(bridge: _Bridge, session: Any, quiet_for: float) -> bool:
+    """Silence and duration for Riya. True = a close has begun."""
+    riya = bridge.riya
+    assert riya is not None
+    await _riya_reply_recovery(bridge, session)
+    elapsed = time.monotonic() - bridge.call_started
+    # max_duration_seconds: say the configured message so it ends AT the limit.
+    if not bridge.riya_max_warned and elapsed >= riya.max_seconds - 9:
+        bridge.riya_max_warned = True
+        bridge.closing = True
+        bridge.dialogue.begin_closing()
+        riya._close("max_duration", riya.max_duration_message)
+        _spawn(bridge, _riya_say_then_stop(bridge, session, riya.max_duration_message))
+        return True
+    if riya.budget_note() and not bridge.riya_budget_noted:
+        bridge.riya_budget_noted = True
+        from google.genai import types as genai_types
+
+        with contextlib.suppress(Exception):
+            await session.send_client_content(
+                turns=genai_types.Content(role="user", parts=[genai_types.Part(text=riya.budget_note())]),
+                turn_complete=False,
+            )
+    # The parent spoke (our own detector heard it) but Live produced neither a
+    # transcript nor a reply: never wait for an event that will not come.
+    end = getattr(bridge, "last_parent_speech_end", 0.0)
+    if (
+        end
+        and end > bridge.riya_unheard_handled
+        and time.monotonic() - end > _RIYA_UNHEARD_SECONDS
+        and bridge.last_transcript_at < end
+        and bridge.model_last_audio < end
+        and not bridge.model_turn_open
+        and bridge.out.empty()
+    ):
+        bridge.riya_unheard_handled = end
+        _tl(bridge, "unheard_speech_cue")
+        with contextlib.suppress(Exception):
+            await _send_director(session, riya.unheard_cue())
+        bridge.last_activity = time.monotonic()
+        return False
+    verdict = riya.on_silence(quiet_for)
+    if verdict == "reprompt":
+        _tl(bridge, "silence_reprompt")
+        bridge.last_activity = time.monotonic()
+        with contextlib.suppress(Exception):
+            await _send_director(session, riya.reprompt_cue())
+        log.info("telephony.nudge", outreach_id=bridge.outreach_id, kind="riya_turn_timeout")
+    elif verdict == "close":
+        bridge.closing = True
+        bridge.dialogue.begin_closing()
+        log.info("telephony.riya_close", outreach_id=bridge.outreach_id, branch="silence")
+        _spawn(bridge, _riya_say_then_stop(bridge, session, "Thank you for your time. Have a good day."))
+        return True
+    return False
+
+
+def _riya_line_guard(bridge: _Bridge) -> bool:
+    """True while model output must be dropped: a cached Riya line is still
+    playing, or the model turn that competed with it has not ended yet."""
+    if getattr(bridge, "riya", None) is None:
+        return False
+    return time.monotonic() < bridge.riya_line_until or bridge.riya_drop_turn
+
+
+def _riya_reask(bridge: _Bridge, session: Any, line: str) -> None:
+    """Before verification: the bridge asks the guardian question itself.
+
+    The model's own reply to "You are?" started the PTM details on the
+    2026-11-09 handset call (muted, so the parent heard "I'm calling …"). The
+    cached line plays at once in the call voice and the model's reply is
+    dropped; without a cache the model is told the exact words.
+    """
+    _tl(bridge, "riya_reask", line)
+    if _riya_play_line(bridge, line):
+        _spawn(bridge, _riya_lift_discard(bridge, len(_riya_cached(line) or b"") / 8000.0))
+        return
+    bridge.next_turn_scripted = True
+    _spawn(bridge, _send_director(session, f'(Say exactly this, and nothing else: "{line}")'))
+
+
+async def _riya_cue_now(bridge: _Bridge, session: Any, cue: str) -> None:
+    """A cue that must shape Riya's NEXT words (callback repeat-back). The
+    model is usually already answering the parent; that reply is dropped and
+    the cue's reply plays instead, so the parent hears one turn, not two."""
+    # The model usually repeats the time back on its own (s07: "So, tomorrow…").
+    # Cutting that reply to send the cue made Riya speak twice. Cue only if it
+    # has not started answering within a moment.
+    waited = time.monotonic()
+    while time.monotonic() - waited < 1.2:
+        if bridge.model_turn_open or bridge.agent_spoke_since_parent:
+            return
+        await asyncio.sleep(0.05)
+    await _send_director(session, cue)
+
+
+async def _riya_lift_discard(bridge: _Bridge, seconds: float) -> None:
+    """A cached line sets `discard_model_audio` to drop the model's competing
+    reply; that flag lifts on the model's turn_complete. If the model sent no
+    reply at all, lift it once the line has played so the NEXT reply is heard."""
+    await asyncio.sleep(seconds + 2.0)
+    if not bridge.model_turn_open:
+        bridge.discard_model_audio = False
+        bridge.riya_drop_turn = False
+
+
+async def _riya_cue_after_playback(bridge: _Bridge, cue: str) -> None:
+    """Send a director cue once Riya's current audio has finished playing and
+    the parent is not mid-sentence (a cue during generation would cut it)."""
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline and not bridge.stop:
+        playing = bool(bridge.pending) or not bridge.out.empty() or time.monotonic() < bridge.model_last_audio
+        if not playing and not bridge.model_turn_open:
+            break
+        await asyncio.sleep(0.1)
+    await asyncio.sleep(0.4)
+    riya = bridge.riya
+    if bridge.stop or riya is None or riya.parent_signalled_end or riya.stage.value != "delivered":
+        return
+    if riya.preferred_time_given or riya.preferred_time_asked:
+        return
+    if bridge.riya_session is not None:
+        await _send_director(bridge.riya_session, cue)
+
+
+def _riya_awaiting(bridge: _Bridge) -> bool:
+    """The parent has spoken since Riya's last complete turn (by utterance count,
+    not text: the debounced verdict can lag the model's own reply)."""
+    return len(bridge.parent_said) > bridge.riya_parent_count
+
+
+def _riya_cached(line: str) -> bytes | None:
+    """`line` pre-rendered in the call's own voice, if it is in the cache."""
+    if not _RIYA_OPENER_DIR or not line:
+        return None
+    model, _, voice = _riya_live_settings()
+    path = Path(_RIYA_OPENER_DIR) / f"{riya_opener_key(line, voice, model)}.ulaw"
+    return path.read_bytes() if path.is_file() else None
+
+
+async def _riya_trouble_goodbye(bridge: _Bridge) -> None:
+    """The engine died (quota, network): say why the call ends, in Riya's cached voice."""
+    from .riya import LINE_TROUBLE_LINE
+
+    audio = _riya_cached(LINE_TROUBLE_LINE)
+    if audio is None or bridge.stop:
+        return
+    with contextlib.suppress(Exception):
+        bridge.closing = True
+        _queue_ulaw(bridge, audio)
+        _flush_ulaw(bridge)
+        _record_turn(bridge, "agent", LINE_TROUBLE_LINE)
+        _tl(bridge, "trouble_goodbye")
+        log.info("telephony.trouble_goodbye", outreach_id=bridge.outreach_id)
+        await asyncio.sleep(len(audio) / 8000 + 0.5)
+
+
+def _riya_play_line(bridge: _Bridge, line: str) -> bool:
+    """Play a fixed line from the cache (instant, same voice). False if not cached."""
+    audio = _riya_cached(line)
+    if audio is None:
+        return False
+    _stop_current(bridge)
+    bridge.discard_model_audio = True  # nothing the model says now may play over it
+    bridge.riya_line_until = time.monotonic() + len(audio) / 8000.0 + 0.3
+    bridge.riya_drop_turn = True
+    _queue_ulaw(bridge, audio)
+    _flush_ulaw(bridge)
+    bridge.model_last_audio = time.monotonic() + len(audio) / 8000.0
+    _reply_given(bridge)
+    _record_turn(bridge, "agent", line)
+    if bridge.riya is not None:
+        bridge.riya.on_agent(line)
+        bridge.riya_parent_count = len(bridge.parent_said)
+        _note_guardian_question(bridge, time.monotonic())
+    bridge.agent_spoke_since_parent = True
+    _tl(bridge, "fixed_line", line)
+    return True
+
+
+async def _riya_say_then_stop(bridge: _Bridge, session: Any, line: str) -> None:
+    if _riya_play_line(bridge, line):
+        await _drain_then_stop(bridge)
+        return
+    _stop_current(bridge)
+    cue_sent = time.monotonic()
+    with contextlib.suppress(Exception):
+        await _send_director(session, f'(System: say exactly this, and nothing else: "{line}")')
+    deadline = cue_sent + _CLOSING_GRACE_SECONDS
+    while time.monotonic() < deadline and bridge.model_last_audio <= cue_sent and bridge.out.empty():
+        await asyncio.sleep(0.1)
+    await _drain_then_stop(bridge)
+
+
+async def _post_sampark_result(bridge: _Bridge, collected: dict[str, Any]) -> None:
+    """The Sampark post-call event: the same fields ElevenLabs' post-call webhook carries."""
+    riya = bridge.riya
+    assert riya is not None
+    seconds = int(time.monotonic() - bridge.call_started) if bridge.call_started else None
+    transcript = [
+        {"role": "agent" if t["role"] == "agent" else "user", "message": str(t["text"])[:1000]}
+        for t in bridge.transcript
+        if t.get("role") in ("agent", "parent", "user") and str(t.get("text") or "").strip()
+    ][:80]
+    spoke = any(t["role"] == "user" for t in transcript)
+    reached = riya.stage.value in ("delivered", "closing", "ended") and riya.identity_state == "confirmed"
+    payload = {
+        "ref": bridge.outreach_id,
+        "callUuid": (bridge.call_uuid or "")[:64],
+        "eventTimestamp": int(time.time()),
+        "status": "done",
+        "durationSeconds": seconds,
+        "terminationReason": (riya.close_branch or "ended")[:300],
+        "callSuccessful": "success" if (reached or riya.callback_state == "confirmed") else ("failure" if spoke else "unknown"),
+        "dataCollection": {k: (str(v)[:400] if v is not None else None) for k, v in collected.items()},
+        "transcript": transcript,
+    }
+    await sampark_link.post_event(payload)
+
+
+async def _persist_riya(bridge: _Bridge) -> None:
+    """Riya's workflow record and her data-collection fields, after hang-up."""
+    riya = bridge.riya
+    if riya is None:
+        return
+    riya._goto_ended()
+    fields = riya.data_collection_fields()
+    collected: dict[str, Any] = {}
+    try:
+        collected = await _riya_extract(bridge, fields)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("telephony.riya_data_collection_failed", outreach_id=bridge.outreach_id, error=str(exc))
+    # The bridge's own verdict on the availability answer is authoritative.
+    # good_time_to_talk is the state machine's (state_answers below): the 19:22
+    # Sampark call stored the extractor's "no" for a misheard reply the parent
+    # then talked through.
+    # So are identity, stop and a CONFIRMED callback (the extractor fills the
+    # callback's wording only when the state machine has none).
+    for key, value in riya.state_answers().items():
+        if key == "callback_requested_time" and collected.get(key):
+            continue
+        collected[key] = value
+    if (
+        riya.purpose == "ptm_invitation"
+        and riya.attendance_asked
+        and not riya.attendance_answered
+        and collected.get("ptm_attendance") in (None, "", "not_applicable")
+    ):
+        # Asked and never answered is "no clear answer", not "not applicable" (real call 2026-11-10).
+        collected["ptm_attendance"] = "no_answer"
+    if riya.callback_state in ("", "declined"):
+        # No callback flow ran (or the parent declined one): never invent one.
+        collected.pop("callback_requested_time", None)
+    if sampark_link.is_sampark(bridge.outreach_id):
+        await _post_sampark_result(bridge, collected)
+        return
+    try:
+        from google.cloud import firestore
+
+        client = firestore.Client(
+            project=get_settings().gcp_project, database=get_settings().firestore_database
+        )
+        ref = client.collection("parent_outreach").document(bridge.outreach_id)
+        now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+        await asyncio.to_thread(
+            ref.update,
+            {
+                "riyaWorkflow": {**riya.record(), "timeline": bridge.timeline},
+                "riyaDataCollection": collected,
+                "updatedAt": now,
+            },
+        )
+        log.info("telephony.riya_saved", outreach_id=bridge.outreach_id, fields=sorted(collected))
+    except Exception as exc:  # noqa: BLE001
+        log.warning("telephony.riya_save_failed", outreach_id=bridge.outreach_id, error=str(exc))
+
+
+async def _riya_extract(bridge: _Bridge, fields: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """Riya's data_collection, from the transcript, with her own field descriptions."""
+    if not bridge.transcript or not fields:
+        return {}
+    from google import genai
+    from google.genai import types as genai_types
+
+    props: dict[str, Any] = {}
+    for name, spec in fields.items():
+        schema: dict[str, Any] = {"type": "STRING", "description": spec.get("description") or ""}
+        if spec.get("enum"):
+            schema["enum"] = list(spec["enum"])
+        props[name] = schema
+    convo = "\n".join(f"{t['role']}: {t['text']}" for t in bridge.transcript)
+    client = genai.Client(
+        vertexai=True,
+        project=get_settings().gcp_project,
+        location=os.environ.get("VOBIZ_RIYA_ANALYSIS_LOCATION", "global"),
+    )
+    resp = await client.aio.models.generate_content(
+        model=os.environ.get("VOBIZ_RIYA_ANALYSIS_MODEL", "gemini-3.1-flash-lite"),
+        contents=(
+            "Extract these fields from the school phone call below. Follow each field's "
+            "description exactly. Use an empty string when the call does not say. Write "
+            "every free-text value in English, in Latin script, even when the transcript "
+            "shows it in another script.\n\n" + convo
+        ),
+        config=genai_types.GenerateContentConfig(
+            temperature=0,
+            response_mime_type="application/json",
+            response_schema={"type": "OBJECT", "properties": props},
+        ),
+    )
+    data = json.loads(resp.text or "{}")
+    out: dict[str, Any] = {}
+    for name, spec in fields.items():
+        value = data.get(name)
+        if not isinstance(value, str):
+            continue
+        value = value.strip()
+        # Validate server-side: an enum field only ever holds one of its values.
+        if spec.get("enum") and value and value not in spec["enum"]:
+            continue
+        out[name] = value
+    return out
 
 
 # ---- the conversation manager: executes the state machine's decisions --------
@@ -2190,10 +3635,15 @@ def _on_agent_transcription(bridge: _Bridge, server: Any) -> None:
         return
     spoken = getattr(server, "output_transcription", None)
     text = (getattr(spoken, "text", "") or "") if spoken else ""
+    if _riya_line_guard(bridge):
+        return
     if text.strip() and not bridge.discard_model_audio:
         _open_model_turn(bridge)
         _agent_said(bridge, text)
         bridge.agent_spoke_since_parent = True
+        if getattr(bridge, "riya", None) is not None:
+            _riya_check_output(bridge)
+            return
         if _leaks(bridge, bridge.agent_turn_text):
             # Defence in depth for an engine whose output we cannot pre-check
             # (Gemini Live): stop it the moment its transcript shows it.
@@ -2207,6 +3657,8 @@ def _open_model_turn(bridge: _Bridge) -> None:
     """A new model turn starts at its first audio OR its first transcription;
     what was played before belongs to the previous turn."""
     if not bridge.model_turn_open:
+        bridge.riya_goodbye_muted = False
+        bridge.turn_started_at = time.monotonic()
         bridge.model_turn_open = True
         bridge.turn_frames_generated = bridge.turn_frames_played = 0
 
@@ -2220,16 +3672,21 @@ def _on_model_audio(bridge: _Bridge, data: bytes | None, *, ulaw: bytes | None =
     """
     if not data and not ulaw:
         return
-    if bridge.discard_model_audio:
-        # Still streaming for the response the parent talked over.
+    if bridge.discard_model_audio or _riya_line_guard(bridge):
+        # Still streaming for the response the parent talked over (or one that
+        # competes with Riya's cached line).
         bridge.stale_chunks_dropped += 1
         return
     bridge.last_activity = time.monotonic()
     bridge.model_has_spoken = True
     bridge.agent_spoke_since_parent = True
     bridge.model_last_audio = bridge.last_activity
+    if bridge.reply_owed_since:
+        _reply_given(bridge)
     if bridge.first_audio_at is None:
         bridge.first_audio_at = time.monotonic()
+    if not bridge.model_turn_open:
+        _tl(bridge, "model_first_audio")
     _open_model_turn(bridge)
     if ulaw is None:
         ulaw, bridge.decimator = pcm24k_to_ulaw8k(data or b"", bridge.decimator)
@@ -2257,7 +3714,11 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                 break
             turn_had_output = True
             server = getattr(resp, "server_content", None)
+            _test_fault(bridge, resp)
             _on_model_interrupted(bridge, server)
+            upd = getattr(resp, "session_resumption_update", None)
+            if upd is not None and getattr(upd, "new_handle", None) and getattr(upd, "resumable", True) is not False:
+                bridge.resume_handle = upd.new_handle
 
             cancelled = getattr(resp, "tool_call_cancellation", None)
             if cancelled is not None:
@@ -2268,12 +3729,23 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
             await _handle_tool_call(bridge, session, getattr(resp, "tool_call", None))
 
             if server is not None and getattr(server, "turn_complete", False):
+                _tl(bridge, "model_turn_complete")
                 # The abandoned response is over even if the model never
                 # flagged it as interrupted; what follows is new speech.
                 bridge.discard_model_audio = False
+                if bridge.riya_drop_turn:
+                    # The competing turn is over; nothing of it was played or filed.
+                    bridge.riya_drop_turn = False
+                    bridge.agent_turn_text = ""
                 bridge.model_turn_open = False
                 _commit_agent_turn(bridge)
+                stalled_turn = getattr(bridge, "fault_stall_turn", False)
+                bridge.fault_stall_turn = False
+                if stalled_turn:
+                    continue
 
+            if getattr(bridge, "fault_stall_turn", False):
+                continue  # test fault: this reply never reaches the parent (a stalled generation)
             _on_model_audio(bridge, getattr(resp, "data", None), ulaw=getattr(resp, "ulaw", None))
         # The turn is over: the carry-over is a true tail now, not a chunk seam.
         _flush_ulaw(bridge)
@@ -2284,6 +3756,25 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
             # would spin.
             break
     return "live_stream_end"
+
+
+def _test_fault(bridge: _Bridge, resp: Any) -> None:
+    """Simulated failures for the synthetic suite (never on a real call: see _load_riya)."""
+    faults = getattr(bridge.riya, "test_faults", None) if getattr(bridge, "riya", None) else None
+    if not faults:
+        return
+    elapsed = time.monotonic() - bridge.call_started
+    drop = faults.get("drop_after_s")
+    if drop and not getattr(bridge, "fault_dropped", False) and elapsed > float(drop) and bridge.resume_handle:
+        bridge.fault_dropped = True
+        _tl(bridge, "test_fault", "live_dropped")
+        raise RuntimeError("test fault: live session dropped (simulated 1011)")
+    stall = faults.get("stall_after_s")
+    if (stall and not getattr(bridge, "fault_stalled", False) and elapsed > float(stall)
+            and getattr(resp, "data", None) and not bridge.model_turn_open):  # a whole new reply is lost
+        bridge.fault_stalled = True
+        bridge.fault_stall_turn = True
+        _tl(bridge, "test_fault", "generation_stalled")
 
 
 async def _barge_in_tick(bridge: _Bridge) -> bool:
@@ -2331,10 +3822,16 @@ def _next_current_frame(bridge: _Bridge) -> bytes | None:
 def _after_tick(bridge: _Bridge, *, is_speech: bool) -> None:
     """Bookkeeping for one pacer tick: what was played, and when."""
     if not is_speech:
+        if getattr(bridge, "tl_playing", False):
+            bridge.tl_playing = False
+            _tl(bridge, "playback_end")
         # A cancel empties the queue; the first tick with nothing to play
         # is when VIDYA actually went quiet.
         _measure_stop(bridge)
         return
+    if not getattr(bridge, "tl_playing", True):
+        bridge.tl_playing = True
+        _tl(bridge, "playback_start")
     bridge.last_speech_frame_at = time.monotonic()
     # The line is busy until VIDYA's audio has PLAYED, not merely been made.
     # Synthesis runs several times faster than playback; counting silence from
@@ -2344,9 +3841,11 @@ def _after_tick(bridge: _Bridge, *, is_speech: bool) -> None:
     bridge.turn_frames_played += 1
     if bridge.awaiting_reply_since:
         # The parent stopped speaking -> the first frame of the reply left.
-        bridge.eos_to_first_audio_ms.append(
-            (bridge.last_speech_frame_at - bridge.awaiting_reply_since) * 1000
-        )
+        gap_ms = (bridge.last_speech_frame_at - bridge.awaiting_reply_since) * 1000
+        bridge.eos_to_first_audio_ms.append(gap_ms)
+        _tl(bridge, "reply_gap", str(round(gap_ms)))
+        if gap_ms > 2500:
+            log.info("telephony.reply_gap_long", outreach_id=bridge.outreach_id, ms=round(gap_ms))
         bridge.awaiting_reply_since = 0.0
 
 
@@ -2429,6 +3928,7 @@ async def _pace_outbound(bridge: _Bridge) -> None:
             # carrier, which is its own kind of stutter. Resync instead and take
             # the loss once.
             bridge.pacing_resyncs += 1
+            _tl(bridge, "pacer_stall", f"{lateness * 1000:.0f}ms speech={is_speech}")
             next_at = now
         await asyncio.sleep(max(0.0, next_at - now))
 
@@ -2447,10 +3947,24 @@ async def _prepare_live_session(
 
     t_accept = time.monotonic()
     context, scope = await _load_context(outreach_id, language)
+    riya = await _load_riya(outreach_id)
     t_context = time.monotonic()
     lookups = school_data_tools_enabled() and scope is not None
 
     settings = get_settings()
+    if riya is not None:
+        r_model, r_location, r_voice = _riya_live_settings()
+        client = await _genai_client(r_location)
+        log.info(
+            "telephony.warmup",
+            outreach_id=outreach_id,
+            model=r_model,
+            workflow="riya",
+            node=riya.node.get("label"),
+            context_ms=round((t_context - t_accept) * 1000),
+            since_open_ms=round((time.monotonic() - started) * 1000),
+        )
+        return client, _riya_live_config(riya, r_voice), r_model, context, None, riya
     # Model and location come from the app-facing voice route rather than from
     # constants of our own. The first version hardcoded the model name the
     # Suraksha agent uses, which does not exist on Vertex — every call died with
@@ -2549,7 +4063,207 @@ async def _prepare_live_session(
         since_open_ms=round((time.monotonic() - started) * 1000),
         lookups=lookups,
     )
-    return client, config, model, context, (scope if lookups else None)
+    return client, config, model, context, (scope if lookups else None), None
+
+
+_CLIENTS: dict[tuple[str, ...], Any] = {}
+
+
+async def _firestore_client() -> Any:
+    """One Firestore client per process, built OFF the event loop.
+
+    Building it inline blocked the loop for ~1.25 s at the start of every call,
+    so the opener reached the parent 1.3 s after they picked up.
+    """
+    key = ("firestore", get_settings().gcp_project, get_settings().firestore_database)
+    if key not in _CLIENTS:
+
+        def make() -> Any:
+            from google.cloud import firestore  # the import itself is slow the first time
+
+            return firestore.Client(project=key[1], database=key[2])
+
+        _CLIENTS[key] = await asyncio.to_thread(make)
+    return _CLIENTS[key]
+
+
+async def _genai_client(location: str) -> Any:
+    """One Vertex client per location per process, built off the event loop."""
+    key = ("genai", get_settings().gcp_project, location)
+    if key not in _CLIENTS:
+
+        def make() -> Any:
+            import google.auth
+            from google import genai
+            from google.auth.transport.requests import Request
+
+            # Explicit, pre-refreshed credentials. Without them google-genai's
+            # live.connect runs google.auth.default() + a token refresh
+            # SYNCHRONOUSLY on the event loop for every call: measured 0.9 s
+            # with the pacer frozen, i.e. the opener reached the parent ~1 s late.
+            creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+            creds.refresh(Request())
+            return genai.Client(vertexai=True, project=key[1], location=location, credentials=creds)
+
+        _CLIENTS[key] = await asyncio.to_thread(make)
+    client = _CLIENTS[key]
+    creds = getattr(getattr(client, "_api_client", None), "_credentials", None)
+    if creds is not None and not (creds.token and creds.valid):
+        from google.auth.transport.requests import Request
+
+        await asyncio.to_thread(creds.refresh, Request())
+    return client
+
+
+def _prewarm_riya_clients() -> None:
+    """Build the Firestore and Vertex clients (and a token) at process start, so
+    the FIRST call after a deploy does not wait ~1 s for them."""
+    import threading
+
+    def warm() -> None:
+        try:
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(_firestore_client())
+            loop.run_until_complete(_genai_client(_riya_live_settings()[1]))
+            loop.close()
+            log.info("telephony.riya_prewarmed")
+        except Exception as exc:  # noqa: BLE001
+            log.warning("telephony.riya_prewarm_failed", error=str(exc)[:160])
+
+    threading.Thread(target=warm, daemon=True, name="riya-prewarm").start()
+
+
+if os.environ.get("SAHAYAKAI_TELEPHONY_ONLY", "").strip().lower() in ("1", "true", "yes") and (
+    os.environ.get("VOBIZ_RIYA_PREWARM", "1") != "0"
+):
+    _prewarm_riya_clients()
+
+
+async def _load_riya(outreach_id: str) -> RiyaCall | None:
+    """A Riya call when the record says `agentWorkflow: "riya"`; else None.
+
+    The record carries Riya's dynamic variables (`riyaVariables`) and the
+    routing context (`productContext`), exactly the inputs the ElevenLabs
+    workflow routed on. Never fatal: a read failure keeps the VIDYA path.
+    """
+    if sampark_link.is_sampark(outreach_id):
+        data = await sampark_link.fetch_context(outreach_id) or {}
+        if data.get("agentWorkflow") != "riya":
+            # No context: a safe-exit Riya (no product context) — she says she has no details.
+            data = {"agentWorkflow": "riya", "riyaVariables": {}, "productContext": ""}
+        raw = data.get("riyaVariables") or {}
+        variables = {str(k): "" if v is None else str(v) for k, v in raw.items()} if isinstance(raw, dict) else {}
+        max_override = os.environ.get("VOBIZ_RIYA_MAX_SECONDS", "").strip()
+        return RiyaCall(
+            variables=variables,
+            product_context=str(data.get("productContext") or ""),
+            max_seconds_override=int(max_override) if max_override.isdigit() else None,
+        )
+    try:
+        client = await _firestore_client()
+        snap = await asyncio.to_thread(
+            lambda: client.collection("parent_outreach").document(outreach_id).get()
+        )
+        data = (snap.to_dict() if snap.exists else None) or {}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("telephony.riya_unavailable", outreach_id=outreach_id, error=str(exc))
+        return None
+    if data.get("agentWorkflow") != "riya":
+        return None
+    raw = data.get("riyaVariables") or {}
+    variables = {str(k): "" if v is None else str(v) for k, v in raw.items()} if isinstance(raw, dict) else {}
+    max_override = os.environ.get("VOBIZ_RIYA_MAX_SECONDS", "").strip()
+    call = RiyaCall(
+        variables=variables,
+        product_context=str(data.get("productContext") or ""),
+        max_seconds_override=int(max_override) if max_override.isdigit() else None,
+    )
+    if (
+        data.get("syntheticTest")
+        and isinstance(data.get("testFaults"), dict)
+        and os.environ.get("SAHAYAKAI_AGENTS_ENV", "") == "development"
+    ):
+        # Test harness only (synthetic records, development): simulated model stalls / drops.
+        call.test_faults = dict(data["testFaults"])  # type: ignore[attr-defined]
+    return call
+
+
+def _riya_vad_config() -> Any:
+    """Live's own voice-activity detection, tunable for phone audio.
+
+    VOBIZ_RIYA_VAD_SILENCE_MS: quiet that ends the parent's turn (unset = model default).
+    """
+    from google.genai import types as genai_types
+
+    silence = os.environ.get("VOBIZ_RIYA_VAD_SILENCE_MS", "").strip()
+    # HIGH start sensitivity: a 1-second "I'm busy." over a phone line was not
+    # treated as speech at the default, and Riya waited in silence.
+    return genai_types.RealtimeInputConfig(
+        automatic_activity_detection=genai_types.AutomaticActivityDetection(
+            start_of_speech_sensitivity=genai_types.StartSensitivity.START_SENSITIVITY_HIGH,
+            silence_duration_ms=int(silence) if silence.isdigit() else None,
+            prefix_padding_ms=int(os.environ.get("VOBIZ_RIYA_VAD_PREFIX_MS", "200")),
+        )
+    )
+
+
+def _riya_live_config(riya: RiyaCall, voice: str) -> Any:
+    """Live session for Riya: her instruction (locked), her two system tools."""
+    from google.genai import types as genai_types
+
+    return genai_types.LiveConnectConfig(
+        response_modalities=[genai_types.Modality.AUDIO],
+        system_instruction=genai_types.Content(
+            parts=[genai_types.Part(text=riya.instruction(opener_spoken=_riya_cached(riya.first_message()) is not None))]
+        ),
+        speech_config=genai_types.SpeechConfig(
+            voice_config=genai_types.VoiceConfig(
+                prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(voice_name=voice)
+            )
+        ),
+        # Riya SPEAKS English only (agent.language = "en"), but parents answer in
+        # their own language: "haan, bataiye" or "houdu, heli" must still be
+        # understood, so Hindi and Kannada are expected alongside Indian English.
+        input_audio_transcription=genai_types.AudioTranscriptionConfig(
+            language_codes=[
+                c.strip()
+                for c in os.environ.get("VOBIZ_RIYA_STT_LANGS", "en-IN").split(",")
+                if c.strip()
+            ]
+        ),
+        realtime_input_config=_riya_vad_config(),
+        output_audio_transcription=genai_types.AudioTranscriptionConfig(),
+        # Resumable: a dropped or failed session (quota 1011, network) reconnects with the same
+        # conversation instead of ending the call (verified on Vertex 2026-11-10: memory kept).
+        session_resumption=genai_types.SessionResumptionConfig()
+        if os.environ.get("VOBIZ_RIYA_SESSION_RESUME", "1") != "0"
+        else None,
+        # No "thinking" on a phone line: measured 4-7 s of silence before some
+        # replies with the model's default; Riya's own LLM ran at minimal effort.
+        thinking_config=genai_types.ThinkingConfig(
+            thinking_budget=int(os.environ.get("VOBIZ_RIYA_THINKING_BUDGET", "0"))
+        ),
+        tools=[
+            genai_types.Tool(
+                function_declarations=[
+                    genai_types.FunctionDeclaration(
+                        name="end_call",
+                        description=riya.workflow["tools"]["end_call"]["description"],
+                        parameters=genai_types.Schema(type=genai_types.Type.OBJECT, properties={}),
+                    ),
+                    genai_types.FunctionDeclaration(
+                        name="skip_turn",
+                        description=(
+                            riya.workflow["tools"]["skip_turn"]["description"]
+                            or "Stay silent this turn and keep listening, for example when the "
+                            "parent asks you to wait a moment or is still speaking."
+                        ),
+                        parameters=genai_types.Schema(type=genai_types.Type.OBJECT, properties={}),
+                    ),
+                ]
+            )
+        ],
+    )
 
 
 def _identity_and_lookup_declarations() -> list[Any]:
@@ -2571,6 +4285,39 @@ def _instruction(context: CallContext, *, lookups: bool, verified: bool) -> str:
         switch_to_hindi=cascade_enabled() and CascadeConfig.from_env().hindi,
         verified=verified,
     )
+
+
+@contextlib.asynccontextmanager
+async def _connect_with_retry(client: Any, model: str, config: Any, outreach_id: str) -> Any:
+    """Live connect with a deadline and one retry (Riya calls).
+
+    Under load a Live connect hung for 28 s and then failed (1006): the parent
+    heard the opener and then nothing. A second attempt after 8 s is cheaper
+    than a dead call.
+    """
+    timeout = float(os.environ.get("VOBIZ_LIVE_CONNECT_TIMEOUT", "8"))
+    last: Exception | None = None
+    for attempt in (1, 2):
+        cm = _connect_engine(client, model, config)
+        try:
+            session = await asyncio.wait_for(cm.__aenter__(), timeout)
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            log.warning(
+                "telephony.live_connect_retry", outreach_id=outreach_id, attempt=attempt, error=str(exc)[:120]
+            )
+            continue
+        exc_info: tuple[Any, Any, Any] = (None, None, None)
+        try:
+            yield session
+        except BaseException as exc:
+            exc_info = (type(exc), exc, exc.__traceback__)
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                await cm.__aexit__(*exc_info)
+        return
+    raise last or RuntimeError("live connect failed")
 
 
 def _connect_engine(client: Any, model: str, config: Any) -> Any:
@@ -2600,8 +4347,25 @@ async def _run_call(bridge: _Bridge, session: Any, pacer: asyncio.Task[None]) ->
         asyncio.create_task(_conversation_watchdog(bridge, session)),
         pacer,
     ]
-    guard = asyncio.create_task(asyncio.sleep(_MAX_CALL_SECONDS))
+    if not bridge.call_deadline:
+        bridge.call_deadline = time.monotonic() + _MAX_CALL_SECONDS
+    guard = asyncio.create_task(asyncio.sleep(max(1.0, bridge.call_deadline - time.monotonic())))
     done, pending = await asyncio.wait({*tasks, guard}, return_when=asyncio.FIRST_COMPLETED)
+
+    lost = next((t for t in tasks[:2] if t in done), None)
+    if lost is not None and guard not in done and _live_resumable(bridge, lost):
+        # The model's session died (quota 1011, network, server close); the PARENT is still on the
+        # line. Keep the pacer and the carrier; reconnect the model with the same conversation.
+        for t in tasks[:3]:
+            if t is not lost:
+                t.cancel()
+        guard.cancel()
+        with contextlib.suppress(Exception):
+            await asyncio.gather(*[t for t in tasks[:3] if t is not lost], guard, return_exceptions=True)
+        exc = lost.exception() if not lost.cancelled() else None
+        log.warning("telephony.live_lost", outreach_id=bridge.outreach_id,
+                    error=(str(exc)[:160] if exc else "stream_end"))
+        return "live_lost"
 
     bridge.stop = True
     if guard in done:
@@ -2622,8 +4386,86 @@ async def _run_call(bridge: _Bridge, session: Any, pacer: asyncio.Task[None]) ->
     return reason
 
 
+def _is_carrier_error(exc: BaseException) -> bool:
+    from starlette.websockets import WebSocketDisconnect as _WSD
+
+    return isinstance(exc, _WSD)
+
+
+def _live_resumable(bridge: _Bridge, task: asyncio.Task[Any]) -> bool:
+    if bridge.riya is None or bridge.closing or bridge.stop or not bridge.resume_handle:
+        return False
+    if bridge.resumes >= int(os.environ.get("VOBIZ_RIYA_MAX_RESUMES", "2")):
+        return False
+    if task.cancelled():
+        return False
+    exc = task.exception()
+    if exc is None:
+        return task.result() == "live_stream_end"  # the server closed the session
+    return not _is_carrier_error(exc)
+
+
+async def _drain_carrier(bridge: _Bridge) -> None:
+    """While the model reconnects: keep reading the carrier (recogniser + voice detector), so the
+    parent's words are neither lost to chirp_2 nor replayed into the new session late."""
+    while True:
+        raw = await bridge.ws.receive_text()
+        frame = parse_inbound(raw)
+        if frame.kind is InboundKind.STOP:
+            raise RuntimeError("carrier stopped during reconnect")
+        if frame.kind is InboundKind.MEDIA and frame.audio:
+            if bridge.asr is not None:
+                bridge.asr.feed(frame.audio)
+            _feed_barge_in(bridge, frame.audio)
+
+
+async def _riya_resume(bridge: _Bridge, client: Any, model: str, config: Any, outreach_id: str,
+                       pacer: asyncio.Task[None]) -> str:
+    """Reconnect Riya's model with the resumption handle and carry on the same conversation."""
+    from google.genai import types as genai_types
+    from .riya import RESUME_LINE
+
+    bridge.resumes += 1
+    t0 = time.monotonic()
+    _tl(bridge, "live_resume_start", str(bridge.resumes))
+    drain = asyncio.create_task(_drain_carrier(bridge))
+    if _riya_cached(RESUME_LINE) and not getattr(bridge, "vad_speaking", False):
+        _riya_play_line(bridge, RESUME_LINE)
+    config.session_resumption = genai_types.SessionResumptionConfig(handle=bridge.resume_handle)
+    try:
+        async with _connect_with_retry(client, model, config, outreach_id) as session:
+            if drain.done() and drain.exception() is not None:
+                raise drain.exception()  # the parent hung up meanwhile
+            drain.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await drain
+            bridge.engine = session
+            bridge.riya_session = session
+            bridge.discard_model_audio = False
+            bridge.model_turn_open = False
+            log.info("telephony.live_resumed", outreach_id=outreach_id, ms=round((time.monotonic() - t0) * 1000),
+                     resumes=bridge.resumes)
+            _tl(bridge, "live_resumed")
+            last = bridge.parent_said[-1] if bridge.parent_said else ""
+            heard = f' The parent\'s last words were: "{last}".' if last else ""
+            await _send_director(session, (
+                "(System: the line dropped for a moment and is back. Do not greet again or repeat what you "
+                f"already said. Continue the conversation from where it was.{heard} Reply briefly now.)"
+            ))
+            _owe_reply(bridge, last)
+            return await _run_call(bridge, session, pacer)
+    finally:
+        if not drain.done():
+            drain.cancel()
+
+
 async def _settle_call(bridge: _Bridge, engine_error: str | None, started: float) -> None:
     """End the carrier call, then write the record."""
+    if bridge.asr is not None:
+        bridge.asr.close()
+        log.info("telephony.asr_closed", outreach_id=bridge.outreach_id, audio_seconds=round(bridge.asr.audio_seconds, 1),
+                 flushes=bridge.asr.flushes,
+                 finals=bridge.asr.finals, errors=bridge.asr.errors, low_confidence=bridge.asr_low_conf)
     # HANG UP FIRST. Everything else is bookkeeping and the parent must
     # not be held on the line for it.
     #
@@ -2649,6 +4491,8 @@ async def _settle_call(bridge: _Bridge, engine_error: str | None, started: float
     await _persist_transcript(bridge)
     if bridge.context is not None:
         await _generate_call_summary(bridge, bridge.context, int(time.monotonic() - started))
+    if getattr(bridge, "riya", None) is not None:
+        await _persist_riya(bridge)
 
 
 async def _stop_side_tasks(bridge: _Bridge | None, *tasks: asyncio.Task[None] | None) -> None:
@@ -2701,6 +4545,9 @@ async def _kickoff(bridge: _Bridge, session: Any) -> None:
     played is what stops it introducing itself a second time, which is the
     single most obviously robotic thing this call could do.
     """
+    if getattr(bridge, "riya", None) is not None:
+        await _riya_kickoff(bridge, session)
+        return
     if _scripted(bridge):
         # The guard runs before synthesis: before verification nothing
         # child-specific can be spoken, whoever composed it.
@@ -2762,11 +4609,65 @@ def _conversation_metrics(bridge: _Bridge) -> dict[str, Any]:
     }
 
 
+#: ASR benchmark capture (approved test audio only). Off unless VOBIZ_CAPTURE_DIR is set; then
+#: a stream token for `capture~<id>` records ONLY the caller's side to <dir>/<id>.ulaw, after one
+#: beep, for at most VOBIZ_CAPTURE_MAX_SECONDS. No Gemini session, no Riya, nothing persisted
+#: anywhere else. Any other call is unaffected.
+_CAPTURE_DIR = os.environ.get("VOBIZ_CAPTURE_DIR", "").strip()
+_CAPTURE_MAX_SECONDS = int(os.environ.get("VOBIZ_CAPTURE_MAX_SECONDS", "240"))
+
+
+async def _capture_inbound(ws: WebSocket, outreach_id: str) -> None:
+    import math
+
+    cap_id = outreach_id.split("~", 1)[1]
+    if not _CAPTURE_DIR or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", cap_id):
+        await ws.close(code=_CLOSE_BAD_TOKEN)
+        log.warning("telephony.capture_refused", reason="capture_off_or_bad_id")
+        return
+    await ws.accept()
+    path = Path(_CAPTURE_DIR) / f"{cap_id}.ulaw"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    started = time.monotonic()
+    stream_id = ""
+    beeped = False
+    captured = bytearray()
+    log.info("telephony.capture_start", capture=cap_id)
+    try:
+        while time.monotonic() - started < _CAPTURE_MAX_SECONDS:
+            try:
+                raw = await asyncio.wait_for(ws.receive_text(), timeout=30)
+            except (TimeoutError, WebSocketDisconnect, RuntimeError):
+                break
+            frame = parse_inbound(raw)
+            if frame.kind is InboundKind.START:
+                stream_id = frame.stream_id or stream_id
+            elif frame.kind is InboundKind.MEDIA and frame.audio:
+                stream_id = stream_id or frame.stream_id
+                if not beeped and stream_id:
+                    beeped = True
+                    tone = array("h", (int(9000 * math.sin(2 * math.pi * 1000 * i / 8000)) for i in range(3200)))
+                    await ws.send_text(build_play_audio(stream_id, pcm16_to_ulaw(tone)))
+                captured.extend(frame.audio)
+            elif frame.kind is InboundKind.STOP:
+                break
+    finally:
+        path.write_bytes(bytes(captured))
+        log.info("telephony.capture_saved", capture=cap_id, seconds=round(len(captured) / 8000, 1))
+        with contextlib.suppress(Exception):
+            await _hangup(ws.query_params.get("cuid", ""))
+        with contextlib.suppress(Exception):
+            await ws.close()
+
+
 @telephony_router.websocket("/telephony/vobiz/stream")
 async def vobiz_stream(ws: WebSocket) -> None:
     """One phone call, bridged to one Live session."""
     outreach_id = await _admit(ws)
     if outreach_id is None:
+        return
+    if outreach_id.startswith("capture~"):
+        await _capture_inbound(ws, outreach_id)
         return
 
     await _SESSION_SEM.acquire()
@@ -2791,14 +4692,32 @@ async def vobiz_stream(ws: WebSocket) -> None:
         # after that warm-up would be pointless — the parent would hear the
         # silence anyway and then be greeted twice.
         pacer = asyncio.create_task(_pace_outbound(bridge))
-        greeter = asyncio.create_task(_greet_and_drain(bridge, language))
-
-        client, config, model, context, scope = await _prepare_live_session(
-            outreach_id, language, started
+        greeter_language = (
+            _RIYA_GREETER if ws.query_params.get("agent") == "riya" else language
         )
-        _equip_bridge(bridge, context, scope)
+        greeter = asyncio.create_task(_greet_and_drain(bridge, greeter_language))
 
-        async with _connect_engine(client, model, config) as session:
+        try:
+            client, config, model, context, scope, riya = await _prepare_live_session(
+                outreach_id, language, started
+            )
+        finally:
+            bridge.riya_checked = True
+        _equip_bridge(bridge, context, scope)
+        bridge.riya = riya
+        if riya is not None:
+            bridge.protected = _riya_protected(riya)
+            if dedicated_asr_model():
+                _start_dedicated_asr(bridge, riya)
+        bridge.call_started = started
+        bridge.riya_ready.set()
+
+        connect = (
+            _connect_with_retry(client, model, config, outreach_id)
+            if riya is not None
+            else _connect_engine(client, model, config)
+        )
+        async with connect as session:
             live_connected = True
             bridge.engine = session
             bridge.t_ready = time.monotonic()
@@ -2820,8 +4739,12 @@ async def vobiz_stream(ws: WebSocket) -> None:
             with contextlib.suppress(asyncio.CancelledError):
                 await greeter
 
+            bridge.riya_session = session
+            _tl(bridge, "live_connected")
             await _kickoff(bridge, session)
             reason = await _run_call(bridge, session, pacer)
+        while reason == "live_lost":
+            reason = await _riya_resume(bridge, client, model, config, outreach_id, pacer)
     except WebSocketDisconnect:
         reason = "carrier_disconnect"
     except Exception as exc:  # noqa: BLE001
@@ -2831,6 +4754,8 @@ async def vobiz_stream(ws: WebSocket) -> None:
         reason = "error" if live_connected else "live_unavailable"
         if not live_connected:
             engine_error = type(exc).__name__
+        if bridge is not None and getattr(bridge, "riya", None) is not None and not bridge.closing:
+            await _riya_trouble_goodbye(bridge)
         log.error(
             "telephony.call_failed",
             outreach_id=outreach_id,
@@ -2845,6 +4770,11 @@ async def vobiz_stream(ws: WebSocket) -> None:
         await _stop_side_tasks(bridge, greeter, pacer)
         if bridge is not None:
             await _settle_call(bridge, engine_error, started)
+            if _TRANSCRIPT_DEBUG and getattr(bridge, "riya", None) is not None:
+                # Debug runs only: the event timeline (no audio, transcript text only when debug is on),
+                # so pauses can be measured on Sampark calls too (their record does not keep it).
+                log.info("telephony.timeline", outreach_id=outreach_id,
+                         events=json.dumps(bridge.timeline[-400:], ensure_ascii=False))
         log.info(
             "telephony.call_closed",
             outreach_id=outreach_id,

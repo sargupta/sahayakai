@@ -21,6 +21,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { writeCallStatus, type CallStatusDb } from '@/lib/attendance/reconcile-call-status';
 import { logger } from '@/lib/logger';
 import { buildVobizAnswerXml, toWebSocketOrigin } from '@/lib/vobiz/answer-xml';
+import { testHoursOverrideApplies } from '@/lib/vobiz/test-hours-override';
 import { VOBIZ_DOMAINS, mintVobizToken, verifyVobizToken } from '@/lib/vobiz/tokens';
 
 /** An XML document that simply ends the call. Used for every refusal. */
@@ -69,7 +70,20 @@ async function handle(req: NextRequest): Promise<NextResponse> {
     // is then answered with silence and ended, rather than with VIDYA opening a
     // conversation about someone's child at midnight.
     const callingWindow = checkCallingWindow();
-    if (!callingWindow.allowed) {
+    // The ONE exception: an authorised test call to an allow-listed test phone,
+    // outside production (lib/vobiz/test-hours-override). Never a parent.
+    const testOverride =
+        !callingWindow.allowed &&
+        testHoursOverrideApplies(
+            (await (await getDb()).collection('parent_outreach').doc(outreachId).get()).data(),
+        );
+    if (testOverride) {
+        logger.warn('Vobiz answer: test-mode calling-hours override applied', 'ATTENDANCE', {
+            outreachId,
+            istHour: callingWindow.istHour,
+        });
+    }
+    if (!callingWindow.allowed && !testOverride) {
         logger.warn(
             `Vobiz call refused at the answer webhook — outside calling hours (${callingWindow.istTime}). ` +
                 'Something reached the carrier without passing through /api/attendance/call.',
@@ -138,7 +152,9 @@ async function handle(req: NextRequest): Promise<NextResponse> {
         `${wsOrigin}/telephony/vobiz/stream` +
         `?t=${encodeURIComponent(streamToken)}` +
         `&cuid=${encodeURIComponent(callUuid)}` +
-        `&lang=${encodeURIComponent(String(data.parentLanguage ?? 'English'))}`;
+        `&lang=${encodeURIComponent(String(data.parentLanguage ?? 'English'))}` +
+        // Riya workflow calls play Riya's own opening, not VIDYA's recording.
+        (data.agentWorkflow === 'riya' ? '&agent=riya' : '');
 
     return xml(buildVobizAnswerXml({ streamUrl }));
 }
