@@ -54,7 +54,7 @@ dev = [
   "pre-commit~=4.0",
 ]
 eval = [
-  "sentence-transformers~=3.2",
+  "sentence-transformers>=3.2,<6.0",
   "torch~=2.5",
 ]
 
