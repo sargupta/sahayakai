@@ -105,6 +105,13 @@ const SPEECH_RMS = 0.02; // local "teacher is making sound" threshold (post-AEC)
 const QUIET_MS_FOR_THINKING = 450;
 const INTERRUPTED_FLASH_MS = 350;
 const READY_FALLBACK_MS = 8000;
+/**
+ * Mic granted → socket open must happen within this long, or the attempt fails with the
+ * friendly "lost the connection" copy (tap to retry) instead of spinning in CONNECTING
+ * forever when the token route or sidecar hangs. Armed only after mic permission, so a
+ * slow permission prompt never trips it.
+ */
+export const CONNECT_TIMEOUT_MS = 20000;
 const TOOL_TURN_AUDIO_GRACE_MS = 4000;
 
 /**
@@ -171,6 +178,7 @@ export class VidyaLiveSession {
   private lastLoudAt = 0;
   private userSpokeThisTurn = false;
   private quietTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
   private interruptedTimer: ReturnType<typeof setTimeout> | null = null;
   private startedAt = 0;
   private endOfSpeechAt = 0;
@@ -312,6 +320,13 @@ export class VidyaLiveSession {
     }
     if (epoch !== this.sessionEpoch) return this.teardown();
 
+    this.connectTimer = setTimeout(() => {
+      this.connectTimer = null;
+      if (epoch === this.sessionEpoch && this.state === 'connecting' && !this.ws?.readyState) {
+        this.fail('socket_failed', 'Voice connection timed out.');
+      }
+    }, CONNECT_TIMEOUT_MS);
+
     // 3. Mint the single-use stream token (Firebase-authenticated server route).
     let session: { wsUrl: string; streamToken: string };
     try {
@@ -368,6 +383,8 @@ export class VidyaLiveSession {
     const ws = this.ws;
     ws.onopen = () => {
       if (epoch !== this.sessionEpoch) return;
+      if (this.connectTimer) clearTimeout(this.connectTimer);
+      this.connectTimer = null;
       this.metrics.connectMs = Math.round(performance.now() - this.startedAt);
       ws.send(JSON.stringify({ setup: this.opts.setup }));
       // Latest app context (if any) right after setup, so a (re)connected
@@ -415,7 +432,8 @@ export class VidyaLiveSession {
   private teardown() {
     if (this.quietTimer) clearTimeout(this.quietTimer);
     if (this.interruptedTimer) clearTimeout(this.interruptedTimer);
-    this.quietTimer = this.interruptedTimer = null;
+    if (this.connectTimer) clearTimeout(this.connectTimer);
+    this.quietTimer = this.interruptedTimer = this.connectTimer = null;
     const ws = this.ws;
     this.ws = null;
     if (ws) {
