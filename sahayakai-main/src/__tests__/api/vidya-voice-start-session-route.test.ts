@@ -218,8 +218,32 @@ describe('POST /api/vidya-voice/start-session', () => {
         expect(res.status).toBe(503);
     });
 
+    it('uses VIDYA_VOICE_STREAM_BASE_URL for the socket when it is set', async () => {
+        // The agents sidecar is behind Cloud Run IAM; the browser-reachable socket can live elsewhere.
+        process.env.VIDYA_VOICE_STREAM_BASE_URL = 'https://voice-bridge-example.a.run.app/';
+        const res = await POST(makeRequest(validBody()));
+        expect(res.status).toBe(200);
+        const json = (await res.json()) as Record<string, unknown>;
+        expect(json.wsUrl).toBe('wss://voice-bridge-example.a.run.app/v1/vidya-voice/stream');
+    });
+
+    it('works with only VIDYA_VOICE_STREAM_BASE_URL configured', async () => {
+        delete process.env.NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL;
+        process.env.VIDYA_VOICE_STREAM_BASE_URL = 'https://voice-bridge-example.a.run.app';
+        const res = await POST(makeRequest(validBody()));
+        expect(res.status).toBe(200);
+    });
+
+    it('ignores a blank VIDYA_VOICE_STREAM_BASE_URL', async () => {
+        process.env.VIDYA_VOICE_STREAM_BASE_URL = '   ';
+        const res = await POST(makeRequest(validBody()));
+        const json = (await res.json()) as Record<string, unknown>;
+        expect(json.wsUrl).toBe('wss://sahayakai-agents-example.a.run.app/v1/vidya-voice/stream');
+    });
+
     it('returns 503 when the sidecar base URL is not configured', async () => {
         delete process.env.NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL;
+        delete process.env.VIDYA_VOICE_STREAM_BASE_URL;
         const res = await POST(makeRequest(validBody()));
         expect(res.status).toBe(503);
         expect(mockMintStreamToken).not.toHaveBeenCalled();
