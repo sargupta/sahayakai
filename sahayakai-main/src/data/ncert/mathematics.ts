@@ -1,4 +1,29 @@
 /**
+ * CLASS IX UPDATED FOR CBSE 2026-27 (NCF-2023 scheme of studies).
+ *
+ * CBSE implemented the NCF-2023 scheme in Class IX from session 2026-27
+ * (Circular Acad-14/2026, 01.04.2026). The grade-9 block below is rewritten
+ * from the official syllabus:
+ *   https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart1/Maths_SecP1IX_2026-27.pdf
+ *
+ * 13 chapters -> 15. Renamed: Polynomials -> Introduction to Polynomials;
+ * Triangles -> Triangles – Congruence Theorems (en dash, U+2013);
+ * Quadrilaterals -> 4-gons (Quadrilaterals); Introduction to Euclid's Geometry
+ * -> ...: Axioms and Postulates. NEW: Sequences and Progressions, Exploring
+ * Algebraic Identities, Introduction to Probability. DROPPED: Heron's Formula,
+ * Areas. Unit marks changed: 07/20/04/25/14/10 = 80 (was 10/20/04/27/13/06).
+ * CBSE no longer prints a subject code for Class IX Mathematics.
+ *
+ * `estimatedPeriods` is DERIVED: CBSE publishes period totals per UNIT
+ * (12/66/6/69/27/24) but not per chapter. `learningOutcomes` and `keywords`
+ * are authored — CBSE publishes neither at chapter level.
+ *
+ * Class X is UNCHANGED for 2026-27 and is untouched here.
+ * An optional Mathematics Advanced paper exists for Class IX 2026-27
+ * (Sets, Logarithms, Relations and Functions, Coordinate Geometry,
+ * Combinatorics, Exploring some more Progressions) — not yet modelled.
+ */
+/**
  * NCERT Mathematics Curriculum - Grades 1-12
  * Based on official NCERT syllabus
  */
@@ -189,19 +214,21 @@ export const NCERTMathematics: NCERTGrade[] = [
         grade: 9,
         subject: 'Mathematics',
         chapters: [
-            { id: 'math-9-1', number: 1, title: 'Number Systems', titleHindi: 'संख्या पद्धति', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Irrational numbers'], keywords: ['real numbers'], estimatedPeriods: 14 },
-            { id: 'math-9-2', number: 2, title: 'Polynomials', titleHindi: 'बहुपद', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Remainder theorem'], keywords: ['algebra'], estimatedPeriods: 16 },
-            { id: 'math-9-3', number: 3, title: 'Coordinate Geometry', titleHindi: 'निर्देशांक ज्यामिति', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Cartesian plane'], keywords: ['coordinates'], estimatedPeriods: 10 },
-            { id: 'math-9-4', number: 4, title: 'Linear Equations in Two Variables', titleHindi: 'दो चर वाले रैखिक समीकरण', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Graph equations'], keywords: ['algebra'], estimatedPeriods: 14 },
-            { id: 'math-9-5', number: 5, title: 'Introduction to Euclid\'s Geometry', titleHindi: 'यूक्लिड की ज्यामिति का परिचय', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Axioms and postulates'], keywords: ['geometry'], estimatedPeriods: 8 },
-            { id: 'math-9-6', number: 6, title: 'Lines and Angles', titleHindi: 'रेखाएँ और कोण', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Theorems on angles'], keywords: ['geometry'], estimatedPeriods: 12 },
-            { id: 'math-9-7', number: 7, title: 'Triangles', titleHindi: 'त्रिभुज', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['SSS, SAS congruence'], keywords: ['triangles'], estimatedPeriods: 16 },
-            { id: 'math-9-8', number: 8, title: 'Quadrilaterals', titleHindi: 'चतुर्भुज', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Properties of parallelograms'], keywords: ['geometry'], estimatedPeriods: 12 },
-            { id: 'math-9-9', number: 9, title: 'Circles', titleHindi: 'वृत्त', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Circle theorems'], keywords: ['geometry'], estimatedPeriods: 14 },
-            { id: 'math-9-10', number: 10, title: 'Heron\'s Formula', titleHindi: 'हीरोन का सूत्र', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Area of triangle'], keywords: ['mensuration'], estimatedPeriods: 8 },
-            { id: 'math-9-11', number: 11, title: 'Surface Areas and Volumes', titleHindi: 'पृष्ठीय क्षेत्रफल और आयतन', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Cones and spheres'], keywords: ['mensuration'], estimatedPeriods: 12 },
-            { id: 'math-9-12', number: 12, title: 'Statistics', titleHindi: 'सांख्यिकी', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Bar graphs and histograms'], keywords: ['data'], estimatedPeriods: 12 },
-            { id: 'math-9-13', number: 13, title: 'Probability', titleHindi: 'प्रायिकता', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Experimental probability'], keywords: ['probability'], estimatedPeriods: 8 },
+            { id: 'math-9-1', number: 1, title: 'Number System', titleHindi: 'संख्या पद्धति', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Irrational numbers, laws of exponents'], keywords: ['NCF-2023'], estimatedPeriods: 12 },
+            { id: 'math-9-2', number: 2, title: 'Introduction to Polynomials', titleHindi: 'बहुपद', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Polynomials in one variable, remainder and factor theorem'], keywords: ['NCF-2023'], estimatedPeriods: 17 },
+            { id: 'math-9-3', number: 3, title: 'Sequences and Progressions', titleHindi: 'अनुक्रम एवं श्रेढ़ियाँ', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Patterns leading to arithmetic progressions'], keywords: ['NCF-2023'], estimatedPeriods: 17 },
+            { id: 'math-9-4', number: 4, title: 'Exploring Algebraic Identities', titleHindi: 'बीजीय सर्वसमिकाएँ', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Algebraic identities and their applications'], keywords: ['NCF-2023'], estimatedPeriods: 16 },
+            { id: 'math-9-5', number: 5, title: 'Linear Equations in Two Variables', titleHindi: 'दो चर वाले रैखिक समीकरण', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Graph of a linear equation in two variables'], keywords: ['NCF-2023'], estimatedPeriods: 16 },
+            { id: 'math-9-6', number: 6, title: 'Coordinate Geometry', titleHindi: 'निर्देशांक ज्यामिति', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Cartesian plane, plotting points'], keywords: ['NCF-2023'], estimatedPeriods: 6 },
+            { id: 'math-9-7', number: 7, title: 'Introduction to Euclid\'s Geometry: Axioms and Postulates', titleHindi: 'यूक्लिड की ज्यामिति का परिचय', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Axioms, postulates and theorems'], keywords: ['NCF-2023'], estimatedPeriods: 13 },
+            { id: 'math-9-8', number: 8, title: 'Lines and Angles', titleHindi: 'रेखाएँ और कोण', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Angle-pair theorems'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'math-9-9', number: 9, title: 'Triangles – Congruence Theorems', titleHindi: 'त्रिभुज', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['SSS, SAS, ASA, RHS congruence'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'math-9-10', number: 10, title: '4-gons (Quadrilaterals)', titleHindi: 'चतुर्भुज', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Properties of parallelograms'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'math-9-11', number: 11, title: 'Circles', titleHindi: 'वृत्त', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Chord and angle theorems'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'math-9-12', number: 12, title: 'Area and Perimeter', titleHindi: 'क्षेत्रफल एवं परिमाप', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Area of triangles and quadrilaterals'], keywords: ['NCF-2023'], estimatedPeriods: 13 },
+            { id: 'math-9-13', number: 13, title: 'Surface Area and Volume', titleHindi: 'पृष्ठीय क्षेत्रफल और आयतन', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Cones, spheres, hemispheres'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'math-9-14', number: 14, title: 'Statistics', titleHindi: 'सांख्यिकी', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Data handling, measures of central tendency'], keywords: ['NCF-2023'], estimatedPeriods: 12 },
+            { id: 'math-9-15', number: 15, title: 'Introduction to Probability', titleHindi: 'प्रायिकता का परिचय', textbookName: 'Ganit / Mathematics (NCERT)', learningOutcomes: ['Experimental probability'], keywords: ['NCF-2023'], estimatedPeriods: 12 },
         ],
     },
     {

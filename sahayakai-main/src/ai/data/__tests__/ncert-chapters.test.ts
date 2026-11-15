@@ -188,9 +188,31 @@ describe('validateChapter — Class 8 Science (Curiosity, NCF-2023)', () => {
 });
 
 describe('validateChapter — Class 9 Mathematics', () => {
-    test('"Polynomials" → valid', () => {
-        const r = validateChapter('Class 9', 'Mathematics', 'Polynomials');
+    // CBSE moved Class IX to the NCF-2023 scheme of studies in 2026-27
+    // (Circular Acad-14/2026). "Polynomials" is now "Introduction to
+    // Polynomials", so the bare old title no longer validates — but it must
+    // still resolve via closestMatch, because teachers type the old name and
+    // shouldAutoCorrect() routes closestMatch into autoCorrectTo.
+    test('"Introduction to Polynomials" (NCF-2023 title) → valid', () => {
+        const r = validateChapter('Class 9', 'Mathematics', 'Introduction to Polynomials');
         expect(r.valid).toBe(true);
+    });
+
+    test('pre-2026-27 title "Polynomials" → not valid, but auto-correctable', () => {
+        const r = validateChapter('Class 9', 'Mathematics', 'Polynomials');
+        expect(r.valid).toBe(false);
+        expect(r.closestMatch?.title).toBe('Introduction to Polynomials');
+    });
+
+    test('"Sequences and Progressions" (new in NCF-2023) → valid', () => {
+        const r = validateChapter('Class 9', 'Mathematics', 'Sequences and Progressions');
+        expect(r.valid).toBe(true);
+    });
+
+    test('"Heron\'s Formula" (dropped in NCF-2023) → rejected', () => {
+        const r = validateChapter('Class 9', 'Mathematics', "Heron's Formula");
+        expect(r.valid).toBe(false);
+        expect(r.reason).toMatch(/not found/i);
     });
 
     test('"Coordinate Geometry" → valid', () => {
