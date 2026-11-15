@@ -91,6 +91,28 @@ describe('runImport', () => {
         await expect(repo.getLatestImportRun(ORG)).resolves.toMatchObject({ id: run.id, status: 'succeeded' });
     });
 
+    // Regression (P1): ERP ids are Firestore doc ids. "ADM/2023/001" became a nested doc
+    // listStudents never returned (or threw mid-import). Such rows are quarantined.
+    it('quarantines ids that cannot be a Firestore document id ("/", ".", "..", "__x__")', async () => {
+        const repo = await setup();
+        const run = await runImport(
+            { repo, clock: testClock() },
+            ORG,
+            source(
+                [crmStudent('s1'), crmStudent('ADM/2023/001'), crmStudent('..'), crmStudent('__meta__')],
+                [crmGuardian('g-s1'), crmGuardian('G/7')],
+            ),
+            ADMIN,
+        );
+        expect(run.status).toBe('succeeded');
+        const reasons = Object.fromEntries(run.rejected.map((r) => [`${r.entity}:${r.crmId}`, r.reason]));
+        expect(reasons['student:ADM/2023/001']).toMatch(/^id: id must not contain "\/"/);
+        expect(reasons['student:..']).toMatch(/^id: /);
+        expect(reasons['student:__meta__']).toMatch(/^id: /);
+        expect(reasons['guardian:G/7']).toMatch(/^id: /);
+        expect((await repo.listStudents(ORG)).map((s) => s.id)).toEqual(['s1']);
+    });
+
     it('quarantines malformed records with the first Zod issue and imports the rest', async () => {
         const repo = await setup();
         const run = await runImport(
