@@ -157,12 +157,9 @@ export async function getMySchools(opts: Opts = {}): Promise<SamparkMeSchool[]> 
     return res.schools;
 }
 
-/**
- * POST /api/sampark/[orgId]/enable — creates the practice-mode record if absent, with the
- * calling provider the school chose (optional: absent = the default).
- */
-export function enableSampark(orgId: string, displayName: string, conversationProvider?: 'elevenlabs' | 'vobiz'): Promise<SamparkSchoolView> {
-    return apiFetch<SamparkSchoolView>(orgPath(orgId, '/enable'), { method: 'POST', body: conversationProvider ? { displayName, conversationProvider } : { displayName } });
+/** POST /api/sampark/[orgId]/enable — creates the practice-mode record if absent. */
+export function enableSampark(orgId: string, displayName: string): Promise<SamparkSchoolView> {
+    return apiFetch<SamparkSchoolView>(orgPath(orgId, '/enable'), { method: 'POST', body: { displayName } });
 }
 
 /** GET /api/sampark/[orgId]/overview */
@@ -191,12 +188,7 @@ export function setMode(orgId: string, mode: SamparkMode): Promise<SamparkSchool
 
 export interface ProviderChoiceState {
     choice: 'elevenlabs' | 'vobiz' | null;
-    options: {
-        id: 'elevenlabs' | 'vobiz';
-        available: boolean;
-        price?: { inrPerMinute: number | null; asOf: string | null };
-        differences?: string[];
-    }[];
+    options: { id: 'elevenlabs' | 'vobiz'; available: boolean }[];
 }
 
 /** GET /api/sampark/provider — this session's calling-provider choice and what the deployment offers. */
@@ -204,31 +196,7 @@ export function getProviderChoice(opts: Opts = {}): Promise<ProviderChoiceState>
     return apiFetch<ProviderChoiceState>(`${BASE}/provider`, { signal: opts.signal });
 }
 
-/** The school's calling provider, as GET/PUT /api/sampark/[orgId]/riya/provider return it. */
-export interface SchoolProviderState {
-    provider: 'elevenlabs' | 'vobiz';
-    chosen: boolean;
-    options: {
-        id: 'elevenlabs' | 'vobiz';
-        available: boolean;
-        price: { inrPerMinute: number | null; asOf: string | null };
-        differences: string[];
-    }[];
-    estimateDefaults: { families: number; callsPerFamilyPerMonth: number; minutesPerCall: number };
-    demoChooser: boolean;
-}
-
-/** GET /api/sampark/[orgId]/riya/provider — the school's provider, prices and estimate defaults. */
-export function getSchoolProvider(orgId: string, opts: Opts = {}): Promise<SchoolProviderState> {
-    return apiFetch<SchoolProviderState>(orgPath(orgId, '/riya/provider'), { signal: opts.signal });
-}
-
-/** PUT /api/sampark/[orgId]/riya/provider — an admin changes the school's provider (audited). */
-export function setSchoolProvider(orgId: string, provider: 'elevenlabs' | 'vobiz'): Promise<SchoolProviderState> {
-    return apiFetch<SchoolProviderState>(orgPath(orgId, '/riya/provider'), { method: 'PUT', body: { provider } });
-}
-
-/** POST /api/sampark/provider — choose the provider for this session (server-side cookie). Demo chooser only. */
+/** POST /api/sampark/provider — choose the provider for this session (server-side cookie). */
 export function chooseProvider(provider: 'elevenlabs' | 'vobiz'): Promise<{ choice: 'elevenlabs' | 'vobiz' }> {
     return apiFetch<{ choice: 'elevenlabs' | 'vobiz' }>(`${BASE}/provider`, { method: 'POST', body: { provider } });
 }

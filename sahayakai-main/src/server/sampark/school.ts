@@ -150,18 +150,11 @@ export const UpdateSchoolSchema = z
 export type UpdateSchoolInput = z.infer<typeof UpdateSchoolSchema>;
 
 /** `spokenName` is optional (an addition to the contract body): Indic names must be in their own script to render. */
-export const EnableSchoolSchema = z
-    .object({
-        displayName: z.string().trim().min(1).max(120),
-        spokenName: spokenRecord.optional(),
-        /** The calling provider the school chose on the way in (by budget). Optional: absent = the default. */
-        conversationProvider: z.enum(['elevenlabs', 'vobiz']).optional(),
-    })
-    .strict();
+export const EnableSchoolSchema = z.object({ displayName: z.string().trim().min(1).max(120), spokenName: spokenRecord.optional() }).strict();
 
 export const ModeSchema = z.object({ mode: z.enum(['practice', 'test', 'live']) }).strict();
 
-/** Settings → Calling provider: which backend runs Riya's real calls for this school. */
+/** Settings → Calling provider: which backend runs Riya's real (Test-mode) calls. */
 export const ConversationProviderSchema = z.object({ provider: z.enum(['elevenlabs', 'vobiz']) }).strict();
 
 /**
@@ -173,9 +166,7 @@ export const ConversationProviderSchema = z.object({ provider: z.enum(['elevenla
 export async function setConversationProvider(ctx: SamparkCtx, orgId: string, uid: string, provider: 'elevenlabs' | 'vobiz'): Promise<SamparkSchool> {
     const school = await getSchoolOrThrow(ctx, orgId);
     const current = school.conversationProvider === 'vobiz' ? 'vobiz' : 'elevenlabs';
-    // An explicit choice of the default is still recorded (the school has now decided); asking
-    // again for the stored value changes nothing.
-    if (school.conversationProvider === provider) return school;
+    if (current === provider) return school;
     const now = ctx.clock.now().toISOString();
     const next: SamparkSchool = { ...school, conversationProvider: provider, updatedAt: now };
     await ctx.repo.upsertSchool(next);
@@ -224,7 +215,7 @@ export async function enableSchool(
     ctx: SamparkCtx,
     orgId: string,
     uid: string,
-    input: { displayName: string; isDemo: boolean; spokenName?: Record<ParentLanguage, string>; conversationProvider?: 'elevenlabs' | 'vobiz' },
+    input: { displayName: string; isDemo: boolean; spokenName?: Record<ParentLanguage, string> },
 ): Promise<SamparkSchool> {
     const existing = await ctx.repo.getSchool(orgId);
     if (existing) return existing;
@@ -246,12 +237,11 @@ export async function enableSchool(
         testPhoneLast4: null,
         crm: null,
         emergencyBypassConsent: false,
-        ...(input.conversationProvider ? { conversationProvider: input.conversationProvider } : {}),
         createdAt: now,
         updatedAt: now,
     };
     await ctx.repo.upsertSchool(school);
-    await ctx.repo.appendAudit(orgId, { at: now, actor: uid, action: 'school.enable', target: `school/${orgId}`, detail: { isDemo: input.isDemo, conversationProvider: input.conversationProvider ?? null } });
+    await ctx.repo.appendAudit(orgId, { at: now, actor: uid, action: 'school.enable', target: `school/${orgId}`, detail: { isDemo: input.isDemo } });
     return school;
 }
 

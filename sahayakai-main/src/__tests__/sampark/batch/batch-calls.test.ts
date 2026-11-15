@@ -536,15 +536,6 @@ describe('safety rails', () => {
         expect(t.fetchImpl).not.toHaveBeenCalled();
     });
 
-    it('ElevenLabs batches switched on: the school\'s provider runs the batch, never Vobiz in its place', async () => {
-        const t = await setup({ count: 3, provider: 'elevenlabs-roster', env: { SAMPARK_BATCH_ELEVENLABS_ENABLED: 'true', SAMPARK_ELEVENLABS_MAX_CONCURRENT_CALLS: '1' } });
-        const p = await previewBatch(t.deps, t.org, ADMIN, { grade: 7, section: 'A', reason: 'holiday_announcement', facts: HOLIDAY });
-        expect(p.provider).toBe('elevenlabs');
-        expect(p.blockers.map((b) => b.code)).not.toContain('BATCH_PROVIDER_NOT_SUPPORTED');
-        // The ElevenLabs plan limit is the one that binds.
-        expect(p.capacity).toMatchObject({ effective: 1, source: 'provider' });
-    });
-
     it('real batches need the deployment switch and an explicit confirmation', async () => {
         const off = await setup({ count: 2, provider: 'vobiz-roster', env: { SAMPARK_BATCH_REAL_CALLS: undefined } });
         expect(await code(createFrom(off))).toBe('REAL_BATCH_DISABLED');

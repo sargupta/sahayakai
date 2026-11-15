@@ -130,18 +130,12 @@ export function samparkEntryPath(env: Record<string, string | undefined> = { NEX
 }
 
 /**
- * The URL SahayakAI links to for "enter SamparkAI": `path` (SamparkAI-relative, default the
- * entry page). The school owns its calling provider, so there is nothing to ask on the way in.
- * Only on an internal demo deployment (NEXT_PUBLIC_SAMPARK_PROVIDER_CHOOSER === 'true', the public
- * twin of the server flag SAMPARK_PROVIDER_CHOOSER) does the link go through the per-session
- * chooser first (src/lib/sampark/provider-choice.ts). The public flag only picks the link.
+ * The URL SahayakAI links to for "enter SamparkAI": ALWAYS the calling-provider choice first
+ * (ElevenLabs Calls or Vobiz Calls, src/lib/sampark/provider-choice.ts), which then opens
+ * `path` (SamparkAI-relative, default the entry page). One chooser, one SamparkAI after it.
  */
-export function samparkEntryUrl(
-    path: string = samparkEntryPath(),
-    env: Record<string, string | undefined> = { NEXT_PUBLIC_SAMPARK_PROVIDER_CHOOSER: process.env.NEXT_PUBLIC_SAMPARK_PROVIDER_CHOOSER },
-): string {
+export function samparkEntryUrl(path: string = samparkEntryPath()): string {
     const target = samparkUrl(path);
-    if (env.NEXT_PUBLIC_SAMPARK_PROVIDER_CHOOSER !== 'true') return target;
     const next = target.startsWith('http') ? new URL(target).pathname + new URL(target).search : target;
     return `${samparkUrl('/choose-provider')}?next=${encodeURIComponent(next)}`;
 }

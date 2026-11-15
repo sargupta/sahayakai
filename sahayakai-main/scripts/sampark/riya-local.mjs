@@ -523,10 +523,6 @@ async function main() {
         SAMPARK_PHONE_PEPPER: localKeys.pepper,
         SAMPARK_ENABLED: 'true',
         SAMPARK_ELEVENLABS_ENABLED: 'true',
-        // Local demos keep the per-session provider chooser (off by default since schools own
-        // their provider, 2026-11-15): the server flag and its public twin for the entry link.
-        SAMPARK_PROVIDER_CHOOSER: 'true',
-        NEXT_PUBLIC_SAMPARK_PROVIDER_CHOOSER: 'true',
         SAMPARK_RIYA_PURPOSES: RIYA_ALL_PURPOSES, // Practice simulates calls, so every workflow can be tried (Class-Wide Outreach needs the announcement ones)
         // Disposable placeholders so the webhook receiver can be tested. Not a real key: Test mode
         // stays refused because live dialling is off and this is not the non-production database.

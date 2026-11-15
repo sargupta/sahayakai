@@ -33,7 +33,7 @@ export interface BatchCapacity {
     effective: number;
     /** min(SAMPARK_BATCH_MAX_CONCURRENCY, BATCH_CONCURRENCY_HARD_MAX). */
     app: number;
-    /** The telephony account / trunk limit (and, for ElevenLabs, its plan limit), when an operator has verified and configured one. */
+    /** The telephony account / trunk limit, when an operator has verified and configured one. */
     provider: number | null;
     /** The conversation backend's session limit (Gemini Live + ASR + TTS), when configured. */
     ai: number | null;
@@ -55,13 +55,7 @@ export function batchCapacity(env: Env, provider: ConversationCall['provider']):
     const app = positiveInt(env.SAMPARK_BATCH_MAX_CONCURRENCY, BATCH_CONCURRENCY_HARD_MAX) ?? BATCH_DEFAULT_CONCURRENCY;
     // Practice rings nothing and starts no conversation session: only the app limit applies.
     const real = isRealProvider(provider);
-    // Both real providers leave through our Vobiz trunk (ElevenLabs dials over its Vobiz SIP
-    // trunk), so the Vobiz channel limit always applies; an ElevenLabs batch is ALSO held to the
-    // ElevenLabs plan's simultaneous-call limit. The lower one wins.
-    const vobizLimit = real ? positiveInt(env.SAMPARK_VOBIZ_MAX_CONCURRENT_CALLS, 1000) : null;
-    const elevenLabsLimit = provider === 'elevenlabs' ? positiveInt(env.SAMPARK_ELEVENLABS_MAX_CONCURRENT_CALLS, 1000) : null;
-    const limits = [vobizLimit, elevenLabsLimit].filter((n): n is number => n !== null);
-    const providerLimit = limits.length ? Math.min(...limits) : null;
+    const providerLimit = real ? positiveInt(env.SAMPARK_VOBIZ_MAX_CONCURRENT_CALLS, 1000) : null;
     const ai = real ? positiveInt(env.SAMPARK_RIYA_MAX_CONCURRENT_SESSIONS, 1000) : null;
     let effective = app;
     let source: BatchCapacitySource = 'app';

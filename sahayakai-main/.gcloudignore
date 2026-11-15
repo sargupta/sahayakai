@@ -18,11 +18,8 @@ output/
 # cannot work. See commits 1054ff1f3 and a2462fee2 — this is the third
 # time this pattern has regressed via a sync-from-main merge. DO NOT
 # replace these two lines with `scripts/`.
-# Anchored with a leading slash (2026-11-15): an unanchored `scripts/*` also matched
-# src/lib/sampark/scripts/ and broke every `gcloud builds submit` of Sampark.
-# Gate: src/__tests__/deploy/gcloudignore-keeps-src.test.ts.
-/scripts/*
-!/scripts/api-test/
+scripts/*
+!scripts/api-test/
 # Per-agent worktrees and tooling — never deploy
 .claude/
 keynote-mcp/

@@ -19,9 +19,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
-import { ApiError, getProviderChoice, getSchoolProvider, setMode, setSchoolProvider, updateSchool, type SamparkSchoolView } from "@/lib/api/sampark";
-import { formatInr } from "@/lib/sampark/provider-pricing";
-import { ProviderChoiceCards, type ProviderId } from "./provider-choice-cards";
+import { ApiError, getProviderChoice, setMode, updateSchool, type SamparkSchoolView } from "@/lib/api/sampark";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSamparkHref } from "@/components/shell/product-paths";
@@ -369,97 +367,7 @@ export function ModeSection() {
  * Vobiz Calls) and applies to calls started in this browser session; this card shows it and is the
  * way back to that one choice. Scheduled callbacks use the provider of the call they follow.
  */
-/**
- * Settings → Calling provider. The SCHOOL owns its provider: an admin chooses ElevenLabs Calls or
- * Vobiz Calls by budget (price per minute and a monthly estimate for this school), every change is
- * audited, and a running class batch pauses until resumed. On an internal demo deployment (the
- * per-session chooser is on) this card shows the session choice instead, as before.
- */
 export function ConversationProviderSection() {
-    const { t } = useLanguage();
-    const { toast } = useToast();
-    const { orgId } = useSamparkSchool();
-    const state = useSamparkQuery((signal) => getSchoolProvider(orgId, { signal }), [orgId]);
-    const [editing, setEditing] = useState(false);
-    const [selected, setSelected] = useState<ProviderId | null>(null);
-    const [saving, setSaving] = useState(false);
-
-    if (state.data?.demoChooser) return <DemoSessionProviderSection />;
-
-    const data = state.data;
-    const current = data?.options.find((o) => o.id === data.provider) ?? null;
-    const perMin = current?.price.inrPerMinute ?? null;
-
-    const save = async () => {
-        if (!selected || !data || selected === data.provider) {
-            setEditing(false);
-            return;
-        }
-        setSaving(true);
-        try {
-            await setSchoolProvider(orgId, selected);
-            toast({ title: `${t("Calls now use")} ${t(PROVIDER_LABEL[selected])}` });
-            setEditing(false);
-            state.reload();
-        } catch (err) {
-            toast({ title: t("Could not change the calling provider"), description: errorMessage(t, err), variant: "destructive" });
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return (
-        <SectionCard
-            title={t("Calling provider")}
-            icon={PhoneCall}
-            description={t("Your school chooses who places its calls to parents, by budget. Every call uses it: single calls, class batches and callbacks. The screens, the rules every call passes, the call history and callbacks stay the same with either.")}
-        >
-            {!data ? (
-                <p className="type-body text-muted-foreground">{state.error ? errorMessage(t, state.error) : t("Loading")}</p>
-            ) : (
-                <div className="space-y-4">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <span className="type-body font-semibold text-foreground" data-testid="school-provider">{t(PROVIDER_LABEL[data.provider])}</span>
-                        {!data.chosen && <StatusPill tone="neutral">{t("Default, not chosen yet")}</StatusPill>}
-                        <span className="type-body text-muted-foreground">
-                            {perMin === null ? t("Price not set yet") : `${formatInr(perMin)} ${t("per connected minute")}`}
-                        </span>
-                        {!editing && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => { setSelected(data.provider); setEditing(true); }}>
-                                {t("Change provider")}
-                            </Button>
-                        )}
-                    </div>
-                    {editing && (
-                        <div className="space-y-4">
-                            <ProviderChoiceCards
-                                options={data.options}
-                                selected={selected}
-                                current={data.provider}
-                                onSelect={setSelected}
-                                defaults={data.estimateDefaults}
-                                disabled={saving}
-                            />
-                            <p className="type-body text-muted-foreground">{t("A class batch that is running pauses when you change provider; resume it to continue on the new one. Scheduled callbacks use the new provider.")}</p>
-                            <div className="flex flex-wrap gap-2">
-                                <Button type="button" onClick={() => void save()} disabled={saving || !selected}>
-                                    {saving && <Loader2 aria-hidden="true" className="animate-spin" />}
-                                    {t("Save provider")}
-                                </Button>
-                                <Button type="button" variant="outline" onClick={() => setEditing(false)} disabled={saving}>
-                                    {t("Cancel")}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-        </SectionCard>
-    );
-}
-
-/** Internal demo deployments only (SAMPARK_PROVIDER_CHOOSER, reported by the server): this session's choice. */
-function DemoSessionProviderSection() {
     const { t } = useLanguage();
     const samparkHref = useSamparkHref();
     const pathname = usePathname() ?? "";

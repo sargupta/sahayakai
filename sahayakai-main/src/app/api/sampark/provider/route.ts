@@ -1,10 +1,8 @@
 /**
  * The calling-provider choice at the SamparkAI entry (src/lib/sampark/provider-choice.ts).
  *
- * GET  → { choice, options: [{ id, available, price, differences }] } — which providers this
- *        deployment can use, their prices per minute (deployment settings; null when not set) and
- *        how they differ — also what a school sees when it switches on calls and picks one by
- *        budget — plus this session's demo choice. No configuration values are returned.
+ * GET  → { choice, options: [{ id, available }] }  — which providers this deployment can use
+ *        (configuration problems by NAME only, never values) and this session's current choice.
  * POST { provider: 'elevenlabs' | 'vobiz' } → sets the httpOnly session cookie the Riya routes
  *        read server-side. Refused (409) for a provider this deployment has not configured.
  *
@@ -18,7 +16,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { PROVIDER_CHOICES, PROVIDER_COOKIE, providerChoiceFromCookieHeader } from '@/lib/sampark/provider-choice';
-import { PROVIDER_DIFFERENCES, providerOptions } from '@/server/sampark/conversation';
+import { providerOptions } from '@/server/sampark/conversation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,7 +32,7 @@ function guard(req: NextRequest): NextResponse | null {
 export async function GET(req: NextRequest) {
     const refused = guard(req);
     if (refused) return refused;
-    const options = providerOptions().map((o) => ({ id: o.id, available: o.available, price: o.price, differences: PROVIDER_DIFFERENCES[o.id] }));
+    const options = providerOptions().map((o) => ({ id: o.id, available: o.available }));
     const current = providerChoiceFromCookieHeader(req.headers.get('cookie'));
     return NextResponse.json({ choice: current, options }, { headers: { 'cache-control': 'no-store' } });
 }

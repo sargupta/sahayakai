@@ -197,9 +197,8 @@ describe('AppSidebar — information architecture', () => {
         it('opens the SamparkAI workspace entry (school picker) through the central URL helper', () => {
             render(<AppSidebar />);
             const hrefs = screen.getAllByTestId('sampark-entry').map((a) => a.getAttribute('href'));
-            // Straight into the workspace: the school owns its calling provider (2026-11-15); only a
-            // demo deployment (NEXT_PUBLIC_SAMPARK_PROVIDER_CHOOSER) goes through the chooser.
-            expect(new Set(hrefs)).toEqual(new Set(['/sampark/workspace']));
+            // Through the calling-provider choice first (2026-11-09), which then opens the workspace.
+            expect(new Set(hrefs)).toEqual(new Set(['/sampark/choose-provider?next=%2Fsampark%2Fworkspace']));
         });
 
         it('goes to the configured SamparkAI subdomain as a full page load', () => {
@@ -208,7 +207,7 @@ describe('AppSidebar — information architecture', () => {
             try {
                 render(<AppSidebar />);
                 const hrefs = screen.getAllByTestId('sampark-entry').map((a) => a.getAttribute('href'));
-                expect(new Set(hrefs)).toEqual(new Set(['https://sampark.sahayakai.com/workspace']));
+                expect(new Set(hrefs)).toEqual(new Set(['https://sampark.sahayakai.com/choose-provider?next=%2Fworkspace']));
             } finally {
                 if (saved === undefined) delete process.env.NEXT_PUBLIC_SAMPARK_URL;
                 else process.env.NEXT_PUBLIC_SAMPARK_URL = saved;
