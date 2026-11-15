@@ -18,6 +18,12 @@
 #   - VOICE_PROVIDER is not set: the attendance parent-call path cannot dial from here.
 #   - Scales to zero; max 1 instance.
 #
+# Scheduler: batches, campaigns and callbacks advance only when /api/jobs/sampark-dispatch is
+# called. That route needs CRON_SECRET (secret SAMPARK_STAGING_CRON_SECRET) and a Cloud Scheduler
+# job `sampark-staging-dispatch` posting to it every minute during calling hours with
+# `Authorization: Bearer <that secret>`. Class-wide batches place real calls here
+# (SAMPARK_BATCH_REAL_CALLS=true), one at a time: Test mode still rings only the school's test phone.
+#
 # Submit (from the repo root; the upload is sahayakai-main only, about 50 MB):
 #   gcloud builds submit sahayakai-main --project=sahayakai-b4248 --config=sahayakai-main/cloudbuild-sampark-staging.yaml \
 #     --substitutions=SHORT_SHA=$(git rev-parse --short HEAD),_TEST_NUMBERS=+91XXXXXXXXXX
@@ -83,12 +89,12 @@ steps:
       - --max-instances=1
       - --cpu=1
       - --memory=2Gi
-      - --set-secrets=SAMPARK_PII_KEY=SAMPARK_STAGING_PII_KEY:latest,SAMPARK_PHONE_PEPPER=SAMPARK_STAGING_PHONE_PEPPER:latest,SAHAYAKAI_REQUEST_SIGNING_KEY=SAMPARK_STAGING_SIGNING_KEY:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest,VOBIZ_FROM_NUMBER=VOBIZ_FROM_NUMBER:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest,GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest
+      - --set-secrets=SAMPARK_PII_KEY=SAMPARK_STAGING_PII_KEY:latest,SAMPARK_PHONE_PEPPER=SAMPARK_STAGING_PHONE_PEPPER:latest,SAHAYAKAI_REQUEST_SIGNING_KEY=SAMPARK_STAGING_SIGNING_KEY:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest,VOBIZ_FROM_NUMBER=VOBIZ_FROM_NUMBER:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest,GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest,CRON_SECRET=SAMPARK_STAGING_CRON_SECRET:latest
       # `^@^` makes @ the pair separator, so values may contain commas (the purposes list, or
       # several test numbers). --set-* replaces the whole list on every deploy: anything added by
       # hand on the service is wiped, so every staging setting must live in this file.
       # All nine Riya workflows and 7-day transcripts match the local launcher the team tests with.
-      - --set-env-vars=^@^NODE_ENV=production@DEMO_MODE=true@SAMPARK_ENABLED=true@SAMPARK_DEMO_ENABLED=true@SAMPARK_ELEVENLABS_ENABLED=true@SAMPARK_LIVE_DIAL_ENABLED=true@SAMPARK_FIRESTORE_DATABASE=sampark-nonprod@SAMPARK_RIYA_PURPOSES=ptm_invitation,event_invitation,holiday_notice,exam_schedule_notice,emergency_closure,absence_notice,academic_performance,classroom_behaviour,student_achievement@SAMPARK_RIYA_STORE_TRANSCRIPTS=true@SAMPARK_RIYA_TRANSCRIPT_DAYS=7@SAMPARK_RIYA_TEST_DAILY_CAP=${_DAILY_CAP}@SAMPARK_RIYA_TEST_ALLOWED_NUMBERS=${_TEST_NUMBERS}@SAMPARK_VOBIZ_RIYA_ENABLED=true@SAMPARK_PUBLIC_BASE_URL=https://${_SERVICE}-${_PROJECT_NUMBER}.${_REGION}.run.app@VOBIZ_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ENABLED=true@VIDYA_VOICE_PUBLIC_ENABLED=true@VIDYA_VOICE_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ALLOWED_UIDS=${_VIDYA_UIDS}@NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai
+      - --set-env-vars=^@^NODE_ENV=production@DEMO_MODE=true@SAMPARK_ENABLED=true@SAMPARK_DEMO_ENABLED=true@SAMPARK_ELEVENLABS_ENABLED=true@SAMPARK_LIVE_DIAL_ENABLED=true@SAMPARK_FIRESTORE_DATABASE=sampark-nonprod@SAMPARK_RIYA_PURPOSES=ptm_invitation,event_invitation,holiday_notice,exam_schedule_notice,emergency_closure,absence_notice,academic_performance,classroom_behaviour,student_achievement@SAMPARK_BATCH_REAL_CALLS=true@SAMPARK_BATCH_MAX_CONCURRENCY=1@SAMPARK_BATCH_DIAL_GAP_SECONDS=60@SAMPARK_VOBIZ_MAX_CONCURRENT_CALLS=1@SAMPARK_RIYA_STORE_TRANSCRIPTS=true@SAMPARK_RIYA_TRANSCRIPT_DAYS=7@SAMPARK_RIYA_TEST_DAILY_CAP=${_DAILY_CAP}@SAMPARK_RIYA_TEST_ALLOWED_NUMBERS=${_TEST_NUMBERS}@SAMPARK_VOBIZ_RIYA_ENABLED=true@SAMPARK_PUBLIC_BASE_URL=https://${_SERVICE}-${_PROJECT_NUMBER}.${_REGION}.run.app@VOBIZ_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ENABLED=true@VIDYA_VOICE_PUBLIC_ENABLED=true@VIDYA_VOICE_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ALLOWED_UIDS=${_VIDYA_UIDS}@NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai
       - --quiet
     waitFor: [push]
 
