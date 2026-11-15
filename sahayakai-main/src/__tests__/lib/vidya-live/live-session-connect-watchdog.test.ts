@@ -163,3 +163,38 @@ it('after a dropped connection the next tap starts a fresh working session (no r
     first.onmessage?.({ data: JSON.stringify({ ready: true }) });
     expect(session.currentState).toBe('listening');
 });
+
+// Start latency: the token request used to wait for audio setup AND mic permission.
+it('requests the stream token at the tap, in parallel with the microphone', async () => {
+    let releaseMic: (v: unknown) => void = () => {};
+    (navigator.mediaDevices.getUserMedia as jest.Mock).mockImplementationOnce(
+        () => new Promise((r) => { releaseMic = r; }),
+    );
+    const fetchMock = jest.fn(async () => ({
+        ok: true, status: 200, json: async () => ({ wsUrl: 'wss://sidecar/v1/vidya-voice/stream', streamToken: 'tok' }),
+    }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const { session } = makeSession();
+    const started = session.start();
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1); // mic still pending
+    releaseMic({ getTracks: () => [{ stop: stopTrack }], getAudioTracks: () => [] });
+    await started;
+    expect(FakeSocket.last).not.toBeNull();
+});
+
+it('a token that arrives after the watchdog fired does not revive the failed attempt', async () => {
+    jest.useFakeTimers();
+    let answer: (v: unknown) => void = () => {};
+    global.fetch = jest.fn(() => new Promise((r) => { answer = r; })) as unknown as typeof fetch;
+    const { session, states } = makeSession();
+    const started = session.start();
+    await flush();
+    jest.advanceTimersByTime(CONNECT_TIMEOUT_MS);
+    expect(session.currentState).toBe('error');
+    FakeSocket.last = null;
+    answer({ ok: true, status: 200, json: async () => ({ wsUrl: 'wss://x', streamToken: 't' }) });
+    await started;
+    expect(FakeSocket.last).toBeNull();
+    expect(states).toEqual(['connecting', 'error']);
+});

@@ -119,7 +119,7 @@ const TOOL_TURN_AUDIO_GRACE_MS = 4000;
  * Bracketed and addressed to her, so she speaks the result, not the note.
  */
 export const VIDYA_GREETING_PROMPT =
-  '[Voice mode just opened. Greet the teacher warmly in one short sentence and ask how you can help. Do not mention this note.]';
+  "[Voice mode just opened. Greet the teacher warmly in one short sentence that introduces you by name (\"I'm VIDYA\"), then ask how you can help. Never call yourself a voice assistant or an assistant. Do not mention this note.]";
 export const VIDYA_MIC_SILENT_PROMPT =
   "[You have heard nothing at all from the teacher's microphone since voice mode opened. In one short sentence, say you can't hear them and ask them to check that their microphone is on and selected. Do not mention this note.]";
 
@@ -290,6 +290,10 @@ export class VidyaLiveSession {
     this.startedAt = performance.now();
     this.set('connecting');
 
+    // The stream token is minted IN PARALLEL with audio + mic setup (it used to wait for both,
+    // adding ~0.7–1.2 s to every tap). The promise never rejects; its result is used in step 3.
+    const minting = this.mintSession();
+
     // 1. Audio contexts inside the gesture so autoplay policy allows output.
     try {
       this.playCtx = new AudioContext({ sampleRate: 24000, latencyHint: 'interactive' });
@@ -327,31 +331,13 @@ export class VidyaLiveSession {
       }
     }, CONNECT_TIMEOUT_MS);
 
-    // 3. Mint the single-use stream token (Firebase-authenticated server route).
-    let session: { wsUrl: string; streamToken: string };
-    try {
-      const idToken = await this.opts.getIdToken();
-      const endpoint =
-        this.opts.scope === 'public' ? '/api/vidya-voice/public-session' : '/api/vidya-voice/start-session';
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
-        },
-        body: JSON.stringify(this.opts.startSessionBody),
-      });
-      if (res.status === 401) return this.fail('unauthorized', 'Please sign in to use voice.');
-      if (res.status === 503) return this.fail('unavailable', 'Live voice is not available right now.');
-      if (res.status === 429) return this.fail('session_limit', 'Please try again in a little while.');
-      if (!res.ok) return this.fail('start_failed', `Could not start voice (${res.status}).`);
-      session = await res.json();
-      if (!session?.wsUrl || !session?.streamToken) {
-        return this.fail('start_failed', 'Voice session response was malformed.');
-      }
-    } catch (e) {
-      return this.fail('start_failed', `Could not reach the server: ${(e as Error).message}`);
-    }
+    // 3. The single-use stream token (Firebase-authenticated server route), started at the tap.
+    const minted = await minting;
+    if (epoch !== this.sessionEpoch) return this.teardown();
+    // The watchdog may have failed this attempt while we awaited (TS narrows `state` across the await).
+    if ((this.state as VidyaLiveState) !== 'connecting') return;
+    if (!minted.ok) return this.fail(minted.code, minted.message);
+    const session = minted.session;
     if (epoch !== this.sessionEpoch) return this.teardown();
 
     // 4. Audio graph.
@@ -413,6 +399,37 @@ export class VidyaLiveSession {
       }
       this.fail('upstream_failed', `Voice session disconnected (${ev.code}).`);
     };
+  }
+
+  /** Mint the stream token. Never rejects: failures come back as an error code for `fail`. */
+  private async mintSession(): Promise<
+    | { ok: true; session: { wsUrl: string; streamToken: string } }
+    | { ok: false; code: VidyaLiveErrorCode; message: string }
+  > {
+    try {
+      const idToken = await this.opts.getIdToken();
+      const endpoint =
+        this.opts.scope === 'public' ? '/api/vidya-voice/public-session' : '/api/vidya-voice/start-session';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
+        body: JSON.stringify(this.opts.startSessionBody),
+      });
+      if (res.status === 401) return { ok: false, code: 'unauthorized', message: 'Please sign in to use voice.' };
+      if (res.status === 503) return { ok: false, code: 'unavailable', message: 'Live voice is not available right now.' };
+      if (res.status === 429) return { ok: false, code: 'session_limit', message: 'Please try again in a little while.' };
+      if (!res.ok) return { ok: false, code: 'start_failed', message: `Could not start voice (${res.status}).` };
+      const session = (await res.json()) as { wsUrl?: string; streamToken?: string };
+      if (!session?.wsUrl || !session?.streamToken) {
+        return { ok: false, code: 'start_failed', message: 'Voice session response was malformed.' };
+      }
+      return { ok: true, session: { wsUrl: session.wsUrl, streamToken: session.streamToken } };
+    } catch (e) {
+      return { ok: false, code: 'start_failed', message: `Could not reach the server: ${(e as Error).message}` };
+    }
   }
 
   /** End the session: stop mic, close socket, drop audio. Safe to call repeatedly. */
