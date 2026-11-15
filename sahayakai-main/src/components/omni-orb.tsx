@@ -872,50 +872,58 @@ export function OmniOrb() {
                     </div>
                 )}
 
-                {chatHistory.length > 0 && (
-                    <>
-                        {/* NCERT demo polish (2026-05-19): simplified the
-                            previous triple-animation stack (animate-ping +
-                            animate-pulse + animate-bounce) to a single ring
-                            and a static tooltip. Three concurrent infinite
-                            animations were ~12ms of per-frame compositing
-                            on low-end Android, contributing to the founder's
-                            "lagging" report. Reduced-motion users see no
-                            ring at all. */}
-                        {!reducedMotion && (
-                            <div
-                                className="absolute -inset-2 rounded-full bg-primary/25 animate-pulse pointer-events-none"
-                                style={{ animationDuration: "2.4s" }}
-                            />
-                        )}
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
-                            <BrainCircuit className="h-3 w-3" />
-                            {t("Tap to reply")}
-                        </div>
-                    </>
-                )}
-
                 <div className="relative z-10 pointer-events-auto">
                     <MicrophoneInput
                         onTranscriptChange={processTranscription}
                         isFloating={true}
                         iconSize="lg"
                         className="shadow-2xl transition-transform hover:scale-105"
-                    />
-                </div>
+                    >
+                        {/* Children render inside the box that wraps the mic
+                            button, so these offsets are relative to the orb
+                            itself. Rendered here as siblings of the mic they
+                            anchored to a 0x0 corner ~72px away instead. */}
+                        {chatHistory.length > 0 && (
+                            <>
+                                {/* NCERT demo polish (2026-05-19): simplified the
+                                    previous triple-animation stack (animate-ping +
+                                    animate-pulse + animate-bounce) to a single ring
+                                    and a static tooltip. Three concurrent infinite
+                                    animations were ~12ms of per-frame compositing
+                                    on low-end Android, contributing to the founder's
+                                    "lagging" report. Reduced-motion users see no
+                                    ring at all. */}
+                                {!reducedMotion && (
+                                    <div
+                                        className="absolute -inset-2 rounded-full bg-primary/25 animate-pulse pointer-events-none"
+                                        style={{ animationDuration: "2.4s" }}
+                                    />
+                                )}
+                                <div
+                                    className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1"
+                                    data-testid="omni-orb-reply-tip"
+                                >
+                                    <BrainCircuit className="h-3 w-3" />
+                                    {t("Tap to reply")}
+                                </div>
+                            </>
+                        )}
 
-                {/* Toggle Memory Button */}
-                <Button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isDragging) setOrbOpen(!orbOpen);
-                    }}
-                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
-                    size="icon"
-                    title={t("View Memory")}
-                >
-                    <BrainCircuit className="h-5 w-5" />
-                </Button>
+                        {/* Toggle Memory Button — a badge on the orb's
+                            top-left edge, painted above the mic (z-30). */}
+                        <Button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (!isDragging) setOrbOpen(!orbOpen);
+                            }}
+                            className="absolute -top-4 -left-4 z-30 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
+                            size="icon"
+                            title={t("View Memory")}
+                        >
+                            <BrainCircuit className="h-5 w-5" />
+                        </Button>
+                    </MicrophoneInput>
+                </div>
             </div>
         </div>
     );

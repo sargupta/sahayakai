@@ -6,32 +6,26 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/client-logger";
 import { tts } from "@/lib/tts";
-import { Mic, StopCircle, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState, type FC } from "react";
+import { Mic, StopCircle } from "lucide-react";
+import { useEffect, useRef, useState, type FC, type ReactNode } from "react";
 import { useLanguage, BCP47_MAP } from "@/context/language-context";
-import { LANGUAGE_TO_ISO } from "@/types";
+import { LANGUAGE_TO_ISO, type Language } from "@/types";
 
-/** Localised mic greeting — spoken when the teacher first taps the mic.
- *  Keyed by the Language display name used across the app. Falls back to
- *  English for languages not explicitly listed. */
-function buildMicGreeting(lang: string): { text: string; ttsLang: string } {
-    const hour = new Date().getHours();
-    switch (lang) {
-        case 'Hindi':
-            return {
-                text: hour < 12 ? 'नमस्ते शिक्षक! सुप्रभात। मैं आपकी क्या मदद कर सकता हूँ?'
-                    : hour < 17 ? 'नमस्ते शिक्षक! मैं आपकी क्या मदद कर सकता हूँ?'
-                    : 'नमस्ते शिक्षक! शुभ संध्या। मैं आपकी क्या मदद कर सकता हूँ?',
-                ttsLang: 'hi-IN',
-            };
-        default:
-            return {
-                text: hour < 12 ? 'Good morning, Teacher. How can I help you today?'
-                    : hour < 17 ? 'Good afternoon, Teacher. How can I help you today?'
-                    : 'Good evening, Teacher. How can I help you today?',
-                ttsLang: 'en-IN',
-            };
-    }
+/** Mic greeting — spoken when the teacher first taps the mic. The strings
+ *  live in src/locales/*.json. A language whose locale has no translation
+ *  falls back to the English text AND an English voice, so the TTS voice
+ *  always matches the words it is reading. */
+function buildMicGreeting(
+  lang: Language,
+  t: (key: string) => string,
+): { text: string; ttsLang: string } {
+  const hour = new Date().getHours();
+  const key = hour < 12 ? 'Good morning, Teacher. How can I help you today?'
+    : hour < 17 ? 'Good afternoon, Teacher. How can I help you today?'
+    : 'Good evening, Teacher. How can I help you today?';
+  const text = t(key);
+  const localised = text !== key;
+  return { text, ttsLang: localised ? BCP47_MAP[lang] : 'en-IN' };
 }
 
 declare global {
@@ -81,6 +75,12 @@ type MicrophoneInputProps = {
   greetingLang?: string;   // BCP-47 locale, e.g. "kn-IN"
   greetingText?: string;   // localised greeting string
   greetingLabel?: string;  // localised "listening" label shown during greeting
+  /**
+   * Decorations anchored to the mic button itself (VIDYA's "Tap to reply"
+   * tip, its memory badge). Rendered inside the box that wraps the button
+   * exactly, so `absolute` offsets resolve against the button's own box.
+   */
+  children?: ReactNode;
 };
 
 export const MicrophoneInput: FC<MicrophoneInputProps> = ({
@@ -94,6 +94,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   greetingLang,
   greetingText,
   greetingLabel,
+  children,
 }) => {
   const [status, setStatus] = useState<MicStatus>('idle');
   const { language, t } = useLanguage();
@@ -371,7 +372,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         //      hears the next greeting in Kannada)
         //   2. global LanguageContext via buildMicGreeting (default for
         //      flows that don't manage language per-session)
-        const fallback = buildMicGreeting(language);
+        const fallback = buildMicGreeting(language, t);
         const finalText = greetingText || fallback.text;
         const finalLang = greetingLang || fallback.ttsLang;
         try {
@@ -675,10 +676,23 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <div className="relative flex items-center justify-center">
+      {/* This box wraps the button exactly, so the idle rings, the recording
+          pulse and `children` all anchor to the button's own box. Floating
+          placement belongs HERE, never on the Button: a fixed Button leaves
+          this box collapsed to 0x0 at the parent's corner and every
+          decoration renders ~72px off the orb (VIDYA orb, 2026-11).
+          `fixed` resolves against the nearest transformed ancestor (OmniOrb's
+          drag wrapper) or the viewport (GlobalVoiceInterface). */}
+      <div
+        className={cn(
+          "relative flex items-center justify-center",
+          isFloating && "fixed bottom-8 right-8 z-50",
+        )}
+        data-testid={isFloating ? "floating-mic" : undefined}
+      >
         {/* Concentric Rings - Idle State (Inviting) */}
         {status === 'idle' && (
-          <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 pointer-events-none" data-testid="mic-idle-rings">
             <div className="absolute inset-[-8px] rounded-full bg-primary/20 animate-ping [animation-duration:3s]" />
             <div className="absolute inset-[-16px] rounded-full bg-primary/10 animate-ping [animation-duration:4s]" />
           </div>
@@ -686,7 +700,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
         {/* Pulsating Orb - Recording State (Active) */}
         {status === 'recording' && (
-          <div className="absolute inset-[-12px] rounded-full bg-destructive/20 animate-pulse" />
+          <div className="absolute inset-[-12px] rounded-full bg-destructive/20 animate-pulse" data-testid="mic-recording-pulse" />
         )}
 
         <Button
@@ -696,13 +710,12 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
           className={cn(
             "relative transition-all duration-500 flex items-center justify-center overflow-hidden z-20 shadow-2xl",
             status === 'recording'
-              ? "bg-gradient-to-br from-destructive to-red-600 border-2 border-white/20 scale-110"
+              ? "bg-gradient-to-br from-destructive to-destructive/80 text-destructive-foreground scale-110"
               : "bg-gradient-to-br from-primary to-primary/80",
             status === 'processing' && "opacity-90",
-            isFloating && "fixed bottom-8 right-8 z-50 border-4 border-white dark:border-background",
             getButtonSize(),
             className,
-            "rounded-full transition-all duration-300 ease-in-out border-4 border-white",
+            "rounded-full transition-all duration-300 ease-in-out border-4 border-background",
             status !== 'recording' && "!bg-gradient-to-br !from-primary !to-primary/80 !text-primary-foreground hover:!from-primary/95 hover:!to-primary/75 animate-pulse [animation-duration:3s]"
           )}
           onClick={handleMicClick}
@@ -711,21 +724,25 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         >
           {/* Internal Glow for recording */}
           {status === 'recording' && (
-            <div className="absolute inset-0 bg-white/10 animate-pulse" />
+            <div className="absolute inset-0 bg-destructive-foreground/10 animate-pulse" />
           )}
 
+          {/* Icons inherit the button's foreground token (primary- or
+              destructive-foreground) via currentColor. */}
           {status === 'processing' || status === 'initializing' ? (
             <div className="relative h-10 w-10">
-              <div className="absolute inset-0 rounded-full border-4 border-white/20" />
-              <div className="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin" />
-              <StopCircle className="absolute inset-0 m-auto h-4 w-4 text-white" />
+              <div className="absolute inset-0 rounded-full border-4 border-primary-foreground/20" />
+              <div className="absolute inset-0 rounded-full border-4 border-primary-foreground border-t-transparent animate-spin" />
+              <StopCircle className="absolute inset-0 m-auto h-4 w-4" />
             </div>
           ) : status === 'recording' ? (
-            <StopCircle className={cn(getIconSize(), "relative z-30 text-white")} />
+            <StopCircle className={cn(getIconSize(), "relative z-30")} />
           ) : (
-            <Mic className={cn(getIconSize(), "relative z-30 text-white")} />
+            <Mic className={cn(getIconSize(), "relative z-30")} />
           )}
         </Button>
+
+        {children}
       </div>
 
       {/* Volume Visualizer Label - More elegant bubble */}

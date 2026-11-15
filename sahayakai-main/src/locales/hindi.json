@@ -1711,5 +1711,8 @@
   "You choose the message once. SahayakAI makes every call, in each parent's own language, and tells you who picked up.": "आप संदेश एक बार चुनते हैं। SahayakAI हर कॉल, हर अभिभावक की अपनी भाषा में करता है, और बताता है कि किसने फ़ोन उठाया।",
   "Your browser does not support audio processing. Please try a different browser.": "आपका ब्राउज़र ऑडियो प्रोसेसिंग का समर्थन नहीं करता। कृपया कोई दूसरा ब्राउज़र आज़माएँ।",
   "Your name": "आपका नाम",
-  "e.g. Anita Sharma": "उदा. अनीता शर्मा"
+  "e.g. Anita Sharma": "उदा. अनीता शर्मा",
+  "Good morning, Teacher. How can I help you today?": "नमस्ते शिक्षक! सुप्रभात। मैं आपकी क्या मदद कर सकता हूँ?",
+  "Good afternoon, Teacher. How can I help you today?": "नमस्ते शिक्षक! मैं आपकी क्या मदद कर सकता हूँ?",
+  "Good evening, Teacher. How can I help you today?": "नमस्ते शिक्षक! शुभ संध्या। मैं आपकी क्या मदद कर सकता हूँ?"
 }
