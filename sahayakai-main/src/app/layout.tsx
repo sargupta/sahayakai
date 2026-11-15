@@ -1,17 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { CSSProperties } from 'react';
 import localFont from 'next/font/local';
-import {
-  Noto_Sans_Devanagari,
-  Noto_Sans_Bengali,
-  Noto_Sans_Tamil,
-  Noto_Sans_Telugu,
-  Noto_Sans_Kannada,
-  Noto_Sans_Malayalam,
-  Noto_Sans_Gujarati,
-  Noto_Sans_Gurmukhi,
-  Noto_Sans_Oriya,
-} from 'next/font/google';
+import { notoFontVars } from './noto-fonts';
 import './globals.css';
 
 // ========================================
@@ -44,6 +34,7 @@ import './globals.css';
 // next/font requires literal arguments, so the ranges are written inline.
 const instrumentLatin = localFont({
   src: './_fonts/instrument-latin.woff2',
+  adjustFontFallback: false,
   weight: '400 700',
   display: 'swap',
   declarations: [{ prop: 'unicode-range', value: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD' }],
@@ -58,6 +49,7 @@ const instrumentLatinExt = localFont({
 // Bricolage Grotesque keeps its optical-size (opsz) axis in the variable file.
 const bricolageLatin = localFont({
   src: './_fonts/bricolage-latin.woff2',
+  adjustFontFallback: false,
   weight: '200 800',
   display: 'swap',
   declarations: [{ prop: 'unicode-range', value: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD' }],
@@ -71,77 +63,17 @@ const bricolageLatinExt = localFont({
 });
 
 // --font-ui / --font-display, as next/font's `variable` used to emit them.
+// Only the LAST face of each stack keeps next/font's metric-matched Arial
+// fallback: a fallback on an earlier face has no unicode-range, so it would
+// outrank the later faces and ₹ would render in Arial.
 const designFontVars = {
   '--font-ui': `${instrumentLatin.style.fontFamily}, ${instrumentLatinExt.style.fontFamily}`,
   '--font-display': `${bricolageLatin.style.fontFamily}, ${bricolageLatinExt.style.fontFamily}`,
 } as CSSProperties;
 
-const notoDevanagari = Noto_Sans_Devanagari({
-  subsets: ['devanagari'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-devanagari',
-  display: 'swap',
-});
-const notoBengali = Noto_Sans_Bengali({
-  subsets: ['bengali'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-bengali',
-  display: 'swap',
-});
-const notoTamil = Noto_Sans_Tamil({
-  subsets: ['tamil'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-tamil',
-  display: 'swap',
-});
-const notoTelugu = Noto_Sans_Telugu({
-  subsets: ['telugu'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-telugu',
-  display: 'swap',
-});
-const notoKannada = Noto_Sans_Kannada({
-  subsets: ['kannada'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-kannada',
-  display: 'swap',
-});
-const notoMalayalam = Noto_Sans_Malayalam({
-  subsets: ['malayalam'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-malayalam',
-  display: 'swap',
-});
-const notoGujarati = Noto_Sans_Gujarati({
-  subsets: ['gujarati'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-gujarati',
-  display: 'swap',
-});
-const notoGurmukhi = Noto_Sans_Gurmukhi({
-  subsets: ['gurmukhi'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-gurmukhi',
-  display: 'swap',
-});
-const notoOriya = Noto_Sans_Oriya({
-  subsets: ['oriya'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-oriya',
-  display: 'swap',
-});
-
-const fontVariables = [
-  notoDevanagari.variable,
-  notoBengali.variable,
-  notoTamil.variable,
-  notoTelugu.variable,
-  notoKannada.variable,
-  notoMalayalam.variable,
-  notoGujarati.variable,
-  notoGurmukhi.variable,
-  notoOriya.variable,
-].join(' ');
+// The nine Noto Sans families (one per Indian script) are self-hosted too:
+// see ./noto-fonts.ts.
+const fontVars = { ...designFontVars, ...notoFontVars } as CSSProperties;
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -262,7 +194,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={fontVariables} style={designFontVars} suppressHydrationWarning>
+    <html lang="en" style={fontVars} suppressHydrationWarning>
       <head>
         {/* Fonts are self-hosted via next/font (see top of file) — the old
             fonts.googleapis.com stylesheet links and the

@@ -26,3 +26,9 @@ output/
 # Per-agent worktrees and tooling — never deploy
 .claude/
 keynote-mcp/
+
+# Never upload local env files to the Cloud Build source bucket.
+.env
+.env.*
+*.local
+!.env.example

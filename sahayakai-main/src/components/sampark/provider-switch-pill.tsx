@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ArrowLeftRight } from "lucide-react";
 import { useSamparkQuery } from "@/components/sampark/use-sampark-query";
@@ -21,8 +20,8 @@ import { CHOOSER_SEGMENT, PROVIDER_LABEL, switchProviderHref } from "@/lib/sampa
  * failed the production build of /sampark/workspace.
  */
 export function ProviderSwitchPill() {
-    // useSearchParams() needs a Suspense boundary, or `next build` cannot prerender any static
-    // page whose frame shows this pill (/sampark/workspace, /sampark/demo/*): the build failed.
+    // The inner pill no longer calls useSearchParams(); the boundary stays as a second guard so a
+    // future hook that suspends cannot break prerendering of /sampark/workspace again.
     return (
         <Suspense fallback={null}>
             <ProviderSwitchPillInner />
