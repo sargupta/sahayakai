@@ -8,7 +8,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SRC = readFileSync(join(process.cwd(), 'src/ai/flows/lesson-plan-generator.ts'), 'utf8');
+// Normalise line endings: a Windows checkout (core.autocrlf=true) has CRLF, the repo has LF.
+const SRC = readFileSync(join(process.cwd(), 'src/ai/flows/lesson-plan-generator.ts'), 'utf8').replace(/\r\n/g, '\n');
 
 describe('lesson plan materials audit budget', () => {
     it('the audit call is wrapped in withTimeout', () => {
