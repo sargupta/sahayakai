@@ -81,6 +81,26 @@ export const LANGUAGE_NATIVE_LABELS: Record<Language, string> = {
     'Odia': 'ଓଡ଼ିଆ',
 };
 
+/**
+ * One-or-two-character native-script mark for each language — the label on
+ * the app header's language pill. Like LANGUAGE_NATIVE_LABELS this is
+ * language metadata (it does not change with the UI language), so it lives
+ * here rather than in src/locales/*.json.
+ */
+export const LANGUAGE_SHORT_LABELS: Record<Language, string> = {
+    'English': 'EN',
+    'Hindi': 'हि',
+    'Kannada': 'ಕ',
+    'Tamil': 'த',
+    'Telugu': 'తె',
+    'Marathi': 'म',
+    'Bengali': 'বা',
+    'Gujarati': 'ગુ',
+    'Punjabi': 'ਪੰ',
+    'Malayalam': 'മ',
+    'Odia': 'ଓ',
+};
+
 /** Maps state name → the default state board for cascading board selector */
 export const STATE_BOARD_MAP: Record<string, string> = {
     'Andhra Pradesh': 'Andhra Pradesh State Board',

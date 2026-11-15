@@ -109,7 +109,7 @@ export function AuthButton() {
         }
     };
 
-    if (loading) return <div className="h-8 w-8 animate-pulse bg-slate-200 rounded-full" />;
+    if (loading) return <div className="h-8 w-8 animate-pulse bg-muted rounded-full" />;
 
     if (!user) {
         return (
@@ -122,7 +122,9 @@ export function AuthButton() {
                     className="gap-2 shadow-sm font-bold"
                 >
                     <GoogleGIcon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("Sign in with Google")}</span>
+                    {/* Label from `md` only: below it the 179px label pushed
+                        the app header past the screen edge (640–767px). */}
+                    <span className="hidden md:inline">{t("Sign in with Google")}</span>
                 </Button>
             </div>
         );
@@ -159,7 +161,7 @@ export function AuthButton() {
                     <span>{t("Certifications")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
+                <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>{t("Sign out")}</span>
                 </DropdownMenuItem>

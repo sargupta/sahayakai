@@ -97,20 +97,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-14 items-center justify-between border-b bg-background px-4 sm:px-6">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger />
-              <div className="md:hidden">
-                <Logo />
+          {/* Phone budget (320px): menu + logo mark on the left, four 36–40px
+              controls on the right. Below `sm` the logo goes compact, search
+              and language become icon squares, and the left group may
+              shrink (min-w-0) while the controls never do — so the header
+              can't push the page wider than the screen. The sign-in label
+              waits for `md` (AuthButton). From `md` up the classes resolve
+              to the original desktop layout; the gap stops at `md` because
+              at 768px, beside the 256px sidebar, the header has only ~2px
+              to spare. Guarded by qa/e2e/phone-overflow.spec.ts. */}
+          <header
+            data-testid="app-header"
+            className="flex h-14 items-center justify-between gap-2 md:gap-0 border-b bg-background px-3 sm:px-6"
+          >
+            <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+              <SidebarTrigger className="shrink-0" />
+              <div className="min-w-0 md:hidden">
+                <Logo compact />
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-3">
               {/* Search trigger — opens command palette (⌘K on desktop) */}
               <button
                 type="button"
                 onClick={openCommandPalette}
                 aria-label={t("Search")}
-                className="inline-flex items-center gap-2 h-9 px-3 rounded-pill bg-muted/60 hover:bg-muted text-muted-foreground transition-colors duration-micro ease-out-quart"
+                className="inline-flex items-center justify-center gap-2 h-9 w-9 sm:w-auto sm:px-3 rounded-pill bg-muted/60 hover:bg-muted text-muted-foreground transition-colors duration-micro ease-out-quart"
               >
                 <Search className="h-4 w-4" />
                 <span className="hidden sm:inline text-xs font-medium">{t("Search")}</span>

@@ -754,14 +754,24 @@ export function OmniOrb() {
     if (voiceDialogOpen) return null;
 
     return (
+        // Viewport-sized clip layer. The orb's decorations (idle ping rings,
+        // the hover memory button, the "Tap to reply" tip) hang off its
+        // bottom-right anchor, and the orb can be dragged anywhere; without
+        // this layer any of them past the right edge made the whole page
+        // scroll sideways on phones. The layer is pointer-events-none so it
+        // never blocks the page; the orb opts back in below.
+        <div
+            className="pointer-events-none fixed inset-0 z-[90] overflow-hidden"
+            data-testid="omni-orb-layer"
+        >
         <div
             ref={orbRef}
-            className={`fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-4 sm:bottom-12 sm:right-12 z-[90] ${
+            className={`absolute bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-4 sm:bottom-12 sm:right-12 ${
                 reducedMotion ? "" : "transition-[transform,opacity] duration-300"
             } ${
                 hiddenByScroll && !orbOpen && !isDragging
                     ? "opacity-0 pointer-events-none"
-                    : "opacity-100"
+                    : "opacity-100 pointer-events-auto"
             }`}
             style={{
                 transform: `translate(${orbPos.x}px, ${
@@ -917,6 +927,7 @@ export function OmniOrb() {
                     <BrainCircuit className="h-5 w-5" />
                 </Button>
             </div>
+        </div>
         </div>
     );
 }
