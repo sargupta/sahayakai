@@ -19,6 +19,7 @@ import {
     parseProviderChoice,
     providerChoiceFromCookieHeader,
     PROVIDER_COOKIE,
+    providerChooserEnabled,
     safeNext,
     switchProviderHref,
 } from '@/lib/sampark/provider-choice';
@@ -61,9 +62,26 @@ describe('which pages need a provider choice', () => {
         }
     });
 
-    it('SahayakAI links enter SamparkAI through the chooser URL', () => {
-        expect(samparkEntryUrl('/demo')).toBe('/sampark/choose-provider?next=%2Fsampark%2Fdemo');
-        expect(samparkEntryUrl('/workspace')).toBe('/sampark/choose-provider?next=%2Fsampark%2Fworkspace');
+    it('by default SahayakAI links go straight into SamparkAI: the school owns its provider', () => {
+        expect(samparkEntryUrl('/demo', {})).toBe('/sampark/demo');
+        expect(samparkEntryUrl('/workspace', {})).toBe('/sampark/workspace');
+        expect(providerChooserEnabled({})).toBe(false);
+        expect(providerChooserEnabled({ SAMPARK_PROVIDER_CHOOSER: 'TRUE' })).toBe(false);
+        // The public link flag never switches server behaviour.
+        expect(providerChooserEnabled({ NEXT_PUBLIC_SAMPARK_PROVIDER_CHOOSER: 'true' })).toBe(false);
+        expect(providerChooserEnabled({ SAMPARK_PROVIDER_CHOOSER: 'true' })).toBe(true);
+    });
+
+    it('on a demo deployment SahayakAI links enter SamparkAI through the chooser URL', () => {
+        const demo = { NEXT_PUBLIC_SAMPARK_PROVIDER_CHOOSER: 'true' };
+        expect(samparkEntryUrl('/demo', demo)).toBe('/sampark/choose-provider?next=%2Fsampark%2Fdemo');
+        expect(samparkEntryUrl('/workspace', demo)).toBe('/sampark/choose-provider?next=%2Fsampark%2Fworkspace');
+    });
+
+    it('the middleware asks for a provider only when the demo chooser is on', () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const src: string = require('node:fs').readFileSync(require('node:path').join(process.cwd(), 'src/middleware.ts'), 'utf8');
+        expect(src).toMatch(/if \(providerChooserEnabled\(\) && !pathname\.startsWith\('\/api\/'\)/);
     });
 });
 
@@ -112,7 +130,10 @@ const providerFetch = () => jest.fn(async (url: string) => {
     return new Response(JSON.stringify({ success: true, conversation_id: `conv_${crypto.randomUUID().slice(0, 8)}`, sip_call_id: 'sip' }), { status: 200 });
 });
 
-async function setup(schoolDefault: 'elevenlabs' | 'vobiz') {
+/** The internal demo deployment: the per-session chooser is on and a session choice counts. */
+const demoEnv = (): Record<string, string | undefined> => ({ ...env(), SAMPARK_PROVIDER_CHOOSER: 'true' });
+
+async function setup(schoolDefault: 'elevenlabs' | 'vobiz', envFor: () => Record<string, string | undefined> = demoEnv) {
     setPhoneEnv();
     process.env.SAHAYAKAI_REQUEST_SIGNING_KEY = 'test-signing-key-not-real-0123456789';
     _resetVobizKeyCacheForTest();
@@ -124,7 +145,7 @@ async function setup(schoolDefault: 'elevenlabs' | 'vobiz') {
     await repo.upsertGuardians(ORG, [guardian('g1', { phoneEnc: encryptPhone('+919811111111'), phoneHash: hashPhone('+919811111111'), phoneLast4: '1111', phoneClass: 'mobile', crmLanguage: 'English', studentIds: ['s1'] })]);
     await repo.upsertPreferences([prefs('g1', { notices: 'granted', progress: 'granted', recorded_conversation: 'granted' })]);
     const fetchImpl = providerFetch();
-    const deps: RiyaDeps = { repo, calls, callbacks: createMemoryCallbackRepo(), clock: testClock(new Date('2026-10-07T05:30:00Z')), env: env(), http: { fetchImpl: fetchImpl as unknown as typeof fetch } };
+    const deps: RiyaDeps = { repo, calls, callbacks: createMemoryCallbackRepo(), clock: testClock(new Date('2026-10-07T05:30:00Z')), env: envFor(), http: { fetchImpl: fetchImpl as unknown as typeof fetch } };
     return { deps, repo, calls, fetchImpl };
 }
 
@@ -136,7 +157,7 @@ async function startWith(deps: RiyaDeps, choice: 'elevenlabs' | 'vobiz' | null) 
 
 afterEach(() => { delete process.env.SAMPARK_LIVE_DIAL_ENABLED; });
 
-describe('the session choice routes the call on the server', () => {
+describe('demo chooser on: the session choice routes the call on the server', () => {
     it('Vobiz chosen → the Vobiz API is dialled and the record says vobiz', async () => {
         const { deps, fetchImpl } = await setup('elevenlabs');
         const r = await startWith(deps, 'vobiz');
@@ -171,7 +192,7 @@ describe('the session choice routes the call on the server', () => {
 
     it('a choice cannot bypass a gate: an unconfigured provider is a blocker, never a dial', async () => {
         const { deps, fetchImpl, repo } = await setup('elevenlabs');
-        const noVobiz = { ...deps, env: { ...env(), VOBIZ_STREAM_BASE_URL: undefined }, providerChoice: 'vobiz' as const };
+        const noVobiz = { ...deps, env: { ...demoEnv(), VOBIZ_STREAM_BASE_URL: undefined }, providerChoice: 'vobiz' as const };
         const preview = await previewRiyaCall(noVobiz, ORG, { purpose: 'ptm_invitation', guardianId: 'g1', studentId: 's1', facts: PTM });
         expect(preview.ok).toBe(false);
         expect(preview.refusals[0]).toMatchObject({ code: 'PROVIDER_UNAVAILABLE', blocker: 'VOBIZ_UNCONFIGURED' });
@@ -186,5 +207,46 @@ describe('the session choice routes the call on the server', () => {
         expect(opts.find((o) => o.id === 'elevenlabs')?.available).toBe(true);
         expect(opts.find((o) => o.id === 'vobiz')).toMatchObject({ available: false });
         expect(JSON.stringify(opts)).not.toMatch(/tok_test_only|sk_test/);
+    });
+});
+
+describe('default: the school owns its provider and every path follows it', () => {
+    it('a session (or source-call) choice is ignored: the school\'s provider places the call', async () => {
+        const { deps, fetchImpl } = await setup('vobiz', env);
+        const r = await startWith(deps, 'elevenlabs');
+        expect(r.call.provider).toBe('vobiz');
+        expect(String(fetchImpl.mock.calls[0][0])).toContain('api.vobiz.ai');
+    });
+
+    it('a school on ElevenLabs is called on ElevenLabs whatever the cookie says', async () => {
+        const { deps, fetchImpl } = await setup('elevenlabs', env);
+        const r = await startWith(deps, 'vobiz');
+        expect(r.call.provider).toBe('elevenlabs');
+        expect(String(fetchImpl.mock.calls[0][0])).not.toContain('api.vobiz.ai');
+    });
+
+    it('when the school changes provider, the next call uses the new one and old calls keep theirs', async () => {
+        const { deps, calls, repo } = await setup('elevenlabs', env);
+        const a = await startWith(deps, null);
+        await deps.repo.releaseLock(`riya:${ORG}`, a.call.id);
+        await calls.mutateCall(ORG, a.call.id, (c) => ({ ...c, state: 'completed' }));
+        const s = (await repo.getSchool(ORG)) as SamparkSchool;
+        await repo.upsertSchool({ ...s, conversationProvider: 'vobiz' });
+        const b = await startWith(deps, null);
+        expect((await calls.getCall(ORG, a.call.id))?.provider).toBe('elevenlabs');
+        expect((await calls.getCall(ORG, b.call.id))?.provider).toBe('vobiz');
+    });
+
+    it('availability reports the school\'s provider, not a stale cookie', async () => {
+        const { repo } = await setup('vobiz', env);
+        const a = riyaAvailability((await repo.getSchool(ORG)) as SamparkSchool, env(), new Date(), 'elevenlabs');
+        expect(a.selectedProvider).toBe('vobiz');
+    });
+
+    it('options carry deployment prices (null when not set), never configuration values', () => {
+        const priced = providerOptions({ ...env(), SAMPARK_PRICE_INR_PER_MIN_ELEVENLABS: '9.5', SAMPARK_PRICE_AS_OF: '2026-11-15' });
+        expect(priced.find((o) => o.id === 'elevenlabs')?.price).toEqual({ inrPerMinute: 9.5, asOf: '2026-11-15' });
+        expect(priced.find((o) => o.id === 'vobiz')?.price).toEqual({ inrPerMinute: null, asOf: '2026-11-15' });
+        expect(JSON.stringify(priced)).not.toMatch(/tok_test_only|sk_test|MA_TEST_ONLY/);
     });
 });

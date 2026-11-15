@@ -68,6 +68,8 @@ import { SAMPARK_NONPROD_DATABASE } from '@/lib/sampark/repo/factory';
 import { SARGVISION_ORG_ID } from '@/lib/sampark/sargvision';
 import { acceptSynopsis, rulesSynopsis, spokenTurns, synopsisNeedsWrite, type RiyaSynopsis, type SynopsisInput } from '@/lib/sampark/conversation/synopsis';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
+import { providerChooserEnabled } from '@/lib/sampark/provider-choice';
+import { providerPrice, type ProviderPrice } from '@/lib/sampark/provider-pricing';
 import { type Clock, type SamparkRepo, systemClock } from '@/lib/sampark/ports';
 import type { BlockReason, CallDestination, Campaign, SamparkGuardian, SamparkSchool, SamparkStudent } from '@/types/sampark';
 import { wakeBatchForCall } from '@/server/sampark/batch-wake';
@@ -108,9 +110,11 @@ export interface RiyaDeps {
     /** Writes a call synopsis with the model (real calls only). Absent or failing: the rules synopsis. */
     synopsis?: (input: SynopsisInput) => Promise<{ bullets: string[]; callbackRequest: string | null }>;
     /**
-     * The calling provider this person chose when entering SamparkAI (the session cookie, read
-     * server-side by the Riya routes; or, for a scheduled callback, its source call's provider).
-     * Absent: the school's default. It only picks the backend: every gate still applies.
+     * A per-request provider override: the demo chooser's session cookie (read by the Riya routes),
+     * a batch's campaign provider, or a scheduled callback's source-call provider. It takes effect
+     * ONLY when the internal demo chooser is on (SAMPARK_PROVIDER_CHOOSER); otherwise
+     * the school's own provider is used and this is ignored. It only picks the backend: every gate
+     * still applies.
      */
     providerChoice?: RealConversationProvider | null;
 }
@@ -151,6 +155,23 @@ function testDailyCap(env: Env): number {
 /** The operator confirmed the agent records no audio and keeps no transcript (privacy settings on the ElevenLabs agent). */
 function recordingOffConfirmed(env: Env): boolean {
     return env.SAMPARK_RIYA_RECORDING_OFF_CONFIRMED === 'true';
+}
+
+/**
+ * Must a family have agreed to recorded calls before this provider may call them?
+ *
+ * - ElevenLabs: yes, unless the operator confirmed the hosted agent records no audio
+ *   (SAMPARK_RIYA_RECORDING_OFF_CONFIRMED).
+ * - Vobiz: our dial request carries no record flag and the answer XML has no Record verb, so no
+ *   audio is stored. The audio is still streamed to the speech model during the call, so the
+ *   exemption is an explicit operator decision: SAMPARK_VOBIZ_NOT_RECORDED_CONFIRMED (or the
+ *   general confirmation above). Off by default: until someone decides, both providers ask.
+ * - Practice / unknown: as today (the general confirmation).
+ */
+export function recordingConsentRequired(env: Env, provider: ConversationProviderKind | null): boolean {
+    if (recordingOffConfirmed(env)) return false;
+    if (provider === 'vobiz') return env.SAMPARK_VOBIZ_NOT_RECORDED_CONFIRMED !== 'true';
+    return true;
 }
 
 export type RiyaBlocker =
@@ -194,22 +215,52 @@ export interface RiyaAvailability {
 }
 
 /**
- * The real provider for this request: the person's session choice when there is one, else the
- * school's default (missing or anything unexpected = ElevenLabs, the reference).
+ * The real provider for this request. The SCHOOL owns it (`conversationProvider`, set when calls
+ * are switched on and changed by an admin in Settings; missing = ElevenLabs, the reference).
+ * A per-request override (`choice`) counts only on an internal demo deployment where the session
+ * chooser is on; everywhere else the school's provider wins, so single calls, class-wide batches
+ * and scheduled callbacks all follow the school's decision.
  */
-export function selectedProvider(school: Pick<SamparkSchool, 'conversationProvider'>, choice?: RealConversationProvider | null): RealConversationProvider {
-    if (choice === 'vobiz' || choice === 'elevenlabs') return choice;
+export function selectedProvider(school: Pick<SamparkSchool, 'conversationProvider'>, choice?: RealConversationProvider | null, env: Env = process.env): RealConversationProvider {
+    if (providerChooserEnabled(env) && (choice === 'vobiz' || choice === 'elevenlabs')) return choice;
     return school.conversationProvider === 'vobiz' ? 'vobiz' : 'elevenlabs';
 }
 
-/** Which providers this deployment can offer at the SamparkAI entry (names of missing settings only). */
-export function providerOptions(env: Env = process.env): { id: RealConversationProvider; available: boolean; problems: string[] }[] {
-    if (!riyaEnabled(env)) return REAL_CONVERSATION_PROVIDERS.map((id) => ({ id, available: false, problems: ['SAMPARK_ELEVENLABS_ENABLED'] }));
+/** The school's own provider, ignoring any override. */
+export function schoolProvider(school: Pick<SamparkSchool, 'conversationProvider'>): RealConversationProvider {
+    return school.conversationProvider === 'vobiz' ? 'vobiz' : 'elevenlabs';
+}
+
+/** How each provider differs, for the school's choice card. Plain facts only; the card translates them. */
+export const PROVIDER_DIFFERENCES: Record<RealConversationProvider, string[]> = {
+    elevenlabs: [
+        'Calls run on the hosted ElevenLabs voice agent',
+        'Class-wide batches are limited by the ElevenLabs plan (6 to 40 calls at once)',
+        'Families must agree to recorded calls unless recording is confirmed off',
+    ],
+    vobiz: [
+        "Calls run on SahayakAI's own voice bridge: Vobiz phone line with Gemini Live",
+        'Class-wide batches are limited by the school\'s Vobiz channels',
+        'No call audio is stored',
+    ],
+};
+
+export interface ProviderOption {
+    id: RealConversationProvider;
+    available: boolean;
+    /** Names of missing settings only, never values. */
+    problems: string[];
+    price: ProviderPrice;
+}
+
+/** Which providers this deployment can offer a school, with their prices (names of missing settings only). */
+export function providerOptions(env: Env = process.env): ProviderOption[] {
+    if (!riyaEnabled(env)) return REAL_CONVERSATION_PROVIDERS.map((id) => ({ id, available: false, problems: ['SAMPARK_ELEVENLABS_ENABLED'], price: providerPrice(id, env) }));
     const el = readElevenLabsConfig(env);
     const vb = readVobizRiyaConfig(env);
     return [
-        { id: 'elevenlabs', available: el.ok, problems: el.ok ? [] : el.problems },
-        { id: 'vobiz', available: vb.ok, problems: vb.ok ? [] : vb.problems },
+        { id: 'elevenlabs', available: el.ok, problems: el.ok ? [] : el.problems, price: providerPrice('elevenlabs', env) },
+        { id: 'vobiz', available: vb.ok, problems: vb.ok ? [] : vb.problems, price: providerPrice('vobiz', env) },
     ];
 }
 
@@ -224,7 +275,7 @@ function providerFor(school: SamparkSchool, env: Env, choice?: RealConversationP
     if (school.isDemo) return { blocker: 'DEMO_SCHOOL_PRACTICE_ONLY', problems: [] };
     if (env.SAMPARK_LIVE_DIAL_ENABLED !== 'true') return { blocker: 'LIVE_DIAL_DISABLED', problems: [] };
     // Which backend runs the call is the school's choice; every rule below applies to both.
-    const chosen = selectedProvider(school, choice);
+    const chosen = selectedProvider(school, choice, env);
     let cfg: { ok: true; config: ProviderConfig } | { ok: false; problems: string[] };
     if (chosen === 'vobiz') {
         const v = readVobizRiyaConfig(env);
@@ -362,7 +413,7 @@ export function stagingTestWindowOverride(
 export function riyaAvailability(school: SamparkSchool, env: Env = process.env, now: Date = new Date(), choice?: RealConversationProvider | null): RiyaAvailability {
     const p = providerFor(school, env, choice);
     const cfg = readElevenLabsConfig(env);
-    const chosen = selectedProvider(school, choice);
+    const chosen = selectedProvider(school, choice, env);
     const vobizCfg = chosen === 'vobiz' ? readVobizRiyaConfig(env) : null;
     return {
         enabled: riyaEnabled(env),
@@ -378,7 +429,7 @@ export function riyaAvailability(school: SamparkSchool, env: Env = process.env, 
         storeTranscripts: storeTranscripts(env),
         transcriptDays: transcriptDays(env),
         testDailyCap: testDailyCap(env),
-        recordingConsentRequired: !recordingOffConfirmed(env),
+        recordingConsentRequired: recordingConsentRequired(env, chosen),
         agentBranchId: cfg.ok ? maskId(cfg.config.branchId ?? null) : null,
         nonProductionDatabase: env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE,
         // Vobiz results are signed by the bridge with the shared request-signing key.
@@ -647,8 +698,9 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
 
     if (isRealProvider(provider) && sargvisionRosterMode(env, school) && !rosterNumberAllowed(env, guardian)) refusals.push({ code: 'NUMBER_NOT_ALLOWED' });
 
-    // The agent records audio and keeps transcripts unless the operator has turned that off.
-    if (!recordingOffConfirmed(env) && preferences?.consent?.recorded_conversation?.status !== 'granted') {
+    // Recorded-call consent, per provider (recordingConsentRequired): the ElevenLabs agent records
+    // unless turned off; Vobiz stores no audio, exempt only once the operator confirms it.
+    if (recordingConsentRequired(env, provider) && preferences?.consent?.recorded_conversation?.status !== 'granted') {
         refusals.push({ code: 'RECORDING_CONSENT_REQUIRED' });
     }
 

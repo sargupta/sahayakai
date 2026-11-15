@@ -1,7 +1,18 @@
 /**
- * The calling-provider choice made at the SahayakAI → SamparkAI boundary.
+ * The per-session calling-provider chooser — an INTERNAL DEMO tool since 2026-11-15.
  *
- * One authoritative mechanism: the person picks "ElevenLabs Calls" or "Vobiz Calls" on
+ * The school owns its calling provider (`SamparkSchool.conversationProvider`, chosen when the
+ * school switches on calls and changed by an admin in Settings → Calling provider, audited).
+ * Every call path (single Riya call, class-wide batch, scheduled callback) uses it.
+ *
+ * Only when SAMPARK_PROVIDER_CHOOSER === 'true' (server-side; internal demos, the local launcher)
+ * does the per-session chooser below run, and only then does a session choice override the
+ * school's provider. Off by default: no middleware gate and a stale cookie has no effect.
+ * The SahayakAI → SamparkAI LINK goes through the chooser only when its public twin (the same
+ * name with the public prefix, read in src/lib/products.ts) is also 'true' — a public flag only
+ * ever picks a link, never server behaviour. A demo deployment sets both.
+ *
+ * Demo mechanism: the person picks "ElevenLabs Calls" or "Vobiz Calls" on
  * /sampark/choose-provider every time they enter SamparkAI from SahayakAI. The server stores
  * the choice in an httpOnly, per-browser-session cookie (set only by POST /api/sampark/provider,
  * after sign-in, and only for a provider this deployment has configured). The Riya routes read it
@@ -16,6 +27,16 @@ export const PROVIDER_COOKIE = 'sampark_provider';
 export const CHOOSER_SEGMENT = 'choose-provider';
 export const PROVIDER_CHOICES = ['elevenlabs', 'vobiz'] as const;
 export type ProviderChoice = (typeof PROVIDER_CHOICES)[number];
+
+type Env = Record<string, string | undefined>;
+
+/**
+ * Is the per-session demo chooser switched on? A server-side flag (read by the middleware and
+ * the Riya server code, never shipped to the browser). Off unless exactly 'true'.
+ */
+export function providerChooserEnabled(env: Env = process.env): boolean {
+    return env.SAMPARK_PROVIDER_CHOOSER === 'true';
+}
 
 export function parseProviderChoice(value: string | null | undefined): ProviderChoice | null {
     return value === 'elevenlabs' || value === 'vobiz' ? value : null;

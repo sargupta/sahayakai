@@ -9,7 +9,10 @@ import { SamparkAuthGate } from "@/components/sampark/sampark-auth-gate";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
-import { ApiError, enableSampark, getMySchools, type SamparkMeSchool } from "@/lib/api/sampark";
+import { ApiError, enableSampark, getMySchools, getProviderChoice, type SamparkMeSchool } from "@/lib/api/sampark";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ProviderChoiceCards, type ProviderId } from "@/components/sampark/provider-choice-cards";
+import { ESTIMATE_DEFAULTS } from "@/lib/sampark/provider-pricing";
 import { StatusPill } from "@/components/sampark/status-pill";
 import { ErrorPanel, LoadingBlock, errorMessage } from "@/components/sampark/states";
 import { useSamparkQuery } from "@/components/sampark/use-sampark-query";
@@ -21,13 +24,23 @@ function SchoolRow({ school }: { school: SamparkMeSchool }) {
     const { toast } = useToast();
     const router = useRouter();
     const [enabling, setEnabling] = useState(false);
+    const [choosing, setChoosing] = useState(false);
+    const [provider, setProvider] = useState<ProviderId | null>(null);
     const samparkHref = useSamparkHref();
     const href = samparkHref(`/${encodeURIComponent(school.orgId)}`);
+    // What this deployment offers, with prices: the school picks one by budget on the way in.
+    const offer = useSamparkQuery(choosing ? (signal) => getProviderChoice({ signal }) : null, [choosing]);
+    const available = (offer.data?.options ?? []).filter((o) => o.available);
 
-    const enable = async () => {
+    const start = () => {
+        setProvider(null);
+        setChoosing(true);
+    };
+
+    const enable = async (chosen: ProviderId | null) => {
         setEnabling(true);
         try {
-            await enableSampark(school.orgId, school.displayName);
+            await enableSampark(school.orgId, school.displayName, chosen ?? undefined);
             toast({ title: t("School calls switched on in Practice mode") });
             router.push(href);
         } catch (err) {
@@ -59,11 +72,47 @@ function SchoolRow({ school }: { school: SamparkMeSchool }) {
                     </Link>
                 </Button>
             ) : (
-                <Button type="button" onClick={enable} disabled={enabling} className="shrink-0">
-                    {enabling && <Loader2 aria-hidden="true" className="animate-spin" />}
+                <Button type="button" onClick={start} disabled={enabling} className="shrink-0">
                     {t("Enable school calls")}
                 </Button>
             )}
+            <Dialog open={choosing} onOpenChange={(open) => !enabling && setChoosing(open)}>
+                <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>{t("Choose how your school's calls are placed")}</DialogTitle>
+                        <DialogDescription>
+                            {t("Pick the calling provider that fits your budget. Every call your school makes uses it, and an administrator can change it later in Settings. Calls start in Practice mode: nothing rings until you switch to Test.")}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {!offer.data ? (
+                        <p className="type-body text-muted-foreground">{offer.error ? errorMessage(t, offer.error) : t("Loading")}</p>
+                    ) : available.length === 0 ? (
+                        <p className="type-body text-muted-foreground">{t("No calling provider is set up yet. You can switch on school calls now and choose a provider in Settings later.")}</p>
+                    ) : (
+                        <ProviderChoiceCards
+                            options={offer.data.options}
+                            selected={provider ?? (available.length === 1 ? available[0].id : null)}
+                            onSelect={setProvider}
+                            defaults={{ families: 0, ...ESTIMATE_DEFAULTS }}
+                            disabled={enabling}
+                        />
+                    )}
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setChoosing(false)} disabled={enabling}>
+                            {t("Cancel")}
+                        </Button>
+                        <Button
+                            type="button"
+                            data-testid="enable-with-provider"
+                            disabled={enabling || !offer.data || (available.length > 1 && !provider)}
+                            onClick={() => void enable(provider ?? (available.length === 1 ? available[0].id : null))}
+                        >
+                            {enabling && <Loader2 aria-hidden="true" className="animate-spin" />}
+                            {t("Switch on school calls")}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </li>
     );
 }

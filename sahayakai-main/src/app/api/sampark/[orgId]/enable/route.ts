@@ -1,8 +1,11 @@
 /**
  * POST /api/sampark/[orgId]/enable — switch Sampark on for a school.
  *
- * Input:  { displayName: string, spokenName?: Record<ParentLanguage, string> }
- *         (spokenName is an optional addition; Indic names must be in their own script)
+ * Input:  { displayName: string, spokenName?: Record<ParentLanguage, string>,
+ *           conversationProvider?: 'elevenlabs' | 'vobiz' }
+ *         (spokenName is an optional addition; Indic names must be in their own script;
+ *          conversationProvider is the calling provider the school chose by budget — 409
+ *          PROVIDER_NOT_AVAILABLE when this deployment has not set it up)
  * Output: SamparkSchoolView — created in PRACTICE mode if absent (simulated
  *         carrier only), returned unchanged if it already exists. `isDemo` is
  *         copied from organizations/{orgId}.isDemoData (class gate 4: a demo
@@ -17,6 +20,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { getOrganizationFacts } from '@/server/sampark/auth';
 import { errorResponse, guardOrgRoute, parseBody, samparkContext } from '@/server/sampark/http';
+import { assertProviderAvailable } from '@/server/sampark/provider-setting';
 import { EnableSchoolSchema, enableSchool, schoolView } from '@/server/sampark/school';
 
 export const runtime = 'nodejs';
@@ -30,8 +34,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
     try {
         const org = await getOrganizationFacts(guard.orgId);
         if (!org) return NextResponse.json({ error: 'ORG_NOT_FOUND', message: 'Organisation not found' }, { status: 404 });
+        if (body.data.conversationProvider) assertProviderAvailable(body.data.conversationProvider);
         const ctx = await samparkContext();
-        const school = await enableSchool(ctx, guard.orgId, guard.uid, { displayName: body.data.displayName, spokenName: body.data.spokenName, isDemo: org.isDemo });
+        const school = await enableSchool(ctx, guard.orgId, guard.uid, {
+            displayName: body.data.displayName,
+            spokenName: body.data.spokenName,
+            isDemo: org.isDemo,
+            conversationProvider: body.data.conversationProvider,
+        });
         // Never the raw record: it carries the test phone's ciphertext and hash.
         return NextResponse.json(schoolView(school));
     } catch (err) {
