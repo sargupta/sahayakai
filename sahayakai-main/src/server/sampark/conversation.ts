@@ -269,6 +269,11 @@ export function sargvisionRosterMode(env: Env, school: SamparkSchool): boolean {
         && school.mode === 'test';
 }
 
+/** Sargvision test class callable at any hour and on off-days (local roster mode only). */
+export function sargvisionAnytimeCalls(env: Env, school: SamparkSchool): boolean {
+    return env.SAMPARK_SARGVISION_ANYTIME_CALLS?.trim() === 'true' && sargvisionRosterMode(env, school);
+}
+
 function rosterNumberAllowed(env: Env, guardian: SamparkGuardian): boolean {
     return allowedTestNumbers(env).some((e164) => hashPhone(e164) === guardian.phoneHash);
 }
@@ -287,6 +292,16 @@ function rosterContactE164(guardian: SamparkGuardian, env: Env): string {
  * the allow-list, until it expires (at most 3 hours). The per-contact daily cap limits attempts.
  */
 export function sargvisionAfterHoursOverride(env: Env, school: SamparkSchool, guardian: SamparkGuardian, destination: CallDestination | null, now: Date): StagingTestWindowOverride {
+    // SAMPARK_SARGVISION_ANYTIME_CALLS=true (set by the local real-calls launcher): the Sargvision
+    // TEST class — the team's own consented numbers, never parents — may be called on off-days
+    // (Sunday) and outside 10:00–20:00 IST, with no expiry. Only the calling-hours rule is lifted;
+    // roster mode (emulator + non-production + nonprod database + Test mode), the allow-list,
+    // consent, suppression and the per-contact daily cap all still apply.
+    if (sargvisionAnytimeCalls(env, school)) {
+        if (destination !== 'guardian' || !rosterNumberAllowed(env, guardian)) return { active: false, until: null, inactiveReason: 'not_allowed_number' };
+        // No expiry: re-evaluated on every call; `until` is a rolling 24 h so consumers keep a timestamp.
+        return { active: true, until: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(), inactiveReason: null };
+    }
     const arm = school.localAfterHoursTest;
     if (!arm) return { active: false, until: null, inactiveReason: null };
     const untilMs = Date.parse(arm.until);
@@ -622,10 +637,12 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
     const destPreview = provider ? destinationOf(school, guardian, env) : null;
     const stagingOverride = stagingTestWindowOverride(env, school, isRealProvider(provider) ? destPreview?.destination ?? null : null, now);
     const armedAt = school.localAfterHoursTest?.armedAt;
-    const windowOverride = stagingOverride.active || !armedAt || !isRealProvider(provider)
+    const windowOverride = stagingOverride.active || !isRealProvider(provider)
         ? stagingOverride
-        : sargvisionRosterMode(env, school)
+        : sargvisionRosterMode(env, school) && (armedAt || sargvisionAnytimeCalls(env, school))
         ? sargvisionAfterHoursOverride(env, school, guardian, destPreview?.destination ?? null, now)
+        : !armedAt || sargvisionRosterMode(env, school)
+        ? stagingOverride
         : localAfterHoursTestOverride(env, school, student.id, destPreview?.destination ?? null, now,
             (await deps.calls.listCalls(orgId, 100)).filter((c) => isRealProvider(c.provider) && c.createdAt >= armedAt).length);
     let gateLanguage = verdict.kind === 'allow' ? verdict.language : null;

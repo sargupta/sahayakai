@@ -669,6 +669,12 @@ async function main() {
         say(`   VOBIZ CALL MODE: Sargvision class, provider Vobiz Calls; allow-listed: ${allowIds.join(', ')} (numbers not shown); cap ${testCap()}/day per contact. Credentials read from file (not shown).`);
         say(`   Vobiz calls back on ${appEnv.SAMPARK_PUBLIC_BASE_URL}; media stream to ${appEnv.VOBIZ_STREAM_BASE_URL}.`);
     }
+    if (has('real-call') || has('vobiz-call')) {
+        // The Sargvision TEST class (team numbers, consent recorded) may be called any day, any hour:
+        // only the calling-hours / off-day rule is lifted, and only for its allow-listed roster.
+        appEnv.SAMPARK_SARGVISION_ANYTIME_CALLS = 'true';
+        say('   SARGVISION ANYTIME: the Sargvision test class can be called on Sundays/off-days and outside 10:00–20:00 IST (roster numbers only; caps and consent still apply).');
+    }
     say('   PII key, pepper and webhook secret generated; they exist only in this window.');
     say(`   Google Calendar: ${appEnv.GOOGLE_CALENDAR_MODE === 'mock' ? 'local MOCK Google (no real account; set GOOGLE_CALENDAR_CLIENT_ID/_SECRET for real Google)' : 'real Google OAuth client from this shell'}; token key is per run (reconnect after a restart).`);
 

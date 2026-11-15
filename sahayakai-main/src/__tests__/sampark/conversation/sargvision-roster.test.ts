@@ -265,6 +265,29 @@ describe('Sargvision roster calls (Riya service)', () => {
         expect(sargvisionAfterHoursOverride(localEnv(), { ...sv, localAfterHoursTest: { armedAt: arm.armedAt, until: '2026-10-07T20:00:00Z' } }, { phoneHash: hashPhone(ALLOWED[0]) } as never, 'guardian', WED_21_IST)).toMatchObject({ active: false, inactiveReason: 'longer_than_3_hours' });
     });
 
+    // Founder request 2026-11-15: the Sargvision TEST class can be called on Sundays and after hours.
+    const SUN_2330_IST = new Date('2026-10-04T18:00:00Z'); // Sunday (school off-day), 23:30 IST; before the PTM date
+    it('SAMPARK_SARGVISION_ANYTIME_CALLS: Sunday / late night allowed for roster numbers only, and it dials', async () => {
+        const closed = await setupRoster({ at: SUN_2330_IST });
+        expect((await start(closed.deps, 'sv-alyssa')).preview.refusals.map((r) => r.code)).toContain('OUTSIDE_CALLING_HOURS');
+
+        const anytime = await setupRoster({ at: SUN_2330_IST, env: localEnv({ SAMPARK_SARGVISION_ANYTIME_CALLS: 'true' }) });
+        const q = await start(anytime.deps, 'sv-alyssa');
+        expect(q.preview.refusals).toEqual([]);
+        expect(q.preview.ok).toBe(true);
+        await q.run();
+        expect(anytime.fetchImpl).toHaveBeenCalledTimes(1);
+
+        const sv = schoolFixture({ orgId: SARGVISION_ORG_ID, mode: 'test', isDemo: false });
+        const on = localEnv({ SAMPARK_SARGVISION_ANYTIME_CALLS: 'true' });
+        expect(sargvisionAfterHoursOverride(on, sv, { phoneHash: hashPhone(ALLOWED[0]) } as never, 'guardian', SUN_2330_IST)).toMatchObject({ active: true });
+        expect(sargvisionAfterHoursOverride(on, sv, { phoneHash: hashPhone('+919876543210') } as never, 'guardian', SUN_2330_IST)).toMatchObject({ active: false, inactiveReason: 'not_allowed_number' });
+        // Never outside local roster mode: production, another school, Practice mode.
+        expect(sargvisionAfterHoursOverride({ ...on, NODE_ENV: 'production' }, sv, { phoneHash: hashPhone(ALLOWED[0]) } as never, 'guardian', SUN_2330_IST).active).toBe(false);
+        expect(sargvisionAfterHoursOverride(on, { ...sv, orgId: 'hillview-demo' }, { phoneHash: hashPhone(ALLOWED[0]) } as never, 'guardian', SUN_2330_IST).active).toBe(false);
+        expect(sargvisionAfterHoursOverride(on, { ...sv, mode: 'practice' }, { phoneHash: hashPhone(ALLOWED[0]) } as never, 'guardian', SUN_2330_IST).active).toBe(false);
+    });
+
     it('a provider refusal is reported truthfully and does not use the contact’s allowance', async () => {
         const s = await setupRoster({ env: localEnv({ SAMPARK_RIYA_TEST_DAILY_CAP: '1' }) });
         s.fetchImpl.mockImplementationOnce(async () => new Response(JSON.stringify({ detail: { status: 'invalid_request', message: 'bad' } }), { status: 400 }));
