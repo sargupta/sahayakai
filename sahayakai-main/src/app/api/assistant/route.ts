@@ -265,10 +265,10 @@ async function _handler(req: Request) {
         return NextResponse.json(wireResponse);
 
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
         // eslint-disable-next-line no-console
         console.error('[Assistant API] Error:', error);
-        return NextResponse.json({ error: message }, { status: 500 });
+        // Never return model/SDK error text to the client (internal detail leak).
+        return NextResponse.json({ error: 'VIDYA could not answer right now. Please try again.' }, { status: 500 });
     }
 }
 

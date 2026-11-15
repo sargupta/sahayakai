@@ -299,7 +299,6 @@ export async function middleware(request: NextRequest) {
     // (the client doesn't have a token yet at that moment).
     const isPublicApi =
         pathname.startsWith('/api/health') ||
-        pathname.startsWith('/api/ai/quiz/health') ||
         pathname.startsWith('/api-docs') ||
         pathname.startsWith('/api/metrics') ||
         pathname.startsWith('/api/auth/') ||

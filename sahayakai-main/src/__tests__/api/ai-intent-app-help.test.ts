@@ -97,3 +97,23 @@ describe('POST /api/ai/intent — conversation vs app help vs generators', () =>
         expect(mockInstantAnswer).not.toHaveBeenCalled();
     });
 });
+
+// Regression (cost/abuse): every request spent a router-model call with no bound on input.
+describe('POST /api/ai/intent — input bounds', () => {
+    it('a prompt over 4000 characters is refused (413) without calling the model', async () => {
+        const res = await POST(req('x'.repeat(4001)));
+        expect(res.status).toBe(413);
+        expect(mockRouter).not.toHaveBeenCalled();
+    });
+    it('a missing or non-string prompt is refused (400) without calling the model', async () => {
+        const bad = { json: async () => ({ prompt: { $gt: '' } }), headers: { get: (k: string) => (k === 'x-user-id' ? 'teacher-1' : null) } } as unknown as Request;
+        expect((await POST(bad)).status).toBe(400);
+        expect((await POST(req('   '))).status).toBe(400);
+        expect(mockRouter).not.toHaveBeenCalled();
+    });
+    it('a 4000-character prompt still reaches the router', async () => {
+        mockRouter.mockResolvedValue({ type: 'unknown', plannedActions: [] });
+        await POST(req('y'.repeat(4000)));
+        expect(mockRouter).toHaveBeenCalledTimes(1);
+    });
+});

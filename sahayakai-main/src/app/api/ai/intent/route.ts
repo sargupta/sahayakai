@@ -5,6 +5,9 @@ import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 import { getSection } from '@/lib/vidya/app-manifest';
 
+/** Same bound as /api/assistant's MAX_MESSAGE_CHARS. */
+const MAX_INTENT_PROMPT_CHARS = 4000;
+
 const APP_HELP_FALLBACK = 'Everything in SahayakAI is in the sidebar (or press Ctrl/⌘+K to search). Ask me "where is My Library?" or "how do I take attendance?".';
 
 /**
@@ -81,8 +84,15 @@ export async function POST(request: Request) {
         // `uiLanguage` = explicit UI-language override; when present it MUST
         // win for instant answers so a teacher who set the app to Tamil gets
         // a Tamil answer even if they typed/spoke an English-script prompt.
-        const { prompt, language, uiLanguage } = body;
-        promptText = prompt || 'Unknown Prompt';
+        const { prompt, language, uiLanguage } = body ?? {};
+        // Bound what reaches the router model (cost/abuse): same cap as /api/assistant.
+        if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+            return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
+        }
+        if (prompt.length > MAX_INTENT_PROMPT_CHARS) {
+            return NextResponse.json({ error: `prompt is too long (max ${MAX_INTENT_PROMPT_CHARS} characters)` }, { status: 413 });
+        }
+        promptText = prompt;
 
         // 1. Determine Intent and extract params
         const flowOutput = await agentRouterFlow({

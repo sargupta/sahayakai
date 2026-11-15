@@ -15,6 +15,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { mintPublicStreamToken } from '@/lib/sidecar/signing';
 import { logger } from '@/lib/logger';
+import { trustedClientAddress as clientIp } from '@/lib/net/client-address';
 
 export const runtime = 'nodejs';
 
@@ -26,10 +27,6 @@ const opensByIp = new Map<string, number[]>();
 
 const ALLOWED_LANGS = new Set(['en', 'hi', 'kn', 'ta', 'te', 'mr', 'bn', 'gu', 'pa', 'ml', 'or']);
 
-function clientIp(req: NextRequest): string {
-  const fwd = req.headers.get('x-forwarded-for');
-  return (fwd?.split(',')[0] ?? req.headers.get('x-real-ip') ?? 'local').trim();
-}
 
 function allow(ip: string): boolean {
   const now = Date.now();
@@ -40,7 +37,11 @@ function allow(ip: string): boolean {
   }
   recent.push(now);
   opensByIp.set(ip, recent);
-  if (opensByIp.size > 10_000) opensByIp.clear(); // bound memory under a flood
+  // Bound memory under a flood by evicting only EXPIRED windows. Clearing the whole map
+  // (as before) let a caller wipe every address's limit by sending 10,001 addresses.
+  if (opensByIp.size > 10_000) {
+    for (const [k, v] of opensByIp) if (!v.length || now - v[v.length - 1] >= WINDOW_MS) opensByIp.delete(k);
+  }
   return true;
 }
 
