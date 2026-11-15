@@ -1,5 +1,6 @@
 
 import { NextResponse } from 'next/server';
+import { isOwnedStoragePath } from '@/lib/storage/owned-path';
 import { dbAdapter } from '@/lib/db/adapter';
 import { SaveContentSchema } from '@/ai/schemas/content-schemas';
 import { z } from 'zod';
@@ -57,6 +58,13 @@ export async function POST(request: Request) {
         // and Firestore drops docs missing an orderBy field, so saves without
         // it never appeared in My Library. An explicit Save also un-deletes.
         const { Timestamp } = await import('firebase-admin/firestore');
+        // A client-supplied storagePath outside users/<uid>/ is never kept: download and
+        // export sign/fetch whatever path the doc holds (arbitrary-object read otherwise).
+        if (validContent.storagePath !== undefined && !isOwnedStoragePath(userId, validContent.storagePath)) {
+            logger.warn('content/save: dropped foreign storagePath', 'CONTENT', { userId });
+            validContent.storagePath = undefined;
+        }
+
         const existing = await dbAdapter.getContent(userId, validContent.id);
         const persistFields = {
             createdAt: existing?.createdAt ?? Timestamp.now(),

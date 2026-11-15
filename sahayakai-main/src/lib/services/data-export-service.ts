@@ -12,6 +12,7 @@
  */
 
 import { getDb } from '@/lib/firebase-admin';
+import { isOwnedStoragePath } from '@/lib/storage/owned-path';
 import { getStorageInstance } from '@/lib/firebase-admin';
 import { BaseContent, ContentType, UserProfile, CONTENT_TYPES } from '@/types';
 import { logger } from '@/lib/logger';
@@ -22,6 +23,32 @@ import { Writable } from 'stream';
 // ---------------------------------------------------------------------------
 
 export type ExportFormat = 'json' | 'csv' | 'html'; // HTML is print-to-PDF ready
+
+/**
+ * HTML-escape a value interpolated into an exported HTML document. Export content
+ * is user-authored (and the school-wide export packs OTHER teachers' content), so a
+ * `<script>` in a title or description must never become markup on the admin's machine.
+ */
+export function h(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * One CSV cell: always quoted, quotes doubled, and a leading = + - @ (or tab/CR)
+ * neutralised with an apostrophe so a spreadsheet never runs it as a formula
+ * (CSV/formula injection, e.g. a title of `=HYPERLINK(...)`).
+ */
+export function csvCell(value: unknown): string {
+  let s = value === null || value === undefined ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+}
 
 /**
  * Build an ASCII-safe document <title> for print-to-PDF HTML.
@@ -315,14 +342,14 @@ export const dataExportService = {
     const rows = items.map(item => [
       item.id,
       item.type,
-      `"${(item.title || '').replace(/"/g, '""')}"`,
+      item.title,
       item.subject,
       item.gradeLevel,
-      `"${(item.topic || '').replace(/"/g, '""')}"`,
+      item.topic,
       item.language,
       item.createdAt?.toDate?.()?.toISOString() ?? '',
       item.isPublic ? 'true' : 'false',
-    ].join(','));
+    ].map(csvCell).join(','));
 
     return [headers.join(','), ...rows].join('\n');
   },
@@ -333,9 +360,9 @@ export const dataExportService = {
   lessonPlanToHTML(plan: any, metadata: BaseContent): string {
     const activities = (plan.activities || []).map((a: any) => `
       <div class="activity">
-        <h3>${a.phase}: ${a.name} <span class="duration">(${a.duration})</span></h3>
-        <p>${a.description}</p>
-        ${a.teacherTips ? `<p class="tip"><strong>Teacher Tip:</strong> ${a.teacherTips}</p>` : ''}
+        <h3>${h(a.phase)}: ${h(a.name)} <span class="duration">(${h(a.duration)})</span></h3>
+        <p>${h(a.description)}</p>
+        ${a.teacherTips ? `<p class="tip"><strong>Teacher Tip:</strong> ${h(a.teacherTips)}</p>` : ''}
       </div>
     `).join('');
 
@@ -359,34 +386,34 @@ export const dataExportService = {
   </style>
 </head>
 <body>
-  <h1>${metadata.title || plan.title}</h1>
+  <h1>${h(metadata.title || plan.title)}</h1>
   <div class="meta">
-    <span><strong>Subject:</strong> ${metadata.subject}</span>
-    <span><strong>Grade:</strong> ${metadata.gradeLevel}</span>
-    <span><strong>Duration:</strong> ${plan.duration || 'N/A'}</span>
-    <span><strong>Language:</strong> ${metadata.language}</span>
+    <span><strong>Subject:</strong> ${h(metadata.subject)}</span>
+    <span><strong>Grade:</strong> ${h(metadata.gradeLevel)}</span>
+    <span><strong>Duration:</strong> ${h(plan.duration || 'N/A')}</span>
+    <span><strong>Language:</strong> ${h(metadata.language)}</span>
   </div>
 
   <h2>Learning Objectives</h2>
   <ul class="objectives">
-    ${(plan.objectives || []).map((o: string) => `<li>${o}</li>`).join('')}
+    ${(plan.objectives || []).map((o: string) => `<li>${h(o)}</li>`).join('')}
   </ul>
 
   ${plan.keyVocabulary?.length ? `
   <h2>Key Vocabulary</h2>
   <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%">
     <tr><th>Term</th><th>Meaning</th></tr>
-    ${plan.keyVocabulary.map((v: any) => `<tr><td>${v.term}</td><td>${v.meaning}</td></tr>`).join('')}
+    ${plan.keyVocabulary.map((v: any) => `<tr><td>${h(v.term)}</td><td>${h(v.meaning)}</td></tr>`).join('')}
   </table>` : ''}
 
   <h2>Materials</h2>
-  <ul>${(plan.materials || []).map((m: string) => `<li>${m}</li>`).join('')}</ul>
+  <ul>${(plan.materials || []).map((m: string) => `<li>${h(m)}</li>`).join('')}</ul>
 
   <h2>Activities</h2>
   ${activities}
 
-  ${plan.assessment ? `<h2>Assessment</h2><p>${plan.assessment}</p>` : ''}
-  ${plan.homework ? `<h2>Homework</h2><p>${plan.homework}</p>` : ''}
+  ${plan.assessment ? `<h2>Assessment</h2><p>${h(plan.assessment)}</p>` : ''}
+  ${plan.homework ? `<h2>Homework</h2><p>${h(plan.homework)}</p>` : ''}
 
   <div class="footer">
     Exported from SahayakAI on ${new Date().toLocaleDateString('en-IN')} |
@@ -403,7 +430,7 @@ export const dataExportService = {
     const questions = (quiz.questions || []).map((q: any, i: number) => {
       let body = '';
       if (q.type === 'multiple-choice') {
-        body = `<ol type="A">${(q.options || []).map((o: string) => `<li>${o}</li>`).join('')}</ol>`;
+        body = `<ol type="A">${(q.options || []).map((o: string) => `<li>${h(o)}</li>`).join('')}</ol>`;
       } else if (q.type === 'true-false') {
         body = '<p>True / False</p>';
       } else {
@@ -411,15 +438,15 @@ export const dataExportService = {
       }
       return `
         <div class="question">
-          <p><strong>Q${i + 1}.</strong> ${q.text}
-            <span class="difficulty">[${q.difficulty}]</span>
+          <p><strong>Q${i + 1}.</strong> ${h(q.text)}
+            <span class="difficulty">[${h(q.difficulty)}]</span>
           </p>
           ${body}
         </div>`;
     }).join('');
 
     const answerKey = (quiz.questions || []).map((q: any, i: number) =>
-      `<tr><td>Q${i + 1}</td><td>${q.correctAnswer}</td><td>${q.explanation || ''}</td></tr>`
+      `<tr><td>Q${i + 1}</td><td>${h(q.correctAnswer)}</td><td>${h(q.explanation || '')}</td></tr>`
     ).join('');
 
     return `<!DOCTYPE html>
@@ -440,10 +467,10 @@ export const dataExportService = {
   </style>
 </head>
 <body>
-  <h1>${metadata.title || metadata.topic}</h1>
+  <h1>${h(metadata.title || metadata.topic)}</h1>
   <div class="meta">
-    <strong>Subject:</strong> ${metadata.subject} |
-    <strong>Grade:</strong> ${metadata.gradeLevel} |
+    <strong>Subject:</strong> ${h(metadata.subject)} |
+    <strong>Grade:</strong> ${h(metadata.gradeLevel)} |
     <strong>Questions:</strong> ${quiz.questions?.length || 0}
   </div>
   <div class="student-info" style="margin:16px 0; border:1px solid #ccc; padding:12px;">
@@ -570,7 +597,8 @@ export const dataExportService = {
         );
 
         // If there's a GCS file, include the original
-        if (item.storagePath) {
+        // Only the exporting teacher's own objects (users/<uid>/...) are ever fetched.
+        if (item.storagePath && isOwnedStoragePath(request.userId, item.storagePath)) {
           const fileBuffer = await this.getStorageFile(item.storagePath);
           if (fileBuffer) {
             const ext = item.storagePath.split('.').pop() || 'bin';
