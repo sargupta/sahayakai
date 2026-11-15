@@ -143,3 +143,14 @@ Skipped tests are not counted as passed. Environment limits:
 4. Run a person-in-the-loop check of VIDYA voice in Chrome (mic, barge-in, reconnect, tab close).
 5. Do one authorised staging deploy, then one webhook round-trip from ElevenLabs to the deployed URL, before calling Riya "operational".
 6. Turn on `CSP_ENFORCED` after a report-only soak.
+
+## 8. Follow-up changes (2026-11-15 evening, founder requests)
+
+| Commit | Change | Verification |
+|---|---|---|
+| 2e4eaa99 | VIDYA start latency: stream token minted in parallel with mic/audio setup; one shared ADC credentials object for every Live session (was ~1.65 s per tap); sidecar warms ADK imports + credentials at boot (~2.4 s cold). VIDYA introduces herself as "I'm VIDYA", never "voice assistant". | 62 VIDYA Jest tests; 356 Python VIDYA tests; warm-up confirmed in the sidecar log (`vidya_voice.warm_up_done credentials=True`). Real-microphone timing not measured. |
+| 035524bb, 4f58968a | Sidebar: no "Start here!" spotlight, no "New" badge (class gate `sidebar-no-feature-highlights.test.ts`). Big VIDYA sphere 26% of stage (was 30%): 162 → 140 px on the landing hero; floating mic orb unchanged at 64 px. | Measured in the browser on :3000. |
+| 419ef124 | `Start-Sahayak-Demo.cmd` starts real calls (ElevenLabs + Vobiz, Sargvision roster only) whenever the credential files exist; `SAHAYAK_PRACTICE_ONLY=1` forces Practice. | Both providers report `available: true`; no-dial preflight passes for both up to calling hours. |
+| ac42c581 | `SAMPARK_SARGVISION_ANYTIME_CALLS` (set by that launcher): Sargvision TEST class callable on Sundays/off-days and after hours, local roster mode only, allow-listed numbers only. | `sargvision-roster.test.ts` (Sunday 23:30 IST allowed + dialled once; refused without the flag, in production, other school, Practice, non-allow-listed number). |
+
+After these: full Jest **5,871 passed, 0 failed, 30 skipped**; `tsc` clean; `next build` exit 0 (165/165).
