@@ -38,6 +38,9 @@ substitutions:
   _ELEVENLABS_AGENT_ID: ''
   _ELEVENLABS_PHONE_NUMBER_ID: ''
   _ELEVENLABS_SOURCE_AGENT_ID: ''
+  # 'true' lets staging call through the original agent when no clone exists (founder decision,
+  # 2026-11-16, staging only). Leave 'false' wherever a clone is available.
+  _ELEVENLABS_ALLOW_SOURCE_AGENT: 'false'
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -104,9 +107,12 @@ steps:
         for v in "_ELEVENLABS_PHONE_NUMBER_ID=${_ELEVENLABS_PHONE_NUMBER_ID}" "_ELEVENLABS_SOURCE_AGENT_ID=${_ELEVENLABS_SOURCE_AGENT_ID}"; do
           [ -n "$${v#*=}" ] || { echo "missing substitution $${v%%=*}"; exit 1; }
         done
-        # The source agent is the exported original; calls must go through a clone of it.
-        [ "${_ELEVENLABS_AGENT_ID}" != "${_ELEVENLABS_SOURCE_AGENT_ID}" ] || { echo "refusing: the agent is the source agent"; exit 1; }
+        # The source agent is the exported original; calls normally go through a clone of it.
+        # Calling through the original needs the explicit override (the app refuses otherwise).
+        if [ "${_ELEVENLABS_AGENT_ID}" = "${_ELEVENLABS_SOURCE_AGENT_ID}" ] && [ "${_ELEVENLABS_ALLOW_SOURCE_AGENT}" != "true" ]; then
+          echo "refusing: the agent is the source agent (pass _ELEVENLABS_ALLOW_SOURCE_AGENT=true to allow it on staging)"; exit 1
+        fi
         gcloud run services update ${_SERVICE} --region=${_REGION} --project=$PROJECT_ID --quiet \
           --update-secrets=ELEVENLABS_API_KEY=RIYA_ELEVENLABS_API_KEY:latest,ELEVENLABS_WEBHOOK_SECRET=RIYA_ELEVENLABS_WEBHOOK_SECRET:latest \
-          --update-env-vars=ELEVENLABS_AGENT_ID=${_ELEVENLABS_AGENT_ID},ELEVENLABS_AGENT_PHONE_NUMBER_ID=${_ELEVENLABS_PHONE_NUMBER_ID},ELEVENLABS_SOURCE_AGENT_ID=${_ELEVENLABS_SOURCE_AGENT_ID}
+          --update-env-vars=ELEVENLABS_AGENT_ID=${_ELEVENLABS_AGENT_ID},ELEVENLABS_AGENT_PHONE_NUMBER_ID=${_ELEVENLABS_PHONE_NUMBER_ID},ELEVENLABS_SOURCE_AGENT_ID=${_ELEVENLABS_SOURCE_AGENT_ID},ELEVENLABS_ALLOW_SOURCE_AGENT=${_ELEVENLABS_ALLOW_SOURCE_AGENT}
     waitFor: [deploy]
