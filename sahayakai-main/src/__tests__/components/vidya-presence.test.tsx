@@ -65,11 +65,11 @@ describe('VidyaPresence', () => {
         }
     });
 
-    it('compact orb is 56px and has no wordmark (does not cover page controls)', () => {
+    it('compact orb is 64px and has no wordmark (does not cover page controls)', () => {
         const { container } = render(<VidyaPresence state="idle" size="compact" onActivate={() => {}} label="x" />);
         const stage = container.querySelector('.vidya-stage')!;
-        expect(stage.className).toContain('h-14');
-        expect(stage.className).toContain('w-14');
+        expect(stage.className).toContain('h-16');
+        expect(stage.className).toContain('w-16');
         expect(container.querySelector('.vidya-wordmark')).toBeNull();
     });
 });

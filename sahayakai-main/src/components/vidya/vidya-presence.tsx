@@ -143,7 +143,7 @@ export function VidyaPresence({
         "vidya-stage relative",
         size === "hero" && "w-full max-w-[540px]",
         size === "workspace" && "w-full max-w-[640px]",
-        compact && "h-14 w-14", // 56px: the floating orb, a touch smaller than the old 64px
+        compact && "h-16 w-16",
         className,
       )}
       style={compact ? undefined : { aspectRatio: `${VB_W} / ${VB_H}` }}

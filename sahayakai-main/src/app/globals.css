@@ -94,7 +94,7 @@
 /* The orb button — it IS the control. */
 .vidya-sphere {
   position: relative;
-  width: 30%;
+  width: 26%; /* the big VIDYA sphere: ~13% smaller than the original 30% */
   aspect-ratio: 1;
   border-radius: 9999px;
   cursor: pointer;
@@ -105,7 +105,7 @@
 .vidya-stage[data-size="compact"] .vidya-sphere { width: 100%; }
 @media (max-width: 640px) {
   .vidya-stage[data-size="hero"] .vidya-sphere,
-  .vidya-stage[data-size="workspace"] .vidya-sphere { width: 38%; }
+  .vidya-stage[data-size="workspace"] .vidya-sphere { width: 33%; }
 }
 .vidya-sphere:focus { outline: none; }
 .vidya-sphere:focus-visible { outline: 3px solid hsl(var(--saffron-700)); outline-offset: 5px; }
@@ -149,7 +149,7 @@
   height: auto;
   aspect-ratio: 1;
 }
-.vidya-stage[data-size="compact"] .vidya-icon { width: 21px; }
+.vidya-stage[data-size="compact"] .vidya-icon { width: 24px; }
 .vidya-wordmark {
   font-family: var(--font-bricolage), var(--font-outfit), system-ui, sans-serif;
   font-size: clamp(10px, 7%, 13px);
