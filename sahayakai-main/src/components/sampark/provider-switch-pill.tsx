@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ArrowLeftRight } from "lucide-react";
@@ -15,6 +16,16 @@ import { CHOOSER_SEGMENT, PROVIDER_LABEL, switchProviderHref } from "@/lib/sampa
  * on the server (httpOnly cookie); this only shows it.
  */
 export function ProviderSwitchPill() {
+    // useSearchParams() needs a Suspense boundary, or `next build` cannot prerender any static
+    // page whose frame shows this pill (/sampark/workspace, /sampark/demo/*): the build failed.
+    return (
+        <Suspense fallback={null}>
+            <ProviderSwitchPillInner />
+        </Suspense>
+    );
+}
+
+function ProviderSwitchPillInner() {
     const { t } = useLanguage();
     const pathname = usePathname() ?? "";
     const search = useSearchParams()?.toString() ?? "";
