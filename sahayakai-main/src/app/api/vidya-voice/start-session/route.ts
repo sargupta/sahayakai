@@ -244,9 +244,13 @@ export async function POST(request: NextRequest) {
   //     a malformed payload still fails the same way it did when the
   //     sidecar mint consumed it; the proxy only needs uid + language,
   //     but the client contract must not silently loosen.
-  const baseUrl = process.env[BASE_URL_ENV];
+  // The media socket may be served by a different service from the agents
+  // sidecar (which sits behind Cloud Run IAM, where a browser cannot reach it):
+  // VIDYA_VOICE_STREAM_BASE_URL names that service, the same way
+  // VOBIZ_STREAM_BASE_URL does for phone calls. Unset = the agents URL, as before.
+  const baseUrl = process.env.VIDYA_VOICE_STREAM_BASE_URL?.trim() || process.env[BASE_URL_ENV];
   if (!baseUrl) {
-    logger.error(`${BASE_URL_ENV} is not set`, undefined, 'VIDYA_VOICE');
+    logger.error(`neither VIDYA_VOICE_STREAM_BASE_URL nor ${BASE_URL_ENV} is set`, undefined, 'VIDYA_VOICE');
     return NextResponse.json(
       { error: 'Live voice is not available right now' },
       { status: 503 },

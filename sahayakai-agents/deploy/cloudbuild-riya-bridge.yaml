@@ -29,6 +29,9 @@ substitutions:
   _SIGNING_KEY_SECRET: SAMPARK_STAGING_SIGNING_KEY
   _ENV: staging
   _FIRESTORE_DATABASE: parent-call-test
+  # '1' also serves the token-gated hands-free VIDYA socket (/v1/vidya-voice/stream) from this
+  # public service. Off by default: turning it on widens the public surface by that one route.
+  _PUBLIC_VIDYA_VOICE: '0'
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -56,7 +59,7 @@ steps:
       - |
         pip install --quiet --upgrade pip
         pip install --quiet '.[dev]'
-        pytest tests/unit -q -k "riya or sampark or dedicated_asr" --deselect tests/unit/test_action_flow_ts_parity.py
+        pytest tests/unit -q -k "riya or sampark or dedicated_asr or telephony_only" --deselect tests/unit/test_action_flow_ts_parity.py
     waitFor: [require-sampark-url]
 
   - id: build
@@ -95,6 +98,6 @@ steps:
       - --max-instances=2
       - --cpu-boost
       - --set-secrets=SAHAYAKAI_REQUEST_SIGNING_KEY=${_SIGNING_KEY_SECRET}:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest
-      - --set-env-vars=SAHAYAKAI_TELEPHONY_ONLY=1,SAHAYAKAI_AGENTS_ENV=${_ENV},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_REGION=${_REGION},SAHAYAKAI_PROMPTS_DIR=/srv/prompts,SAHAYAKAI_REQUIRE_APP_CHECK=false,SAHAYAKAI_FIRESTORE_DATABASE=${_FIRESTORE_DATABASE},SAMPARK_WEB_BASE_URL=${_SAMPARK_WEB_BASE_URL},VOBIZ_DISCLOSE_AI=true,VOBIZ_MAX_CALL_SECONDS=600,VOBIZ_MAX_CONCURRENT_CALLS=4
+      - --set-env-vars=SAHAYAKAI_TELEPHONY_ONLY=1,SAHAYAKAI_PUBLIC_VIDYA_VOICE=${_PUBLIC_VIDYA_VOICE},SAHAYAKAI_AGENTS_ENV=${_ENV},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_REGION=${_REGION},SAHAYAKAI_PROMPTS_DIR=/srv/prompts,SAHAYAKAI_REQUIRE_APP_CHECK=false,SAHAYAKAI_FIRESTORE_DATABASE=${_FIRESTORE_DATABASE},SAMPARK_WEB_BASE_URL=${_SAMPARK_WEB_BASE_URL},VOBIZ_DISCLOSE_AI=true,VOBIZ_MAX_CALL_SECONDS=600,VOBIZ_MAX_CONCURRENT_CALLS=4
       - --quiet
     waitFor: [push]
