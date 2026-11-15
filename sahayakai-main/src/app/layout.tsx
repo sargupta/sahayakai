@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
+import type { CSSProperties } from 'react';
+import localFont from 'next/font/local';
 import {
-  Bricolage_Grotesque,
-  Instrument_Sans,
   Noto_Sans_Devanagari,
   Noto_Sans_Bengali,
   Noto_Sans_Tamil,
@@ -32,17 +32,50 @@ import './globals.css';
 // titles, values, CTAs; optical size follows font size) and Instrument Sans
 // for UI text. Both fall back through the Noto Sans family of each Indian
 // script (see tailwind.config.ts), so mixed-script lines shape correctly.
-const instrumentSans = Instrument_Sans({
-  subsets: ['latin'],
-  variable: '--font-ui',
+//
+// The two Latin design faces are committed under ./_fonts (private folder, not a route) instead of being
+// fetched from Google at build time: Cloud Build's Docker builds got font
+// CSS that next/font/google could not parse ("Cannot read properties of
+// null (reading '1')"), which failed every image build of this layout.
+// Local files make the build deterministic and need no network. Each face
+// is split like Google's own CSS (latin + latin-ext, by unicode-range) so
+// the ₹ sign (U+20B9, latin-ext) still renders in the design face.
+// Gate: src/__tests__/deploy/fonts-self-hosted.test.ts.
+// next/font requires literal arguments, so the ranges are written inline.
+const instrumentLatin = localFont({
+  src: './_fonts/instrument-latin.woff2',
+  weight: '400 700',
   display: 'swap',
+  declarations: [{ prop: 'unicode-range', value: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD' }],
 });
-const bricolage = Bricolage_Grotesque({
-  subsets: ['latin'],
-  axes: ['opsz'],
-  variable: '--font-display',
+const instrumentLatinExt = localFont({
+  src: './_fonts/instrument-latin-ext.woff2',
+  weight: '400 700',
   display: 'swap',
+  preload: false,
+  declarations: [{ prop: 'unicode-range', value: 'U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF' }],
 });
+// Bricolage Grotesque keeps its optical-size (opsz) axis in the variable file.
+const bricolageLatin = localFont({
+  src: './_fonts/bricolage-latin.woff2',
+  weight: '200 800',
+  display: 'swap',
+  declarations: [{ prop: 'unicode-range', value: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD' }],
+});
+const bricolageLatinExt = localFont({
+  src: './_fonts/bricolage-latin-ext.woff2',
+  weight: '200 800',
+  display: 'swap',
+  preload: false,
+  declarations: [{ prop: 'unicode-range', value: 'U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF' }],
+});
+
+// --font-ui / --font-display, as next/font's `variable` used to emit them.
+const designFontVars = {
+  '--font-ui': `${instrumentLatin.style.fontFamily}, ${instrumentLatinExt.style.fontFamily}`,
+  '--font-display': `${bricolageLatin.style.fontFamily}, ${bricolageLatinExt.style.fontFamily}`,
+} as CSSProperties;
+
 const notoDevanagari = Noto_Sans_Devanagari({
   subsets: ['devanagari'],
   weight: ['400', '500', '600', '700'],
@@ -99,8 +132,6 @@ const notoOriya = Noto_Sans_Oriya({
 });
 
 const fontVariables = [
-  instrumentSans.variable,
-  bricolage.variable,
   notoDevanagari.variable,
   notoBengali.variable,
   notoTamil.variable,
@@ -231,7 +262,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={fontVariables} suppressHydrationWarning>
+    <html lang="en" className={fontVariables} style={designFontVars} suppressHydrationWarning>
       <head>
         {/* Fonts are self-hosted via next/font (see top of file) — the old
             fonts.googleapis.com stylesheet links and the

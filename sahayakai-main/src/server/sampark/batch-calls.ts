@@ -57,7 +57,7 @@ import {
     retryAfterSeconds,
     type BatchCapacity,
 } from '@/lib/sampark/batch/schedule';
-import { RIYA_VOBIZ_HARD_END_MS } from '@/lib/sampark/conversation/vobiz-provider';
+import { RIYA_VOBIZ_HARD_END_MS, RIYA_VOBIZ_RING_TIMEOUT_SECONDS } from '@/lib/sampark/conversation/vobiz-provider';
 import { applyCallToRecipient, isFinished, isOpen, isRetryable, progressOf } from '@/lib/sampark/batch/state';
 import {
     BATCH_ACTIVE_STATUSES,
@@ -134,6 +134,31 @@ export async function batchDeps(ctx: { repo: RiyaDeps['repo']; clock: Clock }): 
 /** Real (ringing) batches are off unless the operator switches them on, on top of every Riya flag. */
 export function realBatchCallsEnabled(env: Env = process.env): boolean {
     return env.SAMPARK_BATCH_REAL_CALLS === 'true';
+}
+
+/**
+ * ElevenLabs class-wide batches: the same rolling scheduler, gates and records as Vobiz, switched
+ * on separately until one live ElevenLabs batch has been verified. Off: refused with
+ * BATCH_PROVIDER_NOT_SUPPORTED, never silently routed through another provider.
+ */
+export function elevenLabsBatchesEnabled(env: Env = process.env): boolean {
+    return env.SAMPARK_BATCH_ELEVENLABS_ENABLED === 'true';
+}
+
+/** Longest an ElevenLabs Riya conversation may run (the agent's max duration). Default 600 s. */
+export function elevenLabsMaxCallSeconds(env: Env = process.env): number {
+    const n = Number(env.SAMPARK_ELEVENLABS_MAX_CALL_SECONDS);
+    return Number.isInteger(n) && n >= 60 && n <= 3600 ? n : 600;
+}
+
+/**
+ * After this long from placing it, a real call can no longer be connected at its provider, so a
+ * call with no reported end may be recovered (after a provider lookup). Vobiz: its own time_limit
+ * (RIYA_VOBIZ_HARD_END_MS). ElevenLabs: ring timeout + the agent's max duration + 3 minutes.
+ */
+export function realCallHardEndMs(env: Env, provider: ConversationProviderKind | null | undefined): number {
+    if (provider === 'elevenlabs') return (RIYA_VOBIZ_RING_TIMEOUT_SECONDS + elevenLabsMaxCallSeconds(env)) * 1000 + 3 * 60_000;
+    return RIYA_VOBIZ_HARD_END_MS;
 }
 
 /**
@@ -454,7 +479,7 @@ async function evaluateBatch(deps: BatchDeps, orgId: string, input: z.infer<type
     }
 
     if (campaignRefusals.length) block('CAMPAIGN_REFUSED');
-    if (provider === 'elevenlabs') block('BATCH_PROVIDER_NOT_SUPPORTED');
+    if (provider === 'elevenlabs' && !elevenLabsBatchesEnabled(env)) block('BATCH_PROVIDER_NOT_SUPPORTED');
     if (isRealProvider(provider) && !rosterMode) block('BATCH_NEEDS_OWN_NUMBERS');
     if (isRealProvider(provider) && !realBatchCallsEnabled(env)) block('REAL_BATCH_DISABLED');
     if (eligible.length > BATCH_MAX_RECIPIENTS) block('TOO_MANY_RECIPIENTS');
@@ -708,7 +733,7 @@ async function reconcileRecipients(deps: BatchDeps, campaign: BatchCampaign): Pr
         //     so the call cannot still be connected: it becomes 'unknown', and that is audited.
         // A result that arrives later still lands on the call (the reducer resolves 'unknown').
         let snapshot = call;
-        const hardEndMs = isRealProvider(snapshot.provider) ? RIYA_VOBIZ_HARD_END_MS : BATCH_STALE_MS;
+        const hardEndMs = isRealProvider(snapshot.provider) ? realCallHardEndMs(deps.env ?? process.env, snapshot.provider) : BATCH_STALE_MS;
         const overdue = !isTerminalConversationState(snapshot.state) && now.getTime() - Date.parse(snapshot.createdAt) > hardEndMs;
         let recovery: string | null = null;
         let overrun = false;
@@ -981,7 +1006,7 @@ async function dialPass(deps: BatchDeps, start: BatchCampaign, env: Env): Promis
         // 1. Capacity. The call records are the source of truth for "active", never a counter: a
         //    line is held until the provider says the call ended (see holdsLine).
         const active = real
-            ? countActiveCalls(recent, now, RIYA_VOBIZ_HARD_END_MS)
+            ? countActiveCalls(recent, now, realCallHardEndMs(env, c.provider))
             : c.recipients.filter((r) => BATCH_ACTIVE_STATUSES.includes(r.status)).length;
         if (active >= capacity.effective) {
             c = await setWaiting(deps, c, 'CONCURRENCY_FULL');

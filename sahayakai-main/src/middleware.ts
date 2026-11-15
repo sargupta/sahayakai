@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify, importX509, createRemoteJWKSet } from 'jose';
-import { CHOOSER_SEGMENT, needsProviderChoice, parseProviderChoice, PROVIDER_COOKIE } from '@/lib/sampark/provider-choice';
+import { CHOOSER_SEGMENT, needsProviderChoice, parseProviderChoice, PROVIDER_COOKIE, providerChooserEnabled } from '@/lib/sampark/provider-choice';
 import {
     PROFILE_COMPLETE_COOKIE,
     verifyProfileCompleteCookie,
@@ -500,10 +500,10 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // SamparkAI provider choice (src/lib/sampark/provider-choice.ts): no workspace, school or
-    // demo page opens without one. A deep link without it goes to the chooser first and
-    // comes back afterwards. Pages only; the APIs read the same cookie server-side.
-    if (!pathname.startsWith('/api/') && !pathname.startsWith('/_next') && !/\.[a-z0-9]+$/i.test(pathname)) {
+    // SamparkAI per-session provider chooser — internal demos only (src/lib/sampark/provider-choice.ts).
+    // The school owns its calling provider; this gate runs only when the demo chooser is switched
+    // on, so by default no SamparkAI page asks for a provider. Pages only.
+    if (providerChooserEnabled() && !pathname.startsWith('/api/') && !pathname.startsWith('/_next') && !/\.[a-z0-9]+$/i.test(pathname)) {
         const samparkPath = samparkRewrite ? samparkRewrite.pathname : pathname;
         // Entering SamparkAI from SahayakAI (sidebar, Attendance, command palette) always
         // lands on the chooser page — ElevenLabs Calls or Vobiz Calls — even when a choice
