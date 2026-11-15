@@ -288,4 +288,63 @@ describe('POST /api/webhooks/razorpay — H21 ledger + amount binding', () => {
         const body = await dup.json();
         expect(body.status).toBe('already_processed');
     });
+
+    // ── Regression: dedupe keyed on the provider event id; stale claims; bad JSON ──
+    function reqWithEventId(event: unknown, eventId: string | null) {
+        const body = JSON.stringify(event);
+        return {
+            text: async () => body,
+            headers: {
+                get: (name: string) => {
+                    const n = name.toLowerCase();
+                    if (n === 'x-razorpay-signature') return 'sig';
+                    if (n === 'x-razorpay-event-id') return eventId;
+                    return null;
+                },
+            },
+        } as unknown as Request;
+    }
+    const pausedEvent = (status: string) => ({
+        event: `subscription.${status}`,
+        payload: { subscription: { entity: { id: 'sub_test_1', plan_id: 'plan_pro_m', status, notes: { userId: 'user_1' } } } },
+    });
+
+    test('a second subscription.paused (new provider event id) is processed, not dropped as a duplicate', async () => {
+        await POST(reqWithEventId(pausedEvent('paused'), 'evt_A'));
+        await POST(reqWithEventId(pausedEvent('resumed'), 'evt_B'));
+        const second = await POST(reqWithEventId(pausedEvent('paused'), 'evt_C'));
+        const body = await second.json();
+        expect(body.status).not.toBe('already_processed');
+        expect(store['webhook_events/evt_evt_C']).toBeDefined();
+    });
+
+    test('a redelivery of the SAME provider event id is still deduplicated', async () => {
+        await POST(reqWithEventId(pausedEvent('paused'), 'evt_X'));
+        const dup = await POST(reqWithEventId(pausedEvent('paused'), 'evt_X'));
+        expect((await dup.json()).status).toBe('already_processed');
+    });
+
+    test('a stale "processing" claim (worker died) is taken over by the retry and the plan is granted', async () => {
+        store['webhook_events/subscription.charged_pay_test_1'] = {
+            event: 'subscription.charged', status: 'processing', receivedAt: new Date(Date.now() - 10 * 60 * 1000),
+        };
+        const res = await POST(makeReq(chargedEvent()));
+        expect((await res.json()).status).not.toBe('already_processed');
+        expect(userUpdateMock).toHaveBeenCalledWith('user_1', expect.objectContaining({ planType: 'pro' }));
+    });
+
+    test('a fresh "processing" claim (worker still running) is not taken over', async () => {
+        store['webhook_events/subscription.charged_pay_test_1'] = {
+            event: 'subscription.charged', status: 'processing', receivedAt: new Date(),
+        };
+        const res = await POST(makeReq(chargedEvent()));
+        expect((await res.json()).status).toBe('already_processed');
+        expect(userUpdateMock).not.toHaveBeenCalled();
+    });
+
+    test('a signed but unparsable body → 400, no writes', async () => {
+        const res = await POST({ text: async () => '{not json', headers: { get: (n: string) => (n.toLowerCase() === 'x-razorpay-signature' ? 'sig' : null) } } as unknown as Request);
+        expect(res.status).toBe(400);
+        expect(Object.keys(store).some((k) => k.startsWith('webhook_events/'))).toBe(false);
+    });
 });

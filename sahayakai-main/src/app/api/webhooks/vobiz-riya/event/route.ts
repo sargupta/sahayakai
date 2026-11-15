@@ -5,6 +5,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { readBodyCapped } from '@/lib/http/read-body-capped';
 
 import { logger } from '@/lib/logger';
 import { MAX_WEBHOOK_BYTES } from '@/lib/sampark/conversation/webhook';
@@ -16,10 +17,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-    const declared = Number(req.headers.get('content-length') ?? '0');
-    if (Number.isFinite(declared) && declared > MAX_WEBHOOK_BYTES) return NextResponse.json({ ok: false }, { status: 413 });
     try {
-        const raw = await req.text();
+        // Stream-capped: a chunked body has no content-length to check up front.
+        const raw = await readBodyCapped(req, MAX_WEBHOOK_BYTES);
+        if (raw === null) return NextResponse.json({ ok: false }, { status: 413 });
         const out = await handleVobizRiyaEvent(await riyaDeps(await samparkContext()), raw, req.headers.get('x-riya-bridge-signature'));
         return NextResponse.json(out.body, { status: out.status });
     } catch (err) {

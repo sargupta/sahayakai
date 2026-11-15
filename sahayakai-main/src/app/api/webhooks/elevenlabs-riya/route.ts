@@ -13,6 +13,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { readBodyCapped } from '@/lib/http/read-body-capped';
 
 import { logger } from '@/lib/logger';
 import { MAX_WEBHOOK_BYTES } from '@/lib/sampark/conversation/webhook';
@@ -26,11 +27,10 @@ export async function POST(req: NextRequest) {
     if (process.env.SAMPARK_ENABLED !== 'true' || process.env.SAMPARK_ELEVENLABS_ENABLED !== 'true') {
         return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
-    const declared = Number(req.headers.get('content-length') ?? '0');
-    if (Number.isFinite(declared) && declared > MAX_WEBHOOK_BYTES) return NextResponse.json({ ok: false }, { status: 413 });
     try {
-        const raw = await req.text();
-        if (Buffer.byteLength(raw, 'utf8') > MAX_WEBHOOK_BYTES) return NextResponse.json({ ok: false }, { status: 413 });
+        // Stream-capped: a chunked body has no content-length to check up front.
+        const raw = await readBodyCapped(req, MAX_WEBHOOK_BYTES);
+        if (raw === null) return NextResponse.json({ ok: false }, { status: 413 });
         const outcome = await handleRiyaWebhook(await riyaDeps(await samparkContext()), raw, req.headers.get('elevenlabs-signature'));
         return NextResponse.json(outcome.body, { status: outcome.status });
     } catch (err) {
