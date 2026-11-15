@@ -27,7 +27,7 @@ describe('root layout fonts are self-hosted', () => {
   });
 
   it('points only at local woff2 files that exist', () => {
-    const srcs = [...layout.matchAll(/src:\s*'(\.\/fonts\/[^']+)'/g)].map((m) => m[1]);
+    const srcs = [...layout.matchAll(/src:\s*'(\.\/_fonts\/[^']+)'/g)].map((m) => m[1]);
     expect(srcs.length).toBeGreaterThanOrEqual(4);
     for (const rel of srcs) {
       const file = path.join(appDir, rel);

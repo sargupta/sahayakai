@@ -33,7 +33,7 @@ import './globals.css';
 // for UI text. Both fall back through the Noto Sans family of each Indian
 // script (see tailwind.config.ts), so mixed-script lines shape correctly.
 //
-// The two Latin design faces are committed under ./fonts instead of being
+// The two Latin design faces are committed under ./_fonts (private folder, not a route) instead of being
 // fetched from Google at build time: Cloud Build's Docker builds got font
 // CSS that next/font/google could not parse ("Cannot read properties of
 // null (reading '1')"), which failed every image build of this layout.
@@ -43,13 +43,13 @@ import './globals.css';
 // Gate: src/__tests__/deploy/fonts-self-hosted.test.ts.
 // next/font requires literal arguments, so the ranges are written inline.
 const instrumentLatin = localFont({
-  src: './fonts/instrument-latin.woff2',
+  src: './_fonts/instrument-latin.woff2',
   weight: '400 700',
   display: 'swap',
   declarations: [{ prop: 'unicode-range', value: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD' }],
 });
 const instrumentLatinExt = localFont({
-  src: './fonts/instrument-latin-ext.woff2',
+  src: './_fonts/instrument-latin-ext.woff2',
   weight: '400 700',
   display: 'swap',
   preload: false,
@@ -57,13 +57,13 @@ const instrumentLatinExt = localFont({
 });
 // Bricolage Grotesque keeps its optical-size (opsz) axis in the variable file.
 const bricolageLatin = localFont({
-  src: './fonts/bricolage-latin.woff2',
+  src: './_fonts/bricolage-latin.woff2',
   weight: '200 800',
   display: 'swap',
   declarations: [{ prop: 'unicode-range', value: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD' }],
 });
 const bricolageLatinExt = localFont({
-  src: './fonts/bricolage-latin-ext.woff2',
+  src: './_fonts/bricolage-latin-ext.woff2',
   weight: '200 800',
   display: 'swap',
   preload: false,
