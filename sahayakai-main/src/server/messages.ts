@@ -15,6 +15,7 @@
  *     resource field caps)
  */
 import { getDb } from '@/lib/firebase-admin';
+import { isSafeAppRouteSlug } from '@/lib/security/safe-links';
 import { buildDirectConversationId, SharedResource } from '@/types/messages';
 import { dbAdapter } from '@/lib/db/adapter';
 import { createTypedNotification } from '@/lib/notifications/create';
@@ -198,7 +199,8 @@ export async function sendMessage(
         if (typeof resource !== 'object') throw new Error('Invalid resource payload');
         if (typeof resource.id !== 'string' || resource.id.length > 256) throw new Error('Invalid resource id');
         if (typeof resource.title !== 'string' || resource.title.length > 200) throw new Error('Invalid resource title');
-        if (typeof resource.route !== 'string' || resource.route.length > 64) throw new Error('Invalid resource route');
+        // One in-app slug only: a route like "/evil.example" would make router.push(`/${route}`) an open redirect.
+        if (!isSafeAppRouteSlug(resource.route)) throw new Error('Invalid resource route');
     }
 
     const db = await getDb();

@@ -1,6 +1,7 @@
 "use client";
 
 import { Message } from "@/types/messages";
+import { isSafeAppRouteSlug } from "@/lib/security/safe-links";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +70,8 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
         if (resource.gradeLevel) params.set("gradeLevel", resource.gradeLevel);
         if (resource.subject)    params.set("subject", resource.subject);
         if (resource.language)   params.set("language", resource.language ?? "");
+        // Messages can be written by other clients: never navigate off-app.
+        if (!isSafeAppRouteSlug(resource.route)) return;
         router.push(`/${resource.route}?${params.toString()}`);
     };
 

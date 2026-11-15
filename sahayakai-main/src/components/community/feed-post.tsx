@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isSafeHttpsUrl } from '@/lib/security/safe-links';
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -68,7 +69,8 @@ export const POST_TYPE_CONFIG: Record<
 const READ_MORE_THRESHOLD = 280;
 
 function AttachmentCard({ attachment }: { attachment: PostAttachment }) {
-  const isLink = attachment.type === 'link' && attachment.url;
+  // Only https links are clickable: older or client-written posts may hold javascript: URLs.
+  const isLink = attachment.type === 'link' && isSafeHttpsUrl(attachment.url);
   const content = (
     <div className={cn(
       "flex max-w-full items-center gap-2 rounded-surface-sm border border-border bg-muted/50 px-3 py-2",
