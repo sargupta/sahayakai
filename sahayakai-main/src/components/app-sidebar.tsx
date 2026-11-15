@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -30,12 +30,9 @@ import {
   Users,
   Zap,
 } from "lucide-react"
-import { collection, query, where, onSnapshot, doc, getDoc, updateDoc } from "firebase/firestore"
+import { collection, query, where, onSnapshot } from "firebase/firestore"
 import { onAuthStateChanged } from "firebase/auth"
 import { db, auth } from "@/lib/firebase"
-import { isNewUser as checkIsNewUser } from "@/lib/profile-utils"
-import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight"
-import { updateProfileAction } from "@/lib/api/profile"
 import { useLanguage } from "@/context/language-context"
 import { ProductSideNav, type NavBadge, type NavSection } from "@/components/shell/side-nav"
 import { SahayakWordmark, SamparkMark } from "@/components/shell/brand"
@@ -43,7 +40,6 @@ import { useNavAccess } from "@/components/shell/use-nav-access"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { samparkEntryUrl, isExternalUrl } from "@/lib/products"
 import { pressVidyaEntry } from "@/lib/vidya-entry"
-import type { UserProfile } from "@/types"
 
 /**
  * SahayakAI sidebar — design-system navigation (decided 26 Oct 2026):
@@ -85,22 +81,8 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
   const { t } = useLanguage()
   const [totalUnread, setTotalUnread] = useState(0)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
-  const [showCommunityNew, setShowCommunityNew] = useState(false)
-  const [isNewUser, setIsNewUser] = useState(false)
-  const [spotlightsSeen, setSpotlightsSeen] = useState<string[]>([])
   const [sidebarUserId, setSidebarUserId] = useState<string | null>(null)
   const access = useNavAccess(sidebarUserId)
-
-  const handleSpotlightDismiss = useCallback((id: string) => {
-    setSpotlightsSeen(prev => {
-      if (prev.includes(id)) return prev
-      const next = [...prev, id]
-      if (sidebarUserId) {
-        updateProfileAction(sidebarUserId, { featureSpotlightsSeen: next }).catch(() => {})
-      }
-      return next
-    })
-  }, [sidebarUserId])
 
   // Live unread badges — conversation + notification unread counts.
   // Connection requests show as Notifications (NOT Messages), so the
@@ -117,19 +99,11 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
       if (!user) {
         setTotalUnread(0)
         setUnreadNotifications(0)
-        setShowCommunityNew(false)
         setSidebarUserId(null)
         return
       }
 
       setSidebarUserId(user.uid)
-      getDoc(doc(db, "users", user.uid)).then((snap) => {
-        const data = snap.data()
-        setShowCommunityNew(data?.communityIntroState === 'ready')
-        setIsNewUser(checkIsNewUser(data as Partial<UserProfile>))
-        setSpotlightsSeen(data?.featureSpotlightsSeen ?? [])
-      }).catch(() => {})
-
       const convQ = query(
         collection(db, "conversations"),
         where("participantIds", "array-contains", user.uid),
@@ -165,27 +139,8 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
 
   const starts = (prefix: string) => pathname === prefix || pathname.startsWith(prefix + "/")
 
-  const dismissCommunityNew = () => {
-    if (!showCommunityNew) return
-    setShowCommunityNew(false)
-    const u = auth.currentUser
-    if (u) updateDoc(doc(db, "users", u.uid), { communityIntroState: 'visited' }).catch(() => {})
-  }
-
-  const lessonSpotlight = sidebarUserId && isNewUser
-    ? (node: React.ReactNode) => (
-        <FeatureSpotlight
-          id={SPOTLIGHT_IDS.SIDEBAR_LESSON_PLAN}
-          message="Start here! Create your first lesson plan"
-          seenSpotlights={spotlightsSeen}
-          onDismiss={handleSpotlightDismiss}
-          position="right"
-          delay={1000}
-        >
-          {node}
-        </FeatureSpotlight>
-      )
-    : undefined
+  // No feature highlights in the sidebar (no "Start here!" spotlight, no "New" badges):
+  // every destination is shown the same way. Only real unread counts are badged.
 
   const sections: NavSection[] = [
     {
@@ -200,8 +155,6 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
           icon: Users,
           href: "/community",
           active: starts("/community"),
-          onSelect: dismissCommunityNew,
-          badge: showCommunityNew ? { text: t("New"), label: t("New in Community") } : null,
         },
         {
           key: "profile",
@@ -218,7 +171,7 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
       tier: "secondary",
       fold: { icon: PenLine, railLabel: t("Make"), defaultOpen: true },
       items: [
-        { key: "lesson-plan", label: t("Lesson Plan"), icon: CalendarDays, href: "/lesson-plan", active: starts("/lesson-plan"), wrap: lessonSpotlight },
+        { key: "lesson-plan", label: t("Lesson Plan"), icon: CalendarDays, href: "/lesson-plan", active: starts("/lesson-plan") },
         { key: "worksheet", label: t("Worksheet"), icon: PencilRuler, href: "/worksheet-wizard", active: starts("/worksheet-wizard") },
         { key: "quiz", label: t("Quiz"), icon: ListChecks, href: "/quiz-generator", active: starts("/quiz-generator") },
         { key: "exam-paper", label: t("Exam Paper"), icon: FileText, href: "/exam-paper", active: starts("/exam-paper") },

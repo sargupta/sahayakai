@@ -149,7 +149,7 @@
   height: auto;
   aspect-ratio: 1;
 }
-.vidya-stage[data-size="compact"] .vidya-icon { width: 24px; }
+.vidya-stage[data-size="compact"] .vidya-icon { width: 21px; }
 .vidya-wordmark {
   font-family: var(--font-bricolage), var(--font-outfit), system-ui, sans-serif;
   font-size: clamp(10px, 7%, 13px);
