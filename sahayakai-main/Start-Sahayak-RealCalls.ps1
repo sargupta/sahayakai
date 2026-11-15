@@ -19,6 +19,9 @@ $ExtraPids = Join-Path $State 'realcall-pids.json'
 $Node = (Get-Command node -ErrorAction SilentlyContinue).Source; if (-not $Node) { $Node = 'E:\NodeJS\node.exe' }
 $Cloudflared = 'C:\Users\Bhagya\.9router\bin\cloudflared.exe'
 $Python = Join-Path $PSScriptRoot '..\sahayakai-agents\.venv\Scripts\python.exe'
+# A worktree has no venv of its own: use the main checkout's (same pinned requirements). The bridge
+# still runs THIS checkout's code (run_local_voice.py puts its own src/ first on sys.path).
+if (-not (Test-Path $Python)) { $Python = 'E:\sargvision\sahayakai\sahayakai-agents\.venv\Scripts\python.exe' }
 $VobizCred = if ($env:VOBIZ_CRED_FILE) { $env:VOBIZ_CRED_FILE } else { 'E:\sargvision\VOBIZCRED.txt' }
 $ElCred = 'E:\sargvision\Sampark_details.txt'
 $AllContacts = 'sv-abhishek,sv-nischay,sv-nandini,sv-shivadeth,sv-varunesh,sv-yash,sv-sachitt,sv-shree,sv-alyssa'
