@@ -6,6 +6,7 @@ import { checkCallingWindow } from '@/lib/calling-hours';
 import { logger } from '@/lib/logger';
 import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors';
 import { writeCallStatus, type CallStatusDb } from '@/lib/attendance/reconcile-call-status';
+import { claimOutreachDial } from '@/lib/attendance/claim-dial';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import { refuseIfParentOptedOut } from '@/lib/call-suppression';
 import { isDestinationAllowed, placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
@@ -264,6 +265,18 @@ export async function POST(req: NextRequest) {
     if (!target.ok) return target.response;
     const suppressed = await refuseIfParentOptedOut(db, target.parentPhone);
     if (suppressed) return suppressed;
+
+    // One dial per outreach record, claimed atomically before ANY provider is
+    // contacted: a repeated POST (double click, retry loop, script) must not ring
+    // the same parent again. "Try again" in the UI creates a new record.
+    const claim = await claimOutreachDial(db as unknown as CallStatusDb, outreachId);
+    if (!claim.ok) {
+        logger.warn('Parent call refused: outreach already dialled', 'ATTENDANCE', { userId, outreachId });
+        return NextResponse.json(
+            { error: 'This call has already been placed. Start a new call to ring again.', code: 'ALREADY_DIALLED', retryable: false },
+            { status: 409 },
+        );
+    }
 
     // Provider switch. Default 'twilio' preserves the existing batch TwiML path.
     // Set VOICE_PROVIDER=exotel to route attendance calls through the standalone

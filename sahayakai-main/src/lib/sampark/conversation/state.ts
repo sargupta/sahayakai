@@ -66,6 +66,13 @@ export function applyRiyaEvent(call: ConversationCall, event: RiyaWebhookEvent, 
 
     // post_call
     const done = event.status === 'done';
+    // Terminal-state protection (same rule as initiation_failure): an unfinished post_call
+    // (failed / error / processing) never rewrites a final outcome. Without this a late
+    // `failed` report with a different eventId turned a completed call into `unknown` and
+    // replaced its transcript and answers. Only a finished ('done') result may upgrade.
+    if (!done && isTerminalConversationState(call.state) && call.state !== 'unknown') {
+        return { ...call, ...withEvent(call, event.eventId, at) };
+    }
     const transcript = opts.storeTranscript ? event.transcript : null;
     const expires = opts.storeTranscript ? new Date(opts.now.getTime() + opts.transcriptDays * 86_400_000).toISOString() : null;
     return {

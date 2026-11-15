@@ -306,6 +306,23 @@ describe('applyRiyaEvent', () => {
         const stop = parseRiyaWebhook(postCallBody({}, { transcript: [{ role: 'user', message: "Don't call me again" }] })) as RiyaWebhookEvent;
         expect(applyRiyaEvent(baseCall(), stop, opts)?.stopRequested).toBe(true);
     });
+    // Regression: a late unfinished post_call (different eventId, e.g. Vobiz with/without callUuid)
+    // turned a completed call into 'unknown' and replaced its transcript and answers.
+    it('out of order: a late failed post_call never downgrades a completed call', () => {
+        const completed = applyRiyaEvent(baseCall(), postCall, { ...opts, storeTranscript: true, transcriptDays: 7 }) as ConversationCall;
+        const lateFailed = { ...(postCall as Extract<RiyaWebhookEvent, { kind: 'post_call' }>), eventId: 'post_call:other', status: 'failed', transcript: [], dataCollection: {} } as RiyaWebhookEvent;
+        const after = applyRiyaEvent(completed, lateFailed, opts) as ConversationCall;
+        expect(after.state).toBe('completed');
+        expect(after.transcript).toEqual(completed.transcript);
+        expect(after.dataCollection).toEqual(completed.dataCollection);
+        expect(after.appliedEvents).toContain('post_call:other');
+    });
+    it('out of order: a failed post_call after busy keeps busy; on an unknown call it still applies', () => {
+        const busy = applyRiyaEvent(baseCall(), { ...failure, failureReason: 'busy' } as RiyaWebhookEvent, opts) as ConversationCall;
+        const lateFailed = { ...(postCall as Extract<RiyaWebhookEvent, { kind: 'post_call' }>), eventId: 'post_call:late', status: 'failed' } as RiyaWebhookEvent;
+        expect(applyRiyaEvent(busy, lateFailed, opts)?.state).toBe('busy');
+        expect(applyRiyaEvent(baseCall(), lateFailed, opts)?.state).toBe('unknown');
+    });
     it('a reconciliation snapshot only moves on a final status', () => {
         expect(applyRiyaSnapshot(baseCall(), { status: 'in-progress', durationSeconds: null, terminationReason: null, callSuccessful: null }, opts.now)).toMatchObject({ state: 'initiated', providerStatus: 'in-progress' });
         expect(applyRiyaSnapshot(baseCall(), { status: 'done', durationSeconds: 30, terminationReason: null, callSuccessful: 'success' }, opts.now)?.state).toBe('completed');
