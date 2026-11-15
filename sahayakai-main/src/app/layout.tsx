@@ -40,7 +40,7 @@ import './globals.css';
 // Local files make the build deterministic and need no network. Each face
 // is split like Google's own CSS (latin + latin-ext, by unicode-range) so
 // the ₹ sign (U+20B9, latin-ext) still renders in the design face.
-// Gate: src/__tests__/build/fonts-self-hosted.test.ts.
+// Gate: src/__tests__/deploy/fonts-self-hosted.test.ts.
 // next/font requires literal arguments, so the ranges are written inline.
 const instrumentLatin = localFont({
   src: './fonts/instrument-latin.woff2',
