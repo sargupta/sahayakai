@@ -291,16 +291,10 @@ export default function APIPlayground() {
                             </p>
                             <div className="flex gap-3">
                                 <a
-                                    href="/docs/TEACHER_LOOKUP.md"
+                                    href="/api-docs"
                                     className="px-4 py-2 bg-background text-primary rounded-lg font-medium hover:bg-background/90 transition"
                                 >
-                                    Teacher Lookup Guide
-                                </a>
-                                <a
-                                    href="/docs/MONITORING.md"
-                                    className="px-4 py-2 bg-background text-primary rounded-lg font-medium hover:bg-background/90 transition"
-                                >
-                                    Monitoring Guide
+                                    Open API reference
                                 </a>
                             </div>
                         </div>

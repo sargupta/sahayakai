@@ -31,7 +31,6 @@ export const LABS_TOOLS: LabsTool[] = [
     { href: '/assess-assignment', titleKey: 'Assess Work', descriptionKey: 'Grade handwritten work from a photo.', icon: 'ScanEye' },
     { href: '/video-storyteller', titleKey: 'Video Storyteller', descriptionKey: 'Curated videos for your topic.', icon: 'Video' },
     { href: '/virtual-field-trip', titleKey: 'Virtual Field Trip', descriptionKey: 'Explore places from the classroom.', icon: 'Globe2' },
-    { href: '/teacher-training', titleKey: 'Teacher Training', descriptionKey: 'Professional development.', icon: 'GraduationCap' },
     { href: '/impact-dashboard', titleKey: 'Impact', descriptionKey: 'Your usage and time saved.', icon: 'BarChart' },
 ];
 

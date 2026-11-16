@@ -3,6 +3,12 @@ import { agentRouterFlow } from '@/ai/flows/agent-definitions';
 import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
+import { getSection } from '@/lib/vidya/app-manifest';
+
+/** Same bound as /api/assistant's MAX_MESSAGE_CHARS. */
+const MAX_INTENT_PROMPT_CHARS = 4000;
+
+const APP_HELP_FALLBACK = 'Everything in SahayakAI is in the sidebar (or press Ctrl/⌘+K to search). Ask me "where is My Library?" or "how do I take attendance?".';
 
 /**
  * BUG #7 (2026-05-28): When the agent router fails to extract a concise
@@ -78,8 +84,15 @@ export async function POST(request: Request) {
         // `uiLanguage` = explicit UI-language override; when present it MUST
         // win for instant answers so a teacher who set the app to Tamil gets
         // a Tamil answer even if they typed/spoke an English-script prompt.
-        const { prompt, language, uiLanguage } = body;
-        promptText = prompt || 'Unknown Prompt';
+        const { prompt, language, uiLanguage } = body ?? {};
+        // Bound what reaches the router model (cost/abuse): same cap as /api/assistant.
+        if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+            return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
+        }
+        if (prompt.length > MAX_INTENT_PROMPT_CHARS) {
+            return NextResponse.json({ error: `prompt is too long (max ${MAX_INTENT_PROMPT_CHARS} characters)` }, { status: 413 });
+        }
+        promptText = prompt;
 
         // 1. Determine Intent and extract params
         const flowOutput = await agentRouterFlow({
@@ -156,8 +169,29 @@ export async function POST(request: Request) {
             case 'examPaper':
                 result = { action: 'NAVIGATE', url: `/exam-paper?${queryString}` };
                 break;
+            case 'appHelp': {
+                // A question about SahayakAI itself ("where is attendance?",
+                // "how do I add students?"). Answered from the app manifest —
+                // never the instant-answer flow. Navigation targets come ONLY
+                // from the manifest; the model never supplies a URL.
+                const section = flowOutput.appDestination ? getSection(flowOutput.appDestination) : undefined;
+                if (section && flowOutput.wantsNavigation) {
+                    result = { action: 'NAVIGATE', url: section.route };
+                    break;
+                }
+                const content = flowOutput.appAnswer?.trim()
+                    || (section ? `${section.label}: ${section.whereToFind}` : APP_HELP_FALLBACK);
+                result = { action: 'ANSWER', content, videoUrl: null };
+                break;
+            }
             case 'instantAnswer':
             default: {
+                // Library: this answer is NOT persisted. `dispatchInstantAnswer`
+                // (Genkit and sidecar paths alike) returns the answer only —
+                // greetings and questions that land here are conversation, not
+                // My Library artifacts. The teacher saves one explicitly from
+                // the Instant Answer page if they want to keep it.
+                //
                 // QA #1 (2026-05-28): a bare academic topic with no action verb
                 // ("Relations and Functions Class 12") previously fell to the
                 // default branch and returned "Not sure how to help", which felt

@@ -156,7 +156,7 @@ describe('useLessonPlan Hook', () => {
         expect(generateLessonPlan).not.toHaveBeenCalled();
     });
 
-    it('should select a template correctly', () => {
+    it('should select a template correctly (valid class, generation starts)', () => {
         const { result } = renderHook(() => useLessonPlan());
 
         act(() => {
@@ -173,7 +173,8 @@ describe('useLessonPlan Hook', () => {
         });
 
         expect(result.current.form.getValues().topic).toBe('The Moon');
-        expect(result.current.form.getValues().gradeLevels).toEqual(['4th Grade']);
+        // The picker only accepts "Class N"; a template's "4th Grade" is normalised (it failed validation before).
+        expect(result.current.form.getValues().gradeLevels).toEqual(['Class 4']);
         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
             title: 'Template Selected'
         }));

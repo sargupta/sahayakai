@@ -1,0 +1,75 @@
+/**
+ * POST /api/jobs/sampark-dispatch — Cloud Scheduler / local ticker job (every minute).
+ *
+ * Input:  none. `Authorization: Bearer <CRON_SECRET>`.
+ * Output: DispatchReport { schools, dialed, deferred, blocked, skipped, swept, errors }.
+ *         One dispatcher tick: single-flight lease, sweep calls lost in
+ *         'dialing' to 'unknown' (never re-dialled), then per school gate →
+ *         claim (transaction) → place → record. Campaigns move scheduled →
+ *         dispatching → completed when every intent is terminal.
+ * Auth:   requireCronAuth (503 if CRON_SECRET unset, 401 on a wrong bearer).
+ * Flags:  SAMPARK_ENABLED==='true' else 404 (checked first). Carrier: practice
+ *         → simulated; anything else is refused (SAMPARK_LIVE_DIAL_ENABLED is
+ *         false and slice 1 has no real carrier).
+ * Cost:   ≤25 dials per school per tick, ≤20 in flight per school; simulated
+ *         calls cost nothing.
+ * Done:   calls happen only inside the school's window; outcomes, keys and
+ *         opt-outs are recorded.
+ * Then:   due callbacks (src/server/sampark/callbacks.ts runCallbackTick) under their
+ *         own single-flight lock, when Riya is on: claim → re-check → startRiyaCall.
+ *         Reported as `callbacks`. A callback failure never fails the dispatch tick.
+ *         Then class-wide batch campaigns (src/server/sampark/batch-calls.ts runBatchTick) under
+ *         their own single-flight lock: mirror call outcomes, dial the next queued families within
+ *         the configured concurrency and gap. Reported as `batches`; never fails the tick.
+ *         Then, at most hourly across all instances (lease 'riya-transcript-purge'): the Riya
+ *         transcript retention sweep (runScheduledTranscriptPurge; reads also delete expired
+ *         ones). Reported as `transcriptsPurged` (null on ticks that skip it).
+ */
+
+import { NextResponse, type NextRequest } from 'next/server';
+
+import { requireCronAuth } from '@/lib/cron-auth';
+import { errorResponse, samparkContext, samparkDisabledResponse } from '@/server/sampark/http';
+import { dispatchJob } from '@/server/sampark/jobs';
+import { callbackDeps, runCallbackTick, type CallbackTickReport } from '@/server/sampark/callbacks';
+import { riyaDeps, runScheduledTranscriptPurge } from '@/server/sampark/conversation';
+import { batchDeps, runBatchTick, type BatchTickReport } from '@/server/sampark/batch-calls';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest) {
+    const disabled = samparkDisabledResponse();
+    if (disabled) return disabled;
+    const denied = requireCronAuth(req);
+    if (denied) return denied;
+    try {
+        const ctx = await samparkContext();
+        const dispatch = await dispatchJob(ctx);
+        let callbacks: CallbackTickReport | { error: string };
+        try {
+            callbacks = await runCallbackTick(await callbackDeps(ctx));
+        } catch (err) {
+            console.error('[SAMPARK_CALLBACKS] tick failed', err);
+            callbacks = { error: 'callback tick failed' };
+        }
+        // Class-wide batch campaigns: mirror outcomes, dial the next queued families. Never fails the tick.
+        let batches: BatchTickReport | { error: string };
+        try {
+            batches = await runBatchTick(await batchDeps(ctx));
+        } catch (err) {
+            console.error('[SAMPARK_BATCH] tick failed', err);
+            batches = { error: 'batch tick failed' };
+        }
+        // Hourly, single-flight across instances (a Firestore lease); null when this tick skipped it.
+        let transcriptsPurged: number | null = null;
+        try {
+            transcriptsPurged = await runScheduledTranscriptPurge(await riyaDeps(ctx));
+        } catch (err) {
+            console.error('[SAMPARK_RIYA] transcript purge failed', err);
+        }
+        return NextResponse.json({ ...dispatch, callbacks, batches, transcriptsPurged });
+    } catch (err) {
+        return errorResponse(err, 'SAMPARK_DISPATCH_JOB');
+    }
+}

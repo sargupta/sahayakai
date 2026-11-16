@@ -49,7 +49,7 @@ Map<String, dynamic> teacherDoc({
     'subjects': <String>['Mathematics', 'Science'],
     'gradeLevels': <String>['Class 6', 'Class 7'],
     'preferredLanguage': 'Kannada',
-    'phoneNumber': '9845012345',
+    'phoneNumber': '9800000502',
     'pincode': '570001',
     'preferredBoard': 'Karnataka State Board (KSEEB)',
     'educationBoard': 'Karnataka State Board (KSEEB)',

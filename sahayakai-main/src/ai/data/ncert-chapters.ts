@@ -15,12 +15,14 @@
  *     authoritatively reconciled against the published NCERT title list
  *   - We do not duplicate or fork the teacher-facing chapter content
  *
- * For the demo, the *critical accuracy* cells (verified by hand against the
- * existing rich dataset which mirrors official NCERT/NCF-2023 textbooks) are:
+ * The *critical accuracy* cells (verified by hand against the rich dataset) are:
  *   - Class 10 Mathematics
- *   - Class 9  Mathematics
- *   - Class 8  Science (Force and Pressure, Friction, Sound, Chemical Effects…)
- *   - Class 5  EVS / Math
+ *   - Class 9  Mathematics — now Ganita Manjari (NCF-2023, 2026-27). The
+ *     rationalized book it replaced is retired, so its chapter names no longer
+ *     validate at this grade; see the pinned cases in the test file.
+ *   - Class 8  Science
+ *   - Class 5  EVS / Math — NOT yet migrated to NCF; the titles here are the
+ *     retired Math Magic / Looking Around ones. Treat as unverified.
  *
  * Anything in the existing dataset is exposed with `verifiedSource:
  * 'ncert-existing-seed'`; anything we synthesised here as a placeholder is

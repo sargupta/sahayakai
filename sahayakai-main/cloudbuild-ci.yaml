@@ -73,6 +73,11 @@ steps:
     env:
       - 'NEXT_TELEMETRY_DISABLED=1'
       - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai'
+      # Same heap the production image builds with (Dockerfile: NODE_OPTIONS
+      # --max-old-space-size=4096). Without it Node 20 caps the heap near 2 GB
+      # and `next build` aborted out of memory at ~1.87 GB (PR #156). The
+      # E2_HIGHCPU_8 machine has 8 GB, so this is parity, not a new ceiling.
+      - 'NODE_OPTIONS=--max-old-space-size=4096'
     waitFor: [test]
 
 options:

@@ -62,6 +62,7 @@ describe('POST /api/jobs/storage-cleanup', () => {
 
     beforeAll(async () => {
         process.env.CRON_SECRET = 'test-secret';
+        process.env.PUBSUB_PUSH_SERVICE_ACCOUNTS = 'pubsub@example.iam.gserviceaccount.com';
         const mod = await import('@/app/api/jobs/storage-cleanup/route');
         POST = mod.POST;
     });
@@ -150,6 +151,7 @@ describe('POST /api/jobs/storage-cleanup', () => {
             getPayload: () => ({
                 iss: 'https://accounts.google.com',
                 email: 'pubsub@example.iam.gserviceaccount.com',
+                email_verified: true,
                 sub: '123',
             }),
         });
@@ -167,6 +169,7 @@ describe('POST /api/jobs/storage-cleanup', () => {
             getPayload: () => ({
                 iss: 'https://accounts.google.com',
                 email: 'pubsub@example.iam.gserviceaccount.com',
+                email_verified: true,
                 sub: '123',
             }),
         });
@@ -177,5 +180,46 @@ describe('POST /api/jobs/storage-cleanup', () => {
         const { status } = lastJson();
         expect(status).toBe(200);
         expect(mockDelete).toHaveBeenCalledTimes(1);
+    });
+
+    // ── Regression: any Google-signed token from any project must NOT be enough ──
+    const oidcOk = (payload: Record<string, unknown>) =>
+        mockVerifyIdToken.mockResolvedValueOnce({ getPayload: () => ({ iss: 'https://accounts.google.com', ...payload }) });
+
+    it('OIDC from a service account outside the allowlist → 401, nothing deleted', async () => {
+        oidcOk({ email: 'attacker@other-project.iam.gserviceaccount.com', email_verified: true, sub: '9' });
+        await POST(makeReq(
+            { storagePath: 'lessons/victim/x.pdf', userId: 'victim' },
+            { Authorization: 'Bearer attacker-oidc' },
+        ));
+        expect(lastJson().status).toBe(401);
+        expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it('OIDC token with no email claim → 401 (allowlist cannot be skipped)', async () => {
+        oidcOk({ sub: '9' });
+        await POST(makeReq({ storagePath: 'temp/x.txt' }, { Authorization: 'Bearer no-email' }));
+        expect(lastJson().status).toBe(401);
+        expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it('OIDC token with an unverified email → 401', async () => {
+        oidcOk({ email: 'pubsub@example.iam.gserviceaccount.com', email_verified: false, sub: '9' });
+        await POST(makeReq({ storagePath: 'temp/x.txt' }, { Authorization: 'Bearer unverified' }));
+        expect(lastJson().status).toBe(401);
+        expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it('OIDC path is closed when PUBSUB_PUSH_SERVICE_ACCOUNTS is unset (fail closed)', async () => {
+        const saved = process.env.PUBSUB_PUSH_SERVICE_ACCOUNTS;
+        delete process.env.PUBSUB_PUSH_SERVICE_ACCOUNTS;
+        try {
+            oidcOk({ email: 'pubsub@example.iam.gserviceaccount.com', email_verified: true, sub: '9' });
+            await POST(makeReq({ storagePath: 'temp/x.txt' }, { Authorization: 'Bearer good-oidc' }));
+            expect(lastJson().status).toBe(401);
+            expect(mockDelete).not.toHaveBeenCalled();
+        } finally {
+            process.env.PUBSUB_PUSH_SERVICE_ACCOUNTS = saved;
+        }
     });
 });

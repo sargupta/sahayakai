@@ -19,6 +19,7 @@
  * Exit code 1 on any failure — this script is a BLOCKING CI gate.
  */
 import { config as loadEnv } from 'dotenv';
+import { evalRetryDelayMs } from '../../src/lib/eval-retry';
 loadEnv({ path: '.env.local' });
 loadEnv();
 
@@ -141,16 +142,16 @@ async function runFlowDir(dir: string, failures: Failure[]): Promise<{ ran: numb
                 // One retry for transient failures only (timeouts, model-side
                 // schema flakes, rate limits). Language/expect assertions are
                 // NEVER retried — a masked regression is worse than a flaky red.
-                const isTransient = (e: Error) =>
-                    /timeout after|INVALID_ARGUMENT|RESOURCE_EXHAUSTED|429|5\d\d|UNAVAILABLE|fetch failed/i.test(e.message);
                 const callOnce = () => withTimeout(fn!(testCase.input), CASE_TIMEOUT_MS, `${dir}/${langFile}#${idx}`);
                 try {
                     let out: unknown;
                     try {
                         out = await callOnce();
                     } catch (first) {
-                        if (!isTransient(first as Error)) throw first;
-                        console.log(`  RETRY ${dir}/${langFile} — ${label} (transient: ${(first as Error).message.slice(0, 80)})`);
+                        const waitMs = evalRetryDelayMs(first);
+                        if (waitMs === null) throw first;
+                        console.log(`  RETRY ${dir}/${langFile} — ${label} in ${Math.round(waitMs / 1000)} s (transient: ${(first as Error).message.slice(0, 80)})`);
+                        await new Promise((r) => setTimeout(r, waitMs));
                         out = await callOnce();
                     }
                     if (!out) throw new Error('flow returned empty result');

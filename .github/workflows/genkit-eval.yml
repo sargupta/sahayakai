@@ -52,6 +52,14 @@ jobs:
             echo "::error::Add a Gemini API key as the GENKIT_EVAL_API_KEY secret (repo Settings -> Secrets). This gate is blocking by design: AI output quality is the product."
             exit 1
           fi
+      # The app runs Gemini through Vertex AI (src/ai/genkit.ts: usingVertex), which authenticates
+      # with Application Default Credentials, not the API key above. Without this step every live
+      # eval failed with VertexAI.GoogleAuthError, on main every week since 2026-10-12
+      # (gate: src/__tests__/scripts/workflow-evals-authenticate.test.ts).
+      - name: Authenticate to Google Cloud (Vertex AI for the live evals)
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
       - name: Run live evals (blocking)
         run: npx tsx --tsconfig scripts/eval/tsconfig.json scripts/eval/run-evals.mts --all
       - name: Upload eval report

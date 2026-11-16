@@ -339,6 +339,7 @@ export async function dispatchVirtualFieldTrip(
             };
             await persistSidecarJSON({
                 uid: input.userId,
+                contentId: input.contentId,
                 contentType: 'virtual-field-trip',
                 collection: 'virtual-field-trips',
                 title: sidecar.res.title || `Trip: ${input.topic}`,

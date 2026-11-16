@@ -22,7 +22,7 @@
  * Compile-time half: src/lib/onboarding-phase.typecheck.ts.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { extname, join, relative } from 'node:path';
+import { extname, join, relative, sep } from 'node:path';
 import {
     LEGACY_ONBOARDING_PHASE_ALIASES,
     NEW_USER_MODE_MAX_DAYS,
@@ -142,7 +142,7 @@ const SKIPPED = [
 function walk(dir: string, out: string[] = []): string[] {
     for (const entry of readdirSync(dir)) {
         const abs = join(dir, entry);
-        const rel = relative(ROOT, abs);
+        const rel = relative(ROOT, abs).split(sep).join('/'); // Windows: the lists below use '/'
         if (SKIPPED.some((re) => re.test(rel))) continue;
         if (statSync(abs).isDirectory()) walk(abs, out);
         else if (SCANNED_EXTS.has(extname(entry))) out.push(rel);

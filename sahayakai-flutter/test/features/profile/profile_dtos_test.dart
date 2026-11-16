@@ -108,7 +108,7 @@ void main() {
       expect(profile.subjects, ['Mathematics', 'Science']);
       expect(profile.gradeLevels, ['Class 6', 'Class 7']);
       expect(profile.preferredLanguage, AppLocale.kn);
-      expect(profile.phoneNumber, '9845012345');
+      expect(profile.phoneNumber, '9800000502');
       expect(profile.pincode, '570001');
       expect(profile.settings.educationBoard, 'Karnataka State Board (KSEEB)');
       expect(profile.settings.qualifications, ['B.Ed']);
@@ -254,7 +254,7 @@ void main() {
           subjects: ['Mathematics'],
           gradeLevels: ['Class 6'],
           preferredLanguage: AppLocale.kn,
-          phoneNumber: '9845012345',
+          phoneNumber: '9800000502',
           pincode: '570001',
           settings: ProfileSettings(
             educationBoard: 'CBSE',
@@ -268,7 +268,7 @@ void main() {
         'schoolName': 'GHPS',
         'state': 'Karnataka',
         'district': 'Mysuru',
-        'phoneNumber': '9845012345',
+        'phoneNumber': '9800000502',
         'pincode': '570001',
         'subjects': ['Mathematics'],
         'gradeLevels': ['Class 6'],

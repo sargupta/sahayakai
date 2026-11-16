@@ -15,12 +15,34 @@ const serwistOptions = {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Local only: two `next dev` servers on one checkout corrupt a shared .next,
+  // so a second server can set NEXT_DIST_DIR (e.g. ".next-demo"). Unset = .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Reverse-proxy Firebase Auth helper paths through our domain so the OAuth
   // iframe (loaded by signInWithPopup / signInWithRedirect) is same-site with
   // the app. Required for iPhone Safari: ITP blocks third-party iframes to
   // *.firebaseapp.com, which made getRedirectResult() return null and left
   // teachers stranded back on the landing page after Google sign-in.
   // See: https://firebase.google.com/docs/auth/web/redirect-best-practices
+  // Links that the marketing pages, blog articles and the try-call page carry
+  // but that have no page of their own. Without these every one is a 404.
+  // Gate: src/__tests__/app/internal-links-resolve.test.ts.
+  async redirects() {
+    return [
+      // Articles that are linked from the published ones but not written yet,
+      // and the "all articles" link: the Hindi explainer is the entry article.
+      { source: '/blog', destination: '/blog/sahayak-ai-kya-hai', permanent: false },
+      { source: '/blog/teaching-assistant-app-indian-languages', destination: '/blog/sahayak-ai-kya-hai', permanent: false },
+      { source: '/blog/ai-lesson-plan-generator-india', destination: '/lesson-plan', permanent: false },
+      { source: '/blog/ncert-lesson-plan-tool', destination: '/lesson-plan', permanent: false },
+      { source: '/blog/offline-teaching-app-india', destination: '/blog/sahayakai-vs-chatgpt', permanent: false },
+      // The Hindi landing page is the Hindi article until /hi has its own page.
+      { source: '/hi', destination: '/blog/sahayak-ai-kya-hai', permanent: false },
+      { source: '/worksheet', destination: '/worksheet-wizard', permanent: false },
+      // Sign-up is the sign-in dialog on the home page.
+      { source: '/signup', destination: '/', permanent: false },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [
@@ -93,11 +115,20 @@ const nextConfig: NextConfig = {
         source: '/((?!_next/static|_next/image|favicon\\.ico|blog|about|for-schools|pricing|faq|hi|bn|kn|ta).*)',
         headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
       },
-      {
-        // Static JS/CSS chunks are content-addressed â safe to cache forever
-        source: '/_next/static/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
+      // Static JS/CSS chunks are content-addressed in production builds, so
+      // caching them forever is safe there. In `next dev` they are NOT:
+      // webpack.js, main-app.js and the route chunks keep the same name across
+      // restarts, and an immutable copy pinned in the browser loads stale module
+      // ids ("Cannot read properties of undefined (reading 'call')"). Dev keeps
+      // Next's own no-cache headers.
+      ...(process.env.NODE_ENV === 'production'
+        ? [
+            {
+              source: '/_next/static/:path*',
+              headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+            },
+          ]
+        : []),
     ];
   },
   typescript: {

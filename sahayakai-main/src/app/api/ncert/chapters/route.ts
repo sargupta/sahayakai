@@ -9,10 +9,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getNCERTChapters } from '@/server/ncert';
+import { EDUCATION_BOARDS } from '@/types';
 
 const QuerySchema = z.object({
     grade: z.coerce.number().int().min(1).max(12),
     subject: z.string().optional(),
+    // Omitted returns every board's chapters for the cell. Callers generating
+    // material for one teacher should pass that teacher's preferredBoard.
+    board: z.enum(EDUCATION_BOARDS).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -23,11 +27,14 @@ export async function GET(req: NextRequest) {
     const parsed = QuerySchema.safeParse({
         grade: searchParams.get('grade'),
         subject: searchParams.get('subject') ?? undefined,
+        board: searchParams.get('board') ?? undefined,
     });
     if (!parsed.success) {
         return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400 });
     }
 
     // Service fails soft ([]) on DB errors — client falls back to static data.
-    return NextResponse.json(await getNCERTChapters(parsed.data.grade, parsed.data.subject));
+    return NextResponse.json(
+        await getNCERTChapters(parsed.data.grade, parsed.data.subject, parsed.data.board),
+    );
 }

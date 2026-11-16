@@ -6,6 +6,7 @@
  * Each consent category is independently toggleable.
  */
 
+import { clientAddress } from '@/lib/client-address';
 import { NextRequest, NextResponse } from 'next/server';
 
 export interface ConsentPreferences {
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
     await db.collection('users').doc(userId).collection('consent_log').add({
       changes: body,
       timestamp: new Date().toISOString(),
-      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      ip: clientAddress(request),
     });
 
     return NextResponse.json({ ok: true });

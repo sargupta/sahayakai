@@ -74,6 +74,10 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Same heap as the production image (sahayakai-main/Dockerfile).
+          # Gate: src/__tests__/scripts/workflow-build-heap.test.ts.
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Run @smoke suite
         # Playwright's webServer block boots `next start` on :3000 and waits

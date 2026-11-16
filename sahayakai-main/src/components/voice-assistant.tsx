@@ -107,7 +107,7 @@ const FLOW_CONFIG: Record<string, { route: string; icon: React.ReactNode; color:
         route: "/teacher-training",
         icon: <GraduationCap className="w-4 h-4" />,
         color: "bg-primary/5 border-primary/20 text-primary",
-        label: "Teacher Training",
+        label: "AI Coach",
     },
     "virtual-field-trip": {
         route: "/virtual-field-trip",

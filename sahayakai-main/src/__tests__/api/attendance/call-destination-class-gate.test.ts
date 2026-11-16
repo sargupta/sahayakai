@@ -69,6 +69,14 @@ jest.mock('@/lib/firebase-admin', () => ({
         collection: (name: string) => ({
             doc: (id?: string) => (name === 'classes' ? classRef(id as string) : outreachRef(id)),
         }),
+        // Sequential stand-in: the route writes call status through the reconciled writer,
+        // which reads then updates one outreach document in a transaction.
+        runTransaction: async (fn: (tx: unknown) => Promise<unknown>) =>
+            fn({
+                get: (ref: { get: () => Promise<unknown> }) => ref.get(),
+                update: (ref: { update: (p: Record<string, unknown>) => Promise<void> }, patch: Record<string, unknown>) => ref.update(patch),
+                set: (ref: { set: (r: Record<string, unknown>) => Promise<void> }, rec: Record<string, unknown>) => ref.set(rec),
+            }),
     }),
 }));
 
@@ -80,6 +88,8 @@ jest.mock('@/lib/calling-hours', () => ({
 
 const placeVobizCall = jest.fn(async () => ({ ok: true, handle: { requestUuid: 'vobiz-req-1' } }));
 jest.mock('@/lib/vobiz/client', () => ({
+    // The route also applies the CALL_ALLOWED_DESTINATIONS list; unset, it allows every number.
+    isDestinationAllowed: jest.requireActual('@/lib/vobiz/client').isDestinationAllowed,
     readVobizConfig: () => ({ authId: 'a', authToken: 't', fromNumber: '+918000000000', baseUrl: 'https://vobiz.test' }),
     placeVobizCall: (...args: unknown[]) => (placeVobizCall as unknown as (...a: unknown[]) => unknown)(...args),
 }));

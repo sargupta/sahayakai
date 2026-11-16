@@ -26,7 +26,7 @@ export default {
         // Order matters: Inter/Outfit first so Latin characters still use
         // them when mixed with Indic script (code-switching Hinglish).
         body: [
-          'var(--font-inter)',
+          'var(--font-ui)',
           'var(--font-noto-devanagari)',
           'var(--font-noto-tamil)',
           'var(--font-noto-kannada)',
@@ -39,7 +39,21 @@ export default {
           'sans-serif',
         ],
         headline: [
-          'var(--font-outfit)',
+          'var(--font-display)',
+          'var(--font-noto-devanagari)',
+          'var(--font-noto-tamil)',
+          'var(--font-noto-kannada)',
+          'var(--font-noto-telugu)',
+          'var(--font-noto-bengali)',
+          'var(--font-noto-gujarati)',
+          'var(--font-noto-gurmukhi)',
+          'var(--font-noto-malayalam)',
+          'var(--font-noto-oriya)',
+          'sans-serif',
+        ],
+        // Design system aliases: font-display / font-ui.
+        display: [
+          'var(--font-display)',
           'var(--font-noto-devanagari)',
           'var(--font-noto-tamil)',
           'var(--font-noto-kannada)',
@@ -73,15 +87,97 @@ export default {
         // card, animated-headline). DEFAULT and 500 both map to --primary so
         // `bg-saffron` stays consistent with `bg-primary` elsewhere in the app.
         saffron: {
-          DEFAULT: 'hsl(var(--primary))',
+          DEFAULT: 'hsl(var(--saffron-500))',
           50: 'hsl(var(--saffron-50))',
           100: 'hsl(var(--saffron-100))',
           200: 'hsl(var(--saffron-200))',
           300: 'hsl(var(--saffron-300))',
-          500: 'hsl(var(--primary))',
+          400: 'hsl(var(--saffron-400))',
+          500: 'hsl(var(--saffron-500))',
           600: 'hsl(var(--saffron-600))',
           700: 'hsl(var(--saffron-700))',
           800: 'hsl(var(--saffron-800))',
+        },
+        // Design-system families (Oct 2026). Names match the system's
+        // tokens: --milk-200 is bg-milk-200, --ink-900 is text-ink-900.
+        milk: {
+          50: 'hsl(var(--milk-50))',
+          100: 'hsl(var(--milk-100))',
+          200: 'hsl(var(--milk-200))',
+          300: 'hsl(var(--milk-300))',
+          400: 'hsl(var(--milk-400))',
+          500: 'hsl(var(--milk-500))',
+        },
+        ink: {
+          400: 'hsl(var(--ink-400))',
+          500: 'hsl(var(--ink-500))',
+          600: 'hsl(var(--ink-600))',
+          800: 'hsl(var(--ink-800))',
+          900: 'hsl(var(--ink-900))',
+        },
+        stone: {
+          100: 'hsl(var(--stone-100))',
+          500: 'hsl(var(--stone-500))',
+        },
+        leaf: {
+          100: 'hsl(var(--leaf-100))',
+          300: 'hsl(var(--leaf-300))',
+          500: 'hsl(var(--leaf-500))',
+          700: 'hsl(var(--leaf-700))',
+        },
+        indigo: {
+          100: 'hsl(var(--indigo-100))',
+          500: 'hsl(var(--indigo-500))',
+        },
+        // SamparkAI theme tokens (globals.css "SamparkAI theme").
+        sampark: {
+          saffron: 'hsl(var(--sampark-saffron))',
+          'saffron-strong': 'hsl(var(--sampark-saffron-strong))',
+          peach: 'hsl(var(--sampark-peach))',
+          'peach-border': 'hsl(var(--sampark-peach-border))',
+          indigo: 'hsl(var(--sampark-indigo))',
+          'indigo-soft': 'hsl(var(--sampark-indigo-soft))',
+          'indigo-border': 'hsl(var(--sampark-indigo-border))',
+          leaf: 'hsl(var(--sampark-leaf))',
+          'leaf-soft': 'hsl(var(--sampark-leaf-soft))',
+          'leaf-border': 'hsl(var(--sampark-leaf-border))',
+          rose: 'hsl(var(--sampark-rose))',
+          'rose-soft': 'hsl(var(--sampark-rose-soft))',
+          'rose-border': 'hsl(var(--sampark-rose-border))',
+          slate: 'hsl(var(--sampark-slate))',
+          'slate-soft': 'hsl(var(--sampark-slate-soft))',
+          line: 'hsl(var(--sampark-line))',
+        },
+        surface: {
+          glass: 'var(--surface-glass)',
+          'glass-soft': 'var(--surface-glass-soft)',
+          'glass-strong': 'var(--surface-glass-strong)',
+          chrome: 'var(--surface-chrome)',
+          capsule: 'var(--surface-capsule)',
+          float: 'var(--surface-float)',
+          segment: 'var(--surface-segment)',
+          disc: 'var(--surface-disc)',
+        },
+        line: {
+          glass: 'var(--border-glass)',
+          hairline: 'var(--border-hairline)',
+          row: 'var(--border-row)',
+          control: 'var(--border-control)',
+        },
+        tint: {
+          accent: 'var(--accent-tint)',
+          'accent-strong': 'var(--accent-tint-strong)',
+          'accent-border': 'var(--accent-tint-border)',
+          'accent-soft': 'var(--accent-tint-soft)',
+          success: 'var(--success-tint)',
+          'success-border': 'var(--leaf-tint-border)',
+          info: 'var(--info-tint)',
+          'info-border': 'var(--info-tint-border)',
+          danger: 'var(--red-tint)',
+          warning: 'var(--amber-tint)',
+          quiet: 'var(--fill-quiet)',
+          subtle: 'var(--fill-subtle)',
+          mark: 'var(--fill-mark)',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -142,6 +238,15 @@ export default {
         'inner-soft': 'inset 0 1px 2px 0 rgb(0 0 0 / 0.04)',
         // Phase 1 (2026-04-24): floating shadow for modals/sheets/menus
         floating: 'var(--shadow-floating)',
+        // Design system (Oct 2026): warm, low, rare.
+        float: 'var(--shadow-float)',
+        card: 'var(--shadow-card)',
+        cta: 'var(--shadow-cta)',
+        'sampark-card': 'var(--shadow-sampark-card)',
+        'sampark-raised': 'var(--shadow-sampark-raised)',
+        orb: 'var(--shadow-orb)',
+        current: 'var(--shadow-current)',
+        mic: 'var(--shadow-mic)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -154,16 +259,58 @@ export default {
         'surface-md': 'var(--radius-md)',
         'surface-lg': 'var(--radius-lg)',
         pill: 'var(--radius-pill)',
+        // Design system container radii: they step up as containers grow.
+        xs: '6px',
+        mark: '8px',
+        row: '12px',
+        field: '14px',
+        tile: '16px',
+        card: '18px',
+        panel: '20px',
+        sheet: '26px',
+        'web-metric': '24px',
+        band: '36px',
       },
       transitionTimingFunction: {
         // Phase 1 (2026-04-24): single canonical easing curve
         'out-quart': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        // Design system: one curve, gentle and never bouncy.
+        standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      // Design-system type scale (Oct 2026). App sizes never go under 12px.
+      fontSize: {
+        brand: ['17px', { lineHeight: '1' }],
+        tile: ['13px', { lineHeight: '1.3' }],
+        value: ['14px', { lineHeight: '1.3' }],
+        'card-title': ['15px', { lineHeight: '1.3' }],
+        'output-title': ['20px', { lineHeight: '1.22' }],
+        'page-title': ['22px', { lineHeight: '1.2' }],
+        metric: ['26px', { lineHeight: '1.05' }],
+        'web-body': ['14px', { lineHeight: '1.6' }],
+        'web-lead': ['18px', { lineHeight: '1.62' }],
+        'web-h3': ['21px', { lineHeight: '1.2' }],
+        'web-h2': ['clamp(30px, 4vw, 44px)', { lineHeight: '1.06' }],
+        'web-h1': ['clamp(40px, 6vw, 68px)', { lineHeight: '1.02' }],
+      },
+      maxWidth: {
+        web: '1220px',
+        // A printed A4 sheet (exam paper, worksheet) previewed at its real width.
+        paper: '210mm',
+      },
+      width: {
+        sidebar: 'var(--sidebar-w)',
+        rail: 'var(--sidebar-w-rail)',
+      },
+      height: {
+        topbar: 'var(--topbar-h)',
       },
       transitionDuration: {
         // Phase 1 (2026-04-24): durations match --motion-* CSS vars
         micro: '150ms',
         small: '250ms',
         medium: '350ms',
+        // Design system: .4s for sheets, cards and panel widths.
+        sheet: '400ms',
       },
       keyframes: {
         'accordion-down': {

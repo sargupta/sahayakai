@@ -138,7 +138,7 @@ void main() {
       expect(find.text('Government Higher Primary School'), findsWidgets);
       expect(find.text('Karnataka'), findsWidgets);
       expect(find.text('Mysuru'), findsWidgets);
-      expect(find.text('9845012345'), findsOneWidget);
+      expect(find.text('9800000502'), findsOneWidget);
       expect(find.text('570001'), findsOneWidget);
       expect(find.text('Karnataka State Board (KSEEB)'), findsWidgets);
     });
@@ -328,9 +328,9 @@ void main() {
       tester,
     ) async {
       for (final number in const [
-        '9845012345',
-        '+919845012345',
-        '09845012345',
+        '9800000502',
+        '+919800000502',
+        '09800000502',
       ]) {
         await _pumpScreen(tester);
         await enterAndSave(tester, label: 'Mobile number', value: number);
@@ -347,7 +347,7 @@ void main() {
       tester,
     ) async {
       await _pumpScreen(tester);
-      await enterAndSave(tester, label: 'Mobile number', value: '98450 12345');
+      await enterAndSave(tester, label: 'Mobile number', value: '98000 00502');
 
       expect(
         find.text('Please enter a ten digit Indian mobile number.'),

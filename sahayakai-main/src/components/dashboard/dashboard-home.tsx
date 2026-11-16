@@ -12,6 +12,9 @@
  *   3. SECONDARY — the six prep-loop tools as one compact row of quiet
  *                  chip-links (NOT a grid of equal tinted-icon cards).
  *   4. TERTIARY  — Labs as a single muted text link.
+ *   5. COMMUNITY — the header's Messages button opens a floating Community
+ *                  panel (app shell); while it is open this column makes
+ *                  room for it, so VIDYA moves left instead of being covered.
  *
  * Banned patterns intentionally absent (proposal 04 §3): centered badge pill,
  * N-equal-cards grid, tinted-circle icon walls, unanchored accent ruler,
@@ -26,7 +29,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { MicrophoneInput } from "@/components/microphone-input";
+import { MicrophoneInput, type MicStatus } from "@/components/microphone-input";
+import { greetingFirstName } from "@/lib/teacher-name";
+import { VidyaSphere, type VidyaOrbState } from "@/components/vidya/vidya-sphere";
+import { VidyaPresence } from "@/components/vidya/vidya-presence";
+import { useVidyaLiveSession, VIDYA_LIVE_VOICE_ENABLED } from "@/components/vidya/vidya-live-provider";
+import { vidyaStatusKey } from "@/lib/vidya-live/use-vidya-live";
+import { deriveOrbState } from "@/components/vidya/orb-state";
+import { usePrefersReducedMotion, useVidyaSpeaking } from "@/components/vidya/use-vidya-signals";
 import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -45,6 +55,9 @@ import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklis
 import { ProfileCompletionCard } from "@/components/onboarding/profile-completion-card";
 import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight";
 import { RecentWorkStrip } from "@/components/dashboard/recent-work-strip";
+import { useCommunityMessages } from "@/components/community/community-messages-context";
+import { cn } from "@/lib/utils";
+
 import type { ContextualSuggestion } from "@/lib/contextual-suggestions";
 
 const formSchema = z.object({
@@ -98,7 +111,7 @@ const PrepToolsRow = () => {
             href={href}
             className="inline-flex items-center gap-2 rounded-surface-sm border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-soft hover:border-primary/50 hover:text-primary transition-colors duration-micro ease-out-quart indic-text"
           >
-            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <Icon className="h-4 w-4 text-ink-500 dark:text-muted-foreground" aria-hidden="true" />
             {t(labelKey)}
           </Link>
         ))}
@@ -118,7 +131,7 @@ const PrepToolsRow = () => {
 };
 
 export function DashboardHome() {
-  const { requireAuth, openAuthModal } = useAuth();
+  const { requireAuth, openAuthModal, user } = useAuth();
   const { language: userLanguage, t } = useLanguage();
   const {
     isNewUser, generationCount, checklistItems, suggestions, phase, advancePhase,
@@ -129,11 +142,34 @@ export function DashboardHome() {
   const { showNudge, dismissNudge, markVisited, trackGeneration } = useCommunityIntro({ profile });
   const [greeting, setGreeting] = useState("Namaste");
   const [isThinking, setIsThinking] = useState(false);
+  // The home mic's 3D VIDYA orb shows real state only: the mic's status, the answer
+  // being fetched (isThinking) and VIDYA's voice playing.
+  const [micStatus, setMicStatus] = useState<MicStatus>("idle");
+  const [orbFailed, setOrbFailed] = useState(false);
+  useEffect(() => {
+    if (!orbFailed) return;
+    const id = setTimeout(() => setOrbFailed(false), 4000);
+    return () => clearTimeout(id);
+  }, [orbFailed]);
+  const vidyaSpeaking = useVidyaSpeaking();
+  const reducedMotion = usePrefersReducedMotion();
+  const orbState = deriveOrbState({ failed: orbFailed, micStatus, speaking: vidyaSpeaking, awaitingReply: isThinking });
+  // Hands-free Live session (null when the flag is off or outside the app shell).
+  const liveSession = useVidyaLiveSession();
+  const live = VIDYA_LIVE_VOICE_ENABLED ? liveSession : null;
+  const liveOrbState: VidyaOrbState = !live ? orbState
+    : live.state === "error" ? "error"
+    : live.state === "listening" || live.state === "interrupted" ? "listening"
+    : live.state === "speaking" ? "speaking"
+    : live.state === "connecting" || live.state === "thinking" ? "thinking"
+    : "idle";
   const [answer, setAnswer] = useState<string | null>(null);
   const router = useRouter();
+  const messagesOpen = useCommunityMessages()?.open ?? false;
 
   const showNewUserHome = isNewUser && generationCount < 5;
-  const teacherName = profileSummary?.displayName?.split(' ')[0] || "Teacher";
+  // The saved profile name, else the sign-in account's (as the sidebar shows it).
+  const teacherName = greetingFirstName(profileSummary?.displayName, user?.displayName) ?? t("Teacher");
 
   const { toast } = useToast();
 
@@ -214,6 +250,7 @@ export function DashboardHome() {
         variant: "destructive"
       });
       setIsThinking(false);
+      setOrbFailed(true);
     }
   };
 
@@ -260,51 +297,104 @@ export function DashboardHome() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full container-wide py-8 md:py-12 gap-8 md:gap-10 relative">
-      {/* Greeting — restrained scale so the input, not the headline, dominates */}
-      <div className="text-center space-y-3 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-medium">
-        <h1 className="font-headline text-3xl md:text-5xl font-bold text-foreground tracking-tight indic-text leading-[1.15]">
-          {greeting}, <span className="text-primary">{teacherName}.</span>
-        </h1>
-        {showNewUserHome && suggestions.length > 0 ? (
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
-            {t("Ideas for your classes")}
-          </p>
-        ) : (
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
-            {t("I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.")}
-          </p>
+    <div className="w-full container-wide py-8 md:py-12">
+      {/* Community Messages open: from xl the floating panel sits at the right, so the
+          column reserves its width (panel 360px + 24px gap) and everything centred in it —
+          orb, greeting, input, hints — moves left as one group. Below xl the panel is a
+          bottom drawer; the bottom padding lets the input scroll clear of it. Closing
+          returns the padding to 0, i.e. the exact centred layout. */}
+      <div
+        data-testid="home-vidya-column"
+        data-messages-open={messagesOpen ? "true" : "false"}
+        className={cn(
+          "flex flex-col items-center justify-start min-h-[80vh] min-w-0 w-full gap-8 md:gap-10 relative",
+          // VIDYA and the greeting are CENTRED. Only while the Messages panel is open do they
+          // move left beside it (wide screens) — closing it brings them straight back to centre.
+          messagesOpen && "pb-[min(55svh,480px)] md:pb-[min(70svh,640px)] xl:pb-0 xl:pr-[384px]",
         )}
-      </div>
-
-      {/* PRIMARY — voice-first input, the prep loop's entry point */}
-      <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-6 duration-medium delay-75 z-10 flex flex-col items-center gap-8">
-
-        {/* BIG MIC BUTTON */}
-        <FeatureSpotlight
-          id={SPOTLIGHT_IDS.HOME_VOICE_INPUT}
-          message={t("Tap the mic and speak in any language. SahayakAI understands Hindi, Kannada, Tamil and more!")}
-          seenSpotlights={spotlightsSeen}
-          onDismiss={markSpotlightSeen}
-          position="bottom"
-        >
-          <div className="flex flex-col items-center gap-4">
-            <MicrophoneInput
-              onTranscriptChange={handleTranscript}
-              iconSize="xl"
-              label={t("Speak your topic")}
-              className=""
-            />
-            <p className="text-muted-foreground text-sm md:text-sm">
-              {t("Tap the microphone and tell Sahayak what you want to teach today")}
+      >
+        {/* Greeting — restrained scale so the input, not the headline, dominates */}
+        <div className="text-center space-y-3 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-medium">
+          <h1 className="font-headline text-3xl md:text-5xl font-bold text-foreground tracking-tight indic-text leading-[1.15]">
+            {greeting}, <span className="text-saffron-600 dark:text-primary">{teacherName}.</span>
+          </h1>
+          {showNewUserHome && suggestions.length > 0 ? (
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
+              {t("Ideas for your classes")}
             </p>
-          </div>
-        </FeatureSpotlight>
+          ) : (
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
+              {t("I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.")}
+            </p>
+          )}
+        </div>
 
-        {/* OR TEXT INPUT (SECONDARY) */}
-        <div className="w-full">
-          <Card className="border-none rounded-surface-md shadow-elevated bg-card/95 backdrop-blur-sm ring-1 ring-border/80 transition-shadow duration-micro ease-out-quart focus-within:ring-primary/40 focus-within:ring-2">
-            <CardContent className="p-2">
+        {/* PRIMARY — voice-first input, the prep loop's entry point */}
+        <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-6 duration-medium delay-75 z-10 flex flex-col items-center gap-8">
+
+          {/* BIG MIC BUTTON */}
+          <FeatureSpotlight
+            id={SPOTLIGHT_IDS.HOME_VOICE_INPUT}
+            message={t("Tap the mic and speak in any language. SahayakAI understands Hindi, Kannada, Tamil and more!")}
+            seenSpotlights={spotlightsSeen}
+            onDismiss={markSpotlightSeen}
+            position="bottom"
+          >
+            {/* data-vidya-entry: the sidebar's "Talk to VIDYA" presses this mic on Home. */}
+            {live ? (
+              // Hands-free VIDYA (Gemini Live via the voice sidecar): one tap opens a
+              // continuous voice-to-voice session — server-side voice detection, so
+              // she answers the speaker, not the room. Same session as the compact
+              // orb on tool pages (VidyaLiveProvider); tap again to end.
+              <div className="flex flex-col items-center gap-3" data-vidya-entry="home" data-vidya-state={liveOrbState}>
+                {/* The design-system VIDYA (VidyaPresence: saffron radial, breathing
+                    ring, 5 s float; indigo while connecting/thinking) at ONE fixed size on Home
+                    (h-40 / md:h-52) in every state. Its own button carries data-microphone.
+                    Radial #FFD9AE → #C96A28 (design-token-allow: a comment quoting the orb tokens from DESIGN_TOKENS.md, not a style). */}
+                <div data-testid="vidya-home-live">
+                  <VidyaPresence
+                    size="compact"
+                    className="h-40 w-40 shrink-0 md:h-52 md:w-52"
+                    state={live.state}
+                    getLevel={live.getLevel}
+                    onActivate={live.error ? () => { live.dismissError(); void live.start(); } : live.toggle}
+                    label={live.active ? t("End voice conversation") : t("Talk to VIDYA")}
+                  />
+                </div>
+                <div role="status" aria-live="polite" data-state={live.state} className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="indic-text">{live.error ? t(live.error) : t(vidyaStatusKey(live.state, live.hasAnswered))}</span>
+                  {live.active && (
+                    <button type="button" onClick={live.stop} className="focus-ring inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-xs font-medium hover:bg-muted hover:text-foreground">
+                      <X className="h-3 w-3" aria-hidden="true" /> {t("End")}
+                    </button>
+                  )}
+                </div>
+                <p className="min-h-6 max-w-prose text-center text-sm text-muted-foreground indic-text" data-testid="vidya-home-caption">
+                  {live.active && live.caption ? live.caption.text.slice(-160) : ""}
+                </p>
+              </div>
+            ) : (
+            <div className="flex flex-col items-center gap-4" data-vidya-entry="home" data-vidya-state={orbState}>
+              <MicrophoneInput
+                onTranscriptChange={handleTranscript}
+                onStatusChange={setMicStatus}
+                renderVisual={() => <VidyaSphere state={orbState} reducedMotion={reducedMotion} />}
+                iconSize="xl"
+                label={t("Speak your topic")}
+                className=""
+              />
+              <p className="text-muted-foreground text-sm md:text-sm">
+                {t("Tap the microphone and tell Sahayak what you want to teach today")}
+              </p>
+            </div>
+            )}
+          </FeatureSpotlight>
+
+          {/* OR TEXT INPUT (SECONDARY) */}
+          {/* Composer (chat): a surface-disc pill with a border-glass edge; focus gives a
+              2px saffron-500 edge and shadow-current; the send disc is saffron-500 (VIDYA's colour, on request), white glyph. */}
+          <div className="w-full max-w-xl">
+            <div className="rounded-pill border border-line-glass bg-surface-disc py-1.5 pl-[18px] pr-2 shadow-float backdrop-blur-sm transition-shadow duration-micro ease-out-quart focus-within:shadow-current focus-within:ring-2 focus-within:ring-saffron-500">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
                   <div className="relative flex-1">
@@ -317,133 +407,135 @@ export function DashboardHome() {
                         form.setValue("topic", value);
                         form.handleSubmit(onSubmit)();
                       }}
-                      className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-2 pl-4 bg-transparent"
+                      inputClassName="h-[38px] rounded-none border-0 bg-transparent px-0 py-0 text-sm text-ink-900 shadow-none backdrop-blur-none placeholder:text-ink-500 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
 
-                  <Button
+                  {/* A plain button: the shadcn Button's rounded-md and forced 16px svg
+                      survive tailwind-merge and spoil the disc. */}
+                  <button
                     type="submit"
-                    size="icon"
-                    className="h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all active:scale-95"
+                    disabled={isThinking}
+                    className="focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-saffron-500 text-white shadow-mic transition-colors duration-micro hover:bg-saffron-600 active:scale-95 disabled:pointer-events-none disabled:opacity-[.55]"
                     aria-label={t("Generate Lesson Plan")}
                   >
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
+                    <ArrowRight className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                  </button>
                 </form>
               </Form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-center text-xs text-muted-foreground px-4 indic-text">
-            {t("try: \"Quiz about photosynthesis\" or \"Lesson plan for solar system\"")}
-          </p>
-          <p className="text-xs text-muted-foreground indic-text leading-relaxed text-center px-4">
-            {t("Works in Hindi, Kannada, Tamil + 8 more languages")}
-          </p>
-
-          {/* Thinking Indicator */}
-          {isThinking && (
-            <div className="flex items-center gap-2 text-primary font-medium mt-2">
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
-                <span className="ml-2">{t("Thinking")}</span>
-              </span>
             </div>
-          )}
+          </div>
 
-          {/* Instant Answer — uses SectionCard for consistent surface treatment */}
-          {answer && (
-            <SectionCard
-              className="w-full max-w-2xl mt-4 border-l-4 border-l-primary shadow-elevated animate-in fade-in slide-in-from-bottom-2 relative"
-              action={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-muted-foreground"
-                  onClick={() => setAnswer(null)}
-                  aria-label={t("Close answer")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              }
-            >
-              <div className="prose prose-sm max-w-none text-foreground">
-                <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />{t("Answer")}</h3>
-                <div className="whitespace-pre-wrap">{answer}</div>
-                <p className="text-xs text-muted-foreground mt-3 not-prose">
-                  {t("Sahayak can make mistakes. Please review generated content.")}
-                </p>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-center text-xs text-muted-foreground px-4 indic-text">
+              {t("try: \"Quiz about photosynthesis\" or \"Lesson plan for solar system\"")}
+            </p>
+            <p className="text-xs text-muted-foreground indic-text leading-relaxed text-center px-4">
+              {t("Works in Hindi, Kannada, Tamil + 8 more languages")}
+            </p>
+
+            {/* Thinking Indicator */}
+            {isThinking && (
+              <div className="flex items-center gap-2 text-primary font-medium mt-2">
+                <span className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
+                  <span className="ml-2">{t("Thinking")}</span>
+                </span>
               </div>
-            </SectionCard>
-          )}
-        </div>
-      </div>
+            )}
 
-      {/* RECENTS — "continue where you left off"; renders nothing when empty */}
-      <div className="w-full flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-medium delay-100">
-        <RecentWorkStrip />
-      </div>
-
-      {/* Daily inspiration — personalized suggestions for new users */}
-      {showNewUserHome && suggestions.length > 0 && (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-            {suggestions.map(s => (
-              <SuggestionCard key={s.id} suggestion={s} startLabel={t("Start")} />
-            ))}
+            {/* Instant Answer — uses SectionCard for consistent surface treatment */}
+            {answer && (
+              <SectionCard
+                className="w-full max-w-2xl mt-4 border-l-4 border-l-primary shadow-elevated animate-in fade-in slide-in-from-bottom-2 relative"
+                action={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-muted-foreground"
+                    onClick={() => setAnswer(null)}
+                    aria-label={t("Close answer")}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                }
+              >
+                <div className="prose prose-sm max-w-none text-foreground">
+                  <h3 className="text-saffron-600 dark:text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />{t("Answer")}</h3>
+                  <div className="whitespace-pre-wrap">{answer}</div>
+                  <p className="text-xs text-muted-foreground mt-3 not-prose">
+                    {t("Sahayak can make mistakes. Please review generated content.")}
+                  </p>
+                </div>
+              </SectionCard>
+            )}
           </div>
-          <div className="flex items-center justify-center">
-            <button
-              onClick={refreshSuggestions}
-              className="text-sm text-muted-foreground hover:text-primary font-medium flex items-center gap-1 transition-colors"
-            >
-              <RefreshCw className="h-3 w-3" /> {t("Show different ideas")}
-            </button>
+        </div>
+
+        {/* RECENTS — "continue where you left off"; renders nothing when empty */}
+        <div className="w-full flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-medium delay-100">
+          <RecentWorkStrip />
+        </div>
+
+        {/* Daily inspiration — personalized suggestions for new users */}
+        {showNewUserHome && suggestions.length > 0 && (
+          <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+              {suggestions.map(s => (
+                <SuggestionCard key={s.id} suggestion={s} startLabel={t("Start")} />
+              ))}
+            </div>
+            <div className="flex items-center justify-center">
+              <button
+                onClick={refreshSuggestions}
+                className="text-sm text-muted-foreground hover:text-primary font-medium flex items-center gap-1 transition-colors"
+              >
+                <RefreshCw className="h-3 w-3" /> {t("Show different ideas")}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* SECONDARY + TERTIARY — the prep loop as one compact row, Labs quiet */}
-      <div className="w-full flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
-        <PrepToolsRow />
+        {/* SECONDARY + TERTIARY — the prep loop as one compact row, Labs quiet */}
+        <div className="w-full flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
+          <PrepToolsRow />
+        </div>
+
+        {/* Sample Output -- hidden for new users who see personalized suggestions. */}
+        {!showNewUserHome && (
+          <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 flex justify-center">
+            <SampleOutputSection />
+          </div>
+        )}
+
+        {/* Demo Interaction -- hidden for new users */}
+        {!showNewUserHome && (
+          <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
+            <DemoInteraction />
+          </div>
+        )}
+
+        {/* Profile Completion Card — shown after 5+ generations, max 3 times */}
+        {showProfileCompletion && (
+          <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <ProfileCompletionCard onComplete={() => advancePhase('done')} onDismiss={dismissProfileCard} />
+          </div>
+        )}
+
+        {/* Community Nudge Banner — appears after 3rd AI generation */}
+        {showNudge && (
+          <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <CommunityNudgeBanner onDismiss={dismissNudge} onExplore={markVisited} />
+          </div>
+        )}
+
+        {/* Onboarding Checklist — floating bottom-right for new users, dismissible, auto-hides after 7 days */}
+        {showNewUserHome && !checklistDismissed && isFirstWeek && (
+          <OnboardingChecklist items={checklistItems} onDismiss={dismissChecklist} />
+        )}
       </div>
-
-      {/* Sample Output -- hidden for new users who see personalized suggestions. */}
-      {!showNewUserHome && (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 flex justify-center">
-          <SampleOutputSection />
-        </div>
-      )}
-
-      {/* Demo Interaction -- hidden for new users */}
-      {!showNewUserHome && (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
-          <DemoInteraction />
-        </div>
-      )}
-
-      {/* Profile Completion Card — shown after 5+ generations, max 3 times */}
-      {showProfileCompletion && (
-        <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <ProfileCompletionCard onComplete={() => advancePhase('done')} onDismiss={dismissProfileCard} />
-        </div>
-      )}
-
-      {/* Community Nudge Banner — appears after 3rd AI generation */}
-      {showNudge && (
-        <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <CommunityNudgeBanner onDismiss={dismissNudge} onExplore={markVisited} />
-        </div>
-      )}
-
-      {/* Onboarding Checklist — floating bottom-right for new users, dismissible, auto-hides after 7 days */}
-      {showNewUserHome && !checklistDismissed && isFirstWeek && (
-        <OnboardingChecklist items={checklistItems} onDismiss={dismissChecklist} />
-      )}
     </div>
   );
 }

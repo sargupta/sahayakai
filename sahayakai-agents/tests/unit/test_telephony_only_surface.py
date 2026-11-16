@@ -22,12 +22,31 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+# CI selects tests by marker (ci-agents.yml); a class gate without one never runs.
+pytestmark = pytest.mark.unit
+
 SRC = str(Path(__file__).resolve().parents[2] / "src")
 
+# FastAPI >= 0.140 keeps `include_router` lazy: `app.routes` holds an
+# `_IncludedRouter` (no `.path`) per included router. Flatten those so the
+# gate still sees every served path, whatever the FastAPI version.
 _PROBE = """
 import json
 import sahayakai_agents.main as m
-print(json.dumps(sorted(r.path for r in m.app.routes)))
+
+def paths(routes, prefix=""):
+    for r in routes:
+        if hasattr(r, "path"):
+            yield prefix + r.path
+        elif hasattr(r, "original_router"):
+            ctx = getattr(r, "include_context", None)
+            yield from paths(r.original_router.routes, prefix + (getattr(ctx, "prefix", "") or ""))
+        else:
+            raise SystemExit(f"unknown route type {type(r).__name__}")
+
+print(json.dumps(sorted(paths(m.app.routes))))
 """
 
 _BASE_ENV = {

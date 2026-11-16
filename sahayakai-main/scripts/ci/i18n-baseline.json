@@ -1,5 +1,6 @@
 {
-  "comment": "Gate 9 ratchet baseline (scripts/ci/check-i18n-ratchet.mjs). Seeded 2026-08-14 from main HEAD. Counts may only go DOWN — when a PR reduces them, update this file to the new numbers in the same PR.",
-  "missingKeys": 7,
+  "comment": "Gate 9 ratchet baseline (scripts/ci/check-i18n-ratchet.mjs). Seeded 2026-08-14 from main HEAD. Counts may only go DOWN — when a PR reduces them, update this file to the new numbers in the same PR. 2026-11-15: 0 after translating the 678 keys Alyssa's develop work shipped untranslated (fix/riya-sampark-onto-156). 2026-11-16: missingKeys now counts a key missing unless it is in EVERY locale and includes the keys of dynamic t() calls (scripts/i18n-dynamic-keys.json); the old scanner's 0 was really 290 at ebb031baa (plus 3 dynamic calls showing raw server text or status codes). Translated to 0; unregisteredDynamicCalls added at 0.",
+  "missingKeys": 0,
+  "unregisteredDynamicCalls": 0,
   "hardcodedStrings": 58
 }

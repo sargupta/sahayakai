@@ -39,6 +39,7 @@ export function ChapterSelector({
                 <button
                   key={ch}
                   type="button"
+                  aria-pressed={selected}
                   onClick={() => {
                     setChapters((prev) =>
                       selected
@@ -46,7 +47,7 @@ export function ChapterSelector({
                         : [...prev, ch]
                     );
                   }}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  className={`focus-ring text-sm px-3 py-1 rounded-full border transition-colors ${
                     selected
                       ? "bg-primary text-primary-foreground border-primary"
                       : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"

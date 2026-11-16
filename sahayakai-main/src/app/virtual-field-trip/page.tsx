@@ -27,6 +27,7 @@ function VirtualFieldTripContent() {
     selectedLanguage,
     handlePromptClick,
     trip,
+    contentId,
     isGenerating,
     isRestoring,
     limitState,
@@ -205,6 +206,7 @@ function VirtualFieldTripContent() {
             topic={form.getValues('topic')}
             gradeLevel={form.getValues('gradeLevel')}
             language={form.getValues('language')}
+            contentId={contentId}
           /></div>
           </>
         )

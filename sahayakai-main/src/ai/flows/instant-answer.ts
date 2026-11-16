@@ -20,8 +20,6 @@ import {
   sanitizeVideoSuggestionUrl,
   stripSourceLinks,
 } from '@/ai/grounding';
-import { getStorageInstance, getDb } from '@/lib/firebase-admin';
-import { format } from 'date-fns';
 import { LANGUAGE_CODE_MAP } from '@/types/index';
 import { UsageTracker } from '@/lib/usage-tracker';
 
@@ -306,70 +304,19 @@ const instantAnswerFlow = ai.defineFlow(
         grounded,
       };
 
-      // Persistence with error handling
-      if (input.userId) {
-        try {
-          const storage = await getStorageInstance();
-          const now = new Date();
-          const timestamp = format(now, 'yyyyMMdd_HHmmss');
-          const contentId = crypto.randomUUID();
-          // Re-implement safety and file naming logic from previous version
-          const safeTitle = input.question.substring(0, 50).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
-          const fileName = `${timestamp}_${safeTitle}.json`;
-          const filePath = `users/${input.userId}/instant-answers/${fileName}`;
-          const file = storage.bucket().file(filePath);
-
-          const downloadToken = crypto.randomUUID();
-          await file.save(JSON.stringify(sanitizedOutput), {
-            resumable: false,
-            metadata: {
-              contentType: 'application/json',
-              metadata: {
-                firebaseStorageDownloadTokens: downloadToken,
-              }
-            },
-          });
-
-          const { dbAdapter } = await import('@/lib/db/adapter');
-          const { Timestamp } = await import('firebase-admin/firestore');
-
-          await dbAdapter.saveContent(input.userId, {
-            id: contentId,
-            type: 'instant-answer',
-            title: input.question,
-            gradeLevel: (sanitizedOutput.gradeLevel || input.gradeLevel || 'Class 5') as any,
-            subject: (input.subject || sanitizedOutput.subject || 'General') as any,
-            topic: input.question,
-            language: input.language as any || 'English',
-            storagePath: filePath,
-            isPublic: false,
-            isDraft: false,
-            createdAt: Timestamp.fromDate(now),
-            updatedAt: Timestamp.fromDate(now),
-            data: sanitizedOutput,
-          });
-
-          StructuredLogger.info('Content persisted successfully', {
-            service: 'instant-answer-flow',
-            operation: 'persistContent',
-            userId: input.userId,
-            requestId,
-            metadata: { contentId }
-          });
-        } catch (persistenceError: any) {
-          // Non-blocking: user received the answer. Log WARN.
-          StructuredLogger.warn(
-            'Failed to persist instant answer (non-blocking — user received content)',
-            {
-              service: 'instant-answer-flow',
-              operation: 'persistContent',
-              userId: input.userId,
-              requestId,
-              metadata: { error: persistenceError?.message },
-            }
-          );
-        }
-      }
+      // No automatic Library write. An instant answer is an assistant
+      // response, not an artifact: every greeting, navigation question and
+      // Vidya follow-up that lands here used to become a My Library row.
+      // It reaches the Library only when the teacher presses Save
+      // (`saveToLibrary` / `/api/content/save`). The served event stays in
+      // Cloud Logging for operational visibility.
+      StructuredLogger.info('Instant answer served (not persisted to library)', {
+        service: 'instant-answer-flow',
+        operation: 'serveAnswer',
+        userId: input.userId,
+        requestId,
+        metadata: { answerLength: sanitizedOutput.answer.length, grounded },
+      });
 
       const duration = Date.now() - startTime;
 

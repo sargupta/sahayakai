@@ -2,8 +2,11 @@
 
 /**
  * WorksheetWizardView — all worksheet-wizard markup, zero orchestration.
- * Composes the GeneratorPage shell; every form field and the 11-language
- * chrome dict (now in ../i18n) are preserved from the pre-migration page.
+ * A worksheet studio on the GeneratorPage shell: the three steps — (1) the
+ * textbook page, (2) what to make from it, (3) class/subject/language — on the
+ * left, and "Your sheet" (WorksheetSheetPreview) on the right, the top of the
+ * printed sheet drawn live from the form. Keeps every form field and the
+ * 11-language chrome dict (../i18n) from the pre-migration page.
  */
 
 import { Loader2, PencilRuler } from "lucide-react";
@@ -26,8 +29,10 @@ import { WorksheetDisplay } from "@/components/worksheet-display";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 import { useLanguage } from "@/context/language-context";
-import { GeneratorPage, GeneratorSubmitBar } from "@/features/generator";
+import { GeneratorPage, GeneratorSection, GeneratorSubmitBar, GENERATOR_SUBMIT_CLASS } from "@/features/generator";
+import { LANGUAGES, LANGUAGE_TO_ISO } from "@/types";
 import { useWorksheetWizard } from "../hooks/use-worksheet-wizard";
+import { WorksheetSheetPreview } from "./worksheet-sheet-preview";
 
 type WorksheetWizardViewProps = ReturnType<typeof useWorksheetWizard>;
 
@@ -41,11 +46,20 @@ export function WorksheetWizardView({
     canUseAI,
     aiUnavailableReason,
     worksheet,
+    contentId,
     status,
     isGenerating,
     limitState,
 }: WorksheetWizardViewProps) {
     const { t: translate } = useLanguage();
+    const [watchedPrompt, watchedGrade, watchedSubject, watchedLanguage, watchedImage] = form.watch([
+        "prompt",
+        "gradeLevel",
+        "subject",
+        "language",
+        "imageDataUri",
+    ]);
+    const languageName = LANGUAGES.find((l) => LANGUAGE_TO_ISO[l] === watchedLanguage);
 
     return (
         <GeneratorPage
@@ -55,7 +69,7 @@ export function WorksheetWizardView({
             headerExtra={<UsageRemainingBadge feature="worksheet" />}
             feature="worksheet"
             limitState={limitState}
-            width="narrow"
+            width="wide"
             status={status}
             progressMessages={[t.wizardMagic]}
             result={
@@ -68,6 +82,7 @@ export function WorksheetWizardView({
                         }}
                         title={form.getValues("prompt") || t.resultTitle}
                         selectedLanguage={selectedLanguage}
+                        contentId={contentId}
                     />
                 )
             }
@@ -75,78 +90,21 @@ export function WorksheetWizardView({
             form={
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <FormField
-                            control={form.control}
-                            name="imageDataUri"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="font-headline">{t.imageLabel}</FormLabel>
-                                    <FormControl>
-                                        <ImageUploader
-                                            onImageUpload={(dataUri) => {
-                                                field.onChange(dataUri);
-                                                form.trigger("imageDataUri");
-                                            }}
-                                            language={selectedLanguage}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="prompt"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="font-headline">{t.instructionsLabel}</FormLabel>
-                                    <FormControl>
-                                        <div className="flex flex-col gap-4">
-                                            <Textarea
-                                                placeholder={t.placeholder}
-                                                {...field}
-                                                className="bg-muted/20 min-h-[120px]"
-                                            />
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="worksheet" />
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/30 pt-4 mt-2">
+                        <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+                        <div className="min-w-0 space-y-6 xl:col-span-8">
+                        <GeneratorSection step={1} title={t.imageLabel}>
                             <FormField
                                 control={form.control}
-                                name="gradeLevel"
+                                name="imageDataUri"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.gradeLabel}</FormLabel>
+                                        <FormLabel className="sr-only">{t.imageLabel}</FormLabel>
                                         <FormControl>
-                                            <GradeLevelSelector
-                                                value={field.value ? [field.value] : []}
-                                                onValueChange={(values) => field.onChange(values?.[0])}
-                                                language={selectedLanguage}
-                                                isMulti={false}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="subject"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{translate("Subject")}</FormLabel>
-                                        <FormControl>
-                                            <SubjectSelector
-                                                value={field.value}
-                                                onValueChange={field.onChange}
+                                            <ImageUploader
+                                                onImageUpload={(dataUri) => {
+                                                    field.onChange(dataUri);
+                                                    form.trigger("imageDataUri");
+                                                }}
                                                 language={selectedLanguage}
                                             />
                                         </FormControl>
@@ -154,35 +112,110 @@ export function WorksheetWizardView({
                                     </FormItem>
                                 )}
                             />
+                        </GeneratorSection>
 
-                            <FormField
-                                control={form.control}
-                                name="language"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="font-headline text-xs font-semibold text-muted-foreground">{t.languageLabel}</FormLabel>
-                                        <FormControl>
-                                            <LanguageSelector
-                                                onValueChange={field.onChange}
-                                                value={field.value}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        <GeneratorSection step={2} title={t.instructionsLabel}>
+                            <div className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="prompt"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="sr-only">{t.instructionsLabel}</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder={t.placeholder}
+                                                    {...field}
+                                                    className="min-h-32 rounded-field bg-muted/30 text-base leading-relaxed"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="worksheet" />
+                            </div>
+                        </GeneratorSection>
+
+                        <GeneratorSection step={3} title={translate("Details")}>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+                                <FormField
+                                    control={form.control}
+                                    name="gradeLevel"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium text-foreground">{t.gradeLabel}</FormLabel>
+                                            <FormControl>
+                                                <GradeLevelSelector
+                                                    value={field.value ? [field.value] : []}
+                                                    onValueChange={(values) => field.onChange(values?.[0])}
+                                                    language={selectedLanguage}
+                                                    isMulti={false}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="subject"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium text-foreground">{translate("Subject")}</FormLabel>
+                                            <FormControl>
+                                                <SubjectSelector
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                    language={selectedLanguage}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="language"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm font-medium text-foreground">{t.languageLabel}</FormLabel>
+                                            <FormControl>
+                                                <LanguageSelector
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </GeneratorSection>
                         </div>
 
-                        <GeneratorSubmitBar>
+                        <WorksheetSheetPreview
+                            prompt={watchedPrompt}
+                            gradeLevel={watchedGrade}
+                            subject={watchedSubject}
+                            languageLabel={languageName ? translate(languageName) : undefined}
+                            imageDataUri={watchedImage}
+                            className="xl:sticky xl:top-24 xl:col-span-4 xl:self-start"
+                        />
+                        </div>
+
+                        <GeneratorSubmitBar hint={aiUnavailableReason}>
                             <Button
                                 type="submit"
                                 disabled={isGenerating || isRestoring || !canUseAI}
                                 aria-busy={isGenerating}
-                                className="w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all"
+                                className={GENERATOR_SUBMIT_CLASS}
                             >
                                 {isGenerating || isRestoring ? (
                                     <>
-                                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                         {t.generating}
                                     </>
                                 ) : (
@@ -190,9 +223,6 @@ export function WorksheetWizardView({
                                 )}
                             </Button>
                         </GeneratorSubmitBar>
-                        {aiUnavailableReason && (
-                            <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
-                        )}
                     </form>
                 </Form>
             }

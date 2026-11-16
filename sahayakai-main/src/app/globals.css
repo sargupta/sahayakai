@@ -60,6 +60,136 @@
   .mark-float-c { animation: mark-float-c 15s ease-in-out infinite; }
 }
 
+/* ========================================
+   VIDYA orb (vidya-presence.tsx) — product-native, from the SahayakAI
+   website design reference (2026-10). ONE warm radial fill, ONE soft
+   shadow, ONE state ring. No glow field, orbits, sheen or particles:
+   colour + ring carry state, so motion always means something.
+   State arrives as data-state on .vidya-stage:
+   idle | connecting | listening | processing | speaking | error.
+   Live mic / playback level arrives as --vidya-level (0–1). All motion is
+   gated on prefers-reduced-motion: no-preference.
+   ======================================== */
+.vidya-stage {
+  --vidya-level: 0;
+  /* Fill = radial highlight → body (the design's orb recipe). */
+  --vidya-hi: 32 100% 84%;   /* #FFD9AE */
+  --vidya-lo: 25 67% 47%;    /* #C96A28 = --primary */
+  --vidya-ring: 25 67% 47%;
+}
+.vidya-stage[data-state="listening"],
+.vidya-stage[data-state="speaking"] { --vidya-hi: 33 100% 88%; } /* #FFE3C2 */
+.vidya-stage[data-state="connecting"],
+.vidya-stage[data-state="processing"] {
+  --vidya-hi: 228 76% 92%;   /* #DCE2FA — the design's "working" indigo */
+  --vidya-lo: 230 55% 36%;   /* #2A3B8F */
+  --vidya-ring: 230 55% 36%;
+}
+.vidya-stage[data-state="error"] {
+  --vidya-hi: 30 30% 90%;
+  --vidya-lo: 25 25% 55%;    /* desaturated: unavailable, not alarming */
+  --vidya-ring: 6 63% 46%;   /* #C0392B */
+}
+
+/* The orb button — it IS the control. */
+.vidya-sphere {
+  position: relative;
+  width: 26%; /* the big VIDYA sphere: ~13% smaller than the original 30% */
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transform: scale(calc(1 + var(--vidya-level) * 0.04));
+  transition: transform 0.12s linear;
+}
+.vidya-stage[data-size="compact"] .vidya-sphere { width: 100%; }
+@media (max-width: 640px) {
+  .vidya-stage[data-size="hero"] .vidya-sphere,
+  .vidya-stage[data-size="workspace"] .vidya-sphere { width: 33%; }
+}
+.vidya-sphere:focus { outline: none; }
+.vidya-sphere:focus-visible { outline: 3px solid hsl(var(--saffron-700)); outline-offset: 5px; }
+
+.vidya-core {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: hsl(0 0% 100%);
+  background: radial-gradient(circle at 34% 30%, hsl(var(--vidya-hi)), hsl(var(--vidya-lo)) 72%);
+  box-shadow: 0 8px 20px -4px hsl(var(--vidya-lo) / 0.42);
+  transition: background 0.5s ease, box-shadow 0.5s ease, transform 0.18s ease;
+}
+.vidya-sphere:hover .vidya-core { box-shadow: 0 10px 24px -4px hsl(var(--vidya-lo) / 0.48); }
+.vidya-sphere:active .vidya-core { transform: scale(0.97); }
+
+/* State ring: hidden at rest; follows the REAL level while listening /
+   speaking; a slow breath while connecting / thinking; static on error. */
+.vidya-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  box-shadow: 0 0 0 0 hsl(var(--vidya-ring) / 0);
+  transition: box-shadow 0.2s ease;
+}
+.vidya-stage[data-state="listening"] .vidya-ring,
+.vidya-stage[data-state="speaking"] .vidya-ring {
+  box-shadow: 0 0 0 calc(5px + var(--vidya-level) * 12px) hsl(var(--vidya-ring) / 0.18);
+}
+.vidya-stage[data-state="connecting"] .vidya-ring,
+.vidya-stage[data-state="processing"] .vidya-ring { box-shadow: 0 0 0 6px hsl(var(--vidya-ring) / 0.14); }
+.vidya-stage[data-state="error"] .vidya-ring { box-shadow: 0 0 0 3px hsl(var(--vidya-ring) / 0.35); }
+
+.vidya-icon {
+  width: clamp(22px, 26%, 36px);
+  height: auto;
+  aspect-ratio: 1;
+}
+.vidya-stage[data-size="compact"] .vidya-icon { width: 24px; }
+.vidya-wordmark {
+  font-family: var(--font-bricolage), var(--font-outfit), system-ui, sans-serif;
+  font-size: clamp(10px, 7%, 13px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  margin-right: -0.22em;
+}
+
+/* Status pill dot (home / tool-page status line) mirrors the orb colour. */
+.vidya-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 9999px;
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+.vidya-status[data-state="listening"] .vidya-status-dot,
+.vidya-status[data-state="interrupted"] .vidya-status-dot,
+.vidya-status[data-state="speaking"] .vidya-status-dot { background: hsl(25 67% 47%); }
+.vidya-status[data-state="connecting"] .vidya-status-dot,
+.vidya-status[data-state="thinking"] .vidya-status-dot { background: hsl(230 55% 36%); }
+.vidya-status[data-state="error"] .vidya-status-dot { background: hsl(6 63% 46%); }
+
+@keyframes vidya-rest   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes vidya-breath { 0%, 100% { box-shadow: 0 0 0 4px hsl(var(--vidya-ring) / 0.10); } 50% { box-shadow: 0 0 0 9px hsl(var(--vidya-ring) / 0.16); } }
+@keyframes vidya-dot    { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .vidya-stage[data-state="idle"] .vidya-core { animation: vidya-rest 5s ease-in-out infinite; }
+  .vidya-stage[data-state="connecting"] .vidya-ring,
+  .vidya-stage[data-state="processing"] .vidya-ring { animation: vidya-breath 1.8s ease-in-out infinite; }
+  .vidya-status[data-state="listening"] .vidya-status-dot,
+  .vidya-status[data-state="thinking"] .vidya-status-dot,
+  .vidya-status[data-state="speaking"] .vidya-status-dot { animation: vidya-dot 1.4s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vidya-sphere, .vidya-core, .vidya-ring { transition: none; }
+  .vidya-sphere { transform: none; }
+}
+
 @layer utilities {
   .animate-bounce-subtle {
     animation: bounce-subtle 3s infinite;
@@ -81,9 +211,9 @@
      PHASE 1 — CONTAINER GRAMMAR (2026-04-24)
      Three widths only. No more arbitrary max-w-* across pages.
      ======================================== */
-  .container-narrow  { @apply max-w-2xl mx-auto px-4 md:px-6; }
-  .container-default { @apply max-w-5xl mx-auto px-4 md:px-8; }
-  .container-wide    { @apply max-w-7xl mx-auto px-4 md:px-10; }
+  .container-narrow  { @apply w-full max-w-2xl mx-auto px-4 md:px-6; }
+  .container-default { @apply w-full max-w-5xl mx-auto px-4 md:px-8; }
+  .container-wide    { @apply w-full max-w-7xl mx-auto px-4 md:px-10; }
 
   /* ========================================
      FORCE-LIGHT — MARKETING / PUBLIC PAGES (2026-05-28)
@@ -105,48 +235,48 @@
      single source (planned; do not restructure it by hand now).
      ======================================== */
   .force-light {
-    --background: 40 20% 99.5%;
-    --foreground: 222 47% 11%;
+    --background: 37.5 50% 96.9%;
+    --foreground: 25.7 17.9% 7.6%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 40 100% 98.8%;
+    --card-foreground: 25.7 17.9% 7.6%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 40 100% 98.8%;
+    --popover-foreground: 25.7 17.9% 7.6%;
 
-    --primary: 24 65% 47%;
+    --primary: 24.7 70.1% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 123 37% 25%;
+    --secondary: 121.2 36.7% 27.3%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 36.9 41.9% 93.9%;
+    --muted-foreground: 30 10.8% 32.5%;
 
-    --accent: 240 100% 25%;
+    --accent: 229.9 54.6% 36.3%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 5.6 63.4% 46.1%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 16% 93%;
-    --input: 220 16% 90%;
-    --ring: 24 65% 47%;
+    --border: 37.5 12.9% 87.8%;
+    --input: 37.5 10% 84.3%;
+    --ring: 24.7 70.1% 38%;
 
-    --chart-1: 24 65% 47%;
-    --chart-2: 123 37% 25%;
-    --chart-3: 240 100% 25%;
+    --chart-1: 24.6 66.8% 47.3%;
+    --chart-2: 121.2 36.7% 27.3%;
+    --chart-3: 229.9 54.6% 36.3%;
     --chart-4: 43 96% 56%;
     --chart-5: 340 82% 52%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 40 100% 98.8%;
+    --sidebar-foreground: 30 10.8% 32.5%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 28 70% 96%;
-    --sidebar-accent-foreground: 24 65% 47%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 24 65% 47%;
+    --sidebar-accent: 36.9 41.9% 93.9%;
+    --sidebar-accent-foreground: 25.7 17.9% 7.6%;
+    --sidebar-border: 37.5 12.9% 87.8%;
+    --sidebar-ring: 24.7 70.1% 38%;
 
     /* Paint this subtree's own surface light too, so any element that
        relies on inherited body background (not an explicit bg-*) reads
@@ -229,7 +359,7 @@
        docs/DESIGN_TOKENS.md for the usage rules and the palette FREEZE.
        Flag saffron #FF9933 and the bright --saffron-{50..300} shades stay
        DECORATIVE ONLY (gradients, tints, glows) — never text or icons. */
-    --primary: 24 65% 47%;
+    --primary: 24.7 70.1% 38%;
     /* ≈#C96A28 - Warm saffron interactive tone (contrast data in
        docs/DESIGN_TOKENS.md) */
     --primary-foreground: 0 0% 100%;
@@ -239,53 +369,53 @@
        across lightness. Used by landing-hero CTAs, landing-pillar-strip
        active-card glow, and animated-headline border. */
     --saffron-50: 28 100% 96%;
-    --saffron-100: 28 96% 92%;
-    --saffron-200: 28 95% 84%;
-    --saffron-300: 28 88% 73%;
-    --saffron-600: 24 75% 50%;
-    --saffron-700: 20 78% 38%;
-    --saffron-800: 18 82% 30%;
+    --saffron-100: 32.5 100% 88%;
+    --saffron-200: 31.9 100% 84.1%;
+    --saffron-300: 27.7 62.7% 67.5%;
+    --saffron-600: 24.7 70.1% 38%;
+    --saffron-700: 30.5 89% 28.6%;
+    --saffron-800: 23.7 70.3% 29%;
 
     /* Secondary - Warm Green (Indian Flag) */
-    --secondary: 123 37% 25%;
+    --secondary: 121.2 36.7% 27.3%;
     /* #2C5F2D - Deep Green */
     --secondary-foreground: 0 0% 100%;
 
     /* Accent - Navy Blue (Indian Flag) */
-    --accent: 240 100% 25%;
+    --accent: 229.9 54.6% 36.3%;
     /* #000080 - Navy */
     --accent-foreground: 0 0% 100%;
 
     /* Background - Warm, Welcoming */
-    --background: 40 20% 99.5%;
+    --background: 37.5 50% 96.9%;
     /* Warm Off-White */
-    --foreground: 222 47% 11%;
+    --foreground: 25.7 17.9% 7.6%;
     /* Dark Gray #1F2937 */
 
     /* Card - Glassmorphism with Saffron accent */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 40 100% 98.8%;
+    --card-foreground: 25.7 17.9% 7.6%;
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 40 100% 98.8%;
+    --popover-foreground: 25.7 17.9% 7.6%;
 
     /* Muted - Warm Neutrals */
-    --muted: 210 40% 96%;
+    --muted: 36.9 41.9% 93.9%;
     /* #F9FAFB */
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 30 10.8% 32.5%;
     /* #6B7280 */
 
     /* Borders - Warm, soft */
-    --border: 220 16% 93%;
+    --border: 37.5 12.9% 87.8%;
     /* Warm light gray */
-    --input: 220 16% 90%;
+    --input: 37.5 10% 84.3%;
     /* Slightly darker for input affordance */
-    --ring: 24 65% 47%;
+    --ring: 24.7 70.1% 38%;
     /* Saffron focus ring — matches --primary (AA tone) */
 
     /* Status Colors */
-    --destructive: 0 84% 60%;
+    --destructive: 5.6 63.4% 46.1%;
     /* #EF4444 - Red */
     --destructive-foreground: 0 0% 100%;
 
@@ -293,13 +423,13 @@
        raw green/amber/blue Tailwind palette classes in status UI. All three
        pass WCAG AA both ways: as text/icon on --background AND with their
        white foreground on top. */
-    --success: 142 72% 29%;
+    --success: 121.2 36.7% 27.3%;
     /* #15803D - Green, 5.0:1 on white */
     --success-foreground: 0 0% 100%;
-    --warning: 26 90% 37%;
+    --warning: 26 90.5% 37.1%;
     /* #B45309 - Deep amber, 5.0:1 on white */
     --warning-foreground: 0 0% 100%;
-    --info: 221 83% 53%;
+    --info: 229.9 54.6% 36.3%;
     /* #2563EB - Blue, 5.2:1 on white */
     --info-foreground: 0 0% 100%;
 
@@ -331,12 +461,12 @@
     --motion-medium: 350ms; /* page transition, modal */
 
     /* Chart Colors - Indian-friendly palette */
-    --chart-1: 24 65% 47%;
+    --chart-1: 24.6 66.8% 47.3%;
     /* Saffron — matches --primary (2026-08 token-drift fix; was the
        pre-2026-07 #E0924D value hsl(28 70% 59%)) */
-    --chart-2: 123 37% 25%;
+    --chart-2: 121.2 36.7% 27.3%;
     /* Green */
-    --chart-3: 240 100% 25%;
+    --chart-3: 229.9 54.6% 36.3%;
     /* Navy */
     --chart-4: 43 96% 56%;
     /* Gold */
@@ -344,19 +474,134 @@
     /* Rose */
 
     /* Sidebar - Solid & Clean */
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 40 100% 98.8%;
     /* Off-white for distinct sidebar */
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-foreground: 30 10.8% 32.5%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 28 70% 96%;
+    --sidebar-accent: 36.9 41.9% 93.9%;
     /* Light Saffron Tint */
-    --sidebar-accent-foreground: 24 65% 47%;
+    --sidebar-accent-foreground: 25.7 17.9% 7.6%;
     /* Saffron text — 3.57:1 measured on the 96% tint (AA for large
        text / UI components; the old #B35609 note claiming 4.54:1 was
        stale) */
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 24 65% 47%;
+    --sidebar-border: 37.5 12.9% 87.8%;
+    --sidebar-ring: 24.7 70.1% 38%;
+
+    /* ========================================
+       SAHAYAKAI DESIGN SYSTEM TOKENS (Oct 2026)
+       Source: the founder-approved design system ("SahayakAI is a
+       voice-first teaching…", tokens section). The shadcn variables above
+       are mapped onto these per "Platforms and code": --primary is
+       accent-fill (saffron-600, white text 5.28:1), never saffron-500.
+       Colour families are HSL triplets for Tailwind; surfaces, borders and
+       tints are complete colour values (used without opacity modifiers).
+       ======================================== */
+    --saffron-400: 28.5 72.6% 55.7%;
+    --saffron-500: 24.6 66.8% 47.3%;
+    --milk-50: 40 100% 98.8%;
+    --milk-100: 32 100% 97.1%;
+    --milk-200: 37.5 50% 96.9%;
+    --milk-300: 36.9 61.9% 95.9%;
+    --milk-400: 36.9 41.9% 93.9%;
+    --milk-500: 42.9 24.1% 94.3%;
+    --ink-400: 31.3 9.1% 49.6%;
+    --ink-500: 30 8.9% 39.6%;
+    --ink-600: 30 10.8% 32.5%;
+    --ink-800: 30 17.4% 9%;
+    --ink-900: 25.7 17.9% 7.6%;
+    --stone-100: 35 19.4% 87.8%;
+    --stone-500: 30 7.1% 50.6%;
+    --leaf-100: 120 31.5% 85.7%;
+    --leaf-300: 120 33.3% 62.4%;
+    --leaf-500: 121.2 36.7% 27.3%;
+    --leaf-700: 121.5 36.4% 21.6%;
+    --indigo-100: 228 75% 92.2%;
+    --indigo-500: 229.9 54.6% 36.3%;
+    --red-500: 5.6 63.4% 46.1%;
+    --red-700: 0 66.3% 32.5%;
+    --amber-500: 26 90.5% 37.1%;
+
+    --surface-glass: rgba(255, 255, 255, 0.82);
+    --surface-glass-soft: rgba(255, 255, 255, 0.7);
+    --surface-glass-strong: rgba(255, 255, 255, 0.88);
+    --surface-chrome: rgba(255, 253, 249, 0.9);
+    --surface-capsule: rgba(255, 253, 249, 0.92);
+    --surface-float: rgba(255, 253, 249, 0.96);
+    --surface-segment: rgba(255, 255, 255, 0.62);
+    --surface-disc: rgba(255, 255, 255, 0.8);
+    --border-glass: rgba(255, 255, 255, 0.95);
+    --border-hairline: rgba(23, 19, 16, 0.08);
+    --border-row: rgba(23, 19, 16, 0.1);
+    --border-control: rgba(23, 19, 16, 0.14);
+    --fill-quiet: rgba(23, 19, 16, 0.06);
+    --fill-subtle: rgba(23, 19, 16, 0.04);
+    --fill-mark: rgba(23, 19, 16, 0.07);
+    --accent-tint: rgba(201, 106, 40, 0.1);
+    --accent-tint-strong: rgba(201, 106, 40, 0.12);
+    --accent-tint-border: rgba(201, 106, 40, 0.22);
+    --accent-tint-soft: rgba(201, 106, 40, 0.08);
+    --success-tint: rgba(44, 95, 45, 0.12);
+    --leaf-tint-border: rgba(44, 95, 45, 0.24);
+    --info-tint: rgba(42, 59, 143, 0.08);
+    --info-tint-border: rgba(42, 59, 143, 0.18);
+    --red-tint: rgba(192, 57, 43, 0.12);
+    --amber-tint: rgba(180, 83, 9, 0.12);
+    --web-nav-glass: rgba(251, 248, 243, 0.82);
+    --web-hairline: rgba(27, 23, 19, 0.07);
+    --web-glass: rgba(255, 255, 255, 0.74);
+    --web-device-edge: rgba(27, 23, 19, 0.1);
+
+    --wash-screen: linear-gradient(168deg, #fff3e4 0%, #fdefee 36%, #eff4ee 72%, #fff7ec 100%);
+    --glow-saffron: radial-gradient(circle at 38% 32%, rgba(255, 214, 170, 0.78), rgba(201, 106, 40, 0) 76%);
+    --glow-web-saffron: radial-gradient(circle at 40% 35%, rgba(201, 106, 40, 0.2), rgba(201, 106, 40, 0) 70%);
+    --glow-web-indigo: radial-gradient(circle at 50% 50%, rgba(42, 59, 143, 0.14), rgba(42, 59, 143, 0) 68%);
+    --orb-resting: radial-gradient(circle at 34% 30%, #ffd9ae, #c96a28 72%);
+    /* VIDYA live orb (design system LiveOrb tokens orb-live, orb-live-working,
+       orb-live-speaking). Five stops each, lightest at the light to darkest at
+       the rim; the WebGL sphere reads these, the CSS fallback uses the
+       gradients. */
+    --vidya-live-0: #fff0dc;
+    --vidya-live-1: #fbc98e;
+    --vidya-live-2: #e08a3c;
+    --vidya-live-3: #c96a28;
+    --vidya-live-4: #8e4a1c;
+    --vidya-working-0: #dce2fa;
+    --vidya-working-1: #b3bdee;
+    --vidya-working-2: #8d9be0;
+    --vidya-working-3: #2a3b8f;
+    --vidya-working-4: #1e2b6b;
+    --vidya-speaking-0: #e4f2e2;
+    --vidya-speaking-1: #b9d9b9;
+    --vidya-speaking-2: #8fc090;
+    --vidya-speaking-3: #2c5f2d;
+    --vidya-speaking-4: #1c4a1d;
+    --orb-live: radial-gradient(circle at 32% 26%, #fff0dc 0%, #fbc98e 22%, #e08a3c 48%, #c96a28 68%, #8e4a1c 100%);
+    --orb-live-working: radial-gradient(circle at 32% 26%, #dce2fa 0%, #8d9be0 34%, #2a3b8f 72%, #1e2b6b 100%);
+    --orb-live-speaking: radial-gradient(circle at 32% 26%, #e4f2e2 0%, #8fc090 32%, #2c5f2d 74%, #1c4a1d 100%);
+    --shadow-orb-live: 0 6px 16px rgba(142, 74, 28, 0.35), inset 0 -6px 12px rgba(88, 42, 12, 0.45), inset 0 4px 10px rgba(255, 255, 255, 0.4);
+    --shadow-orb-live-listening: 0 0 0 6px rgba(201, 106, 40, 0.18), 0 6px 16px rgba(142, 74, 28, 0.35), inset 0 -6px 12px rgba(88, 42, 12, 0.45), inset 0 4px 10px rgba(255, 255, 255, 0.4);
+    --shadow-orb-live-working: 0 0 0 3px rgba(42, 59, 143, 0.35), 0 6px 16px rgba(30, 43, 107, 0.35), inset 0 4px 10px rgba(255, 255, 255, 0.35);
+    --shadow-orb-live-speaking: 0 0 0 4px rgba(44, 95, 45, 0.24), 0 6px 16px rgba(28, 74, 29, 0.32), inset 0 4px 10px rgba(255, 255, 255, 0.3);
+    --shadow-orb-live-failed: 0 4px 10px rgba(80, 70, 60, 0.25);
+    --band-cta: linear-gradient(140deg, #c96a28 0%, #a5551d 52%, #7e3f16 100%);
+
+    /* Shadows: warm (ink-tinted), low and rare. The txt export names them
+       but omits values; these follow its rules (low, warm, saffron light
+       only on brand elements). */
+    --shadow-float: 0 10px 30px -12px rgba(23, 19, 16, 0.18), 0 2px 6px rgba(23, 19, 16, 0.05);
+    --shadow-card: 0 12px 32px -18px rgba(23, 19, 16, 0.22), 0 1px 2px rgba(23, 19, 16, 0.04);
+    --shadow-cta: 0 10px 24px -10px rgba(165, 85, 29, 0.55);
+    --shadow-orb: 0 4px 12px -2px rgba(201, 106, 40, 0.45);
+    /* A focused Field or Composer pill. */
+    --shadow-current: 0 8px 22px rgba(201, 106, 40, 0.18);
+    /* The Composer's saffron disc. */
+    --shadow-mic: 0 5px 14px rgba(201, 106, 40, 0.36);
+
+    --sidebar-w: 256px;
+    --sidebar-w-rail: 76px;
+    --topbar-h: 64px;
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
@@ -475,39 +720,39 @@
      leading-* utilities still override per element.
      ======================================== */
   :lang(hi), :lang(mr) {
-    font-family: var(--font-inter), var(--font-noto-devanagari), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-devanagari), sans-serif;
     line-height: 1.7;
   }
   :lang(bn) {
-    font-family: var(--font-inter), var(--font-noto-bengali), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-bengali), sans-serif;
     line-height: 1.7;
   }
   :lang(ta) {
-    font-family: var(--font-inter), var(--font-noto-tamil), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-tamil), sans-serif;
     line-height: 1.7;
   }
   :lang(te) {
-    font-family: var(--font-inter), var(--font-noto-telugu), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-telugu), sans-serif;
     line-height: 1.7;
   }
   :lang(kn) {
-    font-family: var(--font-inter), var(--font-noto-kannada), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-kannada), sans-serif;
     line-height: 1.7;
   }
   :lang(ml) {
-    font-family: var(--font-inter), var(--font-noto-malayalam), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-malayalam), sans-serif;
     line-height: 1.7;
   }
   :lang(gu) {
-    font-family: var(--font-inter), var(--font-noto-gujarati), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-gujarati), sans-serif;
     line-height: 1.7;
   }
   :lang(pa) {
-    font-family: var(--font-inter), var(--font-noto-gurmukhi), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-gurmukhi), sans-serif;
     line-height: 1.7;
   }
   :lang(or) {
-    font-family: var(--font-inter), var(--font-noto-oriya), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-oriya), sans-serif;
     line-height: 1.7;
   }
 }
@@ -648,4 +893,150 @@
   .result-divider span {
     @apply text-xs font-medium text-muted-foreground uppercase tracking-widest px-2;
   }
+}
+
+/* ========================================
+   DESIGN SYSTEM — SHELL + UTILITIES (Oct 2026)
+   See src/components/shell/side-nav.tsx. Widths per "The web app and the
+   school console": rail 768–1023px; sidebar from 1024px unless folded.
+   ======================================== */
+.side-nav { width: var(--sidebar-w-rail); }
+.side-nav[data-force-full="true"] { width: 100%; }
+.side-nav[data-force-full="true"] .nav-rail { display: none !important; }
+@media (max-width: 1023.98px) {
+  .side-nav:not([data-force-full="true"]) .nav-full { display: none !important; }
+}
+@media (min-width: 1024px) {
+  .side-nav:not([data-collapsed="true"]):not([data-force-full="true"]) { width: var(--sidebar-w); }
+  .side-nav[data-collapsed="true"] .nav-full { display: none !important; }
+  .side-nav:not([data-collapsed="true"]) .nav-rail { display: none !important; }
+}
+
+@layer utilities {
+  /* Focus: a 2px saffron-600 outline offset 2px, never a shadow. */
+  .focus-ring:focus-visible {
+    outline: 2px solid hsl(var(--saffron-600));
+    outline-offset: 2px;
+  }
+  .focus-ring:focus { box-shadow: none; }
+
+  /* App ground: the wash plus one saffron glow off the top-right corner. */
+  .bg-wash-screen {
+    background-color: hsl(var(--milk-200));
+    background-image: var(--glow-saffron), var(--wash-screen);
+    background-repeat: no-repeat, no-repeat;
+    background-position: right -160px top -200px, 0 0;
+    background-size: 640px 640px, 100% 100%;
+    background-attachment: scroll, fixed;
+  }
+
+  /* Eyebrow: 12px, tracked, uppercase — Latin script only. */
+  .type-eyebrow {
+    font-size: 12px;
+    line-height: 1.22;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .type-web-eyebrow {
+    font-size: 12px;
+    line-height: 1.6;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+}
+
+/* Indic text is never uppercased or letter-spaced (it breaks conjuncts and
+   matras). The page language is synced on <html lang>. */
+:is(:lang(hi), :lang(mr), :lang(bn), :lang(ta), :lang(te), :lang(kn), :lang(ml), :lang(gu), :lang(pa), :lang(or))
+  :is(.type-eyebrow, .type-web-eyebrow) {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* VIDYA's floating orb never covers the phone navigation sheet. */
+body[data-nav-sheet-open] [data-vidya-entry="orb"] { visibility: hidden; }
+
+/* ── SamparkAI theme ─────────────────────────────────────────────────────────
+   Follows the SahayakAI design system's Sampark console boards ("Sampark ·
+   Today", "Campaign live view"): a near-white page, a light grey side rail,
+   slate text, hairline #EAECF0 borders, and SahayakAI saffron for what is live
+   or active. Colour comes from meaning, not decoration: peach for live work and
+   things that need a person, pale indigo for notices, leaf for done, rose for
+   complaints. Tokens live on :root (bg-sampark-peach, text-sampark-indigo …);
+   `.theme-sampark` (SamparkAI pages and their portals) only warms Sampark's
+   fixed console values (see below): every shared component keeps the
+   SahayakAI look. Light theme only. */
+:root {
+  --sampark-saffron: 24.6 66.8% 47.3%;          /* #C96A28 */
+  --sampark-saffron-strong: 24.7 70.1% 38%;     /* #A5551D */
+  --sampark-peach: 28 86% 96%;                  /* #FDF3EA live / needs a person */
+  --sampark-peach-border: 28 72% 86%;           /* #F5D9C0 */
+  --sampark-indigo: 230 55% 36%;                /* #2A3B8F */
+  --sampark-indigo-soft: 228 86% 97%;           /* #F0F3FE notices */
+  --sampark-indigo-border: 228 70% 90%;
+  --sampark-leaf: 121 37% 27%;                  /* #2C5F2D */
+  --sampark-leaf-soft: 122 38% 95%;             /* #EEF7EE done */
+  --sampark-leaf-border: 122 30% 84%;
+  --sampark-rose: 4 74% 41%;                    /* #B42318 complaints */
+  --sampark-rose-soft: 4 86% 97%;               /* #FEF3F2 */
+  --sampark-rose-border: 4 80% 89%;
+  --sampark-slate: 222 47% 11%;                 /* #0F172A */
+  --sampark-slate-soft: 210 40% 98%;            /* #F8FAFC inner tiles */
+  --sampark-line: 220 17% 93%;                  /* #EAECF0 */
+  --shadow-sampark-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-sampark-raised: 0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 24px -16px rgba(16, 24, 40, 0.18);
+}
+
+/* 2026-11: SamparkAI is part of SahayakAI, not a separate console. It keeps
+   SahayakAI's own warm ground (milk surfaces, ink text, warm hairlines and
+   shadows — the shared tokens are NOT re-pointed any more); only Sampark's
+   fixed console values follow them, and the meaning colours above (peach,
+   indigo, leaf, rose) stay. Cards stay crisp white on the milk ground so
+   rosters and call logs read as tables. */
+html:not(.dark) .theme-sampark {
+  --card: 0 0% 100%;
+  --sampark-slate: 25.7 17.9% 7.6%;       /* = --ink-900 */
+  --sampark-slate-soft: 36.9 61.9% 95.9%; /* = --milk-300 inner tiles */
+  --sampark-line: 37.5 12.9% 87.8%;       /* = --border */
+  --shadow-sampark-card: 0 1px 2px rgba(23, 19, 16, 0.04);
+  --shadow-sampark-raised: 0 1px 2px rgba(23, 19, 16, 0.05), 0 12px 32px -18px rgba(23, 19, 16, 0.22);
+}
+
+/* 2026-11: printed documents (exam paper, worksheet, quiz print copy). A sheet
+   is always paper — white, ink text, serif body for the document's own words —
+   in light and dark mode alike, because it is a preview of what prints. The
+   app chrome around it stays in the UI faces. Indic scripts fall back through
+   the self-hosted Noto families, as everywhere else. */
+.paper-sheet {
+  --paper-ink: 25.7 17.9% 7.6%;
+  --paper-muted: 30 9% 38%;
+  --paper-rule: 36 18% 82%;
+  background: #fff;
+  color: hsl(var(--paper-ink));
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", var(--font-noto-devanagari),
+    var(--font-noto-tamil), var(--font-noto-kannada), var(--font-noto-telugu),
+    var(--font-noto-bengali), var(--font-noto-gujarati), var(--font-noto-gurmukhi),
+    var(--font-noto-malayalam), var(--font-noto-oriya), serif;
+  font-feature-settings: "onum" 0, "lnum" 1;
+}
+.paper-sheet .paper-ui {
+  font-family: var(--font-ui), var(--font-noto-devanagari), sans-serif;
+}
+.paper-sheet .paper-muted { color: hsl(var(--paper-muted)); }
+.paper-sheet .paper-rule { border-color: hsl(var(--paper-rule)); }
+/* Ruled writing lines: n lines of 2rem, drawn as a background so they print. */
+.paper-lines {
+  background-image: linear-gradient(to bottom, transparent calc(2rem - 1px), hsl(36 18% 78%) calc(2rem - 1px));
+  background-size: 100% 2rem;
+}
+/* A page break inside an on-screen sheet: a dashed seam with a label. */
+.paper-break {
+  border-top: 1px dashed hsl(36 18% 78%);
+}
+@media print {
+  .paper-break { border: 0; break-before: page; }
+  .paper-break-label { display: none; }
+  .paper-question { break-inside: avoid; }
 }

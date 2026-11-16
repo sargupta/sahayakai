@@ -8,12 +8,14 @@
  *
  * The check is generic, not tied to that header: on each route, at each
  * phone width, the page must not be scrollable sideways
- * (documentElement.scrollWidth <= clientWidth), the header must not
- * overflow itself, and no header text may be cut off with an ellipsis (the
- * logo slot is built to truncate rather than widen the page, so a clipped
- * wordmark is how a too-crowded header shows up). On failure it names the
- * outermost elements that stick out past the right edge, so the culprit is
- * in the error message.
+ * (documentElement.scrollWidth <= clientWidth) and the header must not
+ * overflow itself. A crowded header can also fail without widening the
+ * page, because its left group is allowed to shrink (min-w-0), so three
+ * more header checks: no control (link or button) is squeezed narrower
+ * than it is when the header has all the room it wants, no two controls
+ * overlap (e.g. the wordmark running under Search), and no header text is
+ * cut off with an ellipsis. On failure it names the outermost elements that
+ * stick out past the right edge, so the culprit is in the error message.
  *
  * Runs unauthenticated with stub secrets (same as smoke.spec.ts), which is
  * the widest header state: the "Sign in with Google" button instead of the
@@ -38,6 +40,8 @@ type Overflow = {
   headerClientWidth: number | null;
   culprits: string[];
   truncatedHeaderText: string[];
+  squeezedControls: string[];
+  overlappingControls: string[];
 };
 
 async function measure(page: Page): Promise<Overflow> {
@@ -69,6 +73,42 @@ async function measure(page: Page): Promise<Overflow> {
           })
           .map((el) => `"${el.textContent?.trim()}" ${el.clientWidth}px of ${el.scrollWidth}px`)
       : [];
+    // Header controls: squeezed below their natural width, or overlapping.
+    const squeezedControls: string[] = [];
+    const overlappingControls: string[] = [];
+    if (header instanceof HTMLElement) {
+      const label = (el: Element) =>
+        (el.getAttribute('aria-label') || el.textContent?.trim() || el.tagName).slice(0, 30);
+      const controls = Array.from(header.querySelectorAll('a, button, [role="button"]')).filter(
+        (el) => el.getBoundingClientRect().width > 0,
+      );
+      const rects = controls.map((el) => el.getBoundingClientRect());
+      // Natural widths: let the header be as wide as its content, re-measure.
+      const prevWidth = header.style.width;
+      const prevMax = header.style.maxWidth;
+      header.style.width = 'max-content';
+      header.style.maxWidth = 'none';
+      const natural = controls.map((el) => el.getBoundingClientRect().width);
+      header.style.width = prevWidth;
+      header.style.maxWidth = prevMax;
+      controls.forEach((el, i) => {
+        if (rects[i].width < natural[i] - 0.5) {
+          squeezedControls.push(`"${label(el)}" ${Math.round(rects[i].width)}px of ${Math.round(natural[i])}px`);
+        }
+      });
+      for (let i = 0; i < controls.length; i++) {
+        for (let j = i + 1; j < controls.length; j++) {
+          if (controls[i].contains(controls[j]) || controls[j].contains(controls[i])) continue;
+          const a = rects[i];
+          const b = rects[j];
+          const overlapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const overlapY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (overlapX > 0.5 && overlapY > 0.5) {
+            overlappingControls.push(`"${label(controls[i])}" and "${label(controls[j])}" by ${Math.round(overlapX)}px`);
+          }
+        }
+      }
+    }
     return {
       scrollWidth: root.scrollWidth,
       clientWidth: vw,
@@ -76,6 +116,8 @@ async function measure(page: Page): Promise<Overflow> {
       headerClientWidth: header ? header.clientWidth : null,
       culprits,
       truncatedHeaderText,
+      squeezedControls,
+      overlappingControls,
     };
   });
 }
@@ -112,6 +154,8 @@ for (const vp of VIEWPORTS) {
           expect.soft(m.headerScrollWidth, `header overflows itself${detail}`).toBeLessThanOrEqual(m.headerClientWidth);
         }
         expect.soft(m.truncatedHeaderText, `header text cut off${detail}`).toEqual([]);
+        expect.soft(m.squeezedControls, `header controls squeezed${detail}`).toEqual([]);
+        expect.soft(m.overlappingControls, `header controls overlap${detail}`).toEqual([]);
       }
     });
   });

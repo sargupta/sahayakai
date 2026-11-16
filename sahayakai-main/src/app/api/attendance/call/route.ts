@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP } from '@/types/attendance';
 import { isValidE164 } from '@/lib/twilio-validate';
-import { checkCallingWindow } from '@/lib/calling-hours';
+import { checkCallingWindow, outsideCallingHoursBody } from '@/lib/calling-hours';
 import { logger } from '@/lib/logger';
 import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors';
+import { claimOutreachDial } from '@/lib/attendance/claim-dial';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
-import { placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
+import { refuseIfParentOptedOut } from '@/lib/call-suppression';
+import { isDestinationAllowed, placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
+import { writeCallStatus, type CallStatusDb } from '@/lib/attendance/reconcile-call-status';
 import { warmTelephony } from '@/lib/vobiz/warm';
 import {
     VOBIZ_DOMAINS,
@@ -25,12 +28,7 @@ import type { Language } from '@/types';
  *   VOICE_EXOTEL_CALL_URL — full URL of the voicebot's start-call endpoint,
  *     e.g. https://sahayakai-voice-call-xxxx.a.run.app/api/exotel/call
  */
-async function forwardToExotel(userId: string, outreachId: string): Promise<NextResponse> {
-    const callUrl = process.env.VOICE_EXOTEL_CALL_URL;
-    if (!callUrl) {
-        console.error('[attendance/call] VOICE_PROVIDER=exotel but VOICE_EXOTEL_CALL_URL is not set');
-        return NextResponse.json({ error: 'Voice service not configured' }, { status: 503 });
-    }
+async function forwardToExotel(userId: string, outreachId: string, callUrl: string): Promise<NextResponse> {
     try {
         const res = await fetch(callUrl, {
             method: 'POST',
@@ -56,7 +54,7 @@ async function forwardToExotel(userId: string, outreachId: string): Promise<Next
         return NextResponse.json({ callSid: data?.callSid ?? data?.callId ?? data?.sid ?? 'exotel' });
     } catch (error) {
         console.error('[attendance/call] Exotel forward failed:', error);
-        return NextResponse.json({ error: 'Failed to initiate call' }, { status: 502 });
+        return NextResponse.json({ error: 'Failed to initiate call', code: 'CALL_NOT_PLACED' }, { status: 502 });
     }
 }
 
@@ -81,9 +79,13 @@ async function forwardToExotel(userId: string, outreachId: string): Promise<Next
  * of the whole feature, and when the Twilio path owned its own copy there was
  * nothing stopping a second provider from shipping with only some of them.
  */
+type ResolvedTarget = { parentPhone: string; data: FirebaseFirestore.DocumentData };
 type TargetResolution =
-    | { ok: true; parentPhone: string; data: FirebaseFirestore.DocumentData }
-    | { ok: false; response: NextResponse };
+    | ({ ok: true } & ResolvedTarget)
+    // `owned` once the record is confirmed to be this teacher's: only then may a
+    // refusal mark it failed, so nobody can flip another teacher's record.
+    | { ok: false; response: NextResponse; owned: false }
+    | { ok: false; response: NextResponse; owned: true; category: string };
 
 async function resolveOutreachTarget(
     db: FirebaseFirestore.Firestore,
@@ -92,11 +94,20 @@ async function resolveOutreachTarget(
 ): Promise<TargetResolution> {
     const snap = await db.collection('parent_outreach').doc(outreachId).get();
     if (!snap.exists) {
-        return { ok: false, response: NextResponse.json({ error: 'Outreach record not found' }, { status: 404 }) };
+        return { ok: false, owned: false, response: NextResponse.json({ error: 'Outreach record not found', code: 'OUTREACH_NOT_FOUND' }, { status: 404 }) };
     }
     const data = snap.data()!;
     if (data.teacherUid !== userId) {
-        return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) };
+        return { ok: false, owned: false, response: NextResponse.json({ error: 'Unauthorized', code: 'FORBIDDEN' }, { status: 403 }) };
+    }
+    // Already dialled: the record belongs to the first request, whose call may be
+    // ringing or in progress. Answer 409 BEFORE any other check, and as not-owned
+    // so POST writes nothing: a refusal here (calling window just closed, parent
+    // opted out, class or phone changed) would otherwise mark the live call
+    // failed, and the first final state wins (gate: attendance-call-single-dial).
+    // `callSid` covers records dialled before the claim existed.
+    if (data.dialClaimedAt || data.callSid) {
+        return { ok: false, owned: false, response: alreadyDialled({ userId, outreachId }) };
     }
 
     const classId = typeof data.classId === 'string' ? data.classId : '';
@@ -104,24 +115,33 @@ async function resolveOutreachTarget(
     if (!classId || !studentId) {
         return {
             ok: false,
-            response: NextResponse.json({ error: 'Outreach record is missing its class or student' }, { status: 422 }),
+            owned: true,
+            category: 'outreach_incomplete',
+            response: NextResponse.json({ error: 'Outreach record is missing its class or student', code: 'OUTREACH_INCOMPLETE' }, { status: 422 }),
         };
     }
     const classRef = db.collection('classes').doc(classId);
     const classDoc = await classRef.get();
     if (!classDoc.exists || classDoc.data()?.teacherUid !== userId) {
-        return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) };
+        return { ok: false, owned: true, category: 'class_not_owned', response: NextResponse.json({ error: 'Unauthorized', code: 'CLASS_NOT_OWNED' }, { status: 403 }) };
     }
     const studentDoc = await classRef.collection('students').doc(studentId).get();
     if (!studentDoc.exists) {
-        return { ok: false, response: NextResponse.json({ error: 'Student not found in this class' }, { status: 404 }) };
+        return {
+            ok: false,
+            owned: true,
+            category: 'student_not_found',
+            response: NextResponse.json({ error: 'Student not found in this class', code: 'STUDENT_NOT_FOUND' }, { status: 404 }),
+        };
     }
 
     const parentPhone: unknown = studentDoc.data()?.parentPhone;
     if (typeof parentPhone !== 'string' || !isValidE164(parentPhone)) {
         return {
             ok: false,
-            response: NextResponse.json({ error: 'Student has no valid parent phone on record' }, { status: 422 }),
+            owned: true,
+            category: 'no_valid_parent_phone',
+            response: NextResponse.json({ error: 'Student has no valid parent phone on record', code: 'NO_PARENT_PHONE' }, { status: 422 }),
         };
     }
     if (data.parentPhone !== parentPhone) {
@@ -135,6 +155,8 @@ async function resolveOutreachTarget(
         });
         return {
             ok: false,
+            owned: true,
+            category: 'phone_mismatch',
             response: NextResponse.json(
                 {
                     error: "The parent's phone on this outreach no longer matches the student record. Start a new outreach.",
@@ -158,24 +180,13 @@ async function resolveOutreachTarget(
 async function forwardToVobiz(
     req: NextRequest,
     db: FirebaseFirestore.Firestore,
-    userId: string,
     outreachId: string,
+    target: ResolvedTarget,
+    config: NonNullable<ReturnType<typeof readVobizConfig>>,
 ): Promise<NextResponse> {
-    const config = readVobizConfig();
-    if (!config) {
-        console.error(
-            '[attendance/call] PROVIDER_MISCONFIGURED — VOICE_PROVIDER=vobiz but ' +
-            'VOBIZ_AUTH_ID / VOBIZ_AUTH_TOKEN / VOBIZ_FROM_NUMBER are not all set. ' +
-            'Operator action; retrying will not help.',
-        );
-        return NextResponse.json({ error: 'Voice service not configured' }, { status: 503 });
-    }
-
     // Start the sidecar's cold start now so it overlaps the ring (see warm.ts).
+    // The target was resolved and checked in POST, before the provider switch.
     warmTelephony();
-
-    const target = await resolveOutreachTarget(db, outreachId, userId);
-    if (!target.ok) return target.response;
 
     // Same escape hatch the Twilio path has: lets a teacher exercise the flow
     // without dialling a real parent. Unset it to go live.
@@ -213,10 +224,8 @@ async function forwardToVobiz(
         // No call was placed, so the per-student dedup window is released for
         // the same reason the Twilio path releases it: the parent was never
         // disturbed, and holding the record "recent" only locks the teacher out.
-        await db.collection('parent_outreach').doc(outreachId).update({
-            callStatus: 'failed',
+        await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'failed', {
             callFailureCategory: result.failure.category,
-            updatedAt: new Date().toISOString(),
         }).catch((e: unknown) => {
             console.error('[attendance/call] could not mark outreach failed:', e);
         });
@@ -233,32 +242,39 @@ async function forwardToVobiz(
         );
     }
 
-    await db.collection('parent_outreach').doc(outreachId).update({
+    await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'initiated', {
         callSid: result.handle.requestUuid,
-        callStatus: 'initiated',
         deliveryMethod: 'vobiz_call',
-        updatedAt: new Date().toISOString(),
     });
 
     return NextResponse.json({ callSid: result.handle.requestUuid });
 }
 
-export async function POST(req: NextRequest) {
-    const userId = req.headers.get('x-user-id');
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+/**
+ * The record was never dialled and ownership was already verified: mark it
+ * failed so it does not read "Calling..." and does not hold the per-student
+ * dedup window (only an explicit 'failed' releases it). Never fatal.
+ */
+async function markNotDialled(db: FirebaseFirestore.Firestore, outreachId: string, category: string): Promise<void> {
+    await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'failed', {
+        callFailureCategory: category,
+    }).catch((e: unknown) => {
+        console.error('[attendance/call] could not mark outreach failed:', e);
+    });
+}
 
-    // Parse the body once up front — both the Exotel and Twilio providers need it,
-    // and req.json() can only be consumed a single time.
-    const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-    const { outreachId, parentLanguage } = body as {
-        outreachId: string;
-        parentLanguage: Language;
-    };
-    if (!outreachId || !parentLanguage) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
+/** A call that will not be placed, and why, for the record. */
+type Refusal = { category: string; response: NextResponse };
 
+/**
+ * Every reason this route refuses an owned record before contacting a
+ * provider. Kept in one function so each refusal is released by the single
+ * caller in POST (gate: attendance-call-refusals-gate.test.ts).
+ */
+function refuseBeforeDial(
+    suppressed: NextResponse | null,
+    ctx: { provider: string; parentLanguage: Language; userId: string; outreachId: string; destination: string },
+): Refusal | null {
     // Quiet hours. Enforced HERE, ahead of the provider switch, so it binds every
     // caller equally — the modal's Try again, a scheduled retry, a cron sweep, or
     // a direct POST. Hiding a button is a courtesy; this is the guarantee.
@@ -268,17 +284,113 @@ export async function POST(req: NextRequest) {
         logger.warn(
             `Parent call refused outside calling hours (${window.istTime})`,
             'ATTENDANCE',
-            { userId, outreachId, istHour: window.istHour },
+            { userId: ctx.userId, outreachId: ctx.outreachId, istHour: window.istHour },
         );
-        return NextResponse.json(
-            {
-                error: window.reason,
-                code: 'OUTSIDE_CALLING_HOURS',
-                nextAllowedAt: window.nextAllowedAt?.toISOString() ?? null,
-            },
-            { status: 409 },
-        );
+        return {
+            category: 'outside_calling_hours',
+            response: NextResponse.json(outsideCallingHoursBody(window), { status: 409 }),
+        };
     }
+
+    // The do-not-call list (looked up by the caller in POST, ahead of the
+    // provider switch, so NO provider can be contacted for a parent who asked
+    // not to be called; tests/call-suppression-gate enforces that order).
+    if (suppressed) {
+        return {
+            category: suppressed.status === 409 ? 'parent_opted_out' : 'suppression_check_failed',
+            response: suppressed,
+        };
+    }
+
+    // The server's destination allow-list (CALL_ALLOWED_DESTINATIONS, set on staging and test
+    // servers so they can never ring a real family). Checked for every provider, before any
+    // provider is contacted.
+    if (!isDestinationAllowed(ctx.destination)) {
+        console.error('[attendance/call] DESTINATION_NOT_ALLOWED — refused by CALL_ALLOWED_DESTINATIONS; nothing dialled.');
+        return {
+            category: 'destination_not_allowed',
+            response: NextResponse.json(
+                { error: 'This destination is not allowed on this server.', code: 'DESTINATION_NOT_ALLOWED', retryable: false },
+                { status: 403 },
+            ),
+        };
+    }
+
+    const unconfigured = (detail: string): Refusal => {
+        console.error(`[attendance/call] PROVIDER_MISCONFIGURED — ${detail}. Operator action; retrying will not help.`);
+        return {
+            category: 'provider_unconfigured',
+            response: NextResponse.json({ error: 'Voice service not configured', code: 'VOICE_NOT_CONFIGURED' }, { status: 503 }),
+        };
+    };
+    if (ctx.provider === 'exotel') {
+        return process.env.VOICE_EXOTEL_CALL_URL ? null : unconfigured('VOICE_PROVIDER=exotel but VOICE_EXOTEL_CALL_URL is not set');
+    }
+    if (ctx.provider === 'vobiz') {
+        return readVobizConfig()
+            ? null
+            : unconfigured('VOICE_PROVIDER=vobiz but VOBIZ_AUTH_ID / VOBIZ_AUTH_TOKEN / VOBIZ_FROM_NUMBER are not all set');
+    }
+
+    const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+        console.error('[attendance/call] PROVIDER_MISCONFIGURED — Twilio credentials or number are not set.');
+        return {
+            category: 'provider_unconfigured',
+            response: NextResponse.json({ error: 'Twilio not configured', code: 'VOICE_NOT_CONFIGURED' }, { status: 503 }),
+        };
+    }
+    // Check that the language is supported for Twilio calls
+    if (!TWILIO_LANGUAGE_MAP[ctx.parentLanguage]) {
+        return {
+            category: 'language_unsupported',
+            response: NextResponse.json(
+                { error: `Auto-call not supported for ${ctx.parentLanguage}. Use WhatsApp copy instead.`, code: 'LANGUAGE_NOT_SUPPORTED' },
+                { status: 422 },
+            ),
+        };
+    }
+    return null;
+}
+
+/** 409 for a repeated POST on an outreach record that has already been dialled. */
+function alreadyDialled(ctx: { userId: string; outreachId: string }): NextResponse {
+    logger.warn('Parent call refused: outreach already dialled', 'ATTENDANCE', { userId: ctx.userId, outreachId: ctx.outreachId });
+    return NextResponse.json(
+        { error: 'This call has already been placed. Start a new call to ring again.', code: 'ALREADY_DIALLED', retryable: false },
+        { status: 409 },
+    );
+}
+
+/** A refused call (to be released by POST) or the response of a call attempt. */
+type CallOutcome =
+    | { refused: true; category: string; response: NextResponse }
+    | { refused: false; response: NextResponse };
+
+/**
+ * Everything after ownership is confirmed: the refusals, then the provider.
+ * Returns ONLY a refusal from refuseBeforeDial or a provider's own response,
+ * so POST can release every refusal in one place (and has a single return).
+ */
+async function placeOwnedCall(
+    req: NextRequest,
+    db: FirebaseFirestore.Firestore,
+    target: ResolvedTarget,
+    suppressed: NextResponse | null,
+    ctx: { parentLanguage: Language; userId: string; outreachId: string },
+): Promise<CallOutcome> {
+    const provider = (process.env.VOICE_PROVIDER || 'twilio').toLowerCase();
+    const override = provider === 'vobiz' ? process.env.VOBIZ_TEST_OVERRIDE_NUMBER : provider === 'twilio' ? process.env.TWILIO_TEST_OVERRIDE_NUMBER : undefined;
+    const refusal = refuseBeforeDial(suppressed, { provider, ...ctx, destination: override || target.parentPhone });
+    if (refusal) return { refused: true, ...refusal };
+
+    // One dial per outreach record, claimed atomically before ANY provider is
+    // contacted: a repeated POST (double click, retry loop, script) must not ring
+    // the same parent again. "Try again" in the UI creates a new record.
+    // NOT a refusal for POST to release: the first request owns this record and may be mid-call,
+    // so markNotDialled must not mark it failed (gate: attendance-call-refusals-gate.test.ts).
+    const claim = await claimOutreachDial(db as unknown as CallStatusDb, ctx.outreachId);
+    if (!claim.ok) return { refused: false, response: alreadyDialled(ctx) };
 
     // Provider switch. Default 'twilio' preserves the existing batch TwiML path.
     // Set VOICE_PROVIDER=exotel to route attendance calls through the standalone
@@ -286,47 +398,40 @@ export async function POST(req: NextRequest) {
     // counselor-style interruption handling). The voicebot reads the same
     // parent_outreach doc (shared Firestore project) by id, so we only need to
     // forward the outreachId + the caller identity.
-    const provider = (process.env.VOICE_PROVIDER || 'twilio').toLowerCase();
     if (provider === 'exotel') {
-        // The voicebot dials the number on the outreach doc itself, so the
-        // destination is checked here first — the same boundary every provider
-        // passes through (see resolveOutreachTarget).
-        const target = await resolveOutreachTarget(await getDb(), outreachId, userId);
-        if (!target.ok) return target.response;
-        return forwardToExotel(userId, outreachId);
+        // The voicebot dials the number on the outreach doc itself; ownership, the
+        // destination and the opt-out were all checked above, before this switch.
+        return { refused: false, response: await forwardToExotel(ctx.userId, ctx.outreachId, process.env.VOICE_EXOTEL_CALL_URL!) };
     }
     // Vobiz owns a real Indian origination number, so unlike the Twilio TRIAL
     // account it can actually reach a parent. It streams the leg into a live
     // conversation with VIDYA rather than reading a fixed script.
     if (provider === 'vobiz') {
-        return forwardToVobiz(req, await getDb(), userId, outreachId);
+        return { refused: false, response: await forwardToVobiz(req, db, ctx.outreachId, target, readVobizConfig()!) };
     }
 
-    const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-        return NextResponse.json({ error: 'Twilio not configured' }, { status: 503 });
-    }
+    return { refused: false, response: await placeTwilioCall(req, db, ctx.outreachId, target) };
+}
+
+/** The Twilio batch TwiML path. Configuration and language were verified by refuseBeforeDial. */
+async function placeTwilioCall(
+    req: NextRequest,
+    db: FirebaseFirestore.Firestore,
+    outreachId: string,
+    target: ResolvedTarget,
+): Promise<NextResponse> {
+    // All three were verified by refuseBeforeDial.
+    const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env as Record<string, string>;
 
     try {
 
-        // Ownership + server-stored destination. Shared with the Vobiz path so
-        // the two providers cannot drift apart on the security checks.
-        const db = await getDb();
-        const target = await resolveOutreachTarget(db, outreachId, userId);
-        if (!target.ok) return target.response;
+        // Ownership, destination, suppression, configuration and language were
+        // all verified above, shared by every provider so they cannot drift.
         const parentPhone = target.parentPhone;
 
         // In test mode, override the destination number so all teachers can test
         // without calling real parents. Remove this env var to go live.
         const callTo = process.env.TWILIO_TEST_OVERRIDE_NUMBER || parentPhone;
-
-        // Check that the language is supported for Twilio calls
-        const langCode = TWILIO_LANGUAGE_MAP[parentLanguage];
-        if (!langCode) {
-            return NextResponse.json({
-                error: `Auto-call not supported for ${parentLanguage}. Use WhatsApp copy instead.`
-            }, { status: 422 });
-        }
 
         // Determine pipeline mode (streaming if orchestrator is healthy, else batch)
         const pipelineMode = await getEffectiveMode();
@@ -404,10 +509,8 @@ export async function POST(req: NextRequest) {
             // the record "recent" locks the teacher out for five minutes to
             // protect a parent who was never disturbed.
             if (releasesDedupWindow(failure)) {
-                await db.collection('parent_outreach').doc(outreachId).update({
-                    callStatus: 'failed',
+                await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'failed', {
                     callFailureCategory: failure.category,
-                    updatedAt: new Date().toISOString(),
                 }).catch((e: unknown) => {
                     // Never let bookkeeping mask the error the teacher needs.
                     console.error('[attendance/call] could not mark outreach failed:', e);
@@ -424,17 +527,63 @@ export async function POST(req: NextRequest) {
         const callSid: string = twilioData.sid;
 
         // Update outreach record with callSid
-        await db.collection('parent_outreach').doc(outreachId).update({
+        await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'initiated', {
             callSid,
-            callStatus: 'initiated',
             deliveryMethod: 'twilio_call',
-            updatedAt: new Date().toISOString(),
         });
 
         return NextResponse.json({ callSid });
     } catch (error: any) {
         console.error('[attendance/call] Error:', error);
         // Don't leak internal error messages (may contain stack, secrets, service paths)
-        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal error', code: 'INTERNAL' }, { status: 500 });
     }
+}
+
+export async function POST(req: NextRequest) {
+    const userId = req.headers.get('x-user-id');
+    if (!userId) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHENTICATED' }, { status: 401 });
+
+    // Parse the body once up front — both the Exotel and Twilio providers need it,
+    // and req.json() can only be consumed a single time.
+    const body = await req.json().catch(() => null);
+    if (!body) return NextResponse.json({ error: 'Invalid JSON body', code: 'INVALID_REQUEST' }, { status: 400 });
+    const { outreachId, parentLanguage } = body as {
+        outreachId: string;
+        parentLanguage: Language;
+    };
+    if (!outreachId || !parentLanguage) {
+        return NextResponse.json({ error: 'Missing required fields', code: 'INVALID_REQUEST' }, { status: 400 });
+    }
+
+    // Ownership and the server-stored destination first: until the record is
+    // known to be this teacher's, a refusal must not touch it.
+    //
+    // A Firestore error here must still answer in JSON. Uncaught, Next.js sends
+    // an empty 500 the modal cannot parse, and the teacher sees a JSON parse
+    // error instead of a message (gate: attendance-call-json-errors-gate).
+    let db: FirebaseFirestore.Firestore;
+    let target: TargetResolution;
+    try {
+        db = await getDb();
+        target = await resolveOutreachTarget(db, outreachId, userId);
+    } catch (error) {
+        console.error('[attendance/call] target resolution failed:', error);
+        return NextResponse.json({ error: 'Internal error', code: 'INTERNAL', retryable: true }, { status: 500 });
+    }
+    if (!target.ok) {
+        if (target.owned) await markNotDialled(db, outreachId, target.category);
+        return target.response;
+    }
+
+    // REFUSAL-GATE: ownership confirmed. From here POST has exactly ONE return.
+    // Every refusal comes back from placeOwnedCall as { refused: true } and is
+    // released here: the modal created the record 'initiated' before calling
+    // this route, and a record left 'initiated' reads as a call in progress and
+    // holds the per-student dedup window although nobody was dialled
+    // (gate: attendance-call-refusals-gate.test.ts).
+    const suppressed = await refuseIfParentOptedOut(db, target.parentPhone);
+    const outcome = await placeOwnedCall(req, db, target, suppressed, { parentLanguage, userId, outreachId });
+    if (outcome.refused) await markNotDialled(db, outreachId, outcome.category);
+    return outcome.response;
 }

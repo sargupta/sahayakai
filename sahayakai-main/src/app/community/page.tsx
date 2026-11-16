@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, UserSearch, X, Info, MessageCircle } from 'lucide-react';
+import { Users, Plus, X, Info, SearchX } from 'lucide-react';
 import { BackButton } from "@/components/ui/back-button";
 import { Button } from '@/components/ui/button';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -13,7 +13,10 @@ import { doc, getDoc } from 'firebase/firestore';
 
 // Community components
 import GroupList from '@/components/community/group-list';
-import { ShareComposer } from '@/components/community/share-composer';
+import { ShareComposer, type ComposerOpenRequest } from '@/components/community/share-composer';
+import { CommunityHero } from '@/components/community/community-hero';
+import { POST_TYPE_CONFIG } from '@/components/community/feed-post';
+import { getCommunityPrompt, type CommunityPrompt } from '@/data/community-prompts';
 import { UnifiedFeed } from '@/components/community/unified-feed';
 import { GroupsSidebar } from '@/components/community/groups-sidebar';
 import GroupFeed from '@/components/community/group-feed';
@@ -49,7 +52,7 @@ import {
 import { updateProfileAction } from '@/lib/api/profile';
 
 // Types
-import type { Group, FeedItem, TeacherSuggestion } from '@/types/community';
+import type { Group, FeedItem, TeacherSuggestion, PostType } from '@/types/community';
 import type { MyConnectionData } from '@/types';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -72,6 +75,7 @@ export default function CommunityPage() {
   const [teacherSuggestions, setTeacherSuggestions] = useState<TeacherSuggestion[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
+  const [focusPostId, setFocusPostId] = useState<string | null>(null);
   const [showStaffRoom, setShowStaffRoom] = useState(false);
   const [showTeacherDirectory, setShowTeacherDirectory] = useState(false);
   const [showExploreGroups, setShowExploreGroups] = useState(false);
@@ -81,6 +85,9 @@ export default function CommunityPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [showFirstVisitHint, setShowFirstVisitHint] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [composerRequest, setComposerRequest] = useState<ComposerOpenRequest | null>(null);
+  const [postTypeFilter, setPostTypeFilter] = useState<PostType | 'all'>('all');
+  const deepLinkHandledRef = useRef(false);
 
   // Race guard: every refresh increments this; we discard responses whose
   // version no longer matches when they resolve. Replaces the original
@@ -155,10 +162,49 @@ export default function CommunityPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Filtered feed ────────────────────────────────────────────────────────
+  // Group chips filter by group; the post-type select filters by the post's
+  // own type (resource shares count as "resource"). Non-post items (people /
+  // group suggestions, chat highlights) only show in the unfiltered view.
   const filteredFeedItems = useMemo(() => {
-    if (!selectedGroupId) return feedItems;
-    return feedItems.filter((item) => item.groupId === selectedGroupId);
-  }, [feedItems, selectedGroupId]);
+    return feedItems.filter((item) => {
+      if (selectedGroupId && item.groupId !== selectedGroupId) return false;
+      if (postTypeFilter === 'all') return true;
+      if (item.type === 'group_post') return item.post?.postType === postTypeFilter;
+      if (item.type === 'resource_share') return postTypeFilter === 'resource';
+      return false;
+    });
+  }, [feedItems, selectedGroupId, postTypeFilter]);
+  const feedFiltered = selectedGroupId !== null || postTypeFilter !== 'all';
+
+  const openComposer = useCallback((prompt?: CommunityPrompt) => {
+    setComposerRequest({
+      nonce: Date.now(),
+      postType: prompt?.postType,
+      prompt: prompt ? t(prompt.text) : undefined,
+    });
+  }, [t]);
+
+  // Deep links from the homepage Community corner (read once, after the
+  // first load so the composer and the teacher's groups exist):
+  //   ?compose=1[&prompt=<id>]  open the composer (answering that prompt)
+  //   ?group=<id>[&post=<id>]   open that group's conversation (scrolled to
+  //                             that post — the homepage Messages panel)
+  useEffect(() => {
+    if (loading || deepLinkHandledRef.current || typeof window === 'undefined') return;
+    deepLinkHandledRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const groupParam = params.get('group');
+    if (groupParam) {
+      const group = myGroups.find((g) => g.id === groupParam) ?? suggestedGroups.find((g) => g.id === groupParam);
+      if (group) {
+        setFocusPostId(params.get('post'));
+        setActiveGroup(group);
+      } else toast({ title: t('That conversation is not available'), description: t('It may be in a group you have not joined.') });
+    } else if (params.get('compose') === '1' && user) {
+      openComposer(getCommunityPrompt(params.get('prompt')));
+    }
+    if (groupParam || params.has('compose')) window.history.replaceState(null, '', '/community');
+  }, [loading, myGroups, suggestedGroups, user, openComposer, toast, t]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -434,7 +480,8 @@ export default function CommunityPage() {
     return (
       <GroupFeed
         group={activeGroup}
-        onBack={() => setActiveGroup(null)}
+        focusPostId={focusPostId}
+        onBack={() => { setFocusPostId(null); setActiveGroup(null); }}
         isMember={isMember}
         onJoinGroup={async (groupId) => {
           try {
@@ -509,112 +556,63 @@ export default function CommunityPage() {
   }
 
   // ── Main Feed View ───────────────────────────────────────────────────────
+  const postTypeOptions = Object.entries(POST_TYPE_CONFIG) as Array<[PostType, (typeof POST_TYPE_CONFIG)[PostType]]>;
+
   return (
     <div className="w-full max-w-7xl mx-auto pb-24 sm:pb-6 px-3 sm:px-0">
-      {/* Header — title only.
-          NCERT demo polish (2026-05-19): tightened px-6 → px-4 sm:px-6 so
-          the header doesn't overflow on 360px Android viewports, and
-          forced a 1.5 line-height on the subtitle so Devanagari/Kannada
-          translations don't clip ascenders. */}
-      <div className="rounded-md overflow-hidden bg-card border border-border shadow-soft">
-        <div className="px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 sm:gap-4">
-          <div className="p-2.5 sm:p-3 bg-muted rounded-md border border-border shrink-0">
-            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="type-h2 text-foreground leading-tight">
-              {t("Community")}
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed indic-text">
-              {t("Share, learn, and grow with teachers across Bharat")}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Primary action tiles — labeled entry points, visible at every breakpoint.
-          NCERT demo polish (2026-05-19): smaller padding on mobile, tighter
-          internal gap so both tiles fit on 360px without text truncation. */}
-      <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-3">
-        <button
-          onClick={handleOpenStaffRoom}
-          className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-md bg-card border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors duration-micro ease-out-quart text-left shadow-soft active:scale-[0.98]"
-          aria-label={t("Open Staff Room — chat with every teacher")}
-        >
-          <div className="p-2 sm:p-2.5 rounded-md bg-primary/10 text-primary shrink-0">
-            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm text-foreground leading-snug">{t("Staff Room")}</div>
-            <div className="text-xs text-muted-foreground mt-0.5 truncate">{t("Open chat")}</div>
-          </div>
-        </button>
-        <button
-          onClick={handleOpenTeacherDirectory}
-          className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-md bg-card border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors duration-micro ease-out-quart text-left shadow-soft active:scale-[0.98]"
-          aria-label={t("Find Teachers — search by subject or school")}
-        >
-          <div className="p-2 sm:p-2.5 rounded-md bg-primary/10 text-primary shrink-0">
-            <UserSearch className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm text-foreground leading-snug">{t("Find Teachers")}</div>
-            <div className="text-xs text-muted-foreground mt-0.5 truncate">{t("By subject or school")}</div>
-          </div>
-        </button>
-      </div>
+      {/* Header — welcome, main actions, today's SahayakAI prompt.
+          NCERT demo polish (2026-05-19) still holds: tight padding on 360px
+          phones and relaxed line-height for Devanagari/Kannada ascenders. */}
+      <CommunityHero
+        canPost={!!user}
+        onStartDiscussion={() => openComposer()}
+        onAnswerPrompt={openComposer}
+        onOpenStaffRoom={handleOpenStaffRoom}
+        onOpenTeacherDirectory={handleOpenTeacherDirectory}
+      />
 
       {/* First-visit inline hint */}
       {showFirstVisitHint && (
-        <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-md bg-primary/5 border border-primary/15 animate-in fade-in duration-500">
-          <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-surface-md bg-tint-accent-soft border border-primary/15 animate-in fade-in duration-500">
+          <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" aria-hidden="true" />
           <div className="flex-1 text-sm text-foreground">
             <span className="font-medium">{t("Welcome!")}</span> {t("These groups match your subjects and classes. Post questions, share resources, and connect with fellow teachers.")}
           </div>
-          <button onClick={() => setShowFirstVisitHint(false)} className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
-            <X className="h-4 w-4" />
+          <button onClick={() => setShowFirstVisitHint(false)} aria-label={t("Dismiss")} className="focus-ring shrink-0 rounded-pill text-muted-foreground hover:text-foreground transition-colors">
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       )}
-
-      {/* Group chips — mobile-only. Desktop has the groups sidebar, so rendering
-          chips there would duplicate the same list twice on the screen. */}
-      <div className="mt-4 lg:hidden">
-        <GroupList
-          groups={myGroups}
-          selectedGroupId={selectedGroupId}
-          onSelectGroup={handleSelectGroup}
-          onExploreGroups={handleOpenExploreGroups}
-          hasDiscoverableGroups={suggestedGroups.length > 0}
-        />
-      </div>
 
       {/* Cold-start empty state. Renders when the user has no groups AND no
           feed — usually a brand-new account whose ensureUserGroupsAction
           either ran but auto-joined nothing (rare) or is still in flight.
           Without this, the page below renders mostly blank space. */}
       {!loading && myGroups.length === 0 && feedItems.length === 0 && (
-        <div className="mt-4 rounded-md border border-dashed border-border bg-muted/30 p-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Users className="h-6 w-6 text-primary" />
+        <div className="mt-4 flex flex-col items-center gap-4 rounded-surface-md border border-dashed border-border bg-card/60 p-6 text-center sm:flex-row sm:text-left">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-tint-accent">
+            <Users className="h-6 w-6 text-primary" aria-hidden="true" />
           </div>
-          <p className="text-sm font-bold text-foreground">{t("Join your first group")}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("Groups are how you find teachers in your subject, grade, and area.")}
-          </p>
-          <Button onClick={handleOpenExploreGroups} className="mt-3 gap-1.5">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">{t("Join your first group")}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("Groups are how you find teachers in your subject, grade, and area.")}
+            </p>
+          </div>
+          <Button onClick={handleOpenExploreGroups} className="shrink-0 gap-1.5 rounded-pill">
             {t("Browse groups")}
           </Button>
         </div>
       )}
 
       {/* Main content area */}
-      <div className="mt-4 flex gap-6">
+      <div className="mt-6 flex gap-8">
         {/* Feed column */}
-        <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex-1 min-w-0 space-y-5">
           <div ref={composerRef}>
             <ShareComposer
               groups={myGroups.map((g) => ({ id: g.id, name: g.name }))}
+              openRequest={composerRequest}
               onPostCreated={(info) => {
                 if (info && user) {
                   // Optimistic insertion: prepend the new post to the feed so
@@ -647,45 +645,95 @@ export default function CommunityPage() {
               }}
             />
           </div>
-          <UnifiedFeed
-            feedItems={filteredFeedItems}
-            loading={loading}
-            connectionData={connectionData}
-            onLikePost={handleLikePost}
-            onLikeResource={handleLikeResource}
-            onConnectTeacher={handleConnectTeacher}
-            onOpenGroupChat={handleOpenGroup}
-            onLoadMore={handleLoadMore}
-            hasMore={hasMore && !selectedGroupId}
-            likedPostIds={likedPostIds}
-          />
+
+          {/* Conversations — header, filters, feed */}
+          <section aria-labelledby="community-conversations" className="space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+              <div>
+                <h2 id="community-conversations" className="font-headline text-xl font-bold text-foreground">
+                  {t("Conversations")}
+                </h2>
+                <p className="text-sm text-muted-foreground">{t("From the groups you belong to")}</p>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="sr-only sm:not-sr-only">{t("Show")}</span>
+                <select
+                  value={postTypeFilter}
+                  onChange={(e) => setPostTypeFilter(e.target.value as PostType | 'all')}
+                  className="focus-ring h-9 rounded-pill border border-border bg-card px-3 pr-8 text-sm text-foreground"
+                  aria-label={t("Filter by post type")}
+                >
+                  <option value="all">{t("All posts")}</option>
+                  {postTypeOptions.map(([type, cfg]) => (
+                    <option key={type} value={type}>{t(cfg.label)}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {myGroups.length > 0 && (
+              <GroupList
+                groups={myGroups}
+                selectedGroupId={selectedGroupId}
+                onSelectGroup={handleSelectGroup}
+                onExploreGroups={handleOpenExploreGroups}
+                hasDiscoverableGroups={suggestedGroups.length > 0}
+              />
+            )}
+
+            <UnifiedFeed
+              feedItems={filteredFeedItems}
+              loading={loading}
+              connectionData={connectionData}
+              onLikePost={handleLikePost}
+              onLikeResource={handleLikeResource}
+              onConnectTeacher={handleConnectTeacher}
+              onOpenGroupChat={handleOpenGroup}
+              onLoadMore={handleLoadMore}
+              hasMore={hasMore && !feedFiltered}
+              likedPostIds={likedPostIds}
+              emptyState={feedFiltered && feedItems.length > 0 ? (
+                <div className="rounded-surface-md border border-dashed border-border bg-card/60 px-6 py-8 text-center">
+                  <SearchX className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                  <p className="mt-2 text-sm font-semibold text-foreground">{t("No posts match this filter")}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 rounded-pill"
+                    onClick={() => { setSelectedGroupId(null); setPostTypeFilter('all'); }}
+                  >
+                    {t("Show all posts")}
+                  </Button>
+                </div>
+              ) : undefined}
+            />
+          </section>
 
           {/* Shared Resources */}
-          <div className="mt-6">
-            <h2 className="font-headline text-lg font-bold text-foreground mb-3">
+          <section aria-labelledby="community-resources" className="pt-4">
+            <h2 id="community-resources" className="font-headline text-xl font-bold text-foreground">
               {t("Shared Resources")}
             </h2>
+            <p className="mb-3 text-sm text-muted-foreground">{t("Lesson plans, quizzes and worksheets shared by teachers")}</p>
             <ResourceFeed />
-          </div>
+          </section>
         </div>
 
-        {/* Sidebar — desktop only */}
-        <div className="hidden lg:block">
-          <GroupsSidebar
-            myGroups={myGroups}
-            suggestedGroups={suggestedGroups}
-            teacherSuggestions={teacherSuggestions}
-            connectedUids={connectionData.connectedUids}
-            sentRequestUids={connectionData.sentRequestUids}
-            onSelectGroup={handleOpenGroup}
-            onJoinGroup={handleJoinGroup}
-            onPreviewGroup={handlePreviewGroup}
-            onOpenStaffRoom={handleOpenStaffRoom}
-            onOpenTeacherDirectory={handleOpenTeacherDirectory}
-            onViewAllGroups={handleOpenExploreGroups}
-            onConnectTeacher={handleConnectTeacher}
-          />
-        </div>
+        {/* Sidebar — desktop only (the aside hides itself below lg) */}
+        <GroupsSidebar
+          myGroups={myGroups}
+          suggestedGroups={suggestedGroups}
+          teacherSuggestions={teacherSuggestions}
+          connectedUids={connectionData.connectedUids}
+          sentRequestUids={connectionData.sentRequestUids}
+          onSelectGroup={handleOpenGroup}
+          onJoinGroup={handleJoinGroup}
+          onPreviewGroup={handlePreviewGroup}
+          onOpenStaffRoom={handleOpenStaffRoom}
+          onOpenTeacherDirectory={handleOpenTeacherDirectory}
+          onViewAllGroups={handleOpenExploreGroups}
+          onConnectTeacher={handleConnectTeacher}
+        />
       </div>
 
       {/* Mobile FAB — opens the full create-post dialog. Previously this just
@@ -703,9 +751,9 @@ export default function CommunityPage() {
         <button
           onClick={() => setShowCreateDialog(true)}
           aria-label={t("Create a Post")}
-          className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-elevated flex items-center justify-center transition-transform active:scale-95"
+          className="focus-ring h-14 w-14 rounded-pill bg-primary hover:bg-primary/90 text-primary-foreground shadow-elevated flex items-center justify-center transition-transform active:scale-95"
         >
-          <Plus className="h-6 w-6" />
+          <Plus className="h-6 w-6" aria-hidden="true" />
         </button>
       </div>
 

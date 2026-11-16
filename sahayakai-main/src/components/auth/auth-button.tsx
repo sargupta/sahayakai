@@ -23,7 +23,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { LogOut, User as UserIcon, ShieldCheck } from "lucide-react";
+import { LogOut, User as UserIcon, ShieldCheck, Settings } from "lucide-react";
+import Link from "next/link";
 import { GoogleGIcon } from "./google-g-icon";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -109,7 +110,7 @@ export function AuthButton() {
         }
     };
 
-    if (loading) return <div className="h-8 w-8 animate-pulse bg-muted rounded-full" />;
+    if (loading) return <div className="h-8 w-8 animate-pulse rounded-full bg-milk-400" />;
 
     if (!user) {
         return (
@@ -122,18 +123,24 @@ export function AuthButton() {
                     className="gap-2 shadow-sm font-bold"
                 >
                     <GoogleGIcon className="h-4 w-4" />
-                    {/* Label from `md` only: below it the 179px label pushed
-                        the app header past the screen edge (640–767px). */}
-                    <span className="hidden md:inline">{t("Sign in with Google")}</span>
+                    <span className="hidden sm:inline">{t("Sign in with Google")}</span>
                 </Button>
             </div>
         );
     }
 
+    // The one account entry point in the app shell: the sidebar no longer
+    // repeats the profile row or the settings gear, so everything it held
+    // (profile and classes, settings) is here, with sign out.
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full ring-2 ring-primary/10">
+                <Button
+                    variant="ghost"
+                    aria-label={t("Account menu")}
+                    data-testid="account-menu-trigger"
+                    className="relative h-10 w-10 rounded-full p-0 ring-2 ring-primary/10"
+                >
                     <Avatar className="h-8 w-8">
                         <AvatarImage
                             src={user.photoURL || ""}
@@ -144,7 +151,7 @@ export function AuthButton() {
                     </Avatar>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-60" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user.displayName}</p>
@@ -152,9 +159,17 @@ export function AuthButton() {
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/my-profile')}>
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Profile & Library</span>
+                <DropdownMenuItem asChild>
+                    <Link href="/my-profile" data-testid="account-menu-profile">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>{t("Profile and classes")}</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/settings" data-testid="account-menu-settings">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>{t("Settings")}</span>
+                    </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <ShieldCheck className="mr-2 h-4 w-4" />

@@ -16,6 +16,7 @@ Review trace:
 from __future__ import annotations
 
 import os
+import threading
 import uuid
 from contextlib import asynccontextmanager
 
@@ -80,6 +81,12 @@ async def _lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     )
     # Pass the app so FastAPIInstrumentor actually wraps it (Round-2 P1-8).
     init_telemetry(app)
+    # VIDYA voice: import ADK/genai and resolve credentials in the background so the
+    # teacher's first tap does not pay ~4 s of cold start (startup itself is not delayed).
+    if not TELEPHONY_ONLY:
+        from .agents.vidya_voice.adk_live import warm_up_vidya_live
+
+        threading.Thread(target=warm_up_vidya_live, name="vidya-warm-up", daemon=True).start()
     yield
     log.info("app.shutdown")
 
