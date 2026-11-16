@@ -602,6 +602,11 @@ describe('Chapter numbers match the printed book (class gate)', () => {
         ['Veena 5', 12],
         ['Our Wondrous World 3', 12],
         ['Our Wondrous World 4', 10],
+        // Class 12 History, rationalised edition: four themes per part,
+        // numbered continuously across the series (lehs2ps.pdf contents).
+        ['Themes in Indian History Part I', 4],
+        ['Themes in Indian History Part II', 4],
+        ['Themes in Indian History Part III', 4],
     ];
 
     it.each(OFFICIAL_CHAPTER_COUNT)(
@@ -627,8 +632,14 @@ describe('Chapter numbers match the printed book (class gate)', () => {
     it('every book numbers its chapters contiguously from 1', () => {
         // A multi-volume book numbers straight through: Ganita Prakash 7
         // (Part 2) starts at chapter 9 because Part 1 ended at 8. Group the
-        // parts back together before checking.
-        const baseName = (n: string) => n.replace(/\s*\(Part \d+\)\s*$/, '');
+        // parts back together before checking. Both spellings occur: "(Part 2)"
+        // and a bare roman "Part II". Class 12 Themes in Indian History is the
+        // bare form, and NCERT prints it as one series (Reprint 2026-27
+        // contents page, lehs2ps.pdf: Part I = Themes One–Four, Part II =
+        // Five–Eight, Part III = Nine–Twelve), so Part II starting at 5 is the
+        // book, not a gap.
+        const baseName = (n: string) =>
+            n.replace(/\s*\(Part \d+\)\s*$/, '').replace(/\s+Part\s+(?:[IVX]+|\d+)\s*$/, '');
         const byBook = new Map<string, Set<number>>();
         for (const c of allNCERTChapters) {
             if (c.isActive === false) continue;
