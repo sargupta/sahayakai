@@ -36,6 +36,8 @@ jobs:
       - name: Build Next.js
         run: npm run build
         env:
+          # Same heap as the production image (sahayakai-main/Dockerfile).
+          NODE_OPTIONS: --max-old-space-size=4096
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: sahayakai-b4248
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: sahayakai-b4248.firebasestorage.app
 
