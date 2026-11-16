@@ -96,7 +96,7 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                     // for. Preferring Firestore on a larger chapter count — the
                     // pre-2026-08 rule — meant a stale seed silently outranked a
                     // corrected book, which is how Vasant chapters kept being
-                    // served for Class 6 Hindi months after PR #111 replaced them.
+                    // served for Class 6 Hindi months after PR 111 replaced them.
                     setChapters(staticChapters.length > 0 ? staticChapters : (serverChapters ?? []));
                 } catch (e) {
                     setChapters(getChaptersForGrade(selectedGrade, subject));
