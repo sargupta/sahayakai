@@ -90,7 +90,10 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
   useEffect(() => {
     let unsubConv: (() => void) | undefined
     let unsubNotif: (() => void) | undefined
+    let generation = 0 // bumps on every auth change, so a pending retry for an old user is dropped
+    let disposed = false
     const unsubAuth = onAuthStateChanged(auth, (user) => {
+      generation++
       unsubConv?.()
       unsubNotif?.()
       unsubConv = undefined
@@ -104,33 +107,68 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
       }
 
       setSidebarUserId(user.uid)
-      const convQ = query(
-        collection(db, "conversations"),
-        where("participantIds", "array-contains", user.uid),
-      )
-      unsubConv = onSnapshot(convQ, (snap) => {
-        let count = 0
-        snap.docs.forEach((d) => { count += d.data().unreadCount?.[user.uid] ?? 0 })
-        setTotalUnread(count)
-      })
+      const uid = user.uid
+      const myGeneration = generation
+      const live = () => myGeneration === generation && !disposed
 
-      const notifQ = query(
-        collection(db, "notifications"),
-        where("recipientId", "==", user.uid),
-        where("isRead", "==", false),
+      // Right after sign-in Firestore can refuse the first listen (permission-denied) because
+      // the new ID token has not reached it yet. Every listener here therefore has an error
+      // handler (an unhandled one surfaced as the red "1 issue" overlay at login) and is
+      // re-attached after a token refresh, a few times with back-off. A badge that still
+      // cannot load just stays hidden; it never breaks the page.
+      const subscribe = (
+        label: string,
+        start: (onError: (err: unknown) => void) => () => void,
+        reset: () => void,
+        set: (unsub: () => void) => void,
+        attempt = 0,
+      ) => {
+        set(start((err) => {
+          console.warn(`[AppSidebar] ${label} subscription error`, err)
+          reset()
+          const code = (err as { code?: string })?.code
+          if ((code === 'permission-denied' || code === 'unauthenticated') && attempt < 3 && live()) {
+            setTimeout(() => {
+              if (!live()) return
+              Promise.resolve()
+                .then(() => user.getIdToken(true))
+                .catch(() => undefined)
+                .then(() => { if (live()) subscribe(label, start, reset, set, attempt + 1) })
+            }, 1000 * (attempt + 1))
+          }
+        }))
+      }
+
+      subscribe(
+        'conversations',
+        (onError) => onSnapshot(
+          query(collection(db, "conversations"), where("participantIds", "array-contains", uid)),
+          (snap) => {
+            let count = 0
+            snap.docs.forEach((d) => { count += d.data().unreadCount?.[uid] ?? 0 })
+            setTotalUnread(count)
+          },
+          onError,
+        ),
+        () => setTotalUnread(0),
+        (u) => { unsubConv?.(); unsubConv = u },
       )
-      unsubNotif = onSnapshot(
-        notifQ,
-        (snap) => { setUnreadNotifications(snap.size) },
-        (err) => {
+
+      subscribe(
+        'notifications',
+        (onError) => onSnapshot(
+          query(collection(db, "notifications"), where("recipientId", "==", uid), where("isRead", "==", false)),
+          (snap) => { setUnreadNotifications(snap.size) },
           // A missing composite index must not break the sidebar; the badge just won't show.
-          console.warn('[AppSidebar] notifications subscription error', err)
-          setUnreadNotifications(0)
-        },
+          onError,
+        ),
+        () => setUnreadNotifications(0),
+        (u) => { unsubNotif?.(); unsubNotif = u },
       )
     })
 
     return () => {
+      disposed = true
       unsubAuth()
       unsubConv?.()
       unsubNotif?.()
