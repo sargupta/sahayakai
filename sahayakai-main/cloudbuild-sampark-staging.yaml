@@ -17,6 +17,10 @@
 #   - Its own PII key, phone pepper and request-signing key (SAMPARK_STAGING_*), never production's.
 #   - VOICE_PROVIDER is not set: the attendance parent-call path cannot dial from here.
 #   - Scales to zero; max 1 instance.
+#   - SAMPARK_SARGVISION_ROSTER=true shows the Sargvision test class (school sargvision-local,
+#     the team's own numbers, never parents) on /sampark/demo. Its calls ring only roster numbers
+#     that are also in _TEST_NUMBERS, in Test mode, 10:00-19:00 IST (SAMPARK_SARGVISION_ANYTIME_CALLS
+#     is local-only). Seed it with scripts/sampark/seed-sargvision-staging.ts.
 #
 # Scheduler: batches, campaigns and callbacks advance only when /api/jobs/sampark-dispatch is
 # called. That route needs CRON_SECRET (secret SAMPARK_STAGING_CRON_SECRET) and a Cloud Scheduler
@@ -94,7 +98,7 @@ steps:
       # several test numbers). --set-* replaces the whole list on every deploy: anything added by
       # hand on the service is wiped, so every staging setting must live in this file.
       # All nine Riya workflows and 7-day transcripts match the local launcher the team tests with.
-      - --set-env-vars=^@^NODE_ENV=production@DEMO_MODE=true@SAMPARK_ENABLED=true@SAMPARK_DEMO_ENABLED=true@SAMPARK_ELEVENLABS_ENABLED=true@SAMPARK_LIVE_DIAL_ENABLED=true@SAMPARK_FIRESTORE_DATABASE=sampark-nonprod@SAMPARK_RIYA_PURPOSES=ptm_invitation,event_invitation,holiday_notice,exam_schedule_notice,emergency_closure,absence_notice,academic_performance,classroom_behaviour,student_achievement@SAMPARK_BATCH_REAL_CALLS=true@SAMPARK_BATCH_MAX_CONCURRENCY=1@SAMPARK_BATCH_DIAL_GAP_SECONDS=60@SAMPARK_VOBIZ_MAX_CONCURRENT_CALLS=1@SAMPARK_RIYA_STORE_TRANSCRIPTS=true@SAMPARK_RIYA_TRANSCRIPT_DAYS=7@SAMPARK_RIYA_TEST_DAILY_CAP=${_DAILY_CAP}@SAMPARK_RIYA_TEST_ALLOWED_NUMBERS=${_TEST_NUMBERS}@SAMPARK_VOBIZ_RIYA_ENABLED=true@SAMPARK_PUBLIC_BASE_URL=https://${_SERVICE}-${_PROJECT_NUMBER}.${_REGION}.run.app@VOBIZ_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ENABLED=true@VIDYA_VOICE_PUBLIC_ENABLED=true@VIDYA_VOICE_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ALLOWED_UIDS=${_VIDYA_UIDS}@NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai
+      - --set-env-vars=^@^NODE_ENV=production@DEMO_MODE=true@SAMPARK_ENABLED=true@SAMPARK_DEMO_ENABLED=true@SAMPARK_ELEVENLABS_ENABLED=true@SAMPARK_LIVE_DIAL_ENABLED=true@SAMPARK_FIRESTORE_DATABASE=sampark-nonprod@SAMPARK_SARGVISION_ROSTER=true@SAMPARK_RIYA_PURPOSES=ptm_invitation,event_invitation,holiday_notice,exam_schedule_notice,emergency_closure,absence_notice,academic_performance,classroom_behaviour,student_achievement@SAMPARK_BATCH_REAL_CALLS=true@SAMPARK_BATCH_MAX_CONCURRENCY=1@SAMPARK_BATCH_DIAL_GAP_SECONDS=60@SAMPARK_VOBIZ_MAX_CONCURRENT_CALLS=1@SAMPARK_RIYA_STORE_TRANSCRIPTS=true@SAMPARK_RIYA_TRANSCRIPT_DAYS=7@SAMPARK_RIYA_TEST_DAILY_CAP=${_DAILY_CAP}@SAMPARK_RIYA_TEST_ALLOWED_NUMBERS=${_TEST_NUMBERS}@SAMPARK_VOBIZ_RIYA_ENABLED=true@SAMPARK_PUBLIC_BASE_URL=https://${_SERVICE}-${_PROJECT_NUMBER}.${_REGION}.run.app@VOBIZ_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ENABLED=true@VIDYA_VOICE_PUBLIC_ENABLED=true@VIDYA_VOICE_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ALLOWED_UIDS=${_VIDYA_UIDS}@NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai
       - --quiet
     waitFor: [push]
 
