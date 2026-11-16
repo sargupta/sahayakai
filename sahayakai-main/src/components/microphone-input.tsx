@@ -56,7 +56,7 @@ export function isLikelyTranscriptionRefusal(text: string): boolean {
   return TRANSCRIPTION_REFUSAL_PATTERNS.some((re) => re.test(text));
 }
 
-type MicStatus = 'idle' | 'greeting' | 'initializing' | 'recording' | 'processing';
+export type MicStatus = 'idle' | 'greeting' | 'initializing' | 'recording' | 'processing';
 
 type MicrophoneInputProps = {
   onTranscriptChange: (transcript: string, language?: string) => void;
@@ -76,6 +76,13 @@ type MicrophoneInputProps = {
   greetingText?: string;   // localised greeting string
   greetingLabel?: string;  // localised "listening" label shown during greeting
   /**
+   * Draw the button's face (e.g. the VIDYA 3D orb) instead of the default gradient
+   * and rings. The button, its icon, its label and all recording behaviour stay.
+   */
+  renderVisual?: (status: MicStatus) => ReactNode;
+  /** Fires on every status transition (idle → greeting → … → idle). */
+  onStatusChange?: (status: MicStatus) => void;
+  /**
    * Decorations anchored to the mic button itself (VIDYA's "Tap to reply"
    * tip, its memory badge). Rendered inside the box that wraps the button
    * exactly, so `absolute` offsets resolve against the button's own box.
@@ -94,10 +101,20 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   greetingLang,
   greetingText,
   greetingLabel,
+  renderVisual,
+  onStatusChange,
   children,
 }) => {
   const [status, setStatus] = useState<MicStatus>('idle');
   const { language, t } = useLanguage();
+
+  // Ref so the effect fires on status changes only, not on every new callback.
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
+
+  useEffect(() => {
+    onStatusChangeRef.current?.(status);
+  }, [status]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -691,7 +708,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         data-testid={isFloating ? "floating-mic" : undefined}
       >
         {/* Concentric Rings - Idle State (Inviting) */}
-        {status === 'idle' && (
+        {status === 'idle' && !renderVisual && (
           <div className="absolute inset-0 pointer-events-none" data-testid="mic-idle-rings">
             <div className="absolute inset-[-8px] rounded-full bg-primary/20 animate-ping [animation-duration:3s]" />
             <div className="absolute inset-[-16px] rounded-full bg-primary/10 animate-ping [animation-duration:4s]" />
@@ -699,7 +716,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         )}
 
         {/* Pulsating Orb - Recording State (Active) */}
-        {status === 'recording' && (
+        {status === 'recording' && !renderVisual && (
           <div className="absolute inset-[-12px] rounded-full bg-destructive/20 animate-pulse" data-testid="mic-recording-pulse" />
         )}
 
@@ -708,7 +725,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
           variant={status === 'recording' ? "destructive" : variant}
           size={isFloating || iconSize === 'lg' || iconSize === 'xl' ? "icon" : size}
           className={cn(
-            "relative transition-all duration-500 flex items-center justify-center overflow-hidden z-20 shadow-2xl",
+            "relative transition-all duration-500 flex items-center justify-center overflow-hidden z-20 shadow-floating",
             status === 'recording'
               ? "bg-gradient-to-br from-destructive to-destructive/80 text-destructive-foreground scale-110"
               : "bg-gradient-to-br from-primary to-primary/80",
@@ -716,20 +733,24 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             getButtonSize(),
             className,
             "rounded-full transition-all duration-300 ease-in-out border-4 border-background",
-            status !== 'recording' && "!bg-gradient-to-br !from-primary !to-primary/80 !text-primary-foreground hover:!from-primary/95 hover:!to-primary/75 animate-pulse [animation-duration:3s]"
+            !renderVisual && status !== 'recording' && "!bg-gradient-to-br !from-primary !to-primary/80 !text-primary-foreground hover:!from-primary/95 hover:!to-primary/75 animate-pulse [animation-duration:3s]",
+            renderVisual && "!border-0 !bg-transparent !bg-none hover:!bg-transparent !shadow-none !scale-100"
           )}
           onClick={handleMicClick}
           data-microphone="true"
           aria-label={status === 'recording' || status === 'processing' || status === 'initializing' ? "Stop recording" : "Start recording"}
         >
+          {renderVisual?.(status)}
           {/* Internal Glow for recording */}
-          {status === 'recording' && (
+          {status === 'recording' && !renderVisual && (
             <div className="absolute inset-0 bg-destructive-foreground/10 animate-pulse" />
           )}
 
-          {/* Icons inherit the button's foreground token (primary- or
+          {/* VIDYA's sphere carries no glyph (design system: Orb, LiveOrb); its state is
+              its colour and motion, the label pill names it, aria-label names the action.
+              Otherwise icons inherit the button's foreground token (primary- or
               destructive-foreground) via currentColor. */}
-          {status === 'processing' || status === 'initializing' ? (
+          {renderVisual ? null : status === 'processing' || status === 'initializing' ? (
             <div className="relative h-10 w-10">
               <div className="absolute inset-0 rounded-full border-4 border-primary-foreground/20" />
               <div className="absolute inset-0 rounded-full border-4 border-primary-foreground border-t-transparent animate-spin" />
@@ -748,7 +769,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       {/* Volume Visualizer Label - More elegant bubble */}
       {(label || status !== 'idle') && (
         <div className={cn(
-          "px-5 py-2.5 rounded-2xl backdrop-blur-xl shadow-lg border transition-all duration-500 scale-in-center",
+          "px-5 py-2.5 rounded-surface-lg backdrop-blur-xl shadow-elevated border transition-all duration-500 scale-in-center",
           status === 'recording'
             ? "bg-destructive/10 text-destructive border-destructive/20"
             : status === 'processing' || status === 'initializing'
@@ -774,7 +795,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       {/* Waveform Visualization - Elegant glassmorphic container */}
       {status === 'recording' && (
         <div className={cn(
-          "overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/40 transition-all duration-500 shadow-xl",
+          "overflow-hidden rounded-surface-lg bg-card/40 backdrop-blur-md border border-border/40 transition-all duration-500 shadow-floating",
           isFloating ? "fixed bottom-44 right-8 w-72 h-32" : "h-20 w-full"
         )}>
           <canvas ref={canvasRef} width="300" height="100" className="h-full w-full opacity-80" />

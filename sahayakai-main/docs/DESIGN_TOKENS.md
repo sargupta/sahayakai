@@ -64,6 +64,15 @@ The brand palette is **frozen**. Any PR that changes `--primary` (or any brand/s
 ### Charts
 `--chart-1..5` — saffron (= `--primary`), green, navy, gold, rose. `--chart-1` matches `--primary` exactly (drift fixed 2026-08); if `--primary` ever changes under the FREEZE process, `--chart-1` and `shadow-glow` (in `tailwind.config.ts`) move with it.
 
+### VIDYA orb (design system LiveOrb)
+| Token | Use |
+|---|---|
+| `--vidya-live-0..4`, `--vidya-working-0..4`, `--vidya-speaking-0..4` | Five gradient stops (light → rim) the WebGL `VidyaSphere` reads per state: saffron (idle / listening / speaking), indigo (thinking). Only `src/components/vidya/vidya-sphere.tsx` uses these. |
+| `--orb-live`, `--orb-live-working`, `--orb-live-speaking` | The same stops as CSS radial gradients: the sphere's no-WebGL fallback. |
+| `--shadow-orb-live`, `-listening`, `-working`, `-speaking`, `-failed` | The fallback sphere's halo per state. |
+
+VIDYA is drawn as a bare sphere: it never carries a mic glyph ("a sphere is VIDYA, a mic glyph is a control"). These are brand colours, identical in light and dark, so they are defined once in `:root`. They were ported verbatim from the develop branch (2026-11).
+
 **Anti-pattern:** custom hex/rgb values in components. If you need a color that isn't here, add a token first. Gate 11 (design tokens) blocks raw palette classes in changed files.
 
 ---

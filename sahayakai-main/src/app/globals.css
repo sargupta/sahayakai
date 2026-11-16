@@ -246,6 +246,35 @@
     --saffron-700: 20 78% 38%;
     --saffron-800: 18 82% 30%;
 
+    /* VIDYA live orb (design system LiveOrb tokens orb-live, orb-live-working,
+       orb-live-speaking). Five stops each, lightest at the light to darkest at
+       the rim; the WebGL sphere reads these, the CSS fallback uses the
+       gradients. Ported verbatim from the develop branch's globals.css;
+       brand colours, so identical in light and dark. */
+    --vidya-live-0: #fff0dc;
+    --vidya-live-1: #fbc98e;
+    --vidya-live-2: #e08a3c;
+    --vidya-live-3: #c96a28;
+    --vidya-live-4: #8e4a1c;
+    --vidya-working-0: #dce2fa;
+    --vidya-working-1: #b3bdee;
+    --vidya-working-2: #8d9be0;
+    --vidya-working-3: #2a3b8f;
+    --vidya-working-4: #1e2b6b;
+    --vidya-speaking-0: #e4f2e2;
+    --vidya-speaking-1: #b9d9b9;
+    --vidya-speaking-2: #8fc090;
+    --vidya-speaking-3: #2c5f2d;
+    --vidya-speaking-4: #1c4a1d;
+    --orb-live: radial-gradient(circle at 32% 26%, #fff0dc 0%, #fbc98e 22%, #e08a3c 48%, #c96a28 68%, #8e4a1c 100%);
+    --orb-live-working: radial-gradient(circle at 32% 26%, #dce2fa 0%, #8d9be0 34%, #2a3b8f 72%, #1e2b6b 100%);
+    --orb-live-speaking: radial-gradient(circle at 32% 26%, #e4f2e2 0%, #8fc090 32%, #2c5f2d 74%, #1c4a1d 100%);
+    --shadow-orb-live: 0 6px 16px rgba(142, 74, 28, 0.35), inset 0 -6px 12px rgba(88, 42, 12, 0.45), inset 0 4px 10px rgba(255, 255, 255, 0.4);
+    --shadow-orb-live-listening: 0 0 0 6px rgba(201, 106, 40, 0.18), 0 6px 16px rgba(142, 74, 28, 0.35), inset 0 -6px 12px rgba(88, 42, 12, 0.45), inset 0 4px 10px rgba(255, 255, 255, 0.4);
+    --shadow-orb-live-working: 0 0 0 3px rgba(42, 59, 143, 0.35), 0 6px 16px rgba(30, 43, 107, 0.35), inset 0 4px 10px rgba(255, 255, 255, 0.35);
+    --shadow-orb-live-speaking: 0 0 0 4px rgba(44, 95, 45, 0.24), 0 6px 16px rgba(28, 74, 29, 0.32), inset 0 4px 10px rgba(255, 255, 255, 0.3);
+    --shadow-orb-live-failed: 0 4px 10px rgba(80, 70, 60, 0.25);
+
     /* Secondary - Warm Green (Indian Flag) */
     --secondary: 123 37% 25%;
     /* #2C5F2D - Deep Green */

@@ -7,7 +7,9 @@
  * collapsed to 0x0 at the parent's corner and everything hung off that point.
  *
  * This gate catches the CLASS, not the instance: any decoration of a
- * floating mic that does not sit on the mic button itself. It covers both
+ * floating mic that does not sit on the mic button itself. Since the orb
+ * took the design-system VIDYA sphere (2026-11), its face is the sphere
+ * (no rings, no glyph); the landing-page mic keeps its rings. It covers both
  * floating callers (OmniOrb in the app shell, GlobalVoiceInterface on the
  * landing page), phone and desktop widths, and the idle -> recording
  * transition (nothing may jump when recording starts).
@@ -108,7 +110,14 @@ for (const viewport of VIEWPORTS) {
       // The anchor box must wrap the button exactly — this is the invariant
       // that, when broken, sends every decoration off the orb.
       expectConcentric(await box(anchor), mic, 'anchor box vs mic');
-      expectConcentric(await box(anchor.getByTestId('mic-idle-rings')), mic, 'idle rings vs mic');
+
+      // VIDYA's face is the design-system sphere, drawn inside the button and
+      // centred on it. A sphere is VIDYA, a mic glyph is a control: the orb
+      // carries no glyph.
+      const sphere = anchor.locator('[data-vidya-orb-state]');
+      await expect(sphere).toHaveAttribute('data-vidya-orb-state', 'idle');
+      expectConcentric(await box(sphere), mic, 'VIDYA sphere vs mic');
+      await expect(anchor.locator('[data-microphone] svg'), 'the VIDYA orb carries no glyph').toHaveCount(0);
 
       // "Tap to reply" tip: centred over the orb, just above it.
       const tip = await box(anchor.getByTestId('omni-orb-reply-tip'));
@@ -141,13 +150,13 @@ for (const viewport of VIEWPORTS) {
         const memoryIdle = await box(memoryLocator);
 
         await micLocator.click();
-        const pulse = anchor.getByTestId('mic-recording-pulse');
-        await expect(pulse).toBeVisible({ timeout: 20_000 });
+        // The sphere turns to "listening" in place (no separate pulse ring).
+        const sphere = anchor.locator('[data-vidya-orb-state]');
+        await expect(sphere).toHaveAttribute('data-vidya-orb-state', 'listening', { timeout: 20_000 });
 
-        // The button scales up while recording; its centre must not move.
         const micRec = await box(micLocator);
         expectConcentric(micRec, micIdle, 'mic centre, recording vs idle');
-        expectConcentric(await box(pulse), micRec, 'recording pulse vs mic');
+        expectConcentric(await box(sphere), micRec, 'listening sphere vs mic');
 
         const memoryRec = await box(memoryLocator);
         expect(Math.abs(memoryRec.x - memoryIdle.x), 'memory badge x jump (px)').toBeLessThanOrEqual(1);

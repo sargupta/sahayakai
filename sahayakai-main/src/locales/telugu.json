@@ -1685,5 +1685,9 @@
   "You choose the message once. SahayakAI makes every call, in each parent's own language, and tells you who picked up.": "మీరు సందేశాన్ని ఒక్కసారి ఎంచుకుంటారు. SahayakAI ప్రతి కాల్‌ను, ప్రతి తల్లిదండ్రి స్వంత భాషలో చేస్తుంది మరియు ఎవరు తీసుకున్నారో మీకు చెబుతుంది.",
   "Your browser does not support audio processing. Please try a different browser.": "మీ బ్రౌజర్ ఆడియో ప్రాసెసింగ్‌కు మద్దతు ఇవ్వదు. దయచేసి వేరే బ్రౌజర్‌ని ప్రయత్నించండి.",
   "Your name": "మీ పేరు",
-  "e.g. Anita Sharma": "ఉదా. అనితా శర్మా"
+  "e.g. Anita Sharma": "ఉదా. అనితా శర్మా",
+  "VIDYA is ready": "VIDYA సిద్ధంగా ఉంది",
+  "VIDYA is listening": "VIDYA వింటోంది",
+  "VIDYA is thinking": "VIDYA ఆలోచిస్తోంది",
+  "VIDYA is speaking": "VIDYA మాట్లాడుతోంది"
 }
