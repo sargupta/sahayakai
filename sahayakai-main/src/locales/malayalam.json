@@ -1685,5 +1685,9 @@
   "You choose the message once. SahayakAI makes every call, in each parent's own language, and tells you who picked up.": "നിങ്ങൾ സന്ദേശം ഒരിക്കൽ തിരഞ്ഞെടുക്കുന്നു. SahayakAI ഓരോ കോളും, ഓരോ രക്ഷിതാവിന്റെയും സ്വന്തം ഭാഷയിൽ ചെയ്യുന്നു, ആരാണ് എടുത്തതെന്ന് നിങ്ങളോട് പറയുന്നു.",
   "Your browser does not support audio processing. Please try a different browser.": "നിങ്ങളുടെ ബ്രൗസർ ഓഡിയോ പ്രോസസ്സിംഗ് പിന്തുണയ്ക്കുന്നില്ല. മറ്റൊരു ബ്രൗസർ പരീക്ഷിക്കുക.",
   "Your name": "നിങ്ങളുടെ പേര്",
-  "e.g. Anita Sharma": "ഉദാ. അനിത ശർമ്മ"
+  "e.g. Anita Sharma": "ഉദാ. അനിത ശർമ്മ",
+  "VIDYA is ready": "VIDYA തയ്യാറാണ്",
+  "VIDYA is listening": "VIDYA കേൾക്കുന്നു",
+  "VIDYA is thinking": "VIDYA ചിന്തിക്കുന്നു",
+  "VIDYA is speaking": "VIDYA സംസാരിക്കുന്നു"
 }

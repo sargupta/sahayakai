@@ -7,7 +7,9 @@ import { useAuth } from "@/context/auth-context";
 import { useFeatureFlag } from "@/context/feature-flags-context";
 import { stripRedundantGreeting } from "@/lib/vidya-greeting-suppressor";
 import { auth } from "@/lib/firebase";
-import { MicrophoneInput } from "@/components/microphone-input";
+import { MicrophoneInput, type MicStatus } from "@/components/microphone-input";
+import { VidyaSphere, type VidyaOrbState } from "@/components/vidya/vidya-sphere";
+import { deriveOrbState } from "@/components/vidya/orb-state";
 import { Button } from "@/components/ui/button";
 import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
 import { tts } from "@/lib/tts";
@@ -253,6 +255,22 @@ export function OmniOrb() {
         return () => mq.removeEventListener("change", onChange);
     }, [isClient]);
 
+    // ── The orb's state, from real signals only ──────────────────────────
+    // listening: the microphone is recording · thinking: transcribing, or the
+    // /api/assistant request is in flight · speaking: VIDYA's audio is playing
+    // (tts.subscribeSpeaking) · error: the last request failed (shown briefly).
+    const [micStatus, setMicStatus] = useState<MicStatus>("idle");
+    const [awaitingReply, setAwaitingReply] = useState(false);
+    const [speaking, setSpeaking] = useState(false);
+    const [failed, setFailed] = useState(false);
+    useEffect(() => tts.subscribeSpeaking(setSpeaking), []);
+    useEffect(() => {
+        if (!failed) return;
+        const id = setTimeout(() => setFailed(false), 4000);
+        return () => clearTimeout(id);
+    }, [failed]);
+    const orbState: VidyaOrbState = deriveOrbState({ failed, micStatus, speaking, awaitingReply });
+
     // ── Proactive daily-inspiration greeting (once per session) ──────────
     useEffect(() => {
         if (proactiveShown.current) return;
@@ -439,6 +457,8 @@ export function OmniOrb() {
             ?? (profileLang && LANG_TO_BCP47[profileLang])
             ?? 'en-IN';
 
+        setFailed(false);
+        setAwaitingReply(true);
         try {
             logger.info('POST /api/assistant', 'VIDYA OmniOrb', {
                 transcriptLen: transcript.length,
@@ -632,6 +652,9 @@ export function OmniOrb() {
                 description: errMsg.slice(0, 200),
                 variant: 'destructive',
             });
+            setFailed(true);
+        } finally {
+            setAwaitingReply(false);
         }
     };
 
@@ -753,9 +776,18 @@ export function OmniOrb() {
     // is open. Prevents two simultaneous voice surfaces (UX bug).
     if (voiceDialogOpen) return null;
 
+    const stateWords: Record<VidyaOrbState, string> = {
+        idle: t("VIDYA is ready"),
+        listening: t("VIDYA is listening"),
+        thinking: t("VIDYA is thinking"),
+        speaking: t("VIDYA is speaking"),
+        error: t("VIDYA could not act on that"),
+    };
+
     return (
         <div
             ref={orbRef}
+            data-vidya-state={orbState}
             className={`fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-4 sm:bottom-12 sm:right-12 z-[90] ${
                 reducedMotion ? "" : "transition-[transform,opacity] duration-300"
             } ${
@@ -872,50 +904,54 @@ export function OmniOrb() {
                     </div>
                 )}
 
-                {chatHistory.length > 0 && (
-                    <>
-                        {/* NCERT demo polish (2026-05-19): simplified the
-                            previous triple-animation stack (animate-ping +
-                            animate-pulse + animate-bounce) to a single ring
-                            and a static tooltip. Three concurrent infinite
-                            animations were ~12ms of per-frame compositing
-                            on low-end Android, contributing to the founder's
-                            "lagging" report. Reduced-motion users see no
-                            ring at all. */}
-                        {!reducedMotion && (
-                            <div
-                                className="absolute -inset-2 rounded-full bg-primary/25 animate-pulse pointer-events-none"
-                                style={{ animationDuration: "2.4s" }}
-                            />
-                        )}
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
-                            <BrainCircuit className="h-3 w-3" />
-                            {t("Tap to reply")}
-                        </div>
-                    </>
-                )}
-
                 <div className="relative z-10 pointer-events-auto">
                     <MicrophoneInput
                         onTranscriptChange={processTranscription}
+                        onStatusChange={setMicStatus}
+                        renderVisual={() => <VidyaSphere state={orbState} reducedMotion={reducedMotion} />}
                         isFloating={true}
                         iconSize="lg"
-                        className="shadow-2xl transition-transform hover:scale-105"
-                    />
-                </div>
+                        className={reducedMotion ? "" : "transition-transform hover:scale-105"}
+                    >
+                        {/* Children render inside the box that wraps the mic
+                            button, so these offsets are relative to the orb
+                            itself. Rendered here as siblings of the mic they
+                            anchored to a 0x0 corner ~72px away instead. */}
+                        {chatHistory.length > 0 && (
+                            <>
+                                {/* Static tip only. The 2026-05 pulse ring that sat
+                                    behind the mic is gone: VIDYA's face is the
+                                    design-system sphere, whose state is its own
+                                    colour, motion and halo, and a flat saffron disc
+                                    behind it read as a second orb. (It also kept the
+                                    NCERT-demo rule of one infinite animation at most
+                                    on low-end Android: the sphere is that one.) */}
+                                <div
+                                    className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1"
+                                    data-testid="omni-orb-reply-tip"
+                                >
+                                    <BrainCircuit className="h-3 w-3" />
+                                    {t("Tap to reply")}
+                                </div>
+                            </>
+                        )}
 
-                {/* Toggle Memory Button */}
-                <Button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isDragging) setOrbOpen(!orbOpen);
-                    }}
-                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
-                    size="icon"
-                    title={t("View Memory")}
-                >
-                    <BrainCircuit className="h-5 w-5" />
-                </Button>
+                        {/* Toggle Memory Button — a badge on the orb's
+                            top-left edge, painted above the mic (z-30). */}
+                        <Button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (!isDragging) setOrbOpen(!orbOpen);
+                            }}
+                            className="absolute -top-4 -left-4 z-30 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
+                            size="icon"
+                            title={t("View Memory")}
+                        >
+                            <BrainCircuit className="h-5 w-5" />
+                        </Button>
+                    </MicrophoneInput>
+                </div>
+                <span className="sr-only" role="status" aria-live="polite">{stateWords[orbState]}</span>
             </div>
         </div>
     );

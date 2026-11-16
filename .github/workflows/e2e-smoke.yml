@@ -2,7 +2,7 @@ name: E2E Smoke
 
 # Public-route Playwright smoke gate. Builds the app with stub secrets (the
 # same pattern the unit Test Suite uses), boots `next start`, and runs ONLY
-# the @smoke suite (qa/e2e/smoke.spec.ts) against public routes that render
+# the @smoke suite (qa/e2e/*.spec.ts) against public routes that render
 # without real auth. Deeper authenticated flows need a provisioned test tenant
 # and are intentionally out of scope here — see qa/HARNESS.md.
 
@@ -77,9 +77,13 @@ jobs:
 
       - name: Run @smoke suite
         # Playwright's webServer block boots `next start` on :3000 and waits
-        # for it before the specs run. Path-target the smoke file AND grep
-        # @smoke so only public-route smoke tests execute.
-        run: npm run qa:e2e -- qa/e2e/smoke.spec.ts --grep @smoke
+        # for it before the specs run. Path-target the qa/e2e/ directory AND
+        # grep @smoke so only public-route smoke tests execute. The directory
+        # (not a file list) is deliberate: a new @smoke spec dropped into
+        # qa/e2e/ runs without anyone remembering to edit this line.
+        # floating-mic.spec.ts = class gate for floating-mic decorations
+        # (rings/tip/memory badge) drifting off the mic button.
+        run: npm run qa:e2e -- qa/e2e/ --grep @smoke
 
       - name: Upload Playwright report
         if: always()
