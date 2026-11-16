@@ -69,6 +69,15 @@ jest.mock('@/lib/firebase-admin', () => ({
         collection: (name: string) => ({
             doc: (id?: string) => (name === 'classes' ? classRef(id as string) : outreachRef(id)),
         }),
+        // The call route claims each outreach record once in a transaction
+        // (src/lib/attendance/claim-dial.ts) before it dials.
+        runTransaction: async <T>(fn: (tx: {
+            get: (ref: { get: () => Promise<unknown> }) => Promise<unknown>;
+            update: (ref: { update: (patch: Data) => Promise<void> }, patch: Data) => void;
+        }) => Promise<T>) => fn({
+            get: (ref) => ref.get(),
+            update: (ref, patch) => { void ref.update(patch); },
+        }),
     }),
 }));
 
@@ -82,6 +91,9 @@ const placeVobizCall = jest.fn(async () => ({ ok: true, handle: { requestUuid: '
 jest.mock('@/lib/vobiz/client', () => ({
     readVobizConfig: () => ({ authId: 'a', authToken: 't', fromNumber: '+918000000000', baseUrl: 'https://vobiz.test' }),
     placeVobizCall: (...args: unknown[]) => (placeVobizCall as unknown as (...a: unknown[]) => unknown)(...args),
+    // CALL_ALLOWED_DESTINATIONS is gated by its own tests; this file pins which
+    // number is dialled, so every destination is allowed here.
+    isDestinationAllowed: () => true,
 }));
 
 jest.mock('@/lib/vobiz/tokens', () => ({
