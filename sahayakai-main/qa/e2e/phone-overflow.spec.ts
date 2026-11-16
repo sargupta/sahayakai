@@ -8,9 +8,12 @@
  *
  * The check is generic, not tied to that header: on each route, at each
  * phone width, the page must not be scrollable sideways
- * (documentElement.scrollWidth <= clientWidth) and the header must not
- * overflow itself. On failure it names the outermost elements that stick
- * out past the right edge, so the culprit is in the error message.
+ * (documentElement.scrollWidth <= clientWidth), the header must not
+ * overflow itself, and no header text may be cut off with an ellipsis (the
+ * logo slot is built to truncate rather than widen the page, so a clipped
+ * wordmark is how a too-crowded header shows up). On failure it names the
+ * outermost elements that stick out past the right edge, so the culprit is
+ * in the error message.
  *
  * Runs unauthenticated with stub secrets (same as smoke.spec.ts), which is
  * the widest header state: the "Sign in with Google" button instead of the
@@ -34,6 +37,7 @@ type Overflow = {
   headerScrollWidth: number | null;
   headerClientWidth: number | null;
   culprits: string[];
+  truncatedHeaderText: string[];
 };
 
 async function measure(page: Page): Promise<Overflow> {
@@ -55,12 +59,23 @@ async function measure(page: Page): Promise<Overflow> {
       .filter((el) => sticksOut(el) && !(el.parentElement && sticksOut(el.parentElement)))
       .slice(0, 10)
       .map(describe);
+    // Header text cut off with an ellipsis (visible boxes only).
+    const truncatedHeaderText = header
+      ? Array.from(header.querySelectorAll<HTMLElement>('*'))
+          .filter((el) => {
+            if (el.getBoundingClientRect().width === 0) return false;
+            if (getComputedStyle(el).textOverflow !== 'ellipsis') return false;
+            return el.scrollWidth > el.clientWidth;
+          })
+          .map((el) => `"${el.textContent?.trim()}" ${el.clientWidth}px of ${el.scrollWidth}px`)
+      : [];
     return {
       scrollWidth: root.scrollWidth,
       clientWidth: vw,
       headerScrollWidth: header ? header.scrollWidth : null,
       headerClientWidth: header ? header.clientWidth : null,
       culprits,
+      truncatedHeaderText,
     };
   });
 }
@@ -86,6 +101,8 @@ for (const vp of VIEWPORTS) {
         });
         await expect(page.getByTestId('omni-orb-layer')).toBeAttached({ timeout: 20_000 });
         await page.waitForLoadState('networkidle').catch(() => {});
+        // Measure with the real web fonts, not the fallback metrics.
+        await page.evaluate(() => document.fonts.ready.then(() => undefined));
 
         const m = await measure(page);
         const detail = `\n${route} at ${vp.width}px: scrollWidth=${m.scrollWidth} clientWidth=${m.clientWidth} header=${m.headerScrollWidth}/${m.headerClientWidth}\nsticking out:\n  ${m.culprits.join('\n  ') || '(none)'}`;
@@ -94,6 +111,7 @@ for (const vp of VIEWPORTS) {
         if (m.headerScrollWidth !== null && m.headerClientWidth !== null) {
           expect.soft(m.headerScrollWidth, `header overflows itself${detail}`).toBeLessThanOrEqual(m.headerClientWidth);
         }
+        expect.soft(m.truncatedHeaderText, `header text cut off${detail}`).toEqual([]);
       }
     });
   });

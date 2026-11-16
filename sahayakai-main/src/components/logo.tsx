@@ -9,8 +9,10 @@ import { cn } from '@/lib/utils';
  * group-data selectors below, no hook needed.
  *
  * `compact` is the phone app-header variant: below `sm` the mark shrinks,
- * the wordmark drops to text-lg, the tagline hides, and under 360px only the
- * mark shows. The wordmark can also shrink (truncate) rather than push the
+ * the wordmark drops to text-base, the tagline hides, and under 360px only
+ * the mark shows. text-base (not text-lg) because at 360px the header
+ * leaves the wordmark ~92px, and text-lg measured 90px on macOS but ~95px
+ * in CI's Linux Chromium. The wordmark truncates rather than push the
  * header wider than the screen. From `sm` up it is identical to the default.
  */
 export const Logo: FC<{ compact?: boolean }> = ({ compact = false }) => {
@@ -32,7 +34,7 @@ export const Logo: FC<{ compact?: boolean }> = ({ compact = false }) => {
             'font-headline text-2xl font-bold text-foreground leading-none',
             // leading-tight with truncate: overflow:hidden at leading-none
             // would clip the descender of the "y".
-            compact && 'max-sm:truncate max-sm:text-lg max-sm:leading-tight',
+            compact && 'max-sm:truncate max-sm:text-base max-sm:leading-tight',
           )}
         >
           SahayakAI

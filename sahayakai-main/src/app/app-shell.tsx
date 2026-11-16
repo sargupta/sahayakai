@@ -99,20 +99,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarInset>
           {/* Phone budget (320px): menu + logo mark on the left, four 36–40px
               controls on the right. Below `sm` the logo goes compact, search
-              and language become icon squares, and the left group may
-              shrink (min-w-0) while the controls never do — so the header
-              can't push the page wider than the screen. The sign-in label
-              waits for `md` (AuthButton). From `md` up the classes resolve
-              to the original desktop layout; the gap stops at `md` because
-              at 768px, beside the 256px sidebar, the header has only ~2px
-              to spare. Guarded by qa/e2e/phone-overflow.spec.ts. */}
+              and language become icon squares, and the controls never shrink.
+              The logo slot is `w-0 flex-1` below `sm`: it fills whatever is
+              left and contributes 0 to the header's min-content width.
+              (min-w-0 alone is not enough — SidebarInset is a flex item with
+              min-width:auto, so it grows to the header's min-content, which
+              still counted the full wordmark; CI fonts made that 363px at
+              360px.) So the logo can only truncate, never widen the page.
+              The sign-in label waits for `md` (AuthButton). From `md` up the
+              classes resolve to the original desktop layout; the gap stops at
+              `md` because at 768px, beside the 256px sidebar, the header has
+              only ~2px to spare. Guarded by qa/e2e/phone-overflow.spec.ts. */}
           <header
             data-testid="app-header"
             className="flex h-14 items-center justify-between gap-2 md:gap-0 border-b bg-background px-3 sm:px-6"
           >
-            <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+            <div className="flex min-w-0 items-center gap-2 max-sm:flex-1 sm:gap-4">
               <SidebarTrigger className="shrink-0" />
-              <div className="min-w-0 md:hidden">
+              <div className="min-w-0 max-sm:w-0 max-sm:flex-1 md:hidden">
                 <Logo compact />
               </div>
             </div>
