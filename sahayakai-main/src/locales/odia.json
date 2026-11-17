@@ -2524,5 +2524,18 @@
   "Next message": "ପରବର୍ତ୍ତୀ ବାର୍ତ୍ତା",
   "Open Community": "ସମୁଦାୟ ଖୋଲନ୍ତୁ",
   "Account menu": "ଆକାଉଣ୍ଟ ମେନୁ",
-  "Profile and classes": "ପ୍ରୋଫାଇଲ୍ ଓ ଶ୍ରେଣୀ"
+  "Profile and classes": "ପ୍ରୋଫାଇଲ୍ ଓ ଶ୍ରେଣୀ",
+  "Now supporting six subject families, up to {{cap}} pages per scan": "ଏବେ ଛଅଟି ବିଷୟ ପରିବାରକୁ ସମର୍ଥନ, ପ୍ରତି ସ୍କାନରେ {{cap}} ପୃଷ୍ଠା ପର୍ଯ୍ୟନ୍ତ",
+  "Reading PDF page {{done}} of {{total}}…": "PDF ପୃଷ୍ଠା {{done}} / {{total}} ପଢ଼ାଯାଉଛି…",
+  "Uploading and grading 1 page. This can take up to 2 minutes.": "1ଟି ପୃଷ୍ଠା ଅପଲୋଡ୍ କରି ମୂଲ୍ୟାଙ୍କନ କରାଯାଉଛି। ଏଥିରେ 2 ମିନିଟ୍ ପର୍ଯ୍ୟନ୍ତ ଲାଗିପାରେ।",
+  "Uploading and grading {{count}} pages. This can take up to 2 minutes.": "{{count}}ଟି ପୃଷ୍ଠା ଅପଲୋଡ୍ କରି ମୂଲ୍ୟାଙ୍କନ କରାଯାଉଛି। ଏଥିରେ 2 ମିନିଟ୍ ପର୍ଯ୍ୟନ୍ତ ଲାଗିପାରେ।",
+  "This PDF is {{size}} MB — the limit is {{limit}} MB. Re-export it at a lower resolution, or upload the pages as photos.": "ଏହି PDF {{size}} MB — ସୀମା {{limit}} MB। କମ୍ ରେଜୋଲ୍ୟୁସନରେ ପୁଣି ସେଭ୍ କରନ୍ତୁ, କିମ୍ବା ପୃଷ୍ଠାଗୁଡ଼ିକର ଫଟୋ ଅପଲୋଡ୍ କରନ୍ତୁ।",
+  "This PDF is password-protected. Remove the password (or print it to a new PDF), then upload it again.": "ଏହି PDF ପାସୱାର୍ଡ ଦ୍ୱାରା ସୁରକ୍ଷିତ। ପାସୱାର୍ଡ ହଟାନ୍ତୁ (କିମ୍ବା ନୂଆ PDF ଭାବେ ପ୍ରିଣ୍ଟ କରନ୍ତୁ), ତାପରେ ପୁଣି ଅପଲୋଡ୍ କରନ୍ତୁ।",
+  "This PDF has no pages to add.": "ଏହି PDF ରେ ଯୋଡ଼ିବା ପାଇଁ କୌଣସି ପୃଷ୍ଠା ନାହିଁ।",
+  "This PDF has {{total}} pages, but only {{remaining}} more can be added (limit {{cap}} pages per scan). Nothing was added. Split the PDF, or remove pages already added.": "ଏହି PDF ରେ {{total}}ଟି ପୃଷ୍ଠା ଅଛି, କିନ୍ତୁ ଆଉ କେବଳ {{remaining}}ଟି ଯୋଡ଼ାଯାଇପାରିବ (ପ୍ରତି ସ୍କାନରେ ସୀମା {{cap}} ପୃଷ୍ଠା)। କିଛି ଯୋଡ଼ାଯାଇନାହିଁ। PDF କୁ ଭାଗ କରନ୍ତୁ, କିମ୍ବା ପୂର୍ବରୁ ଯୋଡ଼ାଯାଇଥିବା ପୃଷ୍ଠା ହଟାନ୍ତୁ।",
+  "Page {{page}} of this PDF could not be read, so nothing was added. Re-export the PDF, or upload that page as a photo.": "ଏହି PDF ର ପୃଷ୍ଠା {{page}} ପଢ଼ାଯାଇପାରିଲା ନାହିଁ, ତେଣୁ କିଛି ଯୋଡ଼ାଯାଇନାହିଁ। PDF ପୁଣି ସେଭ୍ କରନ୍ତୁ, କିମ୍ବା ସେହି ପୃଷ୍ଠାର ଫଟୋ ଅପଲୋଡ୍ କରନ୍ତୁ।",
+  "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "ଆପଣଙ୍କ ବ୍ରାଉଜର ଏହି PDF ଦେଖାଇପାରିଲା ନାହିଁ। ଅନ୍ୟ ବ୍ରାଉଜର ଚେଷ୍ଟା କରନ୍ତୁ, କିମ୍ବା ପୃଷ୍ଠାଗୁଡ଼ିକର ଫଟୋ ଅପଲୋଡ୍ କରନ୍ତୁ।",
+  "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "ଏହି PDF ଖୋଲିପାରିଲା ନାହିଁ — ଏହା ନଷ୍ଟ ହୋଇଥାଇପାରେ। ପୁଣି ସେଭ୍ କରନ୍ତୁ, କିମ୍ବା ପୃଷ୍ଠାଗୁଡ଼ିକୁ ଛବି ଭାବେ ଅପଲୋଡ୍ କରନ୍ତୁ।",
+  "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "ଏହି ପୃଷ୍ଠାଗୁଡ଼ିକ ମୋଟ {{size}} MB — ଗୋଟିଏ ସ୍କାନରେ ସର୍ବାଧିକ {{limit}} MB ଅପଲୋଡ୍ ହୋଇପାରିବ। ଗୋଟିଏ-ଦୁଇଟି ପୃଷ୍ଠା ହଟାନ୍ତୁ, କିମ୍ବା ଛୋଟ ଫଟୋ ବ୍ୟବହାର କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+  "Page notices": "ପୃଷ୍ଠା ସୂଚନା"
 }

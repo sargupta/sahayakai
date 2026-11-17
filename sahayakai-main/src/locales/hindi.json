@@ -2565,5 +2565,18 @@
   "Previous message": "पिछला संदेश",
   "Next message": "अगला संदेश",
   "Open Community": "समुदाय खोलें",
-  "Account menu": "खाता मेनू"
+  "Account menu": "खाता मेनू",
+  "Now supporting six subject families, up to {{cap}} pages per scan": "अब छह विषय परिवारों का समर्थन, प्रति स्कैन {{cap}} पृष्ठ तक",
+  "Reading PDF page {{done}} of {{total}}…": "PDF पृष्ठ {{done}} / {{total}} पढ़ा जा रहा है…",
+  "Uploading and grading 1 page. This can take up to 2 minutes.": "1 पृष्ठ अपलोड और जाँचा जा रहा है। इसमें 2 मिनट तक लग सकते हैं।",
+  "Uploading and grading {{count}} pages. This can take up to 2 minutes.": "{{count}} पृष्ठ अपलोड और जाँचे जा रहे हैं। इसमें 2 मिनट तक लग सकते हैं।",
+  "This PDF is {{size}} MB — the limit is {{limit}} MB. Re-export it at a lower resolution, or upload the pages as photos.": "यह PDF {{size}} MB की है — सीमा {{limit}} MB है। इसे कम रिज़ॉल्यूशन में दोबारा सेव करें, या पृष्ठों की फ़ोटो अपलोड करें।",
+  "This PDF is password-protected. Remove the password (or print it to a new PDF), then upload it again.": "यह PDF पासवर्ड से सुरक्षित है। पासवर्ड हटाएँ (या इसे नई PDF में प्रिंट करें), फिर दोबारा अपलोड करें।",
+  "This PDF has no pages to add.": "इस PDF में जोड़ने के लिए कोई पृष्ठ नहीं है।",
+  "This PDF has {{total}} pages, but only {{remaining}} more can be added (limit {{cap}} pages per scan). Nothing was added. Split the PDF, or remove pages already added.": "इस PDF में {{total}} पृष्ठ हैं, लेकिन केवल {{remaining}} और जोड़े जा सकते हैं (सीमा प्रति स्कैन {{cap}} पृष्ठ)। कुछ भी नहीं जोड़ा गया। PDF को विभाजित करें, या पहले जोड़े गए पृष्ठ हटाएँ।",
+  "Page {{page}} of this PDF could not be read, so nothing was added. Re-export the PDF, or upload that page as a photo.": "इस PDF का पृष्ठ {{page}} पढ़ा नहीं जा सका, इसलिए कुछ भी नहीं जोड़ा गया। PDF दोबारा सेव करें, या उस पृष्ठ की फ़ोटो अपलोड करें।",
+  "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "आपका ब्राउज़र यह PDF नहीं दिखा सका। दूसरा ब्राउज़र आज़माएँ, या पृष्ठों की फ़ोटो अपलोड करें।",
+  "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "यह PDF नहीं खुल सकी — यह खराब हो सकती है। इसे दोबारा सेव करें, या पृष्ठों को चित्रों के रूप में अपलोड करें।",
+  "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "ये पृष्ठ कुल {{size}} MB के हैं — एक स्कैन अधिकतम {{limit}} MB अपलोड कर सकता है। एक-दो पृष्ठ हटाएँ, या छोटी फ़ोटो लें, और फिर कोशिश करें।",
+  "Page notices": "पृष्ठ सूचनाएँ"
 }
