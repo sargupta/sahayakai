@@ -66,6 +66,7 @@ import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
 import { SAMPARK_NONPROD_DATABASE } from '@/lib/sampark/repo/factory';
 import { SARGVISION_ORG_ID } from '@/lib/sampark/sargvision';
+import { sargvisionLocalEmulator, sargvisionRosterEnvironment } from '@/server/sampark/sargvision-environment';
 import { acceptSynopsis, rulesSynopsis, spokenTurns, synopsisNeedsWrite, type RiyaSynopsis, type SynopsisInput } from '@/lib/sampark/conversation/synopsis';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 import { type Clock, type SamparkRepo, systemClock } from '@/lib/sampark/ports';
@@ -261,17 +262,18 @@ function providerFor(school: SamparkSchool, env: Env, choice?: RealConversationP
  * the per-contact daily cap, the lock and idempotency.
  */
 export function sargvisionRosterMode(env: Env, school: SamparkSchool): boolean {
-    return Boolean(env.FIRESTORE_EMULATOR_HOST?.trim())
-        && env.NODE_ENV !== 'production'
-        && env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE
+    return sargvisionRosterEnvironment(env)
         && school.orgId === SARGVISION_ORG_ID
         && !school.isDemo
         && school.mode === 'test';
 }
 
-/** Sargvision test class callable at any hour and on off-days (local roster mode only). */
+/**
+ * Sargvision test class callable at any hour and on off-days. Local launcher only: on staging
+ * (and everywhere else) calls keep to 10:00–19:00 IST.
+ */
 export function sargvisionAnytimeCalls(env: Env, school: SamparkSchool): boolean {
-    return env.SAMPARK_SARGVISION_ANYTIME_CALLS?.trim() === 'true' && sargvisionRosterMode(env, school);
+    return env.SAMPARK_SARGVISION_ANYTIME_CALLS?.trim() === 'true' && sargvisionLocalEmulator(env) && sargvisionRosterMode(env, school);
 }
 
 function rosterNumberAllowed(env: Env, guardian: SamparkGuardian): boolean {
@@ -309,7 +311,8 @@ export function sargvisionAfterHoursOverride(env: Env, school: SamparkSchool, gu
     if (!Number.isFinite(untilMs) || !Number.isFinite(armedMs)) return { active: false, until: null, inactiveReason: 'unparseable' };
     const until = new Date(untilMs).toISOString();
     const off = (inactiveReason: string): StagingTestWindowOverride => ({ active: false, until, inactiveReason });
-    if (!sargvisionRosterMode(env, school)) return off('not_roster_school');
+    // The armed evening window is written only by the emulator seed; it never applies off the emulator.
+    if (!sargvisionLocalEmulator(env) || !sargvisionRosterMode(env, school)) return off('not_roster_school');
     if (destination !== 'guardian' || !rosterNumberAllowed(env, guardian)) return off('not_allowed_number');
     if (untilMs <= now.getTime()) return off('expired');
     if (untilMs - armedMs > STAGING_TEST_WINDOW_MAX_MS || untilMs - now.getTime() > STAGING_TEST_WINDOW_MAX_MS) return off('longer_than_3_hours');
