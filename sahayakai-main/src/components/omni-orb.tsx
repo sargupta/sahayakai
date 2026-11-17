@@ -1140,7 +1140,9 @@ export function OmniOrb() {
                                 style={{ animationDuration: "2.4s" }}
                             />
                         )}
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
+                        {/* Anchored to the orb's right edge so it grows LEFTWARD: centred, it hung
+                            ~38px off the right edge of a phone screen (the orb sits there). */}
+                        <div className="absolute -top-12 right-0 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1" data-testid="orb-reply-hint">
                             <BrainCircuit className="h-3 w-3" />
                             {t("Tap to reply")}
                         </div>
