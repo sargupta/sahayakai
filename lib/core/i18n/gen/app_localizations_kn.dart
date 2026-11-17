@@ -5156,4 +5156,44 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'ಈ ಶಿಕ್ಷಕರು';
+
+  @override
+  String get libraryDayToday => 'ಇಂದು';
+
+  @override
+  String get libraryDayYesterday => 'ನಿನ್ನೆ';
+
+  @override
+  String get libraryDayEarlier => 'ಹಿಂದೆ';
+
+  @override
+  String get libraryNew => 'ಹೊಸದು';
+
+  @override
+  String get makeHubRecent => 'ಇತ್ತೀಚೆಗೆ ಬಳಸಿದವು';
+
+  @override
+  String get lessonPlanYourClasses => 'ನಿಮ್ಮ ತರಗತಿಗಳು';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ವಿನಂತಿಗಳು',
+      one: '1 ವಿನಂತಿ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'ಇನ್ನಷ್ಟು ಓದಿ';
+
+  @override
+  String get staffroomShowLess => 'ಕಡಿಮೆ ತೋರಿಸಿ';
+
+  @override
+  String meUsageResets(String date) {
+    return 'ಎಣಿಕೆ $date ರಂದು ಮತ್ತೆ ಆರಂಭವಾಗುತ್ತದೆ';
+  }
 }

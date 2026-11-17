@@ -1474,5 +1474,15 @@
   "moderationUnblock": "అన్‌బ్లాక్ చేయండి",
   "moderationUnblockedSnack": "{name}ను అన్‌బ్లాక్ చేశారు.",
   "moderationUnblockFailed": "అన్‌బ్లాక్ చేయలేకపోయాం. కనెక్షన్ తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.",
-  "moderationUnnamedTeacher": "ఈ ఉపాధ్యాయులు"
+  "moderationUnnamedTeacher": "ఈ ఉపాధ్యాయులు",
+  "libraryDayToday": "ఈరోజు",
+  "libraryDayYesterday": "నిన్న",
+  "libraryDayEarlier": "ఇంతకు ముందు",
+  "libraryNew": "కొత్తది",
+  "makeHubRecent": "ఇటీవల వాడినవి",
+  "lessonPlanYourClasses": "మీ తరగతులు",
+  "communityRequestsWaiting": "{count, plural, =1{1 అభ్యర్థన} other{{count} అభ్యర్థనలు}}",
+  "staffroomReadMore": "మరింత చదవండి",
+  "staffroomShowLess": "తక్కువ చూపించు",
+  "meUsageResets": "లెక్క {date}న మళ్ళీ మొదలవుతుంది"
 }

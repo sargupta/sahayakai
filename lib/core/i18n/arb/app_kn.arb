@@ -1474,5 +1474,15 @@
   "moderationUnblock": "ಅನ್‌ಬ್ಲಾಕ್ ಮಾಡಿ",
   "moderationUnblockedSnack": "{name} ಅವರನ್ನು ಅನ್‌ಬ್ಲಾಕ್ ಮಾಡಲಾಗಿದೆ.",
   "moderationUnblockFailed": "ಅನ್‌ಬ್ಲಾಕ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-  "moderationUnnamedTeacher": "ಈ ಶಿಕ್ಷಕರು"
+  "moderationUnnamedTeacher": "ಈ ಶಿಕ್ಷಕರು",
+  "libraryDayToday": "ಇಂದು",
+  "libraryDayYesterday": "ನಿನ್ನೆ",
+  "libraryDayEarlier": "ಹಿಂದೆ",
+  "libraryNew": "ಹೊಸದು",
+  "makeHubRecent": "ಇತ್ತೀಚೆಗೆ ಬಳಸಿದವು",
+  "lessonPlanYourClasses": "ನಿಮ್ಮ ತರಗತಿಗಳು",
+  "communityRequestsWaiting": "{count, plural, =1{1 ವಿನಂತಿ} other{{count} ವಿನಂತಿಗಳು}}",
+  "staffroomReadMore": "ಇನ್ನಷ್ಟು ಓದಿ",
+  "staffroomShowLess": "ಕಡಿಮೆ ತೋರಿಸಿ",
+  "meUsageResets": "ಎಣಿಕೆ {date} ರಂದು ಮತ್ತೆ ಆರಂಭವಾಗುತ್ತದೆ"
 }

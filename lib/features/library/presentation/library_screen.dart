@@ -9,6 +9,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/data/library_items_provider.dart';
 import '../../../shared/data/library_repository.dart';
+import '../../../shared/domain/library_dedupe.dart';
 import '../../../shared/domain/library_item.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_skeleton.dart';
@@ -74,15 +75,26 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              Semantics(
-                header: true,
-                child: Text(
-                  l10n.libraryMyWork,
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontSize: 27,
-                    color: AppColors.textStrong,
+              Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        l10n.libraryMyWork,
+                        style: Theme.of(context).textTheme.displayLarge
+                            ?.copyWith(
+                              fontSize: 27,
+                              color: AppColors.textStrong,
+                            ),
+                      ),
+                    ),
                   ),
-                ),
+                  // "Make something new" lives here once there is work to
+                  // list, so the list gets the screen.
+                  if (items.valueOrNull?.isNotEmpty ?? false)
+                    const _NewButton(),
+                ],
               ),
               const SizedBox(height: _MapGeometry.stackGap),
               _AskBar(controller: _search, onChanged: () => setState(() {})),
@@ -222,7 +234,22 @@ class _LibraryLoadedState extends ConsumerState<_LibraryLoaded> {
   bool _selectionMode = false;
   final Set<String> _selected = <String>{};
 
-  List<LibraryItem> get all => widget.all;
+  /// Each plan is saved twice today; show it once.
+  List<LibraryItem> get all => withoutSavedTwice(widget.all);
+
+  /// The day a row sits under: Today, Yesterday, a date, or Earlier when the
+  /// server sent no date.
+  String _dayLabel(DateTime? created, DateTime now) {
+    final l10n = context.l10n;
+    if (created == null) return l10n.libraryDayEarlier;
+    final local = created.toLocal();
+    final day = DateTime(local.year, local.month, local.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final daysAgo = today.difference(day).inDays;
+    if (daysAgo == 0) return l10n.libraryDayToday;
+    if (daysAgo == 1) return l10n.libraryDayYesterday;
+    return MaterialLocalizations.of(context).formatMediumDate(local);
+  }
 
   /// Matches the title, subject, class or type name, ignoring case.
   bool _matches(LibraryItem item, String query) {
@@ -250,12 +277,24 @@ class _LibraryLoadedState extends ConsumerState<_LibraryLoaded> {
         if (all.any((item) => item.type == type)) type,
     ];
 
+    final everything = all;
     final visible = [
-      for (final item in all)
+      for (final item in everything)
         if ((widget.filter == null || item.type == widget.filter) &&
             _matches(item, query))
           item,
     ];
+
+    // Rows grouped under their day, keeping the newest-first order.
+    final now = DateTime.now();
+    final groups = <(String, List<(int, LibraryItem)>)>[];
+    for (final (index, item) in visible.indexed) {
+      final label = _dayLabel(item.createdAt, now);
+      if (groups.isEmpty || groups.last.$1 != label) {
+        groups.add((label, <(int, LibraryItem)>[]));
+      }
+      groups.last.$2.add((index, item));
+    }
 
     // The route takes a limit and no cursor, so a full page IS the end of what
     // this build can show.
@@ -268,7 +307,11 @@ class _LibraryLoadedState extends ConsumerState<_LibraryLoaded> {
         if (present.length >= 2) ...[
           _FilterChips(
             present: present,
-            total: all.length,
+            counts: {
+              for (final type in present)
+                type: everything.where((item) => item.type == type).length,
+            },
+            total: everything.length,
             selected: widget.filter,
             onSelect: widget.onFilter,
           ),
@@ -290,39 +333,49 @@ class _LibraryLoadedState extends ConsumerState<_LibraryLoaded> {
           ),
           const SizedBox(height: _MapGeometry.stackGap),
         ],
-        _MapCard(
-          child: visible.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: _MapGeometry.rowPad,
-                  ),
-                  child: MapEmptyNote(
-                    icon: query.isEmpty
-                        ? LucideIcons.filter
-                        : LucideIcons.search,
-                    message: query.isEmpty
-                        ? l10n.libraryFilterEmpty
-                        : l10n.librarySearchEmpty,
-                  ),
-                )
-              : Column(
-                  children: [
-                    for (final (index, item) in visible.indexed) ...[
-                      if (index > 0)
-                        const Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: AppColors.borderHairline,
-                        ),
-                      inkSettle(
-                        context,
-                        _dismissible(item, index),
-                        index: index,
+        if (visible.isEmpty)
+          _MapCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: _MapGeometry.rowPad,
+              ),
+              child: MapEmptyNote(
+                icon: query.isEmpty ? LucideIcons.filter : LucideIcons.search,
+                message: query.isEmpty
+                    ? l10n.libraryFilterEmpty
+                    : l10n.librarySearchEmpty,
+              ),
+            ),
+          )
+        else
+          for (final (groupIndex, (label, rows)) in groups.indexed) ...[
+            if (groupIndex > 0) const SizedBox(height: _MapGeometry.stackGap),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(
+                start: AppSpacing.space1,
+                bottom: AppSpacing.space2,
+              ),
+              child: Semantics(
+                header: true,
+                child: MapOverline(label, color: AppColors.textEyebrow),
+              ),
+            ),
+            _MapCard(
+              child: Column(
+                children: [
+                  for (final (i, (index, item)) in rows.indexed) ...[
+                    if (i > 0)
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: AppColors.borderHairline,
                       ),
-                    ],
+                    inkSettle(context, _dismissible(item, index), index: index),
                   ],
-                ),
-        ),
+                ],
+              ),
+            ),
+          ],
         if (isCapped) ...[
           const SizedBox(height: _MapGeometry.stackGap),
           Text(
@@ -330,8 +383,6 @@ class _LibraryLoadedState extends ConsumerState<_LibraryLoaded> {
             style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
           ),
         ],
-        const SizedBox(height: _MapGeometry.stackGap),
-        const _MakeNewButton(),
       ],
     );
   }
@@ -436,7 +487,9 @@ class _MapCard extends StatelessWidget {
   );
 }
 
-/// One saved item: the type tile, the title over its meta, and "Synced".
+/// One saved item: the type tile and the title over its meta. The day is the
+/// group heading, so the meta ends with the time: two saves of the same title
+/// on one day can still be told apart.
 class _WorkRow extends StatelessWidget {
   const _WorkRow({
     required this.item,
@@ -465,7 +518,9 @@ class _WorkRow extends StatelessWidget {
       if (item.createdAt != null)
         // MaterialLocalizations, not `intl`: its delegates are loaded for all
         // 11 locales, so no initializeDateFormatting call is needed.
-        MaterialLocalizations.of(context).formatMediumDate(item.createdAt!),
+        MaterialLocalizations.of(
+          context,
+        ).formatTimeOfDay(TimeOfDay.fromDateTime(item.createdAt!.toLocal())),
     ].join(' · ');
 
     return Semantics(
@@ -513,17 +568,9 @@ class _WorkRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.space2),
-              // Everything listed came from the server, so it is synced; the
-              // map's amber "Waiting" belongs to offline saves, which this
-              // build does not make yet.
-              Text(
-                l10n.librarySynced,
-                style: text.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.leaf500,
-                ),
-              ),
+              // No "Synced": everything listed came from the server. A state
+              // label returns only for a problem (an offline save waiting to
+              // upload), which this build does not make yet.
             ],
           ),
         ),
@@ -565,12 +612,14 @@ class _TypeTile extends StatelessWidget {
 class _FilterChips extends StatelessWidget {
   const _FilterChips({
     required this.present,
+    required this.counts,
     required this.total,
     required this.selected,
     required this.onSelect,
   });
 
   final List<ContentType> present;
+  final Map<ContentType, int> counts;
   final int total;
   final ContentType? selected;
   final ValueChanged<ContentType?> onSelect;
@@ -588,7 +637,7 @@ class _FilterChips extends StatelessWidget {
         ),
         for (final type in present)
           MapChip(
-            label: typeLabel(l10n, type),
+            label: '${typeLabel(l10n, type)} ${counts[type] ?? 0}',
             selected: selected == type,
             onTap: () => onSelect(type),
           ),
@@ -639,6 +688,50 @@ class _SelectionBar extends StatelessWidget {
             ),
             TextButton(onPressed: onDelete, child: Text(l10n.libraryDelete)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "+ New" beside the title: the same way into the tools as "Make something
+/// new", in the header so the list keeps the screen.
+class _NewButton extends StatelessWidget {
+  const _NewButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.accentFill,
+      shape: const StadiumBorder(),
+      child: InkWell(
+        key: const ValueKey('library-new'),
+        customBorder: const StadiumBorder(),
+        onTap: () => context.push(Routes.prepDesk),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 16, 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  LucideIcons.plus,
+                  size: 18,
+                  color: AppColors.textOnAccent,
+                ),
+                const SizedBox(width: AppSpacing.space1),
+                Text(
+                  context.l10n.libraryNew,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textOnAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

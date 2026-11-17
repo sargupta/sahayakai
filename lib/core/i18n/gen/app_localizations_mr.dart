@@ -5135,4 +5135,44 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'हे शिक्षक';
+
+  @override
+  String get libraryDayToday => 'आज';
+
+  @override
+  String get libraryDayYesterday => 'काल';
+
+  @override
+  String get libraryDayEarlier => 'आधी';
+
+  @override
+  String get libraryNew => 'नवीन';
+
+  @override
+  String get makeHubRecent => 'अलीकडे वापरलेले';
+
+  @override
+  String get lessonPlanYourClasses => 'तुमचे वर्ग';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count विनंत्या',
+      one: '1 विनंती',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'अधिक वाचा';
+
+  @override
+  String get staffroomShowLess => 'कमी दाखवा';
+
+  @override
+  String meUsageResets(String date) {
+    return 'मोजणी $date रोजी पुन्हा सुरू होईल';
+  }
 }

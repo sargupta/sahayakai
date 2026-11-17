@@ -8857,6 +8857,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'this teacher'**
   String get moderationUnnamedTeacher;
+
+  /// My work: heading over items made today
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get libraryDayToday;
+
+  /// My work: heading over items made yesterday
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get libraryDayYesterday;
+
+  /// My work: heading over items with no date
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get libraryDayEarlier;
+
+  /// My work: header button that opens the tools to make something new
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get libraryNew;
+
+  /// Tools hub: heading over the last three tools the teacher opened
+  ///
+  /// In en, this message translates to:
+  /// **'Recently used'**
+  String get makeHubRecent;
+
+  /// Lesson form: label before one-tap chips of the classes on the teacher's profile
+  ///
+  /// In en, this message translates to:
+  /// **'Your classes'**
+  String get lessonPlanYourClasses;
+
+  /// Community: Your network tile line when connection requests are waiting
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 request} other{{count} requests}}'**
+  String communityRequestsWaiting(int count);
+
+  /// Community post: expands a long folded post
+  ///
+  /// In en, this message translates to:
+  /// **'Read more'**
+  String get staffroomReadMore;
+
+  /// Community post: folds an expanded long post again
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get staffroomShowLess;
+
+  /// Profile usage card: when the monthly counts start again. {date} is a localized date.
+  ///
+  /// In en, this message translates to:
+  /// **'Counts start again on {date}'**
+  String meUsageResets(String date);
 }
 
 class _AppLocalizationsDelegate

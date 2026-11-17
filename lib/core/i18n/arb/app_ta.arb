@@ -1474,5 +1474,15 @@
   "moderationUnblock": "தடையை நீக்கு",
   "moderationUnblockedSnack": "{name} மீதான தடை நீக்கப்பட்டது.",
   "moderationUnblockFailed": "தடையை நீக்க முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.",
-  "moderationUnnamedTeacher": "இந்த ஆசிரியர்"
+  "moderationUnnamedTeacher": "இந்த ஆசிரியர்",
+  "libraryDayToday": "இன்று",
+  "libraryDayYesterday": "நேற்று",
+  "libraryDayEarlier": "முன்பு",
+  "libraryNew": "புதியது",
+  "makeHubRecent": "சமீபத்தில் பயன்படுத்தியவை",
+  "lessonPlanYourClasses": "உங்கள் வகுப்புகள்",
+  "communityRequestsWaiting": "{count, plural, =1{1 கோரிக்கை} other{{count} கோரிக்கைகள்}}",
+  "staffroomReadMore": "மேலும் படிக்க",
+  "staffroomShowLess": "குறைவாகக் காட்டு",
+  "meUsageResets": "எண்ணிக்கை {date} அன்று மீண்டும் தொடங்கும்"
 }

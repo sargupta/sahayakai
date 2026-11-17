@@ -1474,5 +1474,15 @@
   "moderationUnblock": "अनब्लॉक करा",
   "moderationUnblockedSnack": "{name} ला अनब्लॉक केले.",
   "moderationUnblockFailed": "अनब्लॉक करता आले नाही. कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.",
-  "moderationUnnamedTeacher": "हे शिक्षक"
+  "moderationUnnamedTeacher": "हे शिक्षक",
+  "libraryDayToday": "आज",
+  "libraryDayYesterday": "काल",
+  "libraryDayEarlier": "आधी",
+  "libraryNew": "नवीन",
+  "makeHubRecent": "अलीकडे वापरलेले",
+  "lessonPlanYourClasses": "तुमचे वर्ग",
+  "communityRequestsWaiting": "{count, plural, =1{1 विनंती} other{{count} विनंत्या}}",
+  "staffroomReadMore": "अधिक वाचा",
+  "staffroomShowLess": "कमी दाखवा",
+  "meUsageResets": "मोजणी {date} रोजी पुन्हा सुरू होईल"
 }

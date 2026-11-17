@@ -19,12 +19,17 @@ class MapChip extends StatelessWidget {
     this.selectedFill = AppColors.leaf500,
     this.idleFill,
     this.idleInk = AppColors.textStrong,
+    this.showCheck = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
   final Color selectedFill;
+
+  /// Draws a tick before the label while [selected], so "on" reads by shape
+  /// as well as by colour (multi-select chips such as a form's Include row).
+  final bool showCheck;
 
   /// Null draws the default white chip with a hairline edge.
   final Color? idleFill;
@@ -59,12 +64,21 @@ class MapChip extends StatelessWidget {
             // Centre the label without stretching the chip across the row.
             child: Center(
               widthFactor: 1,
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: ink,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (selected && showCheck) ...[
+                    Icon(Icons.check_rounded, size: 14, color: ink),
+                    const SizedBox(width: 4),
+                  ],
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: ink,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

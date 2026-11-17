@@ -5134,4 +5134,44 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'આ શિક્ષક';
+
+  @override
+  String get libraryDayToday => 'આજે';
+
+  @override
+  String get libraryDayYesterday => 'ગઈકાલે';
+
+  @override
+  String get libraryDayEarlier => 'અગાઉ';
+
+  @override
+  String get libraryNew => 'નવું';
+
+  @override
+  String get makeHubRecent => 'તાજેતરમાં વાપરેલા';
+
+  @override
+  String get lessonPlanYourClasses => 'તમારા વર્ગો';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count વિનંતીઓ',
+      one: '1 વિનંતી',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'વધુ વાંચો';
+
+  @override
+  String get staffroomShowLess => 'ઓછું બતાવો';
+
+  @override
+  String meUsageResets(String date) {
+    return 'ગણતરી $date એ ફરી શરૂ થશે';
+  }
 }

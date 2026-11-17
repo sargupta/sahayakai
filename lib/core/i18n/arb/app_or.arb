@@ -1474,5 +1474,15 @@
   "moderationUnblock": "ଅନବ୍ଲକ୍ କରନ୍ତୁ",
   "moderationUnblockedSnack": "{name}ଙ୍କୁ ଅନବ୍ଲକ୍ କରାଗଲା।",
   "moderationUnblockFailed": "ଅନବ୍ଲକ୍ କରିହେଲା ନାହିଁ। ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
-  "moderationUnnamedTeacher": "ଏହି ଶିକ୍ଷକ"
+  "moderationUnnamedTeacher": "ଏହି ଶିକ୍ଷକ",
+  "libraryDayToday": "ଆଜି",
+  "libraryDayYesterday": "ଗତକାଲି",
+  "libraryDayEarlier": "ପୂର୍ବରୁ",
+  "libraryNew": "ନୂଆ",
+  "makeHubRecent": "ନିକଟରେ ବ୍ୟବହୃତ",
+  "lessonPlanYourClasses": "ଆପଣଙ୍କ ଶ୍ରେଣୀ",
+  "communityRequestsWaiting": "{count, plural, =1{1ଟି ଅନୁରୋଧ} other{{count}ଟି ଅନୁରୋଧ}}",
+  "staffroomReadMore": "ଅଧିକ ପଢ଼ନ୍ତୁ",
+  "staffroomShowLess": "କମ୍ ଦେଖାନ୍ତୁ",
+  "meUsageResets": "ଗଣନା {date} ରେ ପୁଣି ଆରମ୍ଭ ହେବ"
 }

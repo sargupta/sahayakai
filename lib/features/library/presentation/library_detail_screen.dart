@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/platform/share_service.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/data/library_items_provider.dart';
@@ -66,11 +69,25 @@ class LibraryDetailScreen extends ConsumerWidget {
     // Prefer the row's item (instant); fall back to the fetched one on a deep
     // link where there was no `extra`.
     final header = item ?? fetched.valueOrNull;
-    final appBarTitle = (header != null && header.title.isNotEmpty)
-        ? header.title
+    // The saved document, when it renders through its tool's own view: that
+    // view carries the title, class, subject and length, so the screen shows
+    // them once (the old metadata card repeated them, and could disagree).
+    final full = fetched.valueOrNull;
+    final rendersOwnHeader = full != null && _savedResultView(full) != null;
+    final shareText = full == null ? null : _savedShareText(full, l10n);
+    // The type ("Lesson plan") names the screen; the long title is in the
+    // document itself, where it is never cut off.
+    final appBarTitle = header != null
+        ? typeLabel(l10n, header.type)
         : l10n.libraryDetailTitle;
 
     return Scaffold(
+      bottomNavigationBar: shareText == null
+          ? null
+          : _SavedShareBar(
+              text: shareText,
+              subject: header?.title.isNotEmpty ?? false ? header!.title : null,
+            ),
       appBar: GlassAppBar(
         title: Text(appBarTitle),
         actions: [
@@ -80,16 +97,16 @@ class LibraryDetailScreen extends ConsumerWidget {
               final shouldDelete = await showDialog<bool>(
                 context: context,
                 builder: (dialogContext) => AlertDialog(
-                  title: const Text('Delete this item?'),
-                  content: const Text("This can't be undone."),
+                  title: Text(l10n.libraryDeleteTitle(1)),
+                  content: Text(l10n.libraryDeleteBody),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(dialogContext).pop(false),
-                      child: const Text('Cancel'),
+                      child: Text(l10n.actionCancel),
                     ),
                     FilledButton(
                       onPressed: () => Navigator.of(dialogContext).pop(true),
-                      child: const Text('Delete'),
+                      child: Text(l10n.libraryDelete),
                     ),
                   ],
                 ),
@@ -100,9 +117,9 @@ class LibraryDetailScreen extends ConsumerWidget {
               context.pop();
             },
             itemBuilder: (context) => [
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'delete',
-                child: Text('Delete'),
+                child: Text(l10n.libraryDelete),
               ),
             ],
           ),
@@ -112,9 +129,13 @@ class LibraryDetailScreen extends ConsumerWidget {
         child: ListView(
           padding: AppSpacing.pagePadding.copyWith(bottom: 96),
           children: [
-            if (header != null) ...[
+            if (header != null && !rendersOwnHeader) ...[
               _DetailHeader(item: header),
               const SizedBox(height: AppSpacing.space6),
+            ],
+            if (header?.createdAt != null && rendersOwnHeader) ...[
+              _SavedOn(createdAt: header!.createdAt!),
+              const SizedBox(height: AppSpacing.space3),
             ],
             _DetailBody(
               state: fetched,
@@ -125,6 +146,100 @@ class LibraryDetailScreen extends ConsumerWidget {
               onRetry: () => ref.invalidate(libraryItemDetailProvider(id)),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Saved Sun, 15 Nov", above a document that carries its own header.
+class _SavedOn extends StatelessWidget {
+  const _SavedOn({required this.createdAt});
+
+  final DateTime createdAt;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      context.l10n.libraryDetailSavedOn(
+        MaterialLocalizations.of(context).formatMediumDate(createdAt.toLocal()),
+      ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+    );
+  }
+}
+
+/// Share and Copy for a saved item, pinned under it: the same plain text each
+/// tool's live result shares. Deliberately NOT [ResultActionsBar], which also
+/// registers the result with VIDYA (the orb turns green); a saved item opened
+/// from My work leaves VIDYA exactly as she is. Share degrades to the
+/// clipboard when the OS sheet cannot open, as the live bar does.
+class _SavedShareBar extends ConsumerWidget {
+  const _SavedShareBar({required this.text, this.subject});
+
+  final String text;
+  final String? subject;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+
+    Future<void> copy({String? note}) async {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(note ?? l10n.copyConfirmation)));
+    }
+
+    Future<void> share() async {
+      try {
+        await ref.read(shareServiceProvider).shareText(text, subject: subject);
+      } catch (_) {
+        await copy(note: l10n.resultShareFailed);
+      }
+    }
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceMapCard,
+        border: Border(top: BorderSide(color: AppColors.borderHairline)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  key: const ValueKey('saved-share'),
+                  onPressed: share,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    backgroundColor: AppColors.accentFill,
+                    foregroundColor: AppColors.textOnAccent,
+                    shape: const StadiumBorder(),
+                  ),
+                  icon: const Icon(LucideIcons.share2, size: 18),
+                  label: Text(l10n.actionShare),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.space2),
+              OutlinedButton.icon(
+                key: const ValueKey('saved-copy'),
+                onPressed: copy,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 50),
+                  shape: const StadiumBorder(),
+                ),
+                icon: const Icon(LucideIcons.copy, size: 17),
+                label: Text(l10n.actionCopy),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -390,6 +505,61 @@ Widget? _savedResultView(LibraryItem full) {
           : AssessmentScannerResultView(result: result);
 
     // No mobile tool screen yet for these two — see library_result_mapper.dart.
+    case ContentType.microLesson:
+    case ContentType.virtualFieldTrip:
+    case ContentType.unknown:
+      return null;
+  }
+}
+
+/// The plain text Share and Copy hand out for [full]: the same export its
+/// tool's live result uses. Null when the saved data cannot be reshaped (the
+/// screen then shows no share bar rather than sharing a blank).
+String? _savedShareText(LibraryItem full, AppLocalizations l10n) {
+  switch (full.type) {
+    case ContentType.lessonPlan:
+      final plan = mapSavedLessonPlan(full.data);
+      return plan == null ? null : lessonPlanAsPlainText(plan, l10n);
+    case ContentType.quiz:
+      final quiz = mapSavedQuiz(full.data);
+      return quiz == null ? null : quizAsPlainText(quiz, l10n);
+    case ContentType.worksheet:
+      final worksheet = mapSavedWorksheet(full.data);
+      return worksheet == null ? null : worksheetAsPlainText(worksheet, l10n);
+    case ContentType.rubric:
+      final rubric = mapSavedRubric(full.data);
+      return rubric == null ? null : rubricAsPlainText(rubric, l10n);
+    case ContentType.instantAnswer:
+      final answer = mapSavedInstantAnswer(full.data);
+      return answer == null
+          ? null
+          : instantAnswerAsPlainText(
+              answer,
+              question: full.title.isEmpty ? null : full.title,
+            );
+    case ContentType.teacherTraining:
+      final advice = mapSavedTeacherAdvice(full.data);
+      return advice == null ? null : teacherAdviceAsPlainText(advice, l10n);
+    case ContentType.examPaper:
+      final ready = mapSavedExamPaper(full.data);
+      return ready == null ? null : examPaperAsPlainText(ready.paper, l10n);
+    case ContentType.assessment:
+      final assessment = mapSavedAssessment(full.data);
+      return assessment == null
+          ? null
+          : assessmentAsPlainText(assessment, l10n);
+    case ContentType.visualAid:
+      final aid = mapSavedVisualAid(full.data);
+      return aid == null
+          ? null
+          : visualAidAsPlainText(
+              aid,
+              l10n,
+              prompt: full.title.isEmpty ? null : full.title,
+            );
+    case ContentType.assessmentSubmission:
+      final result = mapSavedAssessmentScanner(full.data);
+      return result == null ? null : assessmentResultAsPlainText(result, l10n);
     case ContentType.microLesson:
     case ContentType.virtualFieldTrip:
     case ContentType.unknown:

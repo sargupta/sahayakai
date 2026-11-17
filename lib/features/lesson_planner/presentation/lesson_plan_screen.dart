@@ -12,6 +12,7 @@ import '../../../core/i18n/locale_provider.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/data/library_items_provider.dart';
+import '../../../shared/domain/library_dedupe.dart';
 import '../../../shared/domain/library_item.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
@@ -27,6 +28,7 @@ import '../../../shared/widgets/map_select.dart';
 import '../../../shared/widgets/map_toggle.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../profile/presentation/profile_controller.dart';
 import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/background_generation_controller.dart';
 import '../../vidya/presentation/deliverables_controller.dart';
@@ -407,8 +409,70 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     );
   }
 
-  /// Class and Subject, the map's two tap-to-change selectors side by side.
+  /// The classes on the teacher's profile, as one-tap chips under Class. Read
+  /// only when the profile is already loaded (Home loads it): this screen must
+  /// not start a profile fetch of its own. Empty hides the row.
+  List<String> _profileClasses() {
+    if (!ref.exists(profileControllerProvider)) return const [];
+    final grades =
+        ref.watch(profileControllerProvider).valueOrNull?.gradeLevels ??
+        const <String>[];
+    // In school order, whatever order the profile saved them in.
+    final ordered = [
+      for (final grade in kGradeLevels)
+        if (grades.contains(grade)) grade,
+    ];
+    // A profile that ticks every class (or most of them) gives no shortcut:
+    // the Class picker above already lists them all.
+    return ordered.length > _maxQuickClasses ? const [] : ordered;
+  }
+
+  /// The most classes offered as one-tap chips.
+  static const int _maxQuickClasses = 5;
+
+  Widget _yourClasses(AppLocalizations l10n, List<String> classes) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.space2),
+      child: Wrap(
+        spacing: 7,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            l10n.lessonPlanYourClasses,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textBody),
+          ),
+          for (final grade in classes)
+            MapChip(
+              key: ValueKey('your-class-$grade'),
+              label: grade,
+              selected: _grade == grade,
+              showCheck: true,
+              selectedFill: AppColors.accentFill,
+              onTap: () =>
+                  setState(() => _grade = _grade == grade ? null : grade),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Class and Subject, the map's two tap-to-change selectors side by side,
+  /// with the teacher's own classes as quick picks under them.
   Widget _classAndSubject(AppLocalizations l10n) {
+    final classes = _profileClasses();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _classAndSubjectRow(l10n),
+        if (classes.isNotEmpty) _yourClasses(l10n, classes),
+      ],
+    );
+  }
+
+  Widget _classAndSubjectRow(AppLocalizations l10n) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -450,6 +514,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             MapChip(
               label: _includeLabel(l10n, item),
               selected: _includes.contains(item),
+              showCheck: true,
               onTap: () => setState(() {
                 if (!_includes.remove(item)) _includes.add(item);
               }),
@@ -536,10 +601,12 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   /// reopening the saved plan. Drawn only when there are some.
   Widget _recentCard(AppLocalizations l10n) {
     final items = ref.watch(libraryItemsProvider).valueOrNull;
-    final lessons = [
+    // Each plan is saved twice today; list it once.
+    final lessons = withoutSavedTwice([
       for (final item in items ?? const <LibraryItem>[])
         if (item.type == ContentType.lessonPlan) item,
-    ].take(3).toList(growable: false);
+    ]).take(3).toList(growable: false);
+    final materialL10n = MaterialLocalizations.of(context);
     if (lessons.isEmpty) return const SizedBox.shrink();
     final text = Theme.of(context).textTheme;
     return Padding(
@@ -567,14 +634,34 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          [
-                            item.title,
-                            if (item.gradeLevel != null) item.gradeLevel!,
-                          ].join(' · '),
-                          style: text.bodySmall?.copyWith(
-                            fontSize: 12.5,
-                            color: AppColors.textBody,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                item.title,
+                                style: text.bodySmall?.copyWith(
+                                  fontSize: 13,
+                                  color: AppColors.textStrong,
+                                ),
+                              ),
+                              Text(
+                                [
+                                  if (item.gradeLevel != null) item.gradeLevel!,
+                                  if (item.subject != null) item.subject!,
+                                  if (item.createdAt != null)
+                                    materialL10n.formatMediumDate(
+                                      item.createdAt!.toLocal(),
+                                    ),
+                                ].join(' · '),
+                                style: text.bodySmall?.copyWith(
+                                  fontSize: 12,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

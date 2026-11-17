@@ -1474,5 +1474,15 @@
   "moderationUnblock": "ਅਨਬਲੌਕ ਕਰੋ",
   "moderationUnblockedSnack": "{name} ਨੂੰ ਅਨਬਲੌਕ ਕਰ ਦਿੱਤਾ ਗਿਆ।",
   "moderationUnblockFailed": "ਅਨਬਲੌਕ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
-  "moderationUnnamedTeacher": "ਇਹ ਅਧਿਆਪਕ"
+  "moderationUnnamedTeacher": "ਇਹ ਅਧਿਆਪਕ",
+  "libraryDayToday": "ਅੱਜ",
+  "libraryDayYesterday": "ਕੱਲ੍ਹ",
+  "libraryDayEarlier": "ਪਹਿਲਾਂ",
+  "libraryNew": "ਨਵਾਂ",
+  "makeHubRecent": "ਹਾਲ ਹੀ ਵਿੱਚ ਵਰਤੇ",
+  "lessonPlanYourClasses": "ਤੁਹਾਡੀਆਂ ਜਮਾਤਾਂ",
+  "communityRequestsWaiting": "{count, plural, =1{1 ਬੇਨਤੀ} other{{count} ਬੇਨਤੀਆਂ}}",
+  "staffroomReadMore": "ਹੋਰ ਪੜ੍ਹੋ",
+  "staffroomShowLess": "ਘੱਟ ਵਿਖਾਓ",
+  "meUsageResets": "ਗਿਣਤੀ {date} ਨੂੰ ਮੁੜ ਸ਼ੁਰੂ ਹੋਵੇਗੀ"
 }

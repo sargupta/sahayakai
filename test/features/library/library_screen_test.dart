@@ -130,8 +130,14 @@ Future<void> _openLibrary(
       : tester.pump(const Duration(milliseconds: 500)));
 }
 
-/// One "Synced" status per saved-work row.
-Finder _rows() => find.text('Synced');
+/// One per saved-work row: each row is a swipe-to-delete [Dismissible] keyed
+/// `lib-row-<index>-<id>`. (Rows no longer carry a "Synced" label.)
+Finder _rows() => find.byWidgetPredicate(
+  (widget) =>
+      widget is Dismissible &&
+      widget.key is ValueKey<String> &&
+      (widget.key! as ValueKey<String>).value.startsWith('lib-row-'),
+);
 
 /// The filter chips: selectable buttons (rows are not selectable outside
 /// multi-select).
@@ -430,9 +436,9 @@ void main() {
       await _openLibrary(tester, client: _twoTypeClient());
       expect(_rows(), findsNWidgets(2));
 
-      // The "Quiz" chip is the only widget with exactly that text: the row's
-      // meta line is a single joined string ("Quiz · ...").
-      await tester.tap(find.text('Quiz'));
+      // The "Quiz 1" chip (type and count) is the only widget with exactly
+      // that text: the row's meta line is a single joined string.
+      await tester.tap(find.text('Quiz 1'));
       await tester.pumpAndSettle();
 
       expect(_rows(), findsOneWidget);
@@ -443,7 +449,7 @@ void main() {
     testWidgets('the All chip clears the filter again', (tester) async {
       await _openLibrary(tester, client: _twoTypeClient());
 
-      await tester.tap(find.text('Quiz'));
+      await tester.tap(find.text('Quiz 1'));
       await tester.pumpAndSettle();
       expect(_rows(), findsOneWidget);
 
@@ -457,7 +463,7 @@ void main() {
       await _openLibrary(tester, client: client);
       final before = client.gets.length;
 
-      await tester.tap(find.text('Quiz'));
+      await tester.tap(find.text('Quiz 1'));
       await tester.pumpAndSettle();
 
       // The filter narrows the loaded list; it does not re-query the route.

@@ -156,8 +156,9 @@ void main() {
       );
 
       expect(find.byType(LibraryDetailScreen), findsOneWidget);
-      // The type label, and the metadata the item carries.
-      expect(find.text('Lesson plan'), findsOneWidget);
+      // The type names the screen (app bar) and badges the header card, and
+      // the metadata the item carries follows.
+      expect(find.text('Lesson plan'), findsNWidgets(2));
       expect(find.text('Class 6'), findsOneWidget);
       expect(find.text('Science'), findsOneWidget);
       expect(find.text('Photosynthesis'), findsOneWidget);

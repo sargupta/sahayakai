@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
+import '../../../../core/platform/share_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/map_card.dart';
@@ -14,7 +16,6 @@ import '../../../moderation/presentation/moderation_actions.dart';
 import '../../data/staffroom_providers.dart';
 import '../../data/staffroom_transport.dart';
 import '../../domain/group.dart';
-import 'connection_action.dart';
 import 'post_type_style.dart';
 import 'staffroom_avatar.dart';
 
@@ -72,6 +73,38 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
 
   bool get _isLiked => _liked ?? widget.initialLiked;
   int get _likeCount => _count ?? widget.post.likesCount;
+
+  /// Posts longer than this open folded behind "Read more".
+  static const int _foldAt = 320;
+
+  bool _expanded = false;
+
+  bool get _isLong => widget.post.content.length > _foldAt;
+
+  /// The first lines of a long post, cut at a word and marked with an ellipsis.
+  static String _folded(String content) {
+    final cut = content.lastIndexOf(RegExp(r'\s'), _foldAt - 40);
+    final end = cut > _foldAt ~/ 2 ? cut : _foldAt - 40;
+    return '${content.substring(0, end).trimRight()}…';
+  }
+
+  /// Shares the post as "Author: text" through the OS sheet; if the sheet
+  /// cannot open, the text is copied instead and the teacher is told.
+  Future<void> _share() async {
+    final post = widget.post;
+    final text = post.authorName.trim().isEmpty
+        ? post.content
+        : '${post.authorName.trim()}: ${post.content}';
+    try {
+      await ref.read(shareServiceProvider).shareText(text);
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(context.l10n.resultShareFailed)));
+    }
+  }
 
   Future<void> _toggle() async {
     if (_busy) return;
@@ -188,36 +221,78 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
             ],
           ),
           const SizedBox(height: 9),
-          // Body: server-authored prose (full ink, matra-safe).
-          AiText(post.content),
-          const SizedBox(height: 2),
-          // Footer, as in the map: the like, the comment count when there is
-          // one, and Connect on another teacher's post.
+          // Body: server-authored prose (full ink, matra-safe). A long post (a
+          // daily briefing runs to a screen and more) opens folded, with
+          // "Read more"; short posts show whole.
+          if (_isLong && !_expanded)
+            AiText(_folded(post.content))
+          else
+            AiText(post.content),
+          if (_isLong)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton(
+                key: ValueKey('post-more-${post.id}'),
+                onPressed: () => setState(() => _expanded = !_expanded),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 40),
+                  foregroundColor: AppColors.textLink,
+                ),
+                child: Text(
+                  _expanded ? l10n.staffroomShowLess : l10n.staffroomReadMore,
+                  style: text.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textLink,
+                  ),
+                ),
+              ),
+            )
+          else
+            const SizedBox(height: 2),
+          // Footer: the like, the comment count when there is one, and Share.
+          // Connect lives on the teacher's profile and in Your network, not on
+          // every post.
           Row(
             children: [
               _LikeButton(liked: _isLiked, count: _likeCount, onTap: _toggle),
-              // The comment count takes the free width, so Connect sits flush
-              // right; with no comments a spacer does the same.
               if (post.commentsCount > 0) ...[
-                const SizedBox(width: AppSpacing.space3),
-                Expanded(
-                  child: Text(
-                    l10n.staffroomCommentsCount(post.commentsCount),
-                    style: text.bodySmall?.copyWith(
-                      fontSize: 12.5,
-                      color: AppColors.textMuted,
-                    ),
+                const SizedBox(width: AppSpacing.space2),
+                Semantics(
+                  label: l10n.staffroomCommentsCount(post.commentsCount),
+                  excludeSemantics: true,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        LucideIcons.messageCircle,
+                        size: 16,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${post.commentsCount}',
+                        style: text.bodySmall?.copyWith(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textBody,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ] else
-                const Spacer(),
-              if (othersPost)
-                TeacherConnectionAction(
-                  uid: post.authorUid,
-                  displayName: post.authorName,
-                  photoURL: post.authorPhotoURL,
-                  compact: true,
+              ],
+              const Spacer(),
+              TextButton.icon(
+                key: ValueKey('post-share-${post.id}'),
+                onPressed: _share,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(44, 44),
+                  foregroundColor: AppColors.textBody,
                 ),
+                icon: const Icon(LucideIcons.share2, size: 16),
+                label: Text(l10n.actionShare),
+              ),
             ],
           ),
           if (_failed) ...[

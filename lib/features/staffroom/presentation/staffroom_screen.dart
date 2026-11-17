@@ -12,6 +12,7 @@ import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/map_card.dart';
 import '../../../shared/widgets/map_chip.dart';
+import '../../../shared/widgets/map_icon_tile.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/community_post.dart';
@@ -178,6 +179,8 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
               children: [
                 Expanded(
                   child: _HubTile(
+                    icon: LucideIcons.messageCircle,
+                    tint: MapTint.saffron,
                     title: l10n.staffroomChatTitle,
                     subtitle: l10n.communityOpenChat,
                     onTap: () => context.push(Routes.staffRoomChat),
@@ -185,10 +188,28 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _HubTile(
-                    title: l10n.communityYourNetwork,
-                    subtitle: l10n.communityGroupsAndPeople,
-                    onTap: () => openCommunityNetwork(context),
+                  child: Builder(
+                    builder: (context) {
+                      // Waiting requests are what's new in the network: say
+                      // so on the tile instead of the generic line.
+                      final requests =
+                          ref
+                              .watch(connectionsControllerProvider)
+                              .valueOrNull
+                              ?.receivedRequests
+                              .length ??
+                          0;
+                      return _HubTile(
+                        icon: LucideIcons.users,
+                        tint: MapTint.leaf,
+                        title: l10n.communityYourNetwork,
+                        subtitle: requests > 0
+                            ? l10n.communityRequestsWaiting(requests)
+                            : l10n.communityGroupsAndPeople,
+                        highlight: requests > 0,
+                        onTap: () => openCommunityNetwork(context),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -293,14 +314,23 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
 /// line, tappable as a whole.
 class _HubTile extends StatelessWidget {
   const _HubTile({
+    required this.icon,
+    required this.tint,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.highlight = false,
   });
 
+  final IconData icon;
+  final MapTint tint;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+
+  /// The line says something new (e.g. "2 requests"): drawn in the tint's
+  /// ink and bold instead of muted.
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
@@ -309,21 +339,41 @@ class _HubTile extends StatelessWidget {
       button: true,
       child: MapCard(
         onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(
-              title,
-              style: text.bodyLarge?.copyWith(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textStrong,
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: tint.fill,
+                borderRadius: AppRadius.rRow,
               ),
+              child: Icon(icon, size: 17, color: tint.ink),
             ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: text.bodyLarge?.copyWith(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textStrong,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: text.bodyMedium?.copyWith(
+                      color: highlight ? tint.ink : AppColors.textMuted,
+                      fontWeight: highlight ? FontWeight.w700 : null,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

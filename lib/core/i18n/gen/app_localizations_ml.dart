@@ -5213,4 +5213,44 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'ഈ അധ്യാപകൻ';
+
+  @override
+  String get libraryDayToday => 'ഇന്ന്';
+
+  @override
+  String get libraryDayYesterday => 'ഇന്നലെ';
+
+  @override
+  String get libraryDayEarlier => 'മുമ്പ്';
+
+  @override
+  String get libraryNew => 'പുതിയത്';
+
+  @override
+  String get makeHubRecent => 'അടുത്തിടെ ഉപയോഗിച്ചവ';
+
+  @override
+  String get lessonPlanYourClasses => 'നിങ്ങളുടെ ക്ലാസുകൾ';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count അഭ്യർത്ഥനകൾ',
+      one: '1 അഭ്യർത്ഥന',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'കൂടുതൽ വായിക്കുക';
+
+  @override
+  String get staffroomShowLess => 'കുറച്ച് കാണിക്കുക';
+
+  @override
+  String meUsageResets(String date) {
+    return 'എണ്ണം $date-ന് വീണ്ടും തുടങ്ങും';
+  }
 }

@@ -5241,4 +5241,44 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'இந்த ஆசிரியர்';
+
+  @override
+  String get libraryDayToday => 'இன்று';
+
+  @override
+  String get libraryDayYesterday => 'நேற்று';
+
+  @override
+  String get libraryDayEarlier => 'முன்பு';
+
+  @override
+  String get libraryNew => 'புதியது';
+
+  @override
+  String get makeHubRecent => 'சமீபத்தில் பயன்படுத்தியவை';
+
+  @override
+  String get lessonPlanYourClasses => 'உங்கள் வகுப்புகள்';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count கோரிக்கைகள்',
+      one: '1 கோரிக்கை',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'மேலும் படிக்க';
+
+  @override
+  String get staffroomShowLess => 'குறைவாகக் காட்டு';
+
+  @override
+  String meUsageResets(String date) {
+    return 'எண்ணிக்கை $date அன்று மீண்டும் தொடங்கும்';
+  }
 }

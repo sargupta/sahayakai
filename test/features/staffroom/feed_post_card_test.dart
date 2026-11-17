@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
@@ -15,12 +16,16 @@ import '../../support/fake_block_c_transports.dart';
 /// real comment count, and Connect only where it is true.
 const _me = 'u-me';
 
-GroupPost _post({String author = 'u-sr', int comments = 0}) => GroupPost(
+GroupPost _post({
+  String author = 'u-sr',
+  int comments = 0,
+  String content = 'Taught fractions by cutting chapatis.',
+}) => GroupPost(
   id: 'p1',
   groupId: 'g1',
   authorUid: author,
   authorName: 'Suresh Reddy',
-  content: 'Taught fractions by cutting chapatis.',
+  content: content,
   postType: PostType.share,
   likesCount: 4,
   commentsCount: comments,
@@ -61,37 +66,53 @@ void main() {
     tester,
   ) async {
     await _pump(tester, _post(comments: 12));
-    expect(find.text('12 comments'), findsOneWidget);
+    // An icon and the number, read out as "12 comments".
+    expect(find.text('12'), findsOneWidget);
+    expect(find.bySemanticsLabel('12 comments'), findsOneWidget);
 
     await _pump(tester, _post());
-    expect(find.textContaining('comment'), findsNothing);
+    expect(find.byIcon(LucideIcons.messageCircle), findsNothing);
   });
 
-  testWidgets("Connect shows on another teacher's post when not connected", (
+  testWidgets('every post can be shared', (tester) async {
+    await _pump(tester, _post());
+    expect(find.byKey(const ValueKey('post-share-p1')), findsOneWidget);
+    expect(find.text('Share'), findsOneWidget);
+  });
+
+  testWidgets('Connect is not on posts: it lives in Your network', (
     tester,
   ) async {
     await _pump(tester, _post());
-    expect(find.text('Connect'), findsOneWidget);
-  });
+    expect(find.text('Connect'), findsNothing);
 
-  testWidgets('a request already sent reads "Requested"', (tester) async {
     await _pump(
       tester,
       _post(),
       connections: const MyConnectionData(sentRequestUids: ['u-sr']),
     );
-    expect(find.text('Requested'), findsOneWidget);
-    expect(find.text('Connect'), findsNothing);
+    expect(find.text('Requested'), findsNothing);
   });
 
-  testWidgets('no Connect for someone already connected', (tester) async {
-    await _pump(
-      tester,
-      _post(),
-      connections: const MyConnectionData(connectedUids: ['u-sr']),
-    );
-    expect(find.text('Connect'), findsNothing);
-    expect(find.text('Requested'), findsNothing);
+  testWidgets('a long post opens folded and Read more shows it all', (
+    tester,
+  ) async {
+    final long = List.filled(60, 'Fractions with chapatis works.').join(' ');
+    await _pump(tester, _post(content: long));
+
+    expect(find.text(long), findsNothing);
+    expect(find.text('Read more'), findsOneWidget);
+
+    await tester.tap(find.text('Read more'));
+    await tester.pumpAndSettle();
+    expect(find.text(long), findsOneWidget);
+    expect(find.text('Show less'), findsOneWidget);
+  });
+
+  testWidgets('a short post shows whole, with no Read more', (tester) async {
+    await _pump(tester, _post());
+    expect(find.text('Taught fractions by cutting chapatis.'), findsOneWidget);
+    expect(find.text('Read more'), findsNothing);
   });
 
   testWidgets('a request from the author is not answered from the feed', (

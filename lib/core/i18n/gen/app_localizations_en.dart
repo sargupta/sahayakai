@@ -5110,4 +5110,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'this teacher';
+
+  @override
+  String get libraryDayToday => 'Today';
+
+  @override
+  String get libraryDayYesterday => 'Yesterday';
+
+  @override
+  String get libraryDayEarlier => 'Earlier';
+
+  @override
+  String get libraryNew => 'New';
+
+  @override
+  String get makeHubRecent => 'Recently used';
+
+  @override
+  String get lessonPlanYourClasses => 'Your classes';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count requests',
+      one: '1 request',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'Read more';
+
+  @override
+  String get staffroomShowLess => 'Show less';
+
+  @override
+  String meUsageResets(String date) {
+    return 'Counts start again on $date';
+  }
 }

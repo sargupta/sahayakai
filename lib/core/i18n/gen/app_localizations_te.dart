@@ -5170,4 +5170,44 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'ఈ ఉపాధ్యాయులు';
+
+  @override
+  String get libraryDayToday => 'ఈరోజు';
+
+  @override
+  String get libraryDayYesterday => 'నిన్న';
+
+  @override
+  String get libraryDayEarlier => 'ఇంతకు ముందు';
+
+  @override
+  String get libraryNew => 'కొత్తది';
+
+  @override
+  String get makeHubRecent => 'ఇటీవల వాడినవి';
+
+  @override
+  String get lessonPlanYourClasses => 'మీ తరగతులు';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count అభ్యర్థనలు',
+      one: '1 అభ్యర్థన',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'మరింత చదవండి';
+
+  @override
+  String get staffroomShowLess => 'తక్కువ చూపించు';
+
+  @override
+  String meUsageResets(String date) {
+    return 'లెక్క $dateన మళ్ళీ మొదలవుతుంది';
+  }
 }

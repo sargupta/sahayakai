@@ -5137,4 +5137,44 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'ਇਹ ਅਧਿਆਪਕ';
+
+  @override
+  String get libraryDayToday => 'ਅੱਜ';
+
+  @override
+  String get libraryDayYesterday => 'ਕੱਲ੍ਹ';
+
+  @override
+  String get libraryDayEarlier => 'ਪਹਿਲਾਂ';
+
+  @override
+  String get libraryNew => 'ਨਵਾਂ';
+
+  @override
+  String get makeHubRecent => 'ਹਾਲ ਹੀ ਵਿੱਚ ਵਰਤੇ';
+
+  @override
+  String get lessonPlanYourClasses => 'ਤੁਹਾਡੀਆਂ ਜਮਾਤਾਂ';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ਬੇਨਤੀਆਂ',
+      one: '1 ਬੇਨਤੀ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'ਹੋਰ ਪੜ੍ਹੋ';
+
+  @override
+  String get staffroomShowLess => 'ਘੱਟ ਵਿਖਾਓ';
+
+  @override
+  String meUsageResets(String date) {
+    return 'ਗਿਣਤੀ $date ਨੂੰ ਮੁੜ ਸ਼ੁਰੂ ਹੋਵੇਗੀ';
+  }
 }

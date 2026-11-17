@@ -446,11 +446,29 @@ class _UsageCard extends StatelessWidget {
               feature: feature,
             ),
           ],
+          if (planLimit > 0) ...[
+            const SizedBox(height: AppSpacing.space3),
+            // The counters are per calendar month, so they start again on the
+            // first of next month.
+            Text(
+              l10n.meUsageResets(
+                MaterialLocalizations.of(
+                  context,
+                ).formatMediumDate(_firstOfNextMonth(DateTime.now())),
+              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+            ),
+          ],
         ],
       ),
     );
   }
 }
+
+DateTime _firstOfNextMonth(DateTime now) =>
+    DateTime(now.year, now.month + 1, 1);
 
 /// The map's `.pill.p-sf`: the plan in a saffron tint.
 class _PlanPill extends StatelessWidget {
@@ -642,11 +660,13 @@ class _SettingsCard extends ConsumerWidget {
 
     final rows = <Widget>[
       _SettingsRow(
+        icon: LucideIcons.globe,
         label: '${l10n.languageLabel} · ${language.nativeLabel}',
         trailing: _ChangeLink(label: l10n.meChange),
         onTap: () => showLanguagePickerSheet(context, ref),
       ),
       _SettingsRow(
+        icon: LucideIcons.arrowLeftRight,
         label: hand == VidyaHand.left
             ? l10n.vidyaSideLeft
             : l10n.vidyaSideRight,
@@ -664,14 +684,23 @@ class _SettingsCard extends ConsumerWidget {
         ),
       ),
       _SettingsRow(
+        icon: LucideIcons.slidersHorizontal,
         label: l10n.settingsTitle,
         trailing: const _Chevron(),
         onTap: () => context.push(Routes.settings),
       ),
       _SettingsRow(
+        icon: LucideIcons.shield,
         label: l10n.mePrivacyForTeachers,
         trailing: const _Chevron(),
         onTap: () => context.push(Routes.privacyForTeachers),
+      ),
+      _SettingsRow(
+        key: const ValueKey('me-blocked-teachers'),
+        icon: LucideIcons.ban,
+        label: l10n.moderationBlockedTitle,
+        trailing: const _Chevron(),
+        onTap: () => context.push(Routes.blockedTeachers),
       ),
     ];
 
@@ -699,8 +728,16 @@ class _SettingsCard extends ConsumerWidget {
 /// One settings row: the label and its trailing control. With [onTap] the
 /// whole row is the target; without it the trailing control is.
 class _SettingsRow extends StatelessWidget {
-  const _SettingsRow({required this.label, required this.trailing, this.onTap});
+  const _SettingsRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.trailing,
+    this.onTap,
+  });
 
+  /// A muted line icon before the label, so the rows can be found at a glance.
+  final IconData icon;
   final String label;
   final Widget trailing;
   final VoidCallback? onTap;
@@ -713,6 +750,8 @@ class _SettingsRow extends StatelessWidget {
         padding: const EdgeInsetsDirectional.only(start: 14, end: 8),
         child: Row(
           children: [
+            Icon(icon, size: 18, color: AppColors.textBody),
+            const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 11),
@@ -788,32 +827,27 @@ class _Chevron extends StatelessWidget {
 
 // ------------------------------------------------------------------ sign out
 
-/// The map's white button (`.btn.w`): a 52px pill with a hairline. Sign out
-/// flips the auth state the router's redirect guard reads.
+/// Sign out as a quiet text button: it is the last thing on the page, not the
+/// biggest. It flips the auth state the router's redirect guard reads.
 class _SignOutButton extends ConsumerWidget {
   const _SignOutButton();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Material(
-      color: Colors.white,
-      shape: const StadiumBorder(
-        side: BorderSide(color: AppColors.borderHairline),
-      ),
-      child: InkWell(
-        customBorder: const StadiumBorder(),
-        onTap: () => ref.read(authControllerProvider.notifier).signOut(),
-        child: SizedBox(
-          height: 52,
-          child: Center(
-            child: Text(
-              context.l10n.actionSignOut,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textStrong,
-              ),
-            ),
+    return Center(
+      child: TextButton(
+        onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
+        style: TextButton.styleFrom(
+          minimumSize: const Size(120, 48),
+          foregroundColor: AppColors.red700,
+          shape: const StadiumBorder(),
+        ),
+        child: Text(
+          context.l10n.actionSignOut,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.red700,
           ),
         ),
       ),

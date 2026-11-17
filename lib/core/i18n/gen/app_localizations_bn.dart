@@ -5149,4 +5149,44 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get moderationUnnamedTeacher => 'এই শিক্ষক';
+
+  @override
+  String get libraryDayToday => 'আজ';
+
+  @override
+  String get libraryDayYesterday => 'গতকাল';
+
+  @override
+  String get libraryDayEarlier => 'আগে';
+
+  @override
+  String get libraryNew => 'নতুন';
+
+  @override
+  String get makeHubRecent => 'সম্প্রতি ব্যবহৃত';
+
+  @override
+  String get lessonPlanYourClasses => 'আপনার ক্লাস';
+
+  @override
+  String communityRequestsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি অনুরোধ',
+      one: '1টি অনুরোধ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomReadMore => 'আরও পড়ুন';
+
+  @override
+  String get staffroomShowLess => 'কম দেখান';
+
+  @override
+  String meUsageResets(String date) {
+    return 'গণনা $date তারিখে আবার শুরু হবে';
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -6,10 +7,12 @@ import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/data/recent_tools_provider.dart';
 import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/widgets/map_card.dart';
 import '../../../shared/widgets/map_icon_tile.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../../shared/widgets/tool_tint.dart';
 import '../../vidya/presentation/vidya_sheet.dart';
 
 /// The Make hub (`/prep-desk`, UX map "Make hub", App board B3): one place to
@@ -22,7 +25,7 @@ import '../../vidya/presentation/vidya_sheet.dart';
 ///
 /// Tiles in a row share a height and grow with their text (no fixed aspect
 /// ratio), so a long Malayalam name at large text wraps instead of clipping.
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   /// A tool's tile line where the map writes its own; else the registry's.
@@ -68,17 +71,43 @@ class DashboardScreen extends StatelessWidget {
   static String _parents(AppLocalizations l10n) => l10n.makeHubParents;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final tools = {
       for (final tool in [...kToolRegistry, kAttendanceEntry]) tool.id: tool,
     };
+    final recent = [
+      for (final id in ref.watch(recentToolsProvider)) ?tools[id],
+    ];
+
+    void open(ToolEntry tool) {
+      ref.read(recentToolsProvider.notifier).record(tool.id);
+      context.push(tool.route);
+    }
+
     return ToolScaffold(
       title: l10n.makeHubTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _SpeakCard(),
+          if (recent.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.space5),
+            MapOverline(l10n.makeHubRecent, color: AppColors.textEyebrow),
+            const SizedBox(height: AppSpacing.space2),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final tool in recent)
+                  _RecentChip(
+                    key: ValueKey('make-recent-${tool.id}'),
+                    tool: tool,
+                    onTap: () => open(tool),
+                  ),
+              ],
+            ),
+          ],
           for (final (heading, ids) in _groups) ...[
             const SizedBox(height: AppSpacing.space5),
             MapOverline(heading(l10n), color: AppColors.textEyebrow),
@@ -91,12 +120,67 @@ class DashboardScreen extends StatelessWidget {
                       key: ValueKey('make-${tool.id}'),
                       title: tool.title(l10n),
                       line: _mapLine(id, l10n) ?? tool.subtitle(l10n),
-                      onTap: () => context.push(tool.route),
+                      icon: tool.icon,
+                      tint: toolTint(tool.id),
+                      onTap: () => open(tool),
                     ),
               ],
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// A recently used tool: its icon in a tinted circle and its name, one tap
+/// back into it.
+class _RecentChip extends StatelessWidget {
+  const _RecentChip({super.key, required this.tool, required this.onTap});
+
+  final ToolEntry tool;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = toolTint(tool.id);
+    return Material(
+      color: AppColors.surfaceMapCard,
+      shape: const StadiumBorder(
+        side: BorderSide(color: AppColors.borderHairline),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(6, 6, 14, 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: tint.fill,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(tool.icon, size: 15, color: tint.ink),
+                ),
+                const SizedBox(width: AppSpacing.space2),
+                Text(
+                  tool.title(context.l10n),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textStrong,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -194,11 +278,15 @@ class _Tile extends StatelessWidget {
     super.key,
     required this.title,
     required this.line,
+    required this.icon,
+    required this.tint,
     required this.onTap,
   });
 
   final String title;
   final String line;
+  final IconData icon;
+  final MapTint tint;
   final VoidCallback onTap;
 
   @override
@@ -219,14 +307,29 @@ class _Tile extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
+          // Every tile at least this tall, so a row of short names and a row
+          // of long ones read as one grid; text still grows it at large scale.
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 64),
+            constraints: const BoxConstraints(minHeight: 88),
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // The icon sits above the name, never beside it: a long
+                  // Malayalam or Tamil name at large text needs the tile's
+                  // whole width, or it breaks mid-word.
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: tint.fill,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(icon, size: 15, color: tint.ink),
+                  ),
+                  const SizedBox(height: AppSpacing.space2),
                   Text(
                     title,
                     style: text.bodyLarge?.copyWith(
