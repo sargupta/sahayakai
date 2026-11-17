@@ -15,6 +15,7 @@ import {
   FileText,
   FlaskConical,
   Gauge,
+  Globe2,
   GraduationCap,
   HeartPulse,
   Home,
@@ -24,6 +25,7 @@ import {
   MessageCircle,
   PencilRuler,
   PenLine,
+  ScanLine,
   ShieldCheck,
   Terminal,
   User,
@@ -46,9 +48,11 @@ import { pressVidyaEntry } from "@/lib/vidya-entry"
  *
  *   Talk to VIDYA
  *   Home · Library · Community · Profile      the four destinations
- *   Make      lesson plan, worksheet, quiz, exam paper, rubric, instant answer
+ *   Make      lesson plan, worksheet, quiz, exam paper, rubric, instant answer,
+ *             virtual field trip
  *   Class     attendance at /attendance, for every teacher (the class
  *             registers; parent calls start from a class register)
+ *             assessment scanner (grade a student's answer sheets)
  *   Messages · Notifications                  with unread counts
  *   Explore   folded: shared resources, usage, privacy; Labs and the
  *             internal dashboards only for staff / labsNav beta testers
@@ -181,6 +185,8 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
         { key: "exam-paper", label: t("Exam Paper"), icon: FileText, href: "/exam-paper", active: starts("/exam-paper") },
         { key: "rubric", label: t("Rubric"), icon: ClipboardCheck, href: "/rubric-generator", active: starts("/rubric-generator") },
         { key: "instant-answer", label: t("Instant Answer"), icon: Lightbulb, href: "/instant-answer", active: starts("/instant-answer") },
+        // Un-parked from Labs (parked by the July IA refocus) so every teacher can find it.
+        { key: "virtual-field-trip", label: t("Virtual Field Trip"), icon: Globe2, href: "/virtual-field-trip", active: starts("/virtual-field-trip") },
       ],
     },
     {
@@ -191,6 +197,8 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
         // The teacher's class registers and parent-call modal. Never a SamparkAI URL: SamparkAI is off in
         // production and admits school admins only (src/__tests__/components/nav-surfaces-sampark-gate.test.tsx).
         { key: "attendance", label: t("Attendance"), shortLabel: t("Class"), icon: ClipboardList, href: "/attendance", active: starts("/attendance") },
+        // Un-parked from Labs: grading a class's answer sheets sits with the class, not with experiments.
+        { key: "assessment-scanner", label: t("Assessment Scanner"), icon: ScanLine, href: "/assessment-scanner", active: starts("/assessment-scanner") },
       ],
     },
     {
