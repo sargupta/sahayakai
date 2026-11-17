@@ -58,10 +58,10 @@ describe('Home: VIDYA mic is the 3D orb', () => {
     it('follows the design system: workspace orb size, saffron-600 name, saffron send disc, ink-500 tool icons', () => {
         jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
         render(<DashboardHome />);
-        // Home orb, enlarged on request (2026-10-30): 208px from tablet up, 160px on phones.
+        // Home orb, reduced ~15% on request (2026-11-17): 176px from tablet up, 144px on phones.
         const orb = screen.getByRole('button', { name: 'Start recording' });
-        expect(orb.className).toMatch(/\bh-40\b/);
-        expect(orb.className).toMatch(/\bmd:h-52\b/);
+        expect(orb.className).toMatch(/\bh-36\b/);
+        expect(orb.className).toMatch(/\bmd:h-44\b/);
         // "Good morning, <saffron-600>Meena.</>" (ScreenWebHome).
         const name = document.querySelector('h1 span') as HTMLElement;
         expect(name.className).toMatch(/\btext-saffron-600\b/);

@@ -349,11 +349,11 @@ export function DashboardHome() {
               <div className="flex flex-col items-center gap-3" data-vidya-entry="home" data-vidya-state={liveOrbState}>
                 {/* The design-system VIDYA (VidyaPresence: saffron radial #FFD9AE → #C96A28, breathing
                     ring, 5 s float; indigo while connecting/thinking) at ONE fixed size on Home
-                    (h-40 / md:h-52) in every state. Its own button carries data-microphone. */}
+                    (h-36 / md:h-44, ~15% smaller on request 2026-11-17) in every state. Its own button carries data-microphone. */}
                 <div data-testid="vidya-home-live">
                   <VidyaPresence
                     size="compact"
-                    className="h-40 w-40 shrink-0 md:h-52 md:w-52"
+                    className="h-36 w-36 shrink-0 md:h-44 md:w-44"
                     state={live.state}
                     getLevel={live.getLevel}
                     onActivate={live.error ? () => { live.dismissError(); void live.start(); } : live.toggle}
