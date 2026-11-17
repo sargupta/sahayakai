@@ -5,6 +5,7 @@
  */
 
 import { QuizGeneratorInput, QuizGeneratorOutput, QuizVariantsOutput } from '@/ai/schemas/quiz-generator-schemas';
+import { resolveContentId } from '@/lib/content-id';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
@@ -97,7 +98,7 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
   }
 
   const difficulties = ['easy', 'medium', 'hard'] as const;
-  const contentId = uuidv4();
+  const contentId = resolveContentId(input.contentId);
   const now = new Date();
   const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
 
@@ -178,35 +179,46 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
   }
 
   if (input.userId) {
-    const storage = await getStorageInstance();
-    // const db = await getDb(); // Removed unused
+    // Saving to the Library must never cost the teacher the quiz. This block used to be the
+    // only generator without a guard: a Storage or Firestore failure here threw away three
+    // generated variants (~30 s of work) and the route answered 500. The quiz is returned
+    // either way; `isSaved` says truthfully whether it reached the Library.
+    try {
+      const storage = await getStorageInstance();
 
-    const fileName = `${timestamp}-${contentId}.json`;
-    const filePath = `users/${input.userId}/quizzes/${fileName}`;
-    const file = storage.bucket().file(filePath);
+      const fileName = `${timestamp}-${contentId}.json`;
+      const filePath = `users/${input.userId}/quizzes/${fileName}`;
+      const file = storage.bucket().file(filePath);
 
-    await file.save(JSON.stringify(output), {
-      contentType: 'application/json',
-    });
+      await file.save(JSON.stringify(output), {
+        contentType: 'application/json',
+      });
 
-    const { dbAdapter } = await import('@/lib/db/adapter');
-    const { Timestamp } = await import('firebase-admin/firestore');
+      const { dbAdapter } = await import('@/lib/db/adapter');
+      const { Timestamp } = await import('firebase-admin/firestore');
 
-    await dbAdapter.saveContent(input.userId, {
-      id: contentId,
-      type: 'quiz', // Keep type 'quiz' but data is now multi-variant
-      title: input.topic || 'Quiz',
-      gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 5') as any,
-      subject: (output.subject || 'General') as any,
-      topic: input.topic,
-      language: input.language as any || 'English',
-      storagePath: filePath,
-      isPublic: false,
-      isDraft: false,
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-      data: output,
-    });
+      await dbAdapter.saveContent(input.userId, {
+        id: contentId,
+        type: 'quiz', // Keep type 'quiz' but data is now multi-variant
+        title: input.topic || 'Quiz',
+        gradeLevel: (output.gradeLevel || input.gradeLevel || 'Class 5') as any,
+        subject: (output.subject || 'General') as any,
+        topic: input.topic,
+        language: input.language as any || 'English',
+        storagePath: filePath,
+        isPublic: false,
+        isDraft: false,
+        createdAt: Timestamp.fromDate(now),
+        updatedAt: Timestamp.fromDate(now),
+        data: output,
+      });
+    } catch (persistenceError) {
+      output.isSaved = false;
+      console.warn('[quiz-generator] quiz generated but not saved to the Library', {
+        contentId,
+        error: persistenceError instanceof Error ? persistenceError.message : String(persistenceError),
+      });
+    }
   }
 
   return output;

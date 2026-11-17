@@ -2,12 +2,20 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { getProfileData, updateProfileAction } from '@/lib/api/profile';
-import { getEffectiveOnboardingPhase, isNewUser as checkIsNewUser } from '@/lib/profile-utils';
-import { getPersonalizedSuggestions, type ContextualSuggestion } from '@/lib/contextual-suggestions';
-import type { UserProfile } from '@/types';
+import { getProfileData, updateProfileAction, type ProfileUpdatePatch } from '@/lib/api/profile';
+import { getEffectiveOnboardingPhase } from '@/lib/profile-utils';
+import { isNewUserPhase, toDateOrNull, type OnboardingPhase } from '@/lib/onboarding-phase';
+import type { ContextualSuggestion } from '@/lib/contextual-suggestions';
 
-type OnboardingPhase = NonNullable<UserProfile['onboardingPhase']>;
+/**
+ * The suggestions are built from the NCERT curriculum tables, which hold every subject's chapters
+ * for every class. Importing them here statically put all of them in the home page's first-load
+ * bundle (2406 kB against a 2250 kB budget once the NCF-2023 books landed). They load on demand
+ * instead, only for a new teacher who has a grade and a subject
+ * (gate: src/__tests__/perf/gate-home-bundle-excludes-curriculum.test.ts).
+ */
+const loadSuggestionBuilder = () => import('@/lib/contextual-suggestions').then((m) => m.getPersonalizedSuggestions);
+import type { UserProfile } from '@/types';
 
 interface ProfileSummary {
     displayName?: string;
@@ -75,10 +83,23 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
     useEffect(() => { phaseRef.current = phase; }, [phase]);
     useEffect(() => { userRef.current = user; }, [user]);
 
+    // A different account (or sign-out) must not keep the previous teacher's
+    // profile, e.g. the name on Home's greeting: drop it and load again.
+    const loadedUidRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (loadedUidRef.current === null || loadedUidRef.current === (user?.uid ?? null)) return;
+        loadedUidRef.current = null;
+        profileRef.current = null;
+        setProfileData(null);
+        setProfileSummary(null);
+        setLoaded(false);
+    }, [user?.uid]);
+
     // Load once when user is available
     useEffect(() => {
         if (!user || loaded) return;
 
+        loadedUidRef.current = user.uid;
         getProfileData(user.uid).then(({ profile }) => {
             if (!profile) { setLoaded(true); return; }
             profileRef.current = profile;
@@ -100,26 +121,32 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
             setDismissCount(profile.profileCompletionDismissCount ?? 0);
             setChecklistDismissed(!!profile.checklistDismissedAt);
 
-            if (profile.createdAt?.toDate) {
-                setCreatedAt(profile.createdAt.toDate());
-            }
+            // /api/profile serialises timestamps to ISO strings, so `.toDate`
+            // never existed here and the first-week window never closed.
+            setCreatedAt(toDateOrNull(profile.createdAt));
 
             // Generate suggestions for new users
-            if (effectivePhase !== 'done' && profile.subjects?.length && profile.gradeLevels?.length) {
-                const sug = getPersonalizedSuggestions(
-                    { subjects: profile.subjects, gradeLevels: profile.gradeLevels, educationBoard: profile.educationBoard },
-                    3
-                );
-                setSuggestions(sug);
-                // Track shown chapter IDs for refresh
-                shownChapterIdsRef.current = sug.map(s => s.chapterId).filter(Boolean) as string[];
+            if (isNewUserPhase(effectivePhase, profile.createdAt) && profile.subjects?.length && profile.gradeLevels?.length) {
+                const forSuggestions = { subjects: profile.subjects, gradeLevels: profile.gradeLevels, educationBoard: profile.educationBoard };
+                void loadSuggestionBuilder().then((build) => {
+                    const sug = build(forSuggestions, 3);
+                    setSuggestions(sug);
+                    // Track shown chapter IDs for refresh
+                    shownChapterIdsRef.current = sug.map(s => s.chapterId).filter(Boolean) as string[];
+                }).catch((err) => {
+                    // Suggestions are optional; the home page works without them. A failed chunk fetch
+                    // (flaky network before the service worker is installed) is logged, not hidden.
+                    console.warn('[onboarding] could not load suggestions', err);
+                });
             }
 
             setLoaded(true);
         }).catch(() => { setLoaded(true); });
     }, [user, loaded]);
 
-    const isNew = phase !== 'done';
+    // Same rule as isNewUser() in profile-utils (sidebar): not 'done' and
+    // still inside the first-week window.
+    const isNew = isNewUserPhase(phase, createdAt);
 
     const isFirstWeek = (() => {
         if (!createdAt) return isNew;
@@ -133,7 +160,7 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
         setPhase(to);
         phaseRef.current = to;
         if (user) {
-            const update: Record<string, any> = { onboardingPhase: to };
+            const update: ProfileUpdatePatch = { onboardingPhase: to };
             if (to === 'done') update.onboardingCompletedAt = new Date();
             updateProfileAction(user.uid, update).catch(() => {});
         }
@@ -182,7 +209,7 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
         if (pending === 0 || !currentUser) return;
 
         const newCount = baseGenerationCountRef.current + pending;
-        const update: Record<string, any> = { aiGenerationCount: newCount };
+        const update: ProfileUpdatePatch = { aiGenerationCount: newCount };
 
         // Check if phase should advance
         if (newCount >= 5 && phaseRef.current === 'exploring') {
@@ -235,17 +262,18 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
         const p = profileRef.current;
         if (!p?.subjects?.length || !p?.gradeLevels?.length) return;
 
-        const sug = getPersonalizedSuggestions(
-            { subjects: p.subjects, gradeLevels: p.gradeLevels, educationBoard: p.educationBoard },
-            3,
-            shownChapterIdsRef.current
-        );
+        const forSuggestions = { subjects: p.subjects, gradeLevels: p.gradeLevels, educationBoard: p.educationBoard };
+        void loadSuggestionBuilder().then((build) => {
+            const sug = build(forSuggestions, 3, shownChapterIdsRef.current);
 
-        // Track newly shown chapter IDs
-        const newIds = sug.map(s => s.chapterId).filter(Boolean) as string[];
-        shownChapterIdsRef.current = [...shownChapterIdsRef.current, ...newIds];
+            // Track newly shown chapter IDs
+            const newIds = sug.map(s => s.chapterId).filter(Boolean) as string[];
+            shownChapterIdsRef.current = [...shownChapterIdsRef.current, ...newIds];
 
-        setSuggestions(sug);
+            setSuggestions(sug);
+        }).catch((err) => {
+            console.warn('[onboarding] could not refresh suggestions; keeping the current ones', err);
+        });
     }, []);
 
     // A3: Dismiss profile completion card with counter
@@ -253,7 +281,7 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
         setDismissCount(prev => {
             const next = prev + 1;
             if (user) {
-                const update: Record<string, any> = { profileCompletionDismissCount: next };
+                const update: ProfileUpdatePatch = { profileCompletionDismissCount: next };
                 // After 3 dismissals, advance to 'done'
                 if (next >= 3) {
                     update.onboardingPhase = 'done';

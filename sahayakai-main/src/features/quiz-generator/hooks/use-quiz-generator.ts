@@ -10,6 +10,7 @@
  * prefill + 300ms auto-submit, and the `first-quiz` checklist mark.
  */
 
+import { gradeFromExamplePrompt } from "@/lib/example-grade";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,6 +53,7 @@ export function useQuizGenerator() {
     const generator = useGenerator<FormValues, QuizVariantsOutput>({
         feature: "quiz",
         endpoint: "/api/ai/quiz",
+        persistsArtifact: true,
         // NCERT-demo 2026-05-19 hardening (same pattern as use-lesson-plan.ts):
         // ALWAYS send a non-empty `language`; strip the "General" subject
         // placeholder so the model isn't misled by a meaningless default.
@@ -201,9 +203,8 @@ export function useQuizGenerator() {
             const normalisedLang = normaliseVidyaLanguage(languageParam);
             if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
             // ────────────────────────────────────────────────────────────────────
-            setTimeout(() => {
-                form.handleSubmit(onSubmit)();
-            }, 300);
+            // Pre-fill ONLY. Generation starts when the teacher presses "Generate Quiz":
+            // they may still want to change the question types, count or difficulty.
         }
          
     }, [searchParams, form, toast]);
@@ -212,6 +213,12 @@ export function useQuizGenerator() {
 
     const handlePromptClick = (prompt: string) => {
         form.setValue("topic", prompt);
+        // An example names its class ("for Grade 5", "for 1st graders"); with no class chosen yet,
+        // pick that (else Class 6) so the example is ready to generate. Still editable before Generate.
+        const pickedGrade = form.getValues("gradeLevel");
+        const exampleGrade = gradeFromExamplePrompt(prompt);
+        if (exampleGrade) form.setValue("gradeLevel", exampleGrade, { shouldDirty: true, shouldValidate: true });
+        else if (!pickedGrade) form.setValue("gradeLevel", "Class 6", { shouldDirty: true, shouldValidate: true });
         form.trigger("topic");
     };
 
@@ -221,10 +228,7 @@ export function useQuizGenerator() {
             form.setValue("language", language);
         }
         form.trigger("topic");
-        // Auto-submit after voice transcript to improve UX
-        setTimeout(() => {
-            form.handleSubmit(onSubmit)();
-        }, 100);
+        // Fill the topic only: the quiz is generated when the teacher presses "Generate Quiz".
     };
 
     return {

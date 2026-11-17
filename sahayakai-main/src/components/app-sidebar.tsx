@@ -1,476 +1,365 @@
-
 "use client"
 
+import { useEffect, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import Link from "next/link"
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  useSidebar,
-} from "@/components/ui/sidebar"
-import { UsageDisplay } from "@/components/usage-display"
-import { PlanBadge } from "@/components/plan-badge"
-import {
+  ArrowUpRight,
+  AudioLines,
   Bell,
+  BookMarked,
   CalendarDays,
-  ChevronDown,
   ClipboardCheck,
   ClipboardList,
-  FileSignature,
+  Compass,
   FileText,
   FlaskConical,
+  Gauge,
+  GraduationCap,
   HeartPulse,
   Home,
   Library,
   Lightbulb,
+  ListChecks,
   MessageCircle,
   PencilRuler,
-  Settings,
+  PenLine,
   ShieldCheck,
   Terminal,
   User,
+  Users,
   Zap,
 } from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
-import Link from "next/link"
-import { useEffect, useState, useCallback } from "react"
-import { collection, query, where, onSnapshot, doc, getDoc, updateDoc } from "firebase/firestore"
-import { db, auth } from "@/lib/firebase"
+import { collection, query, where, onSnapshot } from "firebase/firestore"
 import { onAuthStateChanged } from "firebase/auth"
-import { isNewUser as checkIsNewUser } from "@/lib/profile-utils"
-import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight"
-import { updateProfileAction } from "@/lib/api/profile"
+import { db, auth } from "@/lib/firebase"
 import { useLanguage } from "@/context/language-context"
-import type { UserProfile } from "@/types"
+import { ProductSideNav, type NavBadge, type NavSection } from "@/components/shell/side-nav"
+import { SahayakWordmark, SamparkMark } from "@/components/shell/brand"
+import { useNavAccess } from "@/components/shell/use-nav-access"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { samparkEntryUrl, isExternalUrl } from "@/lib/products"
+import { pressVidyaEntry } from "@/lib/vidya-entry"
 
 /**
- * App sidebar — Phase 3 restructure (2026-04-24).
+ * SahayakAI sidebar — design-system navigation (decided 26 Oct 2026):
  *
- * Intent-grouped navigation: Home / Create / Assess / Engage / Ask / My work / Account.
- * Progressive disclosure: new users see minimum set, full tree unlocks after
- * first lesson plan is saved.
+ *   Talk to VIDYA
+ *   Home · Library · Community · Profile      the four destinations
+ *   Make      lesson plan, worksheet, quiz, exam paper, rubric, instant answer
+ *   Class     attendance at /attendance, for every teacher (the class
+ *             registers; parent calls start from a class register)
+ *   Messages · Notifications                  with unread counts
+ *   Explore   folded: shared resources, usage, privacy; Labs and the
+ *             internal dashboards only for staff / labsNav beta testers
+ *   footer    the one SamparkAI entry, only while SamparkAI is switched on
+ *             for this deployment (nav-access `sampark`, the server's
+ *             SAMPARK_ENABLED; hidden while off or unknown, since the
+ *             SamparkAI APIs answer 404 then). It opens the SamparkAI
+ *             workspace's school picker, and the SamparkAI APIs admit school
+ *             admins only. The account (profile, classes, settings, sign out)
+ *             lives in the header avatar menu only.
  *
- * The command palette (⌘K, see command-palette.tsx) provides a flat keyword
- * search across all routes — sidebar is the "browse" affordance, palette is
- * the "search" affordance.
+ * Layout and states live in ProductSideNav (rail 768–1023px, sidebar from
+ * 1024px, foldable). The phone uses the TabBar and this same sidebar inside
+ * the menu sheet (`forceFull`). The command palette (⌘K) stays the flat
+ * search across every route.
  */
-export function AppSidebar() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { setOpenMobile } = useSidebar();
-  const { t } = useLanguage();
-  const [totalUnread, setTotalUnread] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const [showCommunityNew, setShowCommunityNew] = useState(false);
-  const [isNewUser, setIsNewUser] = useState(false);
-  const [showAllTools, setShowAllTools] = useState(false);
-  const [spotlightsSeen, setSpotlightsSeen] = useState<string[]>([]);
-  const [sidebarUserId, setSidebarUserId] = useState<string | null>(null);
 
-  const handleNavClick = (href: string) => {
-    setOpenMobile(false); // always close — no-op on desktop
-    router.push(href);
-  };
+function countBadge(count: number, label: string, tone: NavBadge["tone"], testId?: string): NavBadge | null {
+  if (count <= 0) return null
+  return { text: count > 9 ? "9+" : String(count), label, tone, testId }
+}
 
-  const handleSpotlightDismiss = useCallback((id: string) => {
-    setSpotlightsSeen(prev => {
-      if (prev.includes(id)) return prev;
-      const next = [...prev, id];
-      if (sidebarUserId) {
-        updateProfileAction(sidebarUserId, { featureSpotlightsSeen: next }).catch(() => {});
-      }
-      return next;
-    });
-  }, [sidebarUserId]);
+interface AppSidebarProps {
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
+  /** Render the full sidebar regardless of width (phone menu sheet). */
+  forceFull?: boolean
+  onNavigate?: () => void
+}
 
-  // Live unread badges — subscribe to conversation + notification unread counts.
+export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = false, onNavigate }: AppSidebarProps) {
+  const pathname = usePathname() ?? "/"
+  const router = useRouter()
+  const { t } = useLanguage()
+  const [totalUnread, setTotalUnread] = useState(0)
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
+  const [sidebarUserId, setSidebarUserId] = useState<string | null>(null)
+  const access = useNavAccess(sidebarUserId)
+
+  // Live unread badges — conversation + notification unread counts.
   // Connection requests show as Notifications (NOT Messages), so the
-  // notifications subscription is what powers the Bell badge in the sidebar.
+  // notifications subscription powers the Bell badge.
   useEffect(() => {
-    let unsubConv: (() => void) | undefined;
-    let unsubNotif: (() => void) | undefined;
+    let unsubConv: (() => void) | undefined
+    let unsubNotif: (() => void) | undefined
     const unsubAuth = onAuthStateChanged(auth, (user) => {
-      unsubConv?.();
-      unsubNotif?.();
-      unsubConv = undefined;
-      unsubNotif = undefined;
+      unsubConv?.()
+      unsubNotif?.()
+      unsubConv = undefined
+      unsubNotif = undefined
 
       if (!user) {
-        setTotalUnread(0);
-        setUnreadNotifications(0);
-        setShowCommunityNew(false);
-        setSidebarUserId(null);
-        return;
+        setTotalUnread(0)
+        setUnreadNotifications(0)
+        setSidebarUserId(null)
+        return
       }
 
-      setSidebarUserId(user.uid);
-      getDoc(doc(db, "users", user.uid)).then((snap) => {
-        const data = snap.data();
-        const state = data?.communityIntroState;
-        setShowCommunityNew(state === 'ready');
-        setIsNewUser(checkIsNewUser(data as Partial<UserProfile>));
-        setSpotlightsSeen(data?.featureSpotlightsSeen ?? []);
-      }).catch(() => {});
-
+      setSidebarUserId(user.uid)
       const convQ = query(
         collection(db, "conversations"),
         where("participantIds", "array-contains", user.uid),
-      );
+      )
       unsubConv = onSnapshot(convQ, (snap) => {
-        let count = 0;
-        snap.docs.forEach((d) => { count += d.data().unreadCount?.[user.uid] ?? 0; });
-        setTotalUnread(count);
-      });
+        let count = 0
+        snap.docs.forEach((d) => { count += d.data().unreadCount?.[user.uid] ?? 0 })
+        setTotalUnread(count)
+      })
 
-      // Notifications badge — count unread docs where this user is the recipient.
-      // Uses where(isRead == false) so the badge updates live as the user
-      // dismisses things from the /notifications page or accepts/declines
-      // connection requests (both call markNotificationAsReadAction).
       const notifQ = query(
         collection(db, "notifications"),
         where("recipientId", "==", user.uid),
         where("isRead", "==", false),
-      );
+      )
       unsubNotif = onSnapshot(
         notifQ,
-        (snap) => { setUnreadNotifications(snap.size); },
+        (snap) => { setUnreadNotifications(snap.size) },
         (err) => {
-          // Firestore may need a composite index for this query — log but
-          // don't break the sidebar. The badge just won't show.
-          console.warn('[AppSidebar] notifications subscription error', err);
-          setUnreadNotifications(0);
+          // A missing composite index must not break the sidebar; the badge just won't show.
+          console.warn('[AppSidebar] notifications subscription error', err)
+          setUnreadNotifications(0)
         },
-      );
-    });
+      )
+    })
 
     return () => {
-      unsubAuth();
-      unsubConv?.();
-      unsubNotif?.();
-    };
-  }, []);
+      unsubAuth()
+      unsubConv?.()
+      unsubNotif?.()
+    }
+  }, [])
 
-  // Visibility predicate: for non-essential items, gate behind isNewUser unlock.
-  const canShowAdvanced = !isNewUser || showAllTools;
+  const starts = (prefix: string) => pathname === prefix || pathname.startsWith(prefix + "/")
+
+  // No feature highlights in the sidebar (no "Start here!" spotlight, no "New" badges):
+  // every destination is shown the same way. Only real unread counts are badged.
+
+  const sections: NavSection[] = [
+    {
+      key: "destinations",
+      tier: "primary",
+      items: [
+        { key: "home", label: t("Home"), icon: Home, href: "/", active: pathname === "/" },
+        { key: "library", label: t("Library"), icon: Library, href: "/my-library", active: starts("/my-library") },
+        {
+          key: "community",
+          label: t("Community"),
+          icon: Users,
+          href: "/community",
+          active: starts("/community"),
+        },
+        {
+          key: "profile",
+          label: t("Profile"),
+          icon: User,
+          href: "/my-profile",
+          active: starts("/my-profile") || starts("/settings") || starts("/usage"),
+        },
+      ],
+    },
+    {
+      key: "make",
+      label: t("Make"),
+      tier: "secondary",
+      fold: { icon: PenLine, railLabel: t("Make"), defaultOpen: true },
+      items: [
+        { key: "lesson-plan", label: t("Lesson Plan"), icon: CalendarDays, href: "/lesson-plan", active: starts("/lesson-plan") },
+        { key: "worksheet", label: t("Worksheet"), icon: PencilRuler, href: "/worksheet-wizard", active: starts("/worksheet-wizard") },
+        { key: "quiz", label: t("Quiz"), icon: ListChecks, href: "/quiz-generator", active: starts("/quiz-generator") },
+        { key: "exam-paper", label: t("Exam Paper"), icon: FileText, href: "/exam-paper", active: starts("/exam-paper") },
+        { key: "rubric", label: t("Rubric"), icon: ClipboardCheck, href: "/rubric-generator", active: starts("/rubric-generator") },
+        { key: "instant-answer", label: t("Instant Answer"), icon: Lightbulb, href: "/instant-answer", active: starts("/instant-answer") },
+      ],
+    },
+    {
+      key: "class",
+      label: t("Class"),
+      tier: "secondary",
+      items: [
+        // The teacher's class registers and parent-call modal. Never a SamparkAI URL: SamparkAI is off in
+        // production and admits school admins only (src/__tests__/components/nav-surfaces-sampark-gate.test.tsx).
+        { key: "attendance", label: t("Attendance"), shortLabel: t("Class"), icon: ClipboardList, href: "/attendance", active: starts("/attendance") },
+      ],
+    },
+    {
+      // Back in the main nav (it was parked in Labs by the July IA refocus); always visible, never folded.
+      key: "training",
+      tier: "secondary",
+      items: [
+        { key: "teacher-training", label: t("AI Coach"), shortLabel: t("AI Coach"), icon: GraduationCap, href: "/teacher-training", active: starts("/teacher-training") },
+      ],
+    },
+  ]
+
+  if (sidebarUserId) {
+    sections.push({
+      key: "inbox",
+      tier: "secondary",
+      items: [
+        {
+          key: "messages",
+          label: t("Messages"),
+          icon: MessageCircle,
+          href: "/messages",
+          active: starts("/messages"),
+          badge: countBadge(totalUnread, `${totalUnread} ${t("unread messages")}`, "accent"),
+        },
+        {
+          key: "notifications",
+          label: t("Notifications"),
+          shortLabel: t("Alerts"),
+          icon: Bell,
+          href: "/notifications",
+          active: starts("/notifications"),
+          badge: countBadge(unreadNotifications, `${unreadNotifications} unread notifications`, "danger", "notifications-badge"),
+        },
+      ],
+    })
+  }
+
+  const exploreItems: NavSection["items"] = [
+    { key: "resources", label: t("Shared resources"), icon: BookMarked, href: "/community-library", active: starts("/community-library") },
+    { key: "usage", label: t("Usage"), icon: Gauge, href: "/usage", active: false },
+    { key: "privacy", label: t("Privacy"), icon: ShieldCheck, href: "/privacy-for-teachers", active: starts("/privacy-for-teachers") },
+  ]
+  if (access.labs) {
+    exploreItems.push({ key: "labs", label: t("Labs"), icon: FlaskConical, href: "/labs", active: starts("/labs") })
+  }
+  if (access.staff) {
+    exploreItems.push(
+      { key: "mission-control", label: t("Mission Control"), icon: Zap, href: "/admin/cost-dashboard", active: starts("/admin/cost-dashboard") },
+      { key: "logs", label: t("Log Dashboard"), icon: Terminal, href: "/admin/log-dashboard", active: starts("/admin/log-dashboard") },
+      { key: "ai-health", label: t("AI Health"), icon: HeartPulse, href: "/admin/system-health", active: starts("/admin/system-health") },
+    )
+  }
+  sections.push({
+    key: "explore",
+    label: t("Explore"),
+    tier: "secondary",
+    fold: { icon: Compass, railLabel: t("Explore"), defaultOpen: false },
+    items: exploreItems,
+  })
+
+  const talkToVidya = () => {
+    onNavigate?.()
+    if (!pressVidyaEntry()) router.push("/")
+  }
+
+  const lead = (mode: "full" | "rail") =>
+    mode === "full" ? (
+      <button
+        type="button"
+        onClick={talkToVidya}
+        className="focus-ring flex min-h-11 w-full items-center gap-3 rounded-pill border border-tint-accent-border bg-tint-accent px-4 text-left font-display text-value font-semibold text-saffron-700 transition-colors duration-small ease-standard hover:bg-tint-accent-strong"
+      >
+        <AudioLines aria-hidden="true" strokeWidth={1.7} className="h-[18px] w-[18px] shrink-0" />
+        <span className="flex-1">{t("Talk to VIDYA")}</span>
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={talkToVidya}
+        aria-label={t("Talk to VIDYA")}
+        className="focus-ring group/rail flex min-h-11 w-full flex-col items-center gap-1 rounded-tile py-1.5"
+      >
+        <span className="flex h-9 w-12 items-center justify-center rounded-pill border border-tint-accent-border bg-tint-accent text-saffron-700 transition-colors duration-small ease-standard group-hover/rail:bg-tint-accent-strong">
+          <AudioLines aria-hidden="true" strokeWidth={1.7} className="h-[18px] w-[18px]" />
+        </span>
+        <span className="text-xs font-semibold leading-tight text-saffron-700">VIDYA</span>
+      </button>
+    )
+
+  // The one SamparkAI entry in SahayakAI's navigation. samparkUrl() picks the
+  // configured SamparkAI origin (NEXT_PUBLIC_SAMPARK_URL, e.g.
+  // https://sampark.sahayakai.com) or, unset, /sampark on this origin;
+  // samparkEntryPath() opens the demo school on a demo deployment.
+  const samparkHref = samparkEntryUrl()
+  // Returns the element itself (not a component) so TooltipTrigger asChild can
+  // attach its ref and handlers to the <a>.
+  const samparkLink = ({ className, children, label }: { className: string; children: React.ReactNode; label?: string }) =>
+    isExternalUrl(samparkHref) ? (
+      <a href={samparkHref} className={className} aria-label={label} data-testid="sampark-entry">{children}</a>
+    ) : (
+      <Link href={samparkHref} className={className} aria-label={label} onClick={onNavigate} data-testid="sampark-entry">{children}</Link>
+    )
+
+  // The SamparkAI entry shows only once the server says SamparkAI is on
+  // (access.sampark); signed out, that is unknown, so it stays hidden. The
+  // teacher's account (profile, classes, settings, sign out) is not repeated
+  // here: its one entry is the header avatar menu (AuthButton), plus the
+  // Profile destination above.
+  const footer = (mode: "full" | "rail") => {
+    if (mode === "rail") {
+      return (
+        <div className="flex flex-col items-center gap-2">
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {samparkLink({
+                  label: t("Open SamparkAI"),
+                  className: "focus-ring flex min-h-11 w-full flex-col items-center gap-1 rounded-tile py-1",
+                  children: (
+                    <>
+                      <SamparkMark className="h-8 w-8" />
+                      <span className="text-xs font-medium leading-tight text-ink-600">Sampark</span>
+                    </>
+                  ),
+                })}
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={10}>
+                {t("SamparkAI · Calls and notices to parents")}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )
+    }
+    return (
+      <div className="space-y-2">
+        {samparkLink({
+          className: "focus-ring group/sp flex min-h-12 items-center gap-3 rounded-field border border-line-glass bg-surface-glass-soft px-3 py-2 transition-colors duration-small ease-standard hover:bg-surface-glass-strong",
+          children: (
+            <>
+              <SamparkMark />
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-value font-semibold leading-tight text-ink-900">SamparkAI</span>
+                <span className="block text-xs leading-snug text-ink-500">{t("Calls and notices to parents")}</span>
+              </span>
+              <ArrowUpRight aria-hidden="true" strokeWidth={1.7} className="h-4 w-4 shrink-0 text-ink-500 group-hover/sp:text-ink-900" />
+            </>
+          ),
+        })}
+      </div>
+    )
+  }
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={t("Home")} isActive={pathname === '/'} variant="outline">
-              <Link href="/" onClick={() => handleNavClick('/')}>
-                <Home />
-                <span>{t("Home")}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        {/* CREATE — authoring tools */}
-        <SidebarGroup>
-          <SidebarGroupLabel>{t("Create")}</SidebarGroupLabel>
-          <SidebarMenu>
-            {/* Bug #5 (audit 2026-04-27): FeatureSpotlight was rendering its
-                pulse-ring around Lesson Plan for unauthenticated visitors too,
-                creating the "two active items" visual conflict. Now gated to
-                authenticated NEW users only — established users + signed-out
-                visitors get the plain item with only the real isActive style. */}
-            {sidebarUserId && isNewUser ? (
-              <FeatureSpotlight
-                id={SPOTLIGHT_IDS.SIDEBAR_LESSON_PLAN}
-                message="Start here! Create your first lesson plan"
-                seenSpotlights={spotlightsSeen}
-                onDismiss={handleSpotlightDismiss}
-                position="right"
-                delay={1000}
-              >
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan')} tooltip={t("Lesson Plan")}>
-                    <Link href="/lesson-plan" onClick={() => handleNavClick('/lesson-plan')}>
-                      <CalendarDays />
-                      <span>{t("Lesson Plan")}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </FeatureSpotlight>
-            ) : (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/lesson-plan')} tooltip={t("Lesson Plan")}>
-                  <Link href="/lesson-plan" onClick={() => handleNavClick('/lesson-plan')}>
-                    <CalendarDays />
-                    <span>{t("Lesson Plan")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-            {canShowAdvanced && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/worksheet-wizard')} tooltip={t("Worksheet Wizard")}>
-                  <Link href="/worksheet-wizard" onClick={() => handleNavClick('/worksheet-wizard')}>
-                    <PencilRuler />
-                    <span>{t("Worksheet Wizard")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-          </SidebarMenu>
-        </SidebarGroup>
-
-        {/* ASSESS — evaluation tools */}
-        {canShowAdvanced && (
-          <SidebarGroup>
-            <SidebarGroupLabel>{t("Assess")}</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/quiz-generator')} tooltip={t("Quiz Generator")}>
-                  <Link href="/quiz-generator" onClick={() => handleNavClick('/quiz-generator')}>
-                    <FileSignature />
-                    <span>{t("Quiz Generator")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/rubric-generator')} tooltip={t("Rubric Generator")}>
-                  <Link href="/rubric-generator" onClick={() => handleNavClick('/rubric-generator')}>
-                    <ClipboardCheck />
-                    <span>{t("Rubric Generator")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/exam-paper')} tooltip={t("Exam Paper")}>
-                  <Link href="/exam-paper" onClick={() => handleNavClick('/exam-paper')}>
-                    <FileText />
-                    <span>{t("Exam Paper")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/attendance')} tooltip={t("Attendance")}>
-                  <Link href="/attendance" onClick={() => handleNavClick('/attendance')}>
-                    <ClipboardList />
-                    <span>{t("Attendance")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
-
-        {/* COMMUNITY — peer network (engagement generators live in Labs now) */}
-        {canShowAdvanced && (
-          <SidebarGroup>
-            <SidebarGroupLabel>{t("Community")}</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/community')} tooltip={t("Community")}>
-                  <Link href="/community" onClick={() => {
-                    handleNavClick('/community');
-                    if (showCommunityNew) {
-                      setShowCommunityNew(false);
-                      const u = auth.currentUser;
-                      if (u) updateDoc(doc(db, "users", u.uid), { communityIntroState: 'visited' }).catch(() => {});
-                    }
-                  }} className="flex items-center justify-between w-full">
-                    <span className="flex items-center gap-2">
-                      <Library />
-                      <span>{t("Community")}</span>
-                    </span>
-                    {showCommunityNew && (
-                      <span className="ml-auto h-[18px] px-1.5 rounded-pill bg-orange-500 text-white text-[10px] font-black flex items-center justify-center">
-                        New
-                      </span>
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
-
-        {/* ASK — Q&A surface */}
-        <SidebarGroup>
-          <SidebarGroupLabel>{t("Ask")}</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/instant-answer')} tooltip={t("Instant Answer")}>
-                <Link href="/instant-answer" onClick={() => handleNavClick('/instant-answer')}>
-                  <Lightbulb />
-                  <span>{t("Instant Answer")}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-
-        {/* MY WORK — the teacher's personal workspace */}
-        <SidebarGroup>
-          <SidebarGroupLabel>{t("My work")}</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/my-library')} tooltip={t("My Library")}>
-                <Link href="/my-library" onClick={() => handleNavClick('/my-library')}>
-                  <Library />
-                  <span>{t("My Library")}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            {canShowAdvanced && (
-              <>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/messages')} tooltip={t("Messages")}>
-                    <Link href="/messages" onClick={() => handleNavClick('/messages')} className="flex items-center justify-between w-full">
-                      <span className="flex items-center gap-2">
-                        <MessageCircle />
-                        <span>{t("Messages")}</span>
-                      </span>
-                      {totalUnread > 0 && (
-                        <span className="ml-auto h-[18px] min-w-[18px] px-1.5 rounded-pill bg-primary text-white text-[10px] font-black flex items-center justify-center">
-                          {totalUnread > 9 ? "9+" : totalUnread}
-                        </span>
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </>
-            )}
-            {/* Notifications: always visible when signed in — connection
-                requests arrive here, so a new user needs to see the badge to
-                discover the action. (Previously gated behind canShowAdvanced,
-                which silently hid the entire entry point for new users.) */}
-            {sidebarUserId && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/notifications')} tooltip={t("Notifications")}>
-                  <Link href="/notifications" onClick={() => handleNavClick('/notifications')} className="flex items-center justify-between w-full">
-                    <span className="flex items-center gap-2">
-                      <Bell className="text-primary" />
-                      <span>{t("Notifications")}</span>
-                    </span>
-                    {unreadNotifications > 0 && (
-                      <span
-                        data-testid="notifications-badge"
-                        aria-label={`${unreadNotifications} unread notifications`}
-                        className="ml-auto h-[18px] min-w-[18px] px-1.5 rounded-pill bg-red-500 text-white text-[10px] font-black flex items-center justify-center"
-                      >
-                        {unreadNotifications > 9 ? "9+" : unreadNotifications}
-                      </span>
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-          </SidebarMenu>
-        </SidebarGroup>
-
-        {/* LABS — parked tools, one entry point (registry: src/lib/labs.ts) */}
-        {canShowAdvanced && (
-          <SidebarGroup>
-            <SidebarGroupLabel>{t("Labs")}</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/labs')} tooltip={t("Labs")}>
-                  <Link href="/labs" onClick={() => handleNavClick('/labs')}>
-                    <FlaskConical />
-                    <span>{t("Labs")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
-
-        {/* "See all tools" trigger — only for new users hiding advanced groups */}
-        {isNewUser && !showAllTools && (
-          <SidebarGroup>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setShowAllTools(true)} tooltip={t("See all tools")}>
-                  <ChevronDown />
-                  <span className="text-muted-foreground">{t("See all tools")}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
-
-        <UsageDisplay />
-
-        {/* ACCOUNT — bottom of main content */}
-        <SidebarGroup>
-          <SidebarGroupLabel>{t("Account")}</SidebarGroupLabel>
-          <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
-            <PlanBadge />
-          </div>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/my-profile')} tooltip={t("My Profile")}>
-                <Link href="/my-profile" onClick={() => handleNavClick('/my-profile')}>
-                  <User />
-                  <span>{t("My Profile")}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.startsWith('/settings')} tooltip={t("Settings")}>
-                <Link href="/settings" onClick={() => handleNavClick('/settings')}>
-                  <Settings />
-                  <span>{t("Settings")}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            {canShowAdvanced && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/privacy-for-teachers')} tooltip={t("Privacy")}>
-                  <Link href="/privacy-for-teachers" onClick={() => handleNavClick('/privacy-for-teachers')}>
-                    <ShieldCheck />
-                    <span>{t("Privacy")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-      {sidebarUserId && (
-        <SidebarFooter>
-          <SidebarGroup>
-            <SidebarGroupLabel>{t("Admin")}</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/cost-dashboard')} tooltip={t("Mission Control")}>
-                  <Link href="/admin/cost-dashboard" onClick={() => handleNavClick('/admin/cost-dashboard')}>
-                    <Zap />
-                    <span>{t("Mission Control")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/log-dashboard')} tooltip={t("Log Dashboard")}>
-                  <Link href="/admin/log-dashboard" onClick={() => handleNavClick('/admin/log-dashboard')}>
-                    <Terminal />
-                    <span>{t("Log Dashboard")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/system-health')} tooltip={t("AI Health")}>
-                  <Link href="/admin/system-health" onClick={() => handleNavClick('/admin/system-health')}>
-                    <HeartPulse />
-                    <span>{t("AI Health")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarFooter>
-      )}
-    </Sidebar>
+    <ProductSideNav
+      label="SahayakAI"
+      brand={<SahayakWordmark />}
+      brandCompact={<SahayakWordmark compact />}
+      brandHref="/"
+      lead={lead}
+      sections={sections}
+      footer={access.sampark ? footer : undefined}
+      collapsed={collapsed}
+      onToggleCollapsed={onToggleCollapsed}
+      forceFull={forceFull}
+      onNavigate={onNavigate}
+      collapseLabel={t("Fold sidebar")}
+      expandLabel={t("Unfold sidebar")}
+    />
   )
 }

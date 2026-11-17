@@ -108,3 +108,26 @@ export function vidyaDeepLinkKey(
         .map((name) => `${name}=${encodeURIComponent(searchParams.get(name) ?? '')}`)
         .join('&');
 }
+
+type FlowParams = Record<string, string | undefined | null>;
+
+/**
+ * The destination URL for a VIDYA NAVIGATE_AND_FILL action. Only what the
+ * action carries goes into the form — plus, for the text path,
+ * `fallbackTopic` (the teacher's own previous message) when the action has no
+ * topic/question/prompt. Live voice passes `null`: a stored history turn can
+ * hold VIDYA's own words heard back through the speakers.
+ */
+export function vidyaFlowTargetUrl(flow: string, params: FlowParams, fallbackTopic: string | null): string {
+  const topic = params.topic || (!params.question && !params.prompt ? fallbackTopic?.trim() || null : null);
+  const query = new URLSearchParams();
+  if (topic) query.set("topic", topic);
+  if (params.question) query.set("question", params.question);
+  if (params.assignmentDescription) query.set("assignmentDescription", params.assignmentDescription);
+  if (params.prompt) query.set("prompt", params.prompt);
+  if (params.subject) query.set("subject", params.subject);
+  if (params.gradeLevel) query.set("gradeLevel", params.gradeLevel);
+  const lang = normaliseVidyaLanguage(params.language);
+  if (lang) query.set("language", lang);
+  return `/${flow}?${query.toString()}`;
+}

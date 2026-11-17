@@ -254,7 +254,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   Widget _topicField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.quizTopicLabel,
-      leadingIcon: LucideIcons.lightbulb,
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
         onResult: (text) => _topicController.text = text,
@@ -277,7 +276,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   Widget _numQuestionsField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.quizNumQuestionsLabel,
-      leadingIcon: LucideIcons.hash,
       child: _Stepper(
         value: _numQuestions,
         min: kMinQuestions,
@@ -299,7 +297,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       builder: (field) {
         return LabeledField(
           label: l10n.quizTypesLabel,
-          leadingIcon: LucideIcons.listChecks,
           errorText: field.errorText,
           child: Wrap(
             spacing: AppSpacing.space2,
@@ -333,7 +330,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     return LabeledField(
       label: l10n.quizGradeLabel,
       optionalLabel: l10n.quizOptional,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -354,7 +350,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     return LabeledField(
       label: l10n.quizSubjectLabel,
       optionalLabel: l10n.quizOptional,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -378,7 +373,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     return LabeledField(
       label: l10n.toolImageOptionalLabel,
       hint: l10n.toolImageOptionalHint,
-      leadingIcon: LucideIcons.image,
       child: ImageInput(
         value: _image,
         onChanged: (picked) => setState(() => _image = picked),
@@ -389,7 +383,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,
@@ -408,7 +401,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   Widget _difficultyField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.quizDifficultyLabel,
-      leadingIcon: LucideIcons.gauge,
       hint: l10n.quizDifficultyHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -440,7 +432,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     return LabeledField(
       label: l10n.quizBloomsLabel,
       optionalLabel: l10n.quizOptional,
-      leadingIcon: LucideIcons.brain,
       hint: l10n.quizBloomsHint,
       child: Wrap(
         spacing: AppSpacing.space2,

@@ -1,0 +1,79 @@
+{
+  "students": [
+    {
+      "id": "stu_9901",
+      "admissionNo": "HV/2026/9901",
+      "apaarId": null,
+      "fullName": "Nima Sherpa",
+      "spokenFirstName": {
+        "en": "Nima",
+        "hi": "नीमा",
+        "bn": "নিমা",
+        "ne": "निमा"
+      },
+      "grade": 14,
+      "section": "A",
+      "rollNo": 1,
+      "gender": "male",
+      "feeCategory": "regular",
+      "boarding": false,
+      "transportRoute": null,
+      "sensitiveFlags": [],
+      "status": "active",
+      "guardians": [
+        {
+          "guardianId": "gdn_0001",
+          "isPrimary": true,
+          "isGuardianOfRecord": true
+        }
+      ],
+      "updatedAt": "2026-09-27T04:35:00.000Z"
+    },
+    {
+      "id": "stu_9902",
+      "admissionNo": "HV/2026/9902",
+      "apaarId": null,
+      "fullName": "Riya Das",
+      "spokenFirstName": {
+        "en": "Riya",
+        "hi": "रिया",
+        "bn": "রিয়া",
+        "ne": "रिया"
+      },
+      "grade": 7,
+      "section": "B",
+      "rollNo": 22,
+      "gender": "female",
+      "feeCategory": "regular",
+      "boarding": false,
+      "transportRoute": "R4",
+      "sensitiveFlags": [],
+      "status": "active",
+      "guardians": [],
+      "updatedAt": "2026-09-27T04:35:00.000Z"
+    }
+  ],
+  "guardians": [
+    {
+      "id": "gdn_9901",
+      "fullName": "Rakesh Gupta",
+      "relation": "father",
+      "phone": "12345",
+      "preferredLanguage": "hi",
+      "consent": {
+        "notices": null,
+        "progress": null,
+        "recordedConversation": null,
+        "hpcInput": null
+      },
+      "doNotContact": false,
+      "synthetic": true,
+      "updatedAt": "2026-09-27T04:35:00.000Z"
+    }
+  ],
+  "reasons": {
+    "stu_9901": "grade 14 is outside 1-12",
+    "stu_9902": "no guardians (a student needs at least one)",
+    "gdn_9901": "phone \"12345\" is not E.164"
+  }
+}

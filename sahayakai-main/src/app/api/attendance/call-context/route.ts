@@ -1,8 +1,14 @@
 /**
  * Internal API: Call Context
  *
- * Called by the Pipecat voice server to fetch the full outreach record
- * needed to configure the call pipeline (student name, language, message, etc.)
+ * Called by the Pipecat voice server to fetch the outreach record needed to
+ * configure the call pipeline (student name, language, message, etc.)
+ *
+ * What the pipeline may SPEAK comes from parentCallContent, never from the
+ * record directly. A concern call is a request to talk (founder decision,
+ * 23 Oct 2026): `generatedMessage` carries the fixed request-to-talk line in
+ * the parent's language, and `reason` and `subject` are empty. Only a
+ * good-news call returns the teacher's own message.
  *
  * Auth: X-Internal-Key header (service-to-service, not user auth)
  *
@@ -12,6 +18,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { timingSafeEqual } from 'crypto';
+import { parentCallContent } from '@/lib/attendance/request-to-talk';
 
 function safeCompare(a: string, b: string): boolean {
     if (a.length !== b.length) return false;
@@ -43,14 +50,17 @@ export async function GET(req: NextRequest) {
         }
 
         const data = doc.data()!;
+        const parentLanguage = data.parentLanguage ?? 'Hindi';
+        const content = parentCallContent(data, parentLanguage);
 
         return NextResponse.json({
             studentName: data.studentName ?? '',
             className: data.className ?? '',
-            subject: data.subject ?? '',
-            reason: data.reason ?? '',
-            generatedMessage: data.generatedMessage ?? '',
-            parentLanguage: data.parentLanguage ?? 'Hindi',
+            subject: content.subject,
+            reason: content.requestToTalk ? '' : content.reason,
+            generatedMessage: content.teacherMessage,
+            requestToTalk: content.requestToTalk,
+            parentLanguage,
             teacherName: data.teacherName ?? '',
             schoolName: data.schoolName ?? '',
             teacherUid: data.teacherUid ?? '',

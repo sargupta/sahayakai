@@ -1,5 +1,6 @@
 "use client";
 
+import { isExternalUrl, samparkEntryUrl } from "@/lib/products";
 import {
   useEffect,
   useState,
@@ -28,6 +29,7 @@ import {
   Lightbulb,
   MessageCircle,
   PencilRuler,
+  PhoneCall,
   Search,
   Settings,
   ShieldCheck,
@@ -35,6 +37,8 @@ import {
   Video,
 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { useAuth } from "@/context/auth-context";
+import { useNavAccess } from "@/components/shell/use-nav-access";
 
 /**
  * Command palette — Phase 3 (2026-04-24).
@@ -54,6 +58,8 @@ type Route = {
   keywords: string;
   group: string;
   icon: ComponentType<{ className?: string }>;
+  /** Listed only while SamparkAI is on for this deployment (nav-access `sampark`). */
+  sampark?: true;
 };
 
 const ROUTES: Route[] = [
@@ -71,11 +77,12 @@ const ROUTES: Route[] = [
   { href: "/rubric-generator", label: "Rubric Generator", i18nKey: "Rubric Generator", keywords: "rubric grade score marking", group: "Assess", icon: ClipboardCheck },
   { href: "/exam-paper", label: "Exam Paper", i18nKey: "Exam Paper", keywords: "exam paper board question", group: "Assess", icon: FileText },
   { href: "/attendance", label: "Attendance", i18nKey: "Attendance", keywords: "attendance roll call marks", group: "Assess", icon: ClipboardList },
+  { href: samparkEntryUrl("/workspace"), label: "SamparkAI · School calls", i18nKey: "SamparkAI · School calls", keywords: "school calls parents families ptm event closure notice sampark samparkai", group: "Assess", icon: PhoneCall, sampark: true },
 
   // Engage
   { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend", group: "Labs", icon: Video },
   { href: "/virtual-field-trip", label: "Virtual Field Trip", i18nKey: "Virtual Field Trip", keywords: "virtual field trip explore visit", group: "Labs", icon: Globe2 },
-  { href: "/teacher-training", label: "Teacher Training", i18nKey: "Teacher Training", keywords: "teacher training professional development cpd", group: "Labs", icon: GraduationCap },
+  { href: "/teacher-training", label: "AI Coach", i18nKey: "AI Coach", keywords: "ai coach teaching coach teacher training professional development cpd classroom strategies", group: "Engage", icon: GraduationCap },
   { href: "/community", label: "Community", i18nKey: "Community", keywords: "community teachers chat discover", group: "Engage", icon: Library },
 
   // Ask
@@ -101,6 +108,8 @@ const ROUTES: Route[] = [
 export function CommandPalette() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const access = useNavAccess(user?.uid ?? null);
   const [open, setOpen] = useState(false);
 
   // Global ⌘K / Ctrl+K keybinding + `/` shortcut
@@ -117,18 +126,23 @@ export function CommandPalette() {
 
   const handleSelect = (href: string) => {
     setOpen(false);
-    router.push(href);
+    // SamparkAI may live on its own origin (NEXT_PUBLIC_SAMPARK_URL).
+    if (isExternalUrl(href)) window.location.assign(href);
+    else router.push(href);
   };
 
+  // SamparkAI entries only while the server says SamparkAI is on; off or
+  // unknown, they are left out (the SamparkAI APIs answer 404 then).
   const grouped = useMemo(() => {
     const groups = new Map<string, Route[]>();
     for (const r of ROUTES) {
+      if (r.sampark && !access.sampark) continue;
       const list = groups.get(r.group) ?? [];
       list.push(r);
       groups.set(r.group, list);
     }
     return Array.from(groups.entries());
-  }, []);
+  }, [access.sampark]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

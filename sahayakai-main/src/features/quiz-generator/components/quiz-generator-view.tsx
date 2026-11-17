@@ -2,16 +2,16 @@
 
 /**
  * QuizGeneratorView — all quiz-generator markup, zero orchestration.
- * Composes the GeneratorPage shell; every form field, control and i18n
- * key is preserved from the pre-migration page.
+ * Composes the GeneratorPage shell: the topic, optional image and question
+ * types on the left; a sticky Settings panel (subject/class/language, count,
+ * Bloom's levels, Generate) on the right on wide screens. Every form field,
+ * control and i18n key is preserved from the pre-migration page.
  */
 
 import { FileSignature, Loader2, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import {
     Form,
     FormControl,
@@ -36,7 +36,8 @@ import { SelectableCard } from "@/components/selectable-card";
 import { ShareToCommunityCTA } from "@/components/share-to-community-cta";
 import { UsageRemainingBadge } from "@/components/usage-remaining-badge";
 import { useLanguage } from "@/context/language-context";
-import { GeneratorPage, GeneratorSubmitBar } from "@/features/generator";
+import { cn } from "@/lib/utils";
+import { GeneratorPage, GeneratorSection, GeneratorSubmitBar, GENERATOR_SUBMIT_CLASS } from "@/features/generator";
 import { questionTypesData } from "../types";
 import { useQuizGenerator } from "../hooks/use-quiz-generator";
 
@@ -52,6 +53,7 @@ const BLOOM_HINTS: Record<string, string> = {
     Evaluate: "Justify a decision or judge the value of ideas.",
     Create: "Combine ideas to produce original work or solutions.",
 };
+const BLOOM_LEVELS = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"] as const;
 
 type QuizGeneratorViewProps = ReturnType<typeof useQuizGenerator>;
 
@@ -93,54 +95,63 @@ export function QuizGeneratorView({
             afterResult={<ShareToCommunityCTA contentType="quiz" />}
             form={
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                            {/* LEFT COLUMN: Main Content (7 cols) */}
-                            <div className="lg:col-span-7 space-y-6">
-                                <FormField
-                                    control={form.control}
-                                    name="topic"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <div className="flex flex-col gap-4">
-                                                    <Textarea
-                                                        placeholder={translate("e.g., The life cycle of a butterfly, using the uploaded image.")}
-                                                        {...field}
-                                                        className="bg-muted/20 min-h-[120px] resize-none"
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+                            {/* ── What the quiz is about ─────────────────────── */}
+                            <div className="space-y-6 xl:col-span-7">
+                                <GeneratorSection step={1} title={translate("Topic")}>
+                                    <div className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="topic"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="sr-only">{translate("Topic")}</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            placeholder={translate("e.g., The life cycle of a butterfly, using the uploaded image.")}
+                                                            {...field}
+                                                            className="min-h-32 resize-none rounded-field bg-muted/30 text-base leading-relaxed"
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium text-muted-foreground indic-text">{translate("Quick Ideas")}</p>
+                                            <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
+                                        </div>
+                                    </div>
+                                </GeneratorSection>
+
+                                <GeneratorSection step={2} title={translate("Add Context (Optional Image)")}>
+                                    <FormField
+                                        control={form.control}
+                                        name="imageDataUri"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only">{translate("Add Context (Optional Image)")}</FormLabel>
+                                                <FormControl>
+                                                    <ImageUploader
+                                                        onImageUpload={(dataUri) => field.onChange(dataUri)}
+                                                        language={selectedLanguage}
                                                     />
-                                                </div>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </GeneratorSection>
 
-                                <FormField
-                                    control={form.control}
-                                    name="imageDataUri"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="font-headline">{translate("Add Context (Optional Image)")}</FormLabel>
-                                            <FormControl>
-                                                <ImageUploader
-                                                    onImageUpload={(dataUri) => field.onChange(dataUri)}
-                                                    language={selectedLanguage}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="questionTypes"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="font-headline">{translate("Question Types")}</FormLabel>
-                                            <div className="card-section">
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <GeneratorSection step={3} title={translate("Question Types")}>
+                                    <FormField
+                                        control={form.control}
+                                        name="questionTypes"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only">{translate("Question Types")}</FormLabel>
+                                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                                     {questionTypesData.map((item) => (
                                                         <SelectableCard
                                                             key={item.id}
@@ -158,28 +169,24 @@ export function QuizGeneratorView({
                                                         />
                                                     ))}
                                                 </div>
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <div className="space-y-2">
-                                    <FormLabel className="font-headline">{translate("Quick Ideas")}</FormLabel>
-                                    <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="quiz" />
-                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </GeneratorSection>
                             </div>
 
-                            {/* RIGHT COLUMN: Configuration (5 cols) */}
-                            <div className="lg:col-span-5 space-y-5 bg-card p-4 sm:p-6 rounded-surface-md border border-border shadow-soft h-fit">
-                                {/* Subject, Grade and Language Selection */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-border/30 pt-4 mt-2">
+                            {/* ── Settings panel ─────────────────────────────── */}
+                            <aside className="h-fit space-y-6 rounded-panel border border-border bg-muted/30 p-4 sm:p-6 xl:sticky xl:top-24 xl:col-span-5">
+                                <h2 className="font-headline text-lg font-semibold text-foreground indic-text">{translate("Settings")}</h2>
+
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-2">
                                     <FormField
                                         control={form.control}
                                         name="subject"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-xs font-semibold text-muted-foreground">{translate("Subject")}</FormLabel>
+                                                <FormLabel className="text-sm font-medium text-foreground">{translate("Subject")}</FormLabel>
                                                 <FormControl>
                                                     <SubjectSelector
                                                         value={field.value}
@@ -197,7 +204,7 @@ export function QuizGeneratorView({
                                         name="gradeLevel"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-xs font-semibold text-muted-foreground">{translate("Class")}</FormLabel>
+                                                <FormLabel className="text-sm font-medium text-foreground">{translate("Class")}</FormLabel>
                                                 <FormControl>
                                                     <GradeLevelSelector
                                                         value={field.value ? [field.value] : []}
@@ -215,8 +222,8 @@ export function QuizGeneratorView({
                                         control={form.control}
                                         name="language"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-xs font-semibold text-muted-foreground">{translate("Language")}</FormLabel>
+                                            <FormItem className="xl:col-span-2">
+                                                <FormLabel className="text-sm font-medium text-foreground">{translate("Language")}</FormLabel>
                                                 <FormControl>
                                                     <LanguageSelector
                                                         onValueChange={field.onChange}
@@ -234,7 +241,7 @@ export function QuizGeneratorView({
                                     name="numQuestions"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-xs font-semibold text-muted-foreground">{translate("Number of Questions")}</FormLabel>
+                                            <FormLabel className="text-sm font-medium text-foreground">{translate("Number of Questions")}</FormLabel>
                                             <FormControl>
                                                 <div className="flex items-center gap-4">
                                                     <Slider
@@ -244,8 +251,9 @@ export function QuizGeneratorView({
                                                         value={[field.value]}
                                                         onValueChange={(vals) => field.onChange(vals[0])}
                                                         className="flex-1"
+                                                        aria-label={translate("Number of Questions")}
                                                     />
-                                                    <span className="font-semibold text-primary bg-primary/8 px-3 py-1 rounded-lg border border-primary/15 min-w-[3rem] text-center">{field.value}</span>
+                                                    <span className="min-w-12 rounded-row border border-primary/20 bg-card px-3 py-1 text-center font-semibold tabular-nums text-saffron-700">{field.value}</span>
                                                 </div>
                                             </FormControl>
                                             <FormMessage />
@@ -258,51 +266,58 @@ export function QuizGeneratorView({
                                     name="bloomsTaxonomyLevels"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
-                                            <FormLabel className="text-xs font-semibold text-muted-foreground">{translate("Bloom's Taxonomy Levels")}</FormLabel>
+                                            <FormLabel className="text-sm font-medium text-foreground">{translate("Bloom's Taxonomy Levels")}</FormLabel>
                                             <TooltipProvider>
-                                                <div className="card-section flex flex-wrap gap-2">
-                                                    {["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"].map((level) => (
-                                                        <Tooltip key={level}>
-                                                            <TooltipTrigger asChild>
-                                                                <Badge
-                                                                    variant={field.value?.includes(level) ? "default" : "outline"}
-                                                                    className={`cursor-pointer transition-all ${field.value?.includes(level) ? "bg-primary hover:bg-primary/90 text-white" : "bg-muted/20 hover:bg-muted/40 text-muted-foreground"}`}
-                                                                    onClick={() => {
-                                                                        if (field.value?.includes(level)) {
-                                                                            field.onChange(field.value.filter((l: string) => l !== level));
-                                                                        } else {
-                                                                            field.onChange([...(field.value || []), level]);
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    {translate(level)}
-                                                                </Badge>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                                                <p className="text-xs">{translate(BLOOM_HINTS[level] ?? level)}</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    ))}
+                                                <div className="flex flex-wrap gap-2" role="group" aria-label={translate("Bloom's Taxonomy Levels")}>
+                                                    {BLOOM_LEVELS.map((level) => {
+                                                        const selected = !!field.value?.includes(level);
+                                                        return (
+                                                            <Tooltip key={level}>
+                                                                <TooltipTrigger asChild>
+                                                                    <button
+                                                                        type="button"
+                                                                        aria-pressed={selected}
+                                                                        onClick={() => field.onChange(
+                                                                            selected
+                                                                                ? (field.value ?? []).filter((l: string) => l !== level)
+                                                                                : [...(field.value || []), level],
+                                                                        )}
+                                                                        className={cn(
+                                                                            "focus-ring rounded-pill border px-3 py-1 text-sm font-medium transition-colors duration-micro ease-out-quart indic-text",
+                                                                            selected
+                                                                                ? "border-saffron-600 bg-saffron-600 text-white hover:bg-saffron-700"
+                                                                                : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                                                                        )}
+                                                                    >
+                                                                        {translate(level)}
+                                                                    </button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent className="bg-popover text-popover-foreground border-border">
+                                                                    <p className="text-xs">{translate(BLOOM_HINTS[level] ?? level)}</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        );
+                                                    })}
                                                 </div>
                                             </TooltipProvider>
 
                                             {field.value && field.value.length > 0 && (
-                                                <div className="mt-3 p-3 bg-muted/20 rounded-xl border border-border/50 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                    <div className="text-xs font-bold text-primary uppercase tracking-tighter mb-2 flex items-center gap-1">
-                                                        <Brain className="w-3 h-3" />
+                                                <div className="rounded-row border border-border bg-card p-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    <div className="type-eyebrow mb-2 flex items-center gap-1 text-saffron-700 indic-text">
+                                                        <Brain className="h-3.5 w-3.5" aria-hidden="true" />
                                                         {translate("Pedagogical Strategy")}
                                                     </div>
-                                                    <div className="space-y-2">
+                                                    <ul className="space-y-2">
                                                         {field.value.map((level: string) => (
-                                                            <div key={level} className="text-xs leading-relaxed text-foreground flex items-start gap-2">
-                                                                <div className="mt-1 w-1 h-1 rounded-full bg-primary shrink-0" />
+                                                            <li key={level} className="flex items-start gap-2 text-sm leading-relaxed text-foreground indic-text">
+                                                                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-primary" aria-hidden="true" />
                                                                 <span>
-                                                                    <span className="font-bold text-foreground">{translate(level)}:</span>{" "}
-                                                                    {translate(BLOOM_HINTS[level] ?? level)}
+                                                                    <span className="font-semibold">{translate(level)}:</span>{" "}
+                                                                    <span className="text-muted-foreground">{translate(BLOOM_HINTS[level] ?? level)}</span>
                                                                 </span>
-                                                            </div>
+                                                            </li>
                                                         ))}
-                                                    </div>
+                                                    </ul>
                                                 </div>
                                             )}
                                             <FormMessage />
@@ -310,16 +325,16 @@ export function QuizGeneratorView({
                                     )}
                                 />
 
-                                <GeneratorSubmitBar>
+                                <GeneratorSubmitBar hint={aiUnavailableReason} className="md:block md:border-t-0 md:pt-0">
                                     <Button
                                         type="submit"
                                         disabled={isGenerating || isRestoring || !canUseAI}
                                         aria-busy={isGenerating}
-                                        className="w-full py-5 text-base font-headline rounded-surface-md shadow-elevated transition-shadow duration-micro ease-out-quart"
+                                        className={cn(GENERATOR_SUBMIT_CLASS, "md:w-full md:min-w-0")}
                                     >
                                         {isGenerating || isRestoring ? (
                                             <>
-                                                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                                 {translate("Generating Quiz...")}
                                             </>
                                         ) : (
@@ -327,10 +342,7 @@ export function QuizGeneratorView({
                                         )}
                                     </Button>
                                 </GeneratorSubmitBar>
-                                {aiUnavailableReason && (
-                                    <p className="text-xs text-amber-600 mt-2 text-center">{aiUnavailableReason}</p>
-                                )}
-                            </div>
+                            </aside>
                         </div>
                     </form>
                 </Form>

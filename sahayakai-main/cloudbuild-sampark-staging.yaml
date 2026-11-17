@@ -1,0 +1,124 @@
+# cloudbuild-sampark-staging.yaml — SamparkAI staging with real Riya calls over Vobiz.
+#
+# One non-production Cloud Run service, `sahayakai-sampark-staging`, wired to the Riya voice
+# bridge (`sahayakai-riya-bridge`, sahayakai-agents/deploy/cloudbuild-riya-bridge.yaml):
+#
+#   Sampark console ──start──▶ Vobiz REST ──answer──▶ /api/webhooks/vobiz-riya/answer (here)
+#        ▲                                                     │ <Stream> to the bridge
+#        │                                                     ▼
+#   call history ◀── /api/webhooks/vobiz-riya/event ◀── bridge (Riya on Gemini Live)
+#                    /api/webhooks/vobiz-riya/context ──▶ (the bridge fetches the call's variables)
+#
+# Safety built in (same rules as cloudbuild-riya-staging.yaml):
+#   - SAMPARK_FIRESTORE_DATABASE=sampark-nonprod: Riya refuses real calls without it.
+#   - Test mode only (Live is refused in code); a call rings only the school's saved test phone,
+#     which must also be in _TEST_NUMBERS (SAMPARK_RIYA_TEST_ALLOWED_NUMBERS). Empty = no real call.
+#   - SAMPARK_RIYA_TEST_DAILY_CAP caps real test calls per school per day.
+#   - Its own PII key, phone pepper and request-signing key (SAMPARK_STAGING_*), never production's.
+#   - VOICE_PROVIDER is not set: the attendance parent-call path cannot dial from here.
+#   - Scales to zero; max 1 instance.
+#
+# Scheduler: batches, campaigns and callbacks advance only when /api/jobs/sampark-dispatch is
+# called. That route needs CRON_SECRET (secret SAMPARK_STAGING_CRON_SECRET) and a Cloud Scheduler
+# job `sampark-staging-dispatch` posting to it every minute during calling hours with
+# `Authorization: Bearer <that secret>`. Class-wide batches place real calls here
+# (SAMPARK_BATCH_REAL_CALLS=true), one at a time: Test mode still rings only the school's test phone.
+#
+# Submit (from the repo root; the upload is sahayakai-main only, about 50 MB):
+#   gcloud builds submit sahayakai-main --project=sahayakai-b4248 --config=sahayakai-main/cloudbuild-sampark-staging.yaml \
+#     --substitutions=SHORT_SHA=$(git rev-parse --short HEAD),_TEST_NUMBERS=+91XXXXXXXXXX
+
+substitutions:
+  _SERVICE: sahayakai-sampark-staging
+  _REGISTRY: cloud-run-source-deploy
+  _REGION: asia-southeast1
+  _PROJECT_NUMBER: '640589855975'
+  _BRIDGE_URL: https://sahayakai-riya-bridge-640589855975.asia-south1.run.app
+  _TEST_NUMBERS: ''
+  _DAILY_CAP: '3'
+  # Firebase uids allowed to use hands-free VIDYA (comma-separated). Production mode refuses
+  # the `*` wildcard, so an empty list means nobody. Pass several with gcloud's alternate
+  # delimiter: --substitutions=^@^SHORT_SHA=abc1234@_TEST_NUMBERS=+91...@_VIDYA_UIDS=uid1,uid2
+  _VIDYA_UIDS: ''
+  # ElevenLabs ids (not secrets). Leave empty for a Vobiz-only staging.
+  _ELEVENLABS_AGENT_ID: ''
+  _ELEVENLABS_PHONE_NUMBER_ID: ''
+  _ELEVENLABS_SOURCE_AGENT_ID: ''
+  # 'true' lets staging call through the original agent when no clone exists (founder decision,
+  # 2026-11-16, staging only). Leave 'false' wherever a clone is available.
+  _ELEVENLABS_ALLOW_SOURCE_AGENT: 'false'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REGISTRY}/${_SERVICE}:$SHORT_SHA
+      - --build-arg=GIT_SHA=$SHORT_SHA
+      - --build-arg=BUILD_ID=$BUILD_ID
+      - --build-arg=NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai
+      # Hands-free Live VIDYA in the browser. Also needs the three VIDYA_* settings below.
+      - --build-arg=NEXT_PUBLIC_VIDYA_LIVE_VOICE=1
+      # The demo school (Green Valley, fictional; calls play in the browser). Needs the server
+      # flag SAMPARK_DEMO_ENABLED below as well.
+      - --build-arg=NEXT_PUBLIC_SAMPARK_DEMO_ENABLED=true
+      - --file=Dockerfile
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REGISTRY}/${_SERVICE}:$SHORT_SHA']
+    waitFor: [build]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REGISTRY}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --project=$PROJECT_ID
+      - --allow-unauthenticated
+      - --min-instances=0
+      - --max-instances=1
+      - --cpu=1
+      - --memory=2Gi
+      - --set-secrets=SAMPARK_PII_KEY=SAMPARK_STAGING_PII_KEY:latest,SAMPARK_PHONE_PEPPER=SAMPARK_STAGING_PHONE_PEPPER:latest,SAHAYAKAI_REQUEST_SIGNING_KEY=SAMPARK_STAGING_SIGNING_KEY:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest,VOBIZ_FROM_NUMBER=VOBIZ_FROM_NUMBER:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest,GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest,CRON_SECRET=SAMPARK_STAGING_CRON_SECRET:latest
+      # `^@^` makes @ the pair separator, so values may contain commas (the purposes list, or
+      # several test numbers). --set-* replaces the whole list on every deploy: anything added by
+      # hand on the service is wiped, so every staging setting must live in this file.
+      # All nine Riya workflows and 7-day transcripts match the local launcher the team tests with.
+      - --set-env-vars=^@^NODE_ENV=production@DEMO_MODE=true@SAMPARK_ENABLED=true@SAMPARK_DEMO_ENABLED=true@SAMPARK_ELEVENLABS_ENABLED=true@SAMPARK_LIVE_DIAL_ENABLED=true@SAMPARK_FIRESTORE_DATABASE=sampark-nonprod@SAMPARK_RIYA_PURPOSES=ptm_invitation,event_invitation,holiday_notice,exam_schedule_notice,emergency_closure,absence_notice,academic_performance,classroom_behaviour,student_achievement@SAMPARK_BATCH_REAL_CALLS=true@SAMPARK_BATCH_MAX_CONCURRENCY=1@SAMPARK_BATCH_DIAL_GAP_SECONDS=60@SAMPARK_VOBIZ_MAX_CONCURRENT_CALLS=1@SAMPARK_RIYA_STORE_TRANSCRIPTS=true@SAMPARK_RIYA_TRANSCRIPT_DAYS=7@SAMPARK_RIYA_TEST_DAILY_CAP=${_DAILY_CAP}@SAMPARK_RIYA_TEST_ALLOWED_NUMBERS=${_TEST_NUMBERS}@SAMPARK_VOBIZ_RIYA_ENABLED=true@SAMPARK_PUBLIC_BASE_URL=https://${_SERVICE}-${_PROJECT_NUMBER}.${_REGION}.run.app@VOBIZ_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ENABLED=true@VIDYA_VOICE_PUBLIC_ENABLED=true@VIDYA_VOICE_STREAM_BASE_URL=${_BRIDGE_URL}@VIDYA_VOICE_LIVE_ALLOWED_UIDS=${_VIDYA_UIDS}@NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai
+      - --quiet
+    waitFor: [push]
+
+  # ElevenLabs (the school's other provider). Runs only when the three ids are passed, because
+  # binding a secret that does not exist fails the whole deploy. Needs two secrets created by
+  # hand first: RIYA_ELEVENLABS_API_KEY and RIYA_ELEVENLABS_WEBHOOK_SECRET.
+  # Without this step a school on ElevenLabs is blocked with ELEVENLABS_UNCONFIGURED.
+  - id: elevenlabs
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ -z "${_ELEVENLABS_AGENT_ID}" ]; then echo "ElevenLabs ids not passed: Vobiz only"; exit 0; fi
+        for v in "_ELEVENLABS_PHONE_NUMBER_ID=${_ELEVENLABS_PHONE_NUMBER_ID}" "_ELEVENLABS_SOURCE_AGENT_ID=${_ELEVENLABS_SOURCE_AGENT_ID}"; do
+          [ -n "$${v#*=}" ] || { echo "missing substitution $${v%%=*}"; exit 1; }
+        done
+        # The source agent is the exported original; calls normally go through a clone of it.
+        # Calling through the original needs the explicit override (the app refuses otherwise).
+        if [ "${_ELEVENLABS_AGENT_ID}" = "${_ELEVENLABS_SOURCE_AGENT_ID}" ] && [ "${_ELEVENLABS_ALLOW_SOURCE_AGENT}" != "true" ]; then
+          echo "refusing: the agent is the source agent (pass _ELEVENLABS_ALLOW_SOURCE_AGENT=true to allow it on staging)"; exit 1
+        fi
+        gcloud run services update ${_SERVICE} --region=${_REGION} --project=$PROJECT_ID --quiet \
+          --update-secrets=ELEVENLABS_API_KEY=RIYA_ELEVENLABS_API_KEY:latest,ELEVENLABS_WEBHOOK_SECRET=RIYA_ELEVENLABS_WEBHOOK_SECRET:latest \
+          --update-env-vars=ELEVENLABS_AGENT_ID=${_ELEVENLABS_AGENT_ID},ELEVENLABS_AGENT_PHONE_NUMBER_ID=${_ELEVENLABS_PHONE_NUMBER_ID},ELEVENLABS_SOURCE_AGENT_ID=${_ELEVENLABS_SOURCE_AGENT_ID},ELEVENLABS_ALLOW_SOURCE_AGENT=${_ELEVENLABS_ALLOW_SOURCE_AGENT}
+    waitFor: [deploy]

@@ -125,3 +125,80 @@ describe('useGenerator — a run that parsed to nothing is not "done"', () => {
         expect(onSuccess).toHaveBeenCalled();
     });
 });
+
+// ── One generation = one Library row ─────────────────────────────────────────
+// The hook mints the artifact id the server files the generation under, and
+// the display's Save upserts it. Without this the flow auto-saved UUID A and
+// every Save click minted UUID B, C, …
+
+describe('useGenerator — stable Library contentId', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const sentBody = (call = 0) =>
+        JSON.parse((global.fetch as jest.Mock).mock.calls[call][1].body as string) as Record<string, unknown>;
+
+    function renderArtifactGenerator(persistsArtifact: boolean) {
+        return renderHook(() =>
+            useGenerator<{ prompt: string }, string>({
+                feature: 'worksheet',
+                endpoint: '/api/ai/worksheet',
+                persistsArtifact,
+                buildRequest: (v) => ({ ...v }),
+                parseResponse: (json) => (json as { worksheetContent: string }).worksheetContent,
+            }),
+        );
+    }
+
+    it('sends one contentId per submit and exposes it with the result', async () => {
+        mockJsonResponse({ worksheetContent: '# A' });
+        const { result } = renderArtifactGenerator(true);
+
+        await act(async () => { await result.current.generate({ prompt: 'a' }); });
+
+        const sent = sentBody().contentId;
+        expect(sent).toMatch(UUID);
+        expect(result.current.contentId).toBe(sent);
+    });
+
+    it('a new submit (regenerate) gets a new id — a new artifact', async () => {
+        mockJsonResponse({ worksheetContent: '# A' });
+        const { result } = renderArtifactGenerator(true);
+
+        await act(async () => { await result.current.generate({ prompt: 'a' }); });
+        await act(async () => { await result.current.generate({ prompt: 'a' }); });
+
+        expect(sentBody(0).contentId).not.toBe(sentBody(1).contentId);
+        expect(result.current.contentId).toBe(sentBody(1).contentId);
+    });
+
+    it('does not send or expose an id for endpoints that do not persist', async () => {
+        mockJsonResponse({ worksheetContent: '# A' });
+        const { result } = renderArtifactGenerator(false);
+
+        await act(async () => { await result.current.generate({ prompt: 'a' }); });
+
+        expect(sentBody()).not.toHaveProperty('contentId');
+        expect(result.current.contentId).toBeNull();
+    });
+
+    it('a failed generation leaves no Library id behind', async () => {
+        mockJsonResponse({ error: 'boom' }, 500);
+        const { result } = renderArtifactGenerator(true);
+
+        await act(async () => { await result.current.generate({ prompt: 'a' }); });
+
+        expect(result.current.status).toBe('error');
+        expect(result.current.contentId).toBeNull();
+    });
+
+    it('a restored item keeps its own id so Save updates it', () => {
+        const { result } = renderArtifactGenerator(true);
+
+        act(() => result.current.setResult('# Saved', 'restored-id-1'));
+
+        expect(result.current.contentId).toBe('restored-id-1');
+        act(() => result.current.reset());
+        expect(result.current.contentId).toBeNull();
+    });
+});

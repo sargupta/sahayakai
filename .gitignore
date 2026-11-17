@@ -45,3 +45,12 @@ next-env.d.ts
 # Investor / fundraising materials — kept locally, never in the (public) repo
 docs/investor_materials/
 outputs/investor_materials/
+
+# Sampark (school calling) local artefacts
+sahayakai-main/.sampark-audio/
+sahayakai-main/.env.sampark.local
+# Real team phone numbers for the local Sargvision roster (never committed; see sargvision-roster.example.json)
+sahayakai-main/scripts/sampark/sargvision-roster.local.json
+mock-school-crm/data/
+mock-school-crm/node_modules/
+mock-school-crm/dist/

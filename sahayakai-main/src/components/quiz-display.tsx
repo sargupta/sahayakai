@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+import { useLibraryId } from "@/hooks/use-library-id";
 import type { QuizVariantsOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Button } from "./ui/button";
 import {
@@ -19,6 +20,8 @@ import {
     ThumbsDown,
     MessageSquareQuote,
     Plus,
+    Play,
+    ClipboardList,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -45,6 +48,8 @@ import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
 import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 import { useLanguage } from "@/context/language-context";
+import { QuizPlayer } from "@/components/quiz-player";
+import { correctOptionIndex } from "@/lib/quiz-scoring";
 
 type QuizDisplayProps = {
     quiz: QuizVariantsOutput;
@@ -68,6 +73,9 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
         "medium",
     );
     const [showAnswers, setShowAnswers] = useState(false);
+    // "review" is the teacher's copy (edit, answer key, print); "play" runs
+    // the quiz one question at a time (QuizPlayer).
+    const [mode, setMode] = useState<"review" | "play">("review");
     const [editState, setEditState] = useState<EditingState>({
         isEditing: false,
         editedVariants: JSON.parse(JSON.stringify(quiz)),
@@ -77,6 +85,9 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
     const { toast } = useToast();
     const t = getResultShellDict(selectedLanguage);
     const { t: tr } = useLanguage();
+    // One quiz = one Library row. `quiz.id` is the id the server filed the
+    // generation under (or the restored item's id), so Save updates that row.
+    const libraryId = useLibraryId(quiz.id, quiz);
 
     useEffect(() => {
         setEditState({
@@ -92,7 +103,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
 
     if (!currentQuiz) {
         return (
-            <div className="mt-8 w-full max-w-4xl mx-auto p-6 text-center text-muted-foreground bg-card rounded-[var(--radius)] border border-border shadow-soft">
+            <div className="mt-8 w-full max-w-4xl mx-auto p-6 text-center text-muted-foreground bg-card rounded-card border border-border shadow-card">
                 {tr("No quiz generated for this difficulty level.")}
             </div>
         );
@@ -173,7 +184,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
             }
             const saveTitle = currentQuiz.title || "General Quiz";
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "quiz",
                 title: saveTitle,
                 gradeLevel: quiz.gradeLevel || "Class 5",
@@ -322,7 +333,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
             }
             const saveTitle = currentQuiz.title || "General Quiz";
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "quiz",
                 title: saveTitle,
                 gradeLevel: quiz.gradeLevel || "Class 5",
@@ -403,52 +414,85 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                 onValueChange={(v) => setActiveTab(v as any)}
                 className="w-full"
             >
-                <div className="flex flex-wrap justify-between items-center mb-4 gap-3">
-                    <TabsList className="grid w-full sm:w-[360px] grid-cols-3 bg-muted border border-border shadow-soft p-1 rounded-md h-11">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <TabsList className="grid h-11 w-full grid-cols-3 rounded-pill border border-border bg-muted p-1 sm:w-96">
                         <TabsTrigger
                             value="easy"
                             disabled={!quiz.easy}
-                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-pill font-semibold transition-all data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-card"
                         >
                             {t.difficultyEasy}
                         </TabsTrigger>
                         <TabsTrigger
                             value="medium"
                             disabled={!quiz.medium}
-                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-pill font-semibold transition-all data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-card"
                         >
                             {t.difficultyMedium}
                         </TabsTrigger>
                         <TabsTrigger
                             value="hard"
                             disabled={!quiz.hard}
-                            className="rounded-sm data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-soft font-semibold transition-all"
+                            className="rounded-pill font-semibold transition-all data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-card"
                         >
                             {t.difficultyHard}
                         </TabsTrigger>
                     </TabsList>
 
-                    {onRegenerate ? (
-                        <Button
-                            variant="outline"
-                            size="default"
-                            onClick={onRegenerate}
-                            className="h-11 gap-2"
-                        >
-                            <RotateCw className="h-4 w-4" />
-                            {t.regenerate}
-                        </Button>
-                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                        <div className="flex h-11 rounded-pill border border-border bg-muted p-1" role="group" aria-label={tr("Quiz view")}>
+                            <button
+                                type="button"
+                                onClick={() => setMode("review")}
+                                aria-pressed={mode === "review"}
+                                className={cn(
+                                    "focus-ring flex items-center gap-2 rounded-pill px-4 text-sm font-semibold transition-all",
+                                    mode === "review" ? "bg-card text-foreground shadow-card" : "text-muted-foreground hover:text-foreground",
+                                )}
+                            >
+                                <ClipboardList className="h-4 w-4" aria-hidden="true" />
+                                {tr("Teacher copy")}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setMode("play")}
+                                aria-pressed={mode === "play"}
+                                className={cn(
+                                    "focus-ring flex items-center gap-2 rounded-pill px-4 text-sm font-semibold transition-all",
+                                    mode === "play" ? "bg-primary text-primary-foreground shadow-cta" : "text-muted-foreground hover:text-foreground",
+                                )}
+                            >
+                                <Play className="h-4 w-4" aria-hidden="true" />
+                                {tr("Play quiz")}
+                            </button>
+                        </div>
+                        {onRegenerate ? (
+                            <Button variant="outline" size="default" onClick={onRegenerate} className="h-11 gap-2 rounded-pill">
+                                <RotateCw className="h-4 w-4" aria-hidden="true" />
+                                {t.regenerate}
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
 
                 <TabsContent
                     value={activeTab}
                     className="m-0 focus-visible:ring-0 focus-visible:outline-none"
                 >
+                    {mode === "play" ? (
+                        <QuizPlayer
+                            quiz={currentQuiz}
+                            difficultyLabel={difficultyLabel}
+                            subject={quiz.subject}
+                            gradeLevel={quiz.gradeLevel}
+                            typeLabel={questionTypeLabel}
+                            onExit={() => setMode("review")}
+                        />
+                    ) : (
                     <ResultShell
                         id="quiz-display"
                         title={currentQuiz.title}
-                        variant="glass"
+                        variant="solid"
                         meta={[
                             {
                                 label: t.difficulty,
@@ -513,20 +557,25 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                             />
                         ) : null}
 
-                        <div className="space-y-4">
-                            {currentQuiz.questions.map((q, idx) => (
-                                <div
+                        <ol className="divide-y divide-border">
+                            {currentQuiz.questions.map((q, idx) => {
+                                const rightIdx = showAnswers ? correctOptionIndex(q) : null;
+                                return (
+                                <li
                                     key={idx}
-                                    className="relative p-4 sm:p-5 rounded-md border border-border bg-muted/30"
+                                    className="relative grid grid-cols-[2.5rem_1fr] gap-x-3 py-6 first:pt-2 sm:grid-cols-[3rem_1fr] sm:gap-x-4"
                                 >
+                                    <span
+                                        className="flex h-10 w-10 items-center justify-center rounded-pill bg-tint-accent-soft font-headline text-lg font-semibold tabular-nums text-saffron-700 ring-1 ring-tint-accent-border sm:h-12 sm:w-12 sm:text-xl"
+                                        aria-label={`${t.questionLabel} ${idx + 1}`}
+                                    >
+                                        {idx + 1}
+                                    </span>
+                                    <div className="min-w-0">
                                     <div className="flex justify-between items-start gap-2 mb-3">
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                                <span className="font-bold text-muted-foreground/70 text-xs tracking-tight uppercase">
-                                                    {t.questionLabel} {idx + 1}
-                                                </span>
-                                                <div className="h-1 w-1 rounded-full bg-border" />
-                                                <span className="text-[10px] uppercase font-bold text-primary/80">
+                                            <div className="mb-2 flex flex-wrap items-center gap-2">
+                                                <span className="rounded-pill bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
                                                     {questionTypeLabel(
                                                         q.questionType,
                                                     )}
@@ -545,7 +594,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                     className="font-semibold text-base bg-card border-border min-h-[56px]"
                                                 />
                                             ) : (
-                                                <p className="font-semibold text-base sm:text-lg leading-snug break-words">
+                                                <p className="break-words font-headline text-lg font-semibold leading-snug text-foreground sm:text-xl">
                                                     {q.questionText}
                                                 </p>
                                             )}
@@ -565,7 +614,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                                     )
                                                                 }
                                                                 className={cn(
-                                                                    "h-8 w-8 text-amber-600",
+                                                                    "h-8 w-8 text-warning",
                                                                     isRefining ===
                                                                         idx &&
                                                                         "animate-spin",
@@ -593,7 +642,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                                     savingQuestion ===
                                                                     idx
                                                                 }
-                                                                className="h-8 w-8 text-blue-600"
+                                                                className="h-8 w-8 text-info"
                                                                 aria-label={tr(
                                                                     "Save Edit",
                                                                 )}
@@ -617,7 +666,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                className="h-8 w-8 text-emerald-600"
+                                                                className="h-8 w-8 text-success"
                                                                 aria-label={tr("Add question")}
                                                             >
                                                                 <Plus className="h-3.5 w-3.5" />
@@ -682,7 +731,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                             "up",
                                                         )
                                                     }
-                                                    className="h-8 w-8 text-muted-foreground hover:text-green-600"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-success"
                                                     aria-label={t.goodFeedback}
                                                 >
                                                     <ThumbsUp className="h-3.5 w-3.5" />
@@ -696,7 +745,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                             "down",
                                                         )
                                                     }
-                                                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                                     aria-label={t.badFeedback}
                                                 >
                                                     <ThumbsDown className="h-3.5 w-3.5" />
@@ -715,10 +764,18 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                     (opt, optIdx) => (
                                                         <div
                                                             key={optIdx}
-                                                            className="flex items-center gap-2 p-2 sm:p-3 rounded-sm border border-border bg-card"
+                                                            className={cn(
+                                                                "flex items-center gap-3 rounded-row border px-3 py-2.5 transition-colors duration-micro",
+                                                                rightIdx === optIdx ? "border-success bg-tint-success" : "border-border bg-card",
+                                                            )}
                                                         >
-                                                            <div className="w-6 h-6 rounded-md border border-border flex items-center justify-center text-[10px] font-black text-muted-foreground bg-muted flex-shrink-0">
-                                                                {String.fromCharCode(
+                                                            <div
+                                                                className={cn(
+                                                                    "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-pill text-xs font-semibold",
+                                                                    rightIdx === optIdx ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground",
+                                                                )}
+                                                            >
+                                                                {rightIdx === optIdx ? <Check className="h-3.5 w-3.5" aria-label={t.correctAnswer} /> : String.fromCharCode(
                                                                     65 + optIdx,
                                                                 )}
                                                             </div>
@@ -753,7 +810,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                         {(q.questionType === "short_answer" ||
                                             q.questionType ===
                                                 "fill_in_the_blanks") && (
-                                            <div className="w-full h-20 border border-dashed border-border rounded-md bg-muted/20 flex items-center justify-center text-muted-foreground/70 text-xs sm:text-sm">
+                                            <div className="flex h-16 w-full items-end rounded-row border border-dashed border-border bg-milk-100 px-4 pb-2 text-xs text-muted-foreground sm:text-sm">
                                                 {t.studentAnswerArea}
                                             </div>
                                         )}
@@ -767,10 +824,10 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                 : "opacity-0 max-h-0 py-0 border-none",
                                         )}
                                     >
-                                        <div className="bg-primary/5 p-3 rounded-md border border-primary/10 text-sm space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <Check className="h-4 w-4 text-green-600" />
-                                                <span className="font-bold uppercase text-[10px] tracking-wider">
+                                        <div className="space-y-2 rounded-row bg-tint-success p-3 text-sm">
+                                            <div className="flex items-center gap-2 text-success">
+                                                <Check className="h-4 w-4" aria-hidden="true" />
+                                                <span className="text-xs font-semibold uppercase tracking-wider">
                                                     {t.correctAnswer}
                                                 </span>
                                             </div>
@@ -792,36 +849,43 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                                 </span>
                                             )}
                                             <div className="pt-1">
-                                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                                                     {t.explanation}
                                                 </span>
-                                                <p className="text-muted-foreground leading-relaxed text-xs mt-1">
+                                                <p className="mt-1 text-sm leading-relaxed text-foreground">
                                                     {q.explanation}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                    </div>
+                                </li>
+                                );
+                            })}
+                        </ol>
                     </ResultShell>
+                    )}
                 </TabsContent>
             </Tabs>
 
             {/* Hidden print structure (unchanged layout, used by PDF export). */}
-            <div id={PDF_ID} className="hidden print:block">
-                <div className="print-header mb-8 text-center border-b pb-4">
-                    <h1 className="text-3xl font-bold">
+            <div id={PDF_ID} className="paper-sheet hidden p-10 print:block">
+                <div className="print-header mb-8 border-b-2 border-double paper-rule pb-4 text-center">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] paper-muted">
+                        {[quiz.subject, quiz.gradeLevel, difficultyLabel].filter(Boolean).join(" · ")}
+                    </p>
+                    <h1 className="mt-2 text-3xl font-bold">
                         {currentQuiz.title}
                     </h1>
-                    <p className="text-sm text-muted-foreground uppercase tracking-widest">
-                        {difficultyLabel}
-                    </p>
+                    <div className="paper-ui mt-4 flex justify-between gap-6 text-sm">
+                        <span className="flex-1 border-b paper-rule pb-1 text-left">{tr("Name")}:</span>
+                        <span className="w-40 border-b paper-rule pb-1 text-left">{tr("Date")}:</span>
+                    </div>
                 </div>
                 <div className="print-questions space-y-8">
                     {currentQuiz.questions.map((q, i) => (
                         <div key={i} className="break-inside-avoid">
-                            <p className="font-bold text-lg mb-2">
+                            <p className="mb-2 text-lg font-bold">
                                 {i + 1}. {q.questionText}
                             </p>
                             {q.options && (
@@ -831,20 +895,20 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                             key={j}
                                             className="flex items-center gap-2"
                                         >
-                                            <span className="w-6 h-6 border rounded-full inline-block" />
+                                            <span className="inline-block h-5 w-5 rounded-full border paper-rule" />
                                             <span>{o}</span>
                                         </li>
                                     ))}
                                 </ul>
                             )}
                             {!q.options && (
-                                <div className="h-20 border-b border-border mt-4" />
+                                <div className="paper-lines mt-2 h-16" />
                             )}
                         </div>
                     ))}
                 </div>
                 {includeBranding && (
-                    <div className="print-footer mt-12 pt-4 border-t text-center text-xs text-muted-foreground/70">
+                    <div className="print-footer paper-ui mt-12 border-t paper-rule pt-4 text-center text-xs paper-muted">
                         {tr("Generated by SahayakAI")}
                     </div>
                 )}
@@ -858,7 +922,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                 <span className="font-bold">
                                     {q.correctAnswer}
                                 </span>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm paper-muted">
                                     {q.explanation}
                                 </p>
                             </li>

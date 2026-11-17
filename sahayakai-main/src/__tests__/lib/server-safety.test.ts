@@ -10,11 +10,19 @@ const mockDoc = jest.fn(() => ({
 const mockCollection = jest.fn(() => ({
     doc: mockDoc,
 }));
+// Sequential stand-in for a Firestore transaction over the same get/set mocks.
+const mockRunTransaction = jest.fn(async (fn: (tx: any) => Promise<unknown>) =>
+    fn({
+        get: (ref: any) => ref.get(),
+        set: (ref: any, data: unknown, opts?: unknown) => ref.set(data, opts),
+    }),
+);
 
 jest.mock('@/lib/firebase-admin', () => ({
     getDb: jest.fn(() =>
         Promise.resolve({
             collection: mockCollection,
+            runTransaction: mockRunTransaction,
         })
     ),
 }));
@@ -33,6 +41,7 @@ describe('checkServerRateLimit', () => {
             getDb: jest.fn(() =>
                 Promise.resolve({
                     collection: mockCollection,
+                    runTransaction: mockRunTransaction,
                 })
             ),
         }));
@@ -124,5 +133,23 @@ describe('checkServerRateLimit', () => {
 
         // Should NOT throw — fails open
         await expect(checkServerRateLimit('user123')).resolves.toBeUndefined();
+    });
+});
+
+// Regression: get() then set() outside a transaction let N parallel requests all pass.
+describe('checkServerRateLimit atomicity', () => {
+    it('reads and writes the window inside one transaction', async () => {
+        jest.resetModules();
+        jest.mock('server-only', () => ({}));
+        jest.mock('@/lib/firebase-admin', () => ({
+            getDb: jest.fn(() => Promise.resolve({ collection: mockCollection, runTransaction: mockRunTransaction })),
+        }));
+        const { checkServerRateLimit } = await import('@/lib/server-safety');
+        mockRunTransaction.mockClear();
+        mockGet.mockReset().mockResolvedValue({ exists: false, data: () => undefined });
+        mockSet.mockReset().mockResolvedValue(undefined);
+        await checkServerRateLimit('user-tx');
+        expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+        expect(mockSet).toHaveBeenCalledTimes(1);
     });
 });

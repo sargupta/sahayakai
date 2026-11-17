@@ -1,0 +1,340 @@
+{
+  "$comment": [
+    "Gate 9 registry of dynamic t() calls: every t(<not a string literal>) in src/ must be listed here.",
+    "Read by scripts/find-missing-i18n-keys.mjs. Every string a listed source holds is a used key and must exist in all ten src/locales/*.json files.",
+    "sites: { \"<file>\": { \"<argument as written, whitespace collapsed>\": [\"<source id>\", ...] } }. For t(a ?? b) or t(c ? a : b) each dynamic side is its own entry; string-literal sides need none.",
+    "sources: { \"<id>\": { \"file\", and one of: \"name\" (a const, or a function whose literal return values are the keys), \"type\" (string-literal union members), \"calls\" + \"arg\" (literals passed to that function) } }.",
+    "  Optional: \"props\" (only strings under these property names), \"take\": \"keys\" (object property names, not values), \"transform\": \"capitalize\", \"format\": [\"prefix.{}.suffix\"] (keys built from each value).",
+    "  { \"runtime\": \"<reason>\" } declares a value that is not a fixed set of keys (text the caller already translated, AI or user text, a raw value shown as a last resort). Say why.",
+    "Vocabulary sources (vocab-*) cover runtime values drawn from the app's shared lists (subjects, classes, boards, languages).",
+    "The gate fails on an unlisted dynamic call, a site that no longer matches the code, a source it cannot read, and a source no site uses.",
+    "An entry may be { \"sources\": [...], \"count\": N } when N calls in the file share the same argument text; a plain list covers exactly one call. The count is pinned so a new call reading the same (often generic) expression must be checked and declared, not ride on the first call's entry."
+  ],
+  "sources": {
+    "attendance-call-refusal-labels": { "file": "src/lib/attendance/call-refusal-messages.ts", "name": "CALL_REFUSAL_LABELS", "note": "teacher-facing labels for the call and outreach routes' error codes" },
+    "vocab-grades": { "file": "src/types/index.ts", "name": "GRADE_LEVELS", "note": "class names stored on profiles, classes, resources and AI requests" },
+    "vocab-subjects": { "file": "src/types/index.ts", "name": "SUBJECTS", "note": "subject names stored on profiles, classes, resources and AI requests" },
+    "vocab-boards": { "file": "src/types/index.ts", "name": "EDUCATION_BOARDS" },
+    "vocab-languages": { "file": "src/types/index.ts", "name": "LANGUAGES" },
+
+    "school-pricing-savings": { "file": "src/lib/school-pricing.ts", "name": "SAVINGS_CAPABILITIES", "props": ["name"] },
+    "terms-tldr": { "file": "src/app/(marketing)/terms/terms-client.tsx", "name": "tldr" },
+    "assess-processing-stages": { "file": "src/app/assess-assignment/assess-client.tsx", "name": "PROCESSING_STAGES_RAW" },
+    "assessment-subjects": { "file": "src/ai/schemas/assessment-scanner-constants.ts", "name": "ASSESSMENT_SUPPORTED_SUBJECTS" },
+    "community-library-mock": { "file": "src/app/community-library/page.tsx", "name": "mockResources", "props": ["titleKey"] },
+    "community-post-types": { "file": "src/components/community/feed-post.tsx", "name": "POST_TYPE_CONFIG", "props": ["label"] },
+    "community-prompts": { "file": "src/data/community-prompts.ts", "name": "COMMUNITY_PROMPTS", "props": ["text"] },
+    "community-prompt-kinds": { "file": "src/data/community-prompts.ts", "name": "COMMUNITY_PROMPT_KIND_LABEL" },
+    "community-sample-personas": { "file": "src/data/community-sample-conversations.ts", "name": "SAMPLE_CONVERSATIONS", "props": ["persona"] },
+    "community-sample-texts": { "file": "src/data/community-sample-conversations.ts", "name": "SAMPLE_CONVERSATIONS", "props": ["text"] },
+    "community-sample-topics": { "file": "src/data/community-sample-conversations.ts", "name": "SAMPLE_CONVERSATIONS", "props": ["topic"] },
+    "share-templates-label": { "file": "src/types/community.ts", "name": "SHARE_TEMPLATES", "props": ["label"] },
+    "share-templates-prompt": { "file": "src/types/community.ts", "name": "SHARE_TEMPLATES", "props": ["prompt"] },
+    "share-templates-placeholder": { "file": "src/types/community.ts", "name": "SHARE_TEMPLATES", "props": ["placeholder"] },
+    "exam-grade-options-app": { "file": "src/app/exam-paper/types.ts", "name": "GRADE_OPTIONS" },
+    "exam-grade-options-features": { "file": "src/features/exam-paper/types.ts", "name": "GRADE_OPTIONS" },
+    "exam-difficulty-app": { "file": "src/app/exam-paper/types.ts", "name": "DIFFICULTY_OPTIONS", "transform": "capitalize" },
+    "exam-difficulty-features": { "file": "src/features/exam-paper/types.ts", "name": "DIFFICULTY_OPTIONS", "transform": "capitalize" },
+    "labs-tools-title": { "file": "src/lib/labs.ts", "name": "LABS_TOOLS", "props": ["titleKey"] },
+    "labs-tools-description": { "file": "src/lib/labs.ts", "name": "LABS_TOOLS", "props": ["descriptionKey"] },
+    "onboarding-role-label": { "file": "src/app/onboarding/page.tsx", "name": "ROLE_LABEL" },
+    "onboarding-role-options-label": { "file": "src/app/onboarding/page.tsx", "name": "ROLE_OPTIONS", "props": ["label"] },
+    "onboarding-role-options-hint": { "file": "src/app/onboarding/page.tsx", "name": "ROLE_OPTIONS", "props": ["hint"] },
+    "onboarding-example-phases": { "file": "src/data/onboarding-examples.ts", "name": "examples", "props": ["phase"] },
+    "org-feature-dict": { "file": "src/app/organization/dashboard/dashboard-client.tsx", "name": "FEATURE_DICT_KEY" },
+    "pricing-included": { "file": "src/app/pricing/page.tsx", "name": "INCLUDED", "props": ["text"] },
+    "pricing-enterprise": { "file": "src/app/pricing/page.tsx", "name": "ENTERPRISE_ADDITIONS", "props": ["text"] },
+    "teacher-training-pro-tips": { "file": "src/app/teacher-training/page.tsx", "name": "PRO_TIP_KEYS" },
+    "plan-display-names": { "file": "src/lib/plan-config.ts", "name": "PLAN_DISPLAY_NAMES" },
+    "usage-feature-meta": { "file": "src/app/usage/page.tsx", "name": "FEATURE_META", "props": ["label"] },
+    "video-categories": { "file": "src/app/video-storyteller/page.tsx", "name": "CATEGORY_DEFS", "props": ["titleKey"] },
+    "mistake-pattern-labels": { "file": "src/components/assessment-scanner/assessment-result-card.tsx", "name": "MISTAKE_PATTERN_LABELS", "props": ["label"] },
+    "assessment-warnings": { "file": "src/components/assessment/assessment-result.tsx", "name": "WARNING_STRINGS" },
+    "attendance-month-names": { "file": "src/components/attendance/attendance-calendar.tsx", "name": "MONTH_NAMES" },
+    "contact-parent-placeholder": { "file": "src/components/attendance/contact-parent-modal.tsx", "name": "placeholderKeyFor" },
+    "contact-parent-reasons-label": { "file": "src/components/attendance/contact-parent-modal.tsx", "name": "REASONS", "props": ["labelKey"] },
+    "contact-parent-reasons-description": { "file": "src/components/attendance/contact-parent-modal.tsx", "name": "REASONS", "props": ["descriptionKey"] },
+    "command-palette-routes": { "file": "src/components/command-palette.tsx", "name": "ROUTES", "props": ["i18nKey"] },
+    "command-palette-groups": { "file": "src/components/command-palette.tsx", "name": "ROUTES", "props": ["group"] },
+    "dashboard-prep-tools": { "file": "src/components/dashboard/dashboard-home.tsx", "name": "PREP_TOOLS", "props": ["labelKey"] },
+    "contextual-suggestion-tools": { "file": "src/lib/contextual-suggestions.ts", "name": "TOOL_ROTATION", "props": ["label"] },
+    "vidya-live-errors": { "file": "src/lib/vidya-live/use-vidya-live.ts", "name": "FRIENDLY" },
+    "vidya-live-generic-error": { "file": "src/lib/vidya-live/use-vidya-live.ts", "name": "GENERIC" },
+    "vidya-status-keys": { "file": "src/lib/vidya-live/use-vidya-live.ts", "name": "vidyaStatusKey" },
+    "vidya-sections": { "file": "src/lib/vidya/app-manifest.ts", "name": "VIDYA_SECTIONS", "props": ["label"] },
+    "difficulty-levels": { "file": "src/components/difficulty-selector.tsx", "name": "levels", "props": ["labelKey"] },
+    "grade-selector-keys": { "file": "src/components/grade-level-selector.tsx", "name": "GRADE_KEYS" },
+    "landing-footer-keys": { "file": "src/components/landing/landing-footer.tsx", "name": "EN", "take": "keys" },
+    "landing-quote-keys": { "file": "src/components/landing/landing-quote.tsx", "name": "EN", "take": "keys" },
+    "landing-floating-labels": { "file": "src/components/landing/landing-voice-orb.tsx", "name": "FLOATING", "props": ["label"] },
+    "landing-pillar-keys": { "file": "src/components/landing/pillar-data.ts", "name": "pillars", "props": ["id"], "format": ["pillar.{}.name", "pillar.{}.desc", "pillar.{}.rotating"] },
+    "shareable-types": { "file": "src/components/messages/conversation-thread.tsx", "name": "SHAREABLE_TYPES", "props": ["label"] },
+    "message-resource-config": { "file": "src/components/messages/message-bubble.tsx", "name": "RESOURCE_CONFIG", "props": ["label"] },
+    "message-resource-fallback": { "file": "src/components/messages/message-bubble.tsx", "name": "cfg", "props": ["label"] },
+    "mobile-nav-tabs": { "file": "src/components/mobile-bottom-nav.tsx", "name": "TABS", "props": ["i18nKey"] },
+    "report-reasons": { "file": "src/components/moderation/report-dialog.tsx", "name": "REASON_OPTIONS", "props": ["label"] },
+    "quick-templates-titles": { "file": "src/data/quick-templates.ts", "name": "quickTemplates", "props": ["title"] },
+    "quick-templates-subjects": { "file": "src/data/quick-templates.ts", "name": "quickTemplates", "props": ["subject"] },
+    "resource-levels": { "file": "src/components/resource-selector.tsx", "name": "resources", "props": ["labelKey"] },
+    "quiz-question-types": { "file": "src/features/quiz-generator/types.ts", "name": "questionTypesData", "props": ["labelKey"] },
+    "quiz-bloom-levels": { "file": "src/features/quiz-generator/components/quiz-generator-view.tsx", "name": "BLOOM_LEVELS" },
+    "quiz-bloom-hints": { "file": "src/features/quiz-generator/components/quiz-generator-view.tsx", "name": "BLOOM_HINTS" },
+
+    "gcal-outcomes": { "file": "src/components/sampark/calendar/google-calendar-panel.tsx", "name": "OUTCOMES", "props": ["text"] },
+    "gcal-notice-fallback": { "file": "src/components/sampark/calendar/google-calendar-panel.tsx", "name": "notice", "props": ["text"] },
+    "gcal-repeat-units": { "file": "src/components/sampark/calendar/google-calendar-panel.tsx", "name": "unit" },
+    "calendar-weekday-headings": { "file": "src/components/sampark/calendar/school-calendar.tsx", "name": "WEEKDAY_HEADINGS" },
+    "callback-history-actions": { "file": "src/components/sampark/callbacks/callback-dialogs.tsx", "name": "HISTORY_ACTION" },
+    "batch-reason-labels": { "file": "src/lib/sampark/batch/reasons.ts", "name": "BATCH_REASONS", "props": ["label"] },
+    "batch-reason-hints": { "file": "src/lib/sampark/batch/reasons.ts", "name": "BATCH_REASONS", "props": ["hint"] },
+    "demo-reason-label": { "file": "src/lib/sampark/demo/script.ts", "name": "REASON_LABEL" },
+    "demo-reason-hint": { "file": "src/lib/sampark/demo/script.ts", "name": "REASON_HINT" },
+    "demo-persona-label": { "file": "src/lib/sampark/demo/script.ts", "name": "PERSONA_LABEL" },
+    "demo-refusal-text": { "file": "src/lib/sampark/demo/rules.ts", "name": "REFUSAL_TEXT" },
+    "demo-status-label": { "file": "src/components/sampark/demo/demo-labels.ts", "name": "STATUS_LABEL" },
+    "demo-sentiment-label": { "file": "src/components/sampark/demo/demo-labels.ts", "name": "SENTIMENT_LABEL" },
+    "demo-complaint-label": { "file": "src/components/sampark/demo/demo-labels.ts", "name": "COMPLAINT_LABEL" },
+    "demo-signal-label": { "file": "src/lib/sampark/demo/school.ts", "name": "SIGNAL_LABEL" },
+    "demo-teacher-subjects": { "file": "src/lib/sampark/demo/school.ts", "name": "TEACHERS", "props": ["subject"] },
+    "demo-sample-class-subject": { "file": "src/lib/sampark/demo/school.ts", "name": "sargvisionClass", "props": ["subject"] },
+    "demo-admin-title": { "file": "src/lib/sampark/demo/school.ts", "name": "DEMO_ADMIN", "props": ["title"] },
+    "demo-guardian-relation": { "file": "src/lib/sampark/demo/types.ts", "type": "DemoGuardian", "props": ["relation"] },
+    "demo-venues": { "file": "src/lib/sampark/demo/seed-planning.ts", "name": "DEMO_VENUES" },
+    "demo-campaign-purposes": { "file": "src/components/sampark/demo/campaigns.tsx", "name": "PURPOSES", "props": ["label"] },
+    "demo-call-filters": { "file": "src/components/sampark/demo/call-list.tsx", "name": "FILTERS", "props": ["label"] },
+    "demo-frame-badges": { "file": "src/components/sampark/demo/demo-frame.tsx", "calls": "badge", "arg": 1 },
+
+    "runtime-caller-translated": { "runtime": "AuthGate receives title and description its callers already passed through t() (each caller's literal is scanned at the call); this t() returns translated text unchanged." },
+    "runtime-plan-id": { "runtime": "a plan id PLAN_DISPLAY_NAMES does not know yet, shown capitalised as a last resort" },
+    "runtime-ai-duration": { "runtime": "the lesson plan's duration as the AI wrote it (e.g. \"45 minutes\"); free text, translated only when it matches a key" },
+    "runtime-raw-audit-action": { "runtime": "an audit action newer than HISTORY_ACTION, shown as its code as a last resort" },
+    "runtime-raw-venue-id": { "runtime": "a demo venue id missing from DEMO_VENUES, shown as its id as a last resort" }
+  },
+  "sites": {
+    "src/lib/attendance/call-refusal-messages.ts": { "label": ["attendance-call-refusal-labels"] },
+    "src/app/(marketing)/school-pricing/school-pricing-client.tsx": { "c.name": ["school-pricing-savings"] },
+    "src/app/(marketing)/terms/terms-client.tsx": { "key": ["terms-tldr"] },
+    "src/app/assess-assignment/assess-client.tsx": { "s": ["assess-processing-stages"] },
+    "src/app/assessment-scanner/page.tsx": { "s": ["assessment-subjects"] },
+    "src/app/attendance/page.tsx": { "cls.gradeLevel": ["vocab-grades"], "cls.subject": ["vocab-subjects"] },
+    "src/app/community-library/page.tsx": { "resource.titleKey": ["community-library-mock"] },
+    "src/app/community/page.tsx": { "cfg.label": ["community-post-types"], "prompt.text": ["community-prompts"] },
+    "src/app/exam-paper/components/exam-paper-document.tsx": { "paper.board": { "sources": ["vocab-boards"], "count": 2 }, "paper.gradeLevel": { "sources": ["vocab-grades"], "count": 2 }, "paper.subject": { "sources": ["vocab-subjects"], "count": 2 } },
+    "src/app/exam-paper/components/exam-paper-form.tsx": {
+      "b": ["vocab-boards"],
+      "g": ["exam-grade-options-app"],
+      "s": ["vocab-subjects"],
+      "d.charAt(0).toUpperCase() + d.slice(1)": ["exam-difficulty-app"],
+      "l": ["vocab-languages"]
+    },
+    "src/app/exam-paper/components/paper-plan.tsx": {
+      "board": { "sources": ["vocab-boards"], "count": 2 },
+      "subject": ["vocab-subjects"],
+      "gradeLevel": { "sources": ["vocab-grades"], "count": 2 },
+      "difficulty.charAt(0).toUpperCase() + difficulty.slice(1)": ["exam-difficulty-app"],
+      "language": ["vocab-languages"]
+    },
+    "src/app/labs/page.tsx": { "tool.titleKey": ["labs-tools-title"], "tool.descriptionKey": ["labs-tools-description"] },
+    "src/app/onboarding/page.tsx": {
+      "ROLE_LABEL[formData.administrativeRole]": ["onboarding-role-label"],
+      "act.phase": ["onboarding-example-phases"],
+      "opt.label": ["onboarding-role-options-label"],
+      "opt.hint": ["onboarding-role-options-hint"]
+    },
+    "src/app/organization/dashboard/dashboard-client.tsx": { "dictKey": ["org-feature-dict"] },
+    "src/app/pricing/page.tsx": { "text": { "sources": ["pricing-included", "pricing-enterprise"], "count": 2 } },
+    "src/app/sampark/demo/admin/classes/page.tsx": { "cls.subject": ["demo-teacher-subjects", "demo-sample-class-subject"] },
+    "src/app/sampark/demo/admin/page.tsx": {
+      "COMPLAINT_LABEL[c.complaintStatus]": ["demo-complaint-label"],
+      "SENTIMENT_LABEL[c.summary.parentSentiment]": ["demo-sentiment-label"],
+      "REASON_LABEL[cb.reason]": ["demo-reason-label"],
+      "REASON_LABEL[r.reason]": { "sources": ["demo-reason-label"], "count": 2 },
+      "REASON_LABEL[c.reason]": ["demo-reason-label"],
+      "STATUS_LABEL[c.status]": ["demo-status-label"],
+      "row.teacher.subject": ["demo-teacher-subjects"]
+    },
+    "src/app/sampark/demo/page.tsx": { "teacher.subject": ["demo-teacher-subjects"] },
+    "src/app/sampark/demo/teacher/page.tsx": {
+      "REASON_LABEL[cb.reason]": ["demo-reason-label"],
+      "REASON_LABEL[sig.reason]": ["demo-reason-label"],
+      "sig.label": ["demo-signal-label"]
+    },
+    "src/app/settings/page.tsx": { "b": ["vocab-boards"] },
+    "src/app/teacher-training/page.tsx": {
+      "proTipKey": ["teacher-training-pro-tips"],
+      "teacherProfile.preferredGrade": { "sources": ["vocab-grades"], "count": 5 },
+      "teacherProfile.preferredSubject": { "sources": ["vocab-subjects"], "count": 5 }
+    },
+    "src/app/usage/page.tsx": {
+      "PLAN_DISPLAY_NAMES[plan as PlanType]": ["plan-display-names"],
+      "plan.charAt(0).toUpperCase() + plan.slice(1)": ["runtime-plan-id"],
+      "meta.label": { "sources": ["usage-feature-meta"], "count": 2 }
+    },
+    "src/app/video-storyteller/page.tsx": { "cat.titleKey": ["video-categories"], "found.titleKey": ["video-categories"] },
+    "src/components/assessment-scanner/assessment-result-card.tsx": { "patternInfo.label": ["mistake-pattern-labels"] },
+    "src/components/assessment/assessment-result.tsx": { "WARNING_STRINGS[w]": ["assessment-warnings"] },
+    "src/components/assessment/rubric-picker.tsx": { "r.gradeLevel": ["vocab-grades"], "r.subject": ["vocab-subjects"] },
+    "src/components/attendance/attendance-calendar.tsx": { "MONTH_NAMES[month - 1]": ["attendance-month-names"] },
+    "src/components/attendance/contact-parent-modal.tsx": {
+      "placeholderKeyFor(reason)": ["contact-parent-placeholder"],
+      "r.labelKey": { "sources": ["contact-parent-reasons-label"], "count": 2 },
+      "r.descriptionKey": ["contact-parent-reasons-description"]
+    },
+    "src/components/auth/auth-gate.tsx": { "title": ["runtime-caller-translated"], "description": ["runtime-caller-translated"] },
+    "src/components/command-palette.tsx": { "groupName": ["command-palette-groups"], "r.i18nKey": ["command-palette-routes"] },
+    "src/components/community/community-hero.tsx": {
+      "COMMUNITY_PROMPT_KIND_LABEL[prompt.kind]": ["community-prompt-kinds"],
+      "prompt.text": ["community-prompts"]
+    },
+    "src/components/community/community-messages-panel.tsx": { "type.label": ["community-post-types"] },
+    "src/components/community/feed-post.tsx": { "typeConfig.label": ["community-post-types"] },
+    "src/components/community/resource-feed.tsx": { "resource.gradeLevel": ["vocab-grades"], "resource.subject": ["vocab-subjects"] },
+    "src/components/community/sample-conversations.tsx": {
+      "type.label": ["community-post-types"],
+      "c.topic": ["community-sample-topics"],
+      "c.persona": ["community-sample-personas"],
+      "c.text": ["community-sample-texts"],
+      "c.reply.persona": ["community-sample-personas"],
+      "c.reply.text": ["community-sample-texts"]
+    },
+    "src/components/community/share-composer.tsx": {
+      "tpl.label": ["share-templates-label"],
+      "activeTemplate.prompt": ["share-templates-prompt"],
+      "activeTemplate.placeholder": ["share-templates-placeholder"]
+    },
+    "src/components/dashboard/community-corner.tsx": {
+      "type.label": ["community-post-types"],
+      "COMMUNITY_PROMPT_KIND_LABEL[prompt.kind]": ["community-prompt-kinds"],
+      "prompt.text": ["community-prompts"]
+    },
+    "src/components/dashboard/dashboard-home.tsx": {
+      "suggestion.toolLabel": ["contextual-suggestion-tools"],
+      "suggestion.subject": ["vocab-subjects"],
+      "suggestion.gradeLevel": ["vocab-grades"],
+      "labelKey": ["dashboard-prep-tools"],
+      "live.error": ["vidya-live-errors", "vidya-live-generic-error"],
+      "vidyaStatusKey(live.state, live.hasAnswered)": ["vidya-status-keys"]
+    },
+    "src/components/dashboard/recent-work-strip.tsx": { "item.subject": ["vocab-subjects"], "item.gradeLevel": ["vocab-grades"] },
+    "src/components/difficulty-selector.tsx": { "level.labelKey": ["difficulty-levels"] },
+    "src/components/grade-level-selector.tsx": { "grade": { "sources": ["grade-selector-keys"], "count": 2 } },
+    "src/components/landing/landing-footer.tsx": { "key": ["landing-footer-keys"] },
+    "src/components/landing/landing-quote.tsx": { "key": ["landing-quote-keys"] },
+    "src/components/landing/landing-voice-orb.tsx": {
+      "f.label": ["landing-floating-labels"],
+      "status": ["vidya-live-errors", "vidya-live-generic-error", "vidya-status-keys"]
+    },
+    "src/components/landing/pillar-data.ts": { "key": ["landing-pillar-keys"] },
+    "src/components/lesson-plan-display.tsx": {
+      "lessonPlan.gradeLevel": ["vocab-grades"],
+      "lessonPlan.duration": ["runtime-ai-duration"],
+      "lessonPlan.subject": ["vocab-subjects"]
+    },
+    "src/components/library/library-card.tsx": { "resource.gradeLevel": ["vocab-grades"], "resource.subject": ["vocab-subjects"] },
+    "src/components/messages/conversation-thread.tsx": { "st.label": ["shareable-types"], "lbl": ["shareable-types"] },
+    "src/components/messages/library-picker-dialog.tsx": { "s": ["vocab-grades", "vocab-subjects"] },
+    "src/components/messages/message-bubble.tsx": {
+      "cfg.label": ["message-resource-config", "message-resource-fallback"],
+      "resource.gradeLevel": ["vocab-grades"],
+      "resource.subject": ["vocab-subjects"]
+    },
+    "src/components/mobile-bottom-nav.tsx": { "tab.i18nKey": ["mobile-nav-tabs"] },
+    "src/components/moderation/report-dialog.tsx": { "opt.label": ["report-reasons"] },
+    "src/components/omni-orb.tsx": { "s": ["vocab-grades", "vocab-subjects"], "section.label": ["vidya-sections"] },
+    "src/components/plan-badge.tsx": { "PLAN_DISPLAY_NAMES[key]": ["plan-display-names"] },
+    "src/components/quick-templates.tsx": { "template.title": ["quick-templates-titles"], "template.subject": ["quick-templates-subjects"] },
+    "src/components/resource-selector.tsx": { "resource.labelKey": ["resource-levels"] },
+    "src/components/sampark/calendar/google-calendar-panel.tsx": {
+      "unit[0]": ["gcal-repeat-units"],
+      "unit[1]": ["gcal-repeat-units"],
+      "notice.text": ["gcal-outcomes", "gcal-notice-fallback"]
+    },
+    "src/components/sampark/calendar/school-calendar.tsx": { "d": ["calendar-weekday-headings"] },
+    "src/components/sampark/callbacks/callback-dialogs.tsx": {
+      "HISTORY_ACTION[h.action]": ["callback-history-actions"],
+      "h.action": ["runtime-raw-audit-action"]
+    },
+    "src/components/sampark/class-outreach.tsx": {
+      "batchReason(id).label": ["batch-reason-labels"],
+      "r.label": ["batch-reason-labels"],
+      "spec.hint": ["batch-reason-hints"]
+    },
+    "src/components/sampark/demo/call-list.tsx": {
+      "REASON_LABEL[call.reason]": ["demo-reason-label"],
+      "f.label": ["demo-call-filters"],
+      "REASON_LABEL[r]": ["demo-reason-label"],
+      "REASON_LABEL[c.reason]": ["demo-reason-label"],
+      "STATUS_LABEL[c.status]": ["demo-status-label"],
+      "SENTIMENT_LABEL[c.summary.parentSentiment]": ["demo-sentiment-label"],
+      "COMPLAINT_LABEL[c.complaintStatus]": ["demo-complaint-label"]
+    },
+    "src/components/sampark/demo/call-parent-dialog.tsx": {
+      "student.guardian.relation": ["demo-guardian-relation"],
+      "REASON_LABEL[r]": ["demo-reason-label"],
+      "REASON_HINT[r]": ["demo-reason-hint"],
+      "signal.label": ["demo-signal-label"],
+      "REASON_LABEL[reason]": ["demo-reason-label"],
+      "PERSONA_LABEL[p]": ["demo-persona-label"]
+    },
+    "src/components/sampark/demo/call-summary.tsx": {
+      "COMPLAINT_LABEL[call.complaintStatus]": ["demo-complaint-label"],
+      "SENTIMENT_LABEL[s.parentSentiment]": ["demo-sentiment-label"]
+    },
+    "src/components/sampark/demo/campaigns.tsx": {
+      "DEMO_VENUES[f.venueId]": ["demo-venues"],
+      "f.venueId": ["runtime-raw-venue-id"],
+      "p.label": ["demo-campaign-purposes"]
+    },
+    "src/components/sampark/demo/demo-frame.tsx": { "label": ["demo-frame-badges"], "view.school.admin.title": ["demo-admin-title"] },
+    "src/components/sampark/demo/follow-ups.tsx": {
+      "COMPLAINT_LABEL[c.complaintStatus]": ["demo-complaint-label"],
+      "SENTIMENT_LABEL[c.summary.parentSentiment]": ["demo-sentiment-label"],
+      "REASON_LABEL[c.reason]": ["demo-reason-label"]
+    },
+    "src/components/sampark/demo/planning.tsx": {
+      "REFUSAL_TEXT[check.why]": ["demo-refusal-text"],
+      "student.guardian.relation": ["demo-guardian-relation"],
+      "REASON_LABEL[reason]": ["demo-reason-label"],
+      "REASON_LABEL[cb.reason]": ["demo-reason-label"]
+    },
+    "src/components/sampark/demo/student-roster.tsx": {
+      "s.guardian.relation": ["demo-guardian-relation"],
+      "REASON_LABEL[sig.reason]": ["demo-reason-label"],
+      "sig.label": ["demo-signal-label"],
+      "STATUS_LABEL[last.status]": ["demo-status-label"]
+    },
+    "src/components/sampark/riya-call-panel.tsx": { "REASON_LABEL[reason]": ["demo-reason-label"] },
+    "src/components/subject-selector.tsx": { "subject": ["vocab-subjects"] },
+    "src/components/vidya-live-orb.tsx": {
+      "error": ["vidya-live-errors", "vidya-live-generic-error"],
+      "vidyaStatusKey(state, hasAnswered)": ["vidya-status-keys"]
+    },
+    "src/components/voice-assistant.tsx": { "action.params.gradeLevel": ["vocab-grades"], "action.params.subject": ["vocab-subjects"] },
+    "src/features/exam-paper/components/exam-paper-form.tsx": {
+      "b": ["vocab-boards"],
+      "g": ["exam-grade-options-features"],
+      "s": ["vocab-subjects"],
+      "board": ["vocab-boards"],
+      "gradeLevel": ["exam-grade-options-features"],
+      "d.charAt(0).toUpperCase() + d.slice(1)": ["exam-difficulty-features"],
+      "l": ["vocab-languages"]
+    },
+    "src/features/exam-paper/components/exam-paper-preview.tsx": { "paper.board": ["vocab-boards"], "paper.gradeLevel": ["vocab-grades"], "paper.subject": ["vocab-subjects"] },
+    "src/features/quiz-generator/components/quiz-generator-view.tsx": {
+      "item.labelKey": ["quiz-question-types"],
+      "level": { "sources": ["quiz-bloom-levels"], "count": 4 },
+      "BLOOM_HINTS[level]": { "sources": ["quiz-bloom-hints"], "count": 2 }
+    },
+    "src/features/worksheet-wizard/components/worksheet-sheet-preview.tsx": { "subject": ["vocab-subjects"], "gradeLevel": ["vocab-grades"] },
+    "src/features/worksheet-wizard/components/worksheet-wizard-view.tsx": { "languageName": ["vocab-languages"] },
+    "src/lib/community-feed-ticker.ts": {
+      "COMMUNITY_PROMPT_KIND_LABEL[p.kind]": ["community-prompt-kinds"],
+      "p.text": ["community-prompts"],
+      "c.topic": ["community-sample-topics"],
+      "c.persona": ["community-sample-personas"],
+      "c.text": { "sources": ["community-sample-texts"], "count": 2 },
+      "c.reply.persona": ["community-sample-personas"],
+      "c.reply.text": ["community-sample-texts"]
+    }
+  }
+}

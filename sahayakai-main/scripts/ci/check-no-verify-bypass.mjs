@@ -14,6 +14,11 @@
  */
 import { execFileSync } from 'node:child_process';
 
+// execFileSync kills the child past maxBuffer (Node default: 1 MB); the commit
+// log of a long-lived branch can exceed that. Same cap as every CI child call.
+// Class gate: src/__tests__/scripts/ci-git-max-buffer.test.ts.
+const CHILD_MAX_BUFFER = 256 * 1024 * 1024;
+
 const baseSha = process.argv[2] || process.env.BASE_SHA;
 const headSha = process.argv[3] || process.env.HEAD_SHA || 'HEAD';
 
@@ -41,7 +46,7 @@ try {
   log = execFileSync(
     'git',
     ['log', '--format=%B%n--CCD-BOUNDARY--', `${base}..${head}`],
-    { encoding: 'utf8' },
+    { encoding: 'utf8', maxBuffer: CHILD_MAX_BUFFER },
   );
 } catch (err) {
   console.error('[no-verify-check] git log failed:', err.message);

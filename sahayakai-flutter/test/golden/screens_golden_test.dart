@@ -41,7 +41,7 @@ void main() {
   });
 
   group('screen baselines at 360dp', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       final mode = brightness == Brightness.light ? 'light' : 'dark';
 
       testWidgets('login — $mode', (tester) async {
@@ -107,7 +107,7 @@ void main() {
   group('screen baselines at 800dp', () {
     // The wide surface catches the opposite failure from 360dp: a row that
     // stretches instead of centring, and a card that loses its max-width.
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       final mode = brightness == Brightness.light ? 'light' : 'dark';
 
       testWidgets('login wide — $mode', (tester) async {

@@ -80,8 +80,8 @@ export function QuestionSetsDialog({ paper }: QuestionSetsDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex-1">
-          <FileStack className="w-4 h-4 mr-2" />
+        <Button variant="outline" size="sm">
+          <FileStack className="w-4 h-4 mr-2" aria-hidden="true" />
           {t("Create question sets")}
         </Button>
       </DialogTrigger>

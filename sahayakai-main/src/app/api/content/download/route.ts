@@ -1,5 +1,6 @@
 
 import { NextResponse } from 'next/server';
+import { isOwnedStoragePath } from '@/lib/storage/owned-path';
 import { dbAdapter } from '@/lib/db/adapter';
 import { getStorageInstance } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
@@ -61,6 +62,11 @@ export async function GET(request: Request) {
                 error: 'File not available in storage',
                 details: 'This content might be from an older version or failed to save correctly.'
             }, { status: 404 });
+        }
+
+        if (!isOwnedStoragePath(userId, content.storagePath)) {
+            logger.warn('content/download: refused foreign storagePath', 'CONTENT', { userId, contentId });
+            return NextResponse.json({ error: 'File not available in storage' }, { status: 404 });
         }
 
         // 5. Generate Signed URL

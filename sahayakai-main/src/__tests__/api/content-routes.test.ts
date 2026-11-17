@@ -79,5 +79,43 @@ describe('Content API Routes', () => {
             }));
             expect(res.status).toBe(200);
         });
+
+        // Stable-id upsert: a Save after the generation's auto-save updates
+        // the SAME row (one artifact = one Library record).
+        describe('stable-id upsert', () => {
+            const { dbAdapter } = jest.requireMock('@/lib/db/adapter') as {
+                dbAdapter: { saveContent: jest.Mock; getContent: jest.Mock };
+            };
+            const savedDoc = () => dbAdapter.saveContent.mock.calls.at(-1)?.[1] as Record<string, unknown>;
+            const body = { id: '6f1c2d3e-4b5a-4c6d-8e7f-0123456789ab', type: 'quiz', title: 'Q', data: { q: 1 } };
+
+            it("keeps the existing row's creation time and writes to the same id", async () => {
+                const originalCreatedAt = { seconds: 1700000000, nanoseconds: 0 };
+                dbAdapter.getContent.mockResolvedValueOnce({ id: body.id, createdAt: originalCreatedAt });
+
+                await POST(makeRequest(body));
+
+                expect(savedDoc().id).toBe(body.id);
+                expect(savedDoc().createdAt).toBe(originalCreatedAt);
+                expect(savedDoc().status).toBe('ready');
+            });
+
+            it('gives a brand-new row a createdAt (listContent orders by it — without one the row is invisible)', async () => {
+                dbAdapter.getContent.mockResolvedValueOnce(null);
+
+                await POST(makeRequest(body));
+
+                expect(savedDoc().createdAt).toBeTruthy();
+            });
+
+            it('an explicit Save un-deletes a soft-deleted row', async () => {
+                dbAdapter.getContent.mockResolvedValueOnce({ id: body.id, createdAt: { seconds: 1 }, deletedAt: { seconds: 2 } });
+
+                await POST(makeRequest(body));
+
+                expect(savedDoc().deletedAt).toBeNull();
+                expect(savedDoc().expiresAt).toBeNull();
+            });
+        });
     });
 });

@@ -13,9 +13,9 @@
  * Runs under the node test environment (not jsdom) — jsdom intercepts
  * `node:http` which makes the in-process server hang under curl.
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -24,13 +24,18 @@ import path from 'node:path';
  * the loop, the server never accepts the curl connection, and every request
  * times out at curl --max-time.
  */
+/** `bash` is on PATH on Linux/macOS/CI; on Windows it ships with Git for Windows but is often not on PATH. */
+const BASH = process.platform === 'win32'
+    ? [process.env.BASH_PATH, 'C:/Program Files/Git/bin/bash.exe', 'C:/Program Files/Git/usr/bin/bash.exe'].find((p) => p && existsSync(p)) ?? 'bash'
+    : 'bash';
+
 async function runScript(env: NodeJS.ProcessEnv, timeoutMs: number): Promise<{
     status: number | null;
     stdout: string;
     stderr: string;
 }> {
     return new Promise((resolve, reject) => {
-        const proc = spawn('bash', [SCRIPT_PATH], {
+        const proc = spawn(BASH, [SCRIPT_PATH], {
             env: { ...process.env, ...env },
             stdio: ['ignore', 'pipe', 'pipe'],
         });
@@ -234,7 +239,19 @@ function startMock(): Promise<{ server: Server; baseUrl: string }> {
 // practice and prevents flaky CI failures.
 jest.setTimeout(30_000);
 
-describe('scripts/smoke-test-ai-flows.sh', () => {
+/**
+ * The script needs bash, curl and python3 (timing + JSON checks). Linux/macOS/CI have all three.
+ * On a Windows box where `python3` is only the Microsoft Store stub the script cannot run at all,
+ * so the suite is skipped there with the reason printed, rather than reported as a failure or a pass.
+ */
+const PREREQ_OK = spawnSync(BASH, ['-c', 'command -v curl >/dev/null && python3 -c "print(1)"'], { encoding: 'utf8', timeout: 15000 }).stdout?.trim() === '1';
+if (!PREREQ_OK) {
+    // eslint-disable-next-line no-console -- make the skip visible in the run output
+    console.warn('SKIPPED smoke-test-ai-flows.sh: needs bash + curl + a working python3 on PATH');
+}
+const describeIfPrereqs = PREREQ_OK ? describe : describe.skip;
+
+describeIfPrereqs('scripts/smoke-test-ai-flows.sh', () => {
     let server: Server;
     let baseUrl: string;
 

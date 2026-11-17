@@ -1,5 +1,6 @@
 
 import { NextResponse } from 'next/server';
+import { isOwnedStoragePath } from '@/lib/storage/owned-path';
 import { dbAdapter } from '@/lib/db/adapter';
 import { SaveContentSchema } from '@/ai/schemas/content-schemas';
 import { z } from 'zod';
@@ -49,6 +50,29 @@ export async function POST(request: Request) {
         }
 
         const validContent = validationResult.data;
+
+        // Stable-id upsert (see @/lib/content-id): displays send the id their
+        // generation was already filed under, so this updates that row rather
+        // than adding a duplicate. Keep the row's original creation time —
+        // and give a brand-new row one: `listContent` orders by `createdAt`,
+        // and Firestore drops docs missing an orderBy field, so saves without
+        // it never appeared in My Library. An explicit Save also un-deletes.
+        const { Timestamp } = await import('firebase-admin/firestore');
+        // A client-supplied storagePath outside users/<uid>/ is never kept: download and
+        // export sign/fetch whatever path the doc holds (arbitrary-object read otherwise).
+        if (validContent.storagePath !== undefined && !isOwnedStoragePath(userId, validContent.storagePath)) {
+            logger.warn('content/save: dropped foreign storagePath', 'CONTENT', { userId });
+            validContent.storagePath = undefined;
+        }
+
+        const existing = await dbAdapter.getContent(userId, validContent.id);
+        const persistFields = {
+            createdAt: existing?.createdAt ?? Timestamp.now(),
+            status: 'ready' as const,
+            deletedAt: null,
+            expiresAt: null,
+            hiddenFromLibrary: false,
+        };
 
         // 3. Storage Logic (Ensure file exists in Storage with proper name)
         // Only if 'data' is present. If data is missing, we assume it's just a metadata update?
@@ -169,7 +193,7 @@ export async function POST(request: Request) {
                 }
 
                 // 4. Save to DB via Adapter — if this throws, roll back the GCS file
-                await dbAdapter.saveContent(userId, validContent as any);
+                await dbAdapter.saveContent(userId, { ...validContent, ...persistFields } as any);
             } catch (storageOrDbError) {
                 // Rollback: if GCS was written but Firestore failed, delete the orphaned file
                 if (uploadedGcsPath) {
@@ -192,7 +216,7 @@ export async function POST(request: Request) {
         }
 
         // No data field — metadata-only save
-        await dbAdapter.saveContent(userId, validContent as any);
+        await dbAdapter.saveContent(userId, { ...validContent, ...persistFields } as any);
 
         // Mark onboarding checklist item (fire-and-forget)
         import('@/lib/firebase-admin').then(({ getDb }) =>

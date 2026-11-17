@@ -1,4 +1,5 @@
 import React from 'react';
+import { COMPANY_NAME, FOUNDER } from '@/lib/company-identity';
 
 export function StructuredData() {
   const organizationSchema = {
@@ -50,15 +51,13 @@ export function StructuredData() {
     },
     founder: {
       '@type': 'Person',
-      name: 'Sarit Arora',
-      jobTitle: 'Founder & CEO',
+      name: FOUNDER.name,
+      jobTitle: FOUNDER.jobTitle,
       url: 'https://sahayakai.com/about',
-      sameAs: [
-        'https://www.linkedin.com/in/sarit-arora',
-      ],
+      sameAs: [FOUNDER.linkedin],
       worksFor: {
         '@type': 'Organization',
-        name: 'SARGVISION',
+        name: COMPANY_NAME,
       },
     },
   };

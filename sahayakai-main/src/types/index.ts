@@ -1,3 +1,4 @@
+import type { OnboardingPhase } from '@/lib/onboarding-phase';
 // import { Timestamp } from 'firebase-admin/firestore'; // Removed to prevent client bundle crash
 
 export interface Timestamp {
@@ -212,8 +213,9 @@ export interface UserProfile {
     // Onboarding generation counter (client-side tracks, periodically syncs)
     aiGenerationCount?: number;
 
-    // Onboarding — progressive disclosure state machine
-    onboardingPhase?: 'setup' | 'first-generation' | 'exploring' | 'completing' | 'done';
+    // Onboarding — progressive disclosure state machine. The union lives in
+    // src/lib/onboarding-phase.ts; never widen it here.
+    onboardingPhase?: OnboardingPhase;
     onboardingCompletedAt?: Timestamp;
     firstGenerationContentId?: string;
     firstGenerationTool?: ContentType;
@@ -244,6 +246,12 @@ export interface BaseContent<T = any> {
     status?: 'generating' | 'ready' | 'error';
     deletedAt?: Timestamp | null;  // null = active, set = soft-deleted
     expiresAt?: Timestamp | null;  // TTL field: Firestore auto-purges 30 days after soft-delete
+    /**
+     * Kept in storage but not shown in My Library — set (reversibly) by
+     * scripts/migrate-library-instant-answers.ts for rows that were
+     * auto-saved conversation rather than artifacts. Never deletes data.
+     */
+    hiddenFromLibrary?: boolean;
 
     // Storage
     storagePath?: string; // Path to full JSON/Markdown in Cloud Storage

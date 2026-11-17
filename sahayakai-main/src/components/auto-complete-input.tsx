@@ -12,6 +12,8 @@ type AutoCompleteInputProps = {
   placeholder?: string;
   selectedLanguage: string;
   className?: string;
+  /** Classes for the <input> itself (className styles the wrapper). */
+  inputClassName?: string;
   name?: string;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   ref: React.Ref<HTMLInputElement>;
@@ -117,7 +119,7 @@ const allSuggestions: Record<string, string[]> = {
 };
 
 
-export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange, onSuggestionClick, placeholder, selectedLanguage, className, ...props }) => {
+export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange, onSuggestionClick, placeholder, selectedLanguage, className, inputClassName, ...props }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -158,7 +160,7 @@ export const AutoCompleteInput: FC<AutoCompleteInputProps> = ({ value, onChange,
         value={value}
         onChange={onChange}
         onFocus={() => setIsFocused(true)}
-        className="bg-card/50 backdrop-blur-sm"
+        className={cn("bg-card/50 backdrop-blur-sm", inputClassName)}
         autoComplete="off"
         {...props}
       />

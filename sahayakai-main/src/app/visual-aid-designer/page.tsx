@@ -211,6 +211,8 @@ type FormValues = z.infer<typeof formSchema>;
 function VisualAidContent() {
   const { requireAuth, openAuthModal } = useAuth();
   const [visualAid, setVisualAid] = useState<VisualAidOutput | null>(null);
+  // Library id of the shown visual aid (minted per generation / restored id).
+  const [visualAidContentId, setVisualAidContentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { t: translate, language: uiLanguage } = useLanguage();
@@ -290,6 +292,7 @@ function VisualAidContent() {
               // imageDataUri is stripped on save (storageRef kept).
               // VisualAidDisplay handles missing imageDataUri gracefully.
               setVisualAid(content.data);
+              setVisualAidContentId(id);
               form.reset({
                 prompt: content.topic || content.title,
                 gradeLevel: content.gradeLevel,
@@ -343,6 +346,7 @@ function VisualAidContent() {
     if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setVisualAid(null);
+    setVisualAidContentId(null);
     try {
       const token = await auth.currentUser?.getIdToken();
       const headers: Record<string, string> = {
@@ -363,10 +367,13 @@ function VisualAidContent() {
         ? values.subject
         : undefined;
 
+      // One id per generation: the flow files the image under it and Save upserts it.
+      const submitContentId = crypto.randomUUID();
       const res = await fetch("/api/ai/visual-aid", {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
+          contentId: submitContentId,
           prompt: values.prompt,
           language: submittedLanguage,
           gradeLevel: values.gradeLevel,
@@ -387,6 +394,7 @@ function VisualAidContent() {
 
       const result = await res.json();
       setVisualAid(result);
+      setVisualAidContentId(submitContentId);
       clearFormSnapshot("visual-aid-designer");
     } catch (error: any) {
       console.error("Failed to generate visual aid:", error);
@@ -545,6 +553,7 @@ function VisualAidContent() {
             title={form.getValues('prompt')}
             gradeLevel={form.getValues('gradeLevel')}
             language={form.getValues('language')}
+            contentId={visualAidContentId}
           />
           <ShareToCommunityCTA contentType="visual-aid" className="mt-3" />
           </div>

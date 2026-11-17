@@ -1,56 +1,41 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
-import 'package:sahayakai/core/theme/app_theme.dart';
-import 'package:sahayakai/features/inbox/presentation/inbox_screen.dart';
-import 'package:sahayakai/features/staffroom/presentation/network_hub_screen.dart';
-import 'package:sahayakai/features/staffroom/presentation/staffroom_screen.dart';
-import 'package:sahayakai/features/vidya/presentation/vidya_sheet.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// P1.2 launcher ubiquity. The VIDYA co-teacher action must be reachable from
-/// the shell surfaces that DON'T use ToolScaffold (which injects it on every
-/// tool screen), matching the web's globally-mounted Omni-Orb. Each of these
-/// renders its GlassAppBar regardless of body/auth state, so the launcher is
-/// asserted on the real app bar in the screen's default (deferred / sign-in)
-/// state. Library and ConversationThread also carry it, but Library's items
-/// provider actively fetches (and ConversationThread needs constructor args), so
-/// both are covered by explicit assertions in their own screen suites instead.
-Widget _host(Widget screen) => ProviderScope(
-  child: MaterialApp(
-    theme: AppTheme.light(),
-    locale: const Locale('en'),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: screen,
-  ),
-);
-
+/// One VIDYA entry per screen (design system v2 Orb: "one orb per screen").
+///
+/// VIDYA is reached from the floating orb ([VidyaOverlay], mounted once above
+/// the Navigator, so it is on every pushed route) and, on Home, from the hero
+/// orb. Pre-v2 screens also carried an app-bar launcher, which put two VIDYA
+/// entries on one screen. This gate fails if any file other than the overlay
+/// and the VIDYA feature itself opens the VIDYA sheet: a second launcher on any
+/// screen would have to call it.
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-  });
-
-  final surfaces = <String, Widget>{
-    'Pro Inbox': const InboxScreen(),
-    'Staffroom': const StaffroomScreen(),
-    'Network hub': const NetworkHubScreen(),
-  };
-
-  surfaces.forEach((name, screen) {
-    testWidgets('$name carries the VIDYA co-teacher launcher in its app bar', (
-      tester,
-    ) async {
-      await tester.pumpWidget(_host(screen));
-      // pump (not pumpAndSettle): the deferred transports/streams never settle,
-      // but the app bar and its action render on the first frame.
-      await tester.pump();
-      expect(
-        find.byType(VidyaAppBarAction),
-        findsOneWidget,
-        reason: '$name must expose the voice launcher like the tool screens do',
-      );
-    });
+  test('only the VIDYA overlay opens the VIDYA sheet', () {
+    const allowed = {
+      'lib/features/vidya/presentation/vidya_sheet.dart',
+      'lib/features/vidya/presentation/vidya_overlay.dart',
+    };
+    final offenders = <String>[];
+    for (final f in Directory('lib').listSync(recursive: true)) {
+      if (f is! File || !f.path.endsWith('.dart')) continue;
+      final path = f.path.replaceAll(r'\', '/');
+      if (allowed.contains(path)) continue;
+      final lines = f.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i].trimLeft();
+        if (line.startsWith('//')) continue;
+        if (line.contains('showVidyaSheet(') ||
+            line.contains('VidyaAppBarAction')) {
+          offenders.add('$path:${i + 1}: ${lines[i].trim()}');
+        }
+      }
+    }
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'a second VIDYA entry point; the floating orb is the one launcher',
+    );
   });
 }

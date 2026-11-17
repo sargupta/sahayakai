@@ -1,5 +1,6 @@
 
 "use client";
+import { useLibraryId } from "@/hooks/use-library-id";
 import {
   Accordion,
   AccordionContent,
@@ -41,6 +42,8 @@ const renderMarkdown = (text: string | null | undefined) => {
 type LessonPlanDisplayProps = {
   lessonPlan: LessonPlanOutput;
   selectedLanguage?: string;
+  /** Library id of this artifact (minted per generation / restored id); Save upserts it. */
+  contentId?: string | null;
   /** Re-run the generator with the same inputs; absent when viewing a saved plan. */
   onRegenerate?: () => void;
 };
@@ -211,8 +214,9 @@ const displayTranslations: Record<string, any> = {
 
 const PDF_ID = "lesson-plan-pdf";
 
-export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, selectedLanguage = 'en', onRegenerate }) => {
+export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, selectedLanguage = 'en', contentId, onRegenerate }) => {
   const { toast } = useToast();
+  const libraryId = useLibraryId(contentId, lessonPlan);
   const { canExport } = useSubscription();
   const { t: translate } = useLanguage();
   const t = displayTranslations[selectedLanguage] || displayTranslations.en;
@@ -268,7 +272,8 @@ export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, sele
         : `${lessonPlan.subject || 'General'} Lesson - ${lessonPlan.gradeLevel || 'Unspecified'}`;
 
       const payload = {
-        id: crypto.randomUUID(), // Generate ID client-side or let server do it (server schema expects UUID in ID)
+        // Same id the generation was filed under → upsert, never a second row.
+        id: libraryId,
         type: 'lesson-plan',
         title: saveTitle,
         gradeLevel: lessonPlan.gradeLevel || 'Class 5',

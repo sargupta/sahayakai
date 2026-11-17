@@ -360,37 +360,41 @@ async function _dispatchVideoStorytellerInner(
 
     if (decision.mode === 'shadow') {
         const shadowStartedAt = Date.now();
-        const [genkit, sidecar] = await Promise.all([
-            runGenkitSafe(input),
-            runSidecarSafe(sidecarRequest),
-        ]);
+        // Shadow never makes the teacher wait for the sidecar: it is started now, and its outcome is
+        // logged and diffed when it lands, after the Genkit answer has gone back
+        // (gate: shadow-never-blocks.test.ts).
+        const sidecarShadow = runSidecarSafe(sidecarRequest);
+        const genkit = await runGenkitSafe(input);
         const genkitLatencyMs = Date.now() - shadowStartedAt;
-        // Shadow keeps both calls live (one Genkit, one sidecar) so we
-        // can score parity offline — we DO NOT count this as a single
-        // AI call: the user-facing call is Genkit (1) but the sidecar
-        // shadow is also a Gemini-equivalent. Surfacing both counts so
-        // the cost dashboard can see shadow's true overhead.
-        logDispatch(decision, {
-            source: 'genkit',
-            uid: input.userId,
-            sidecarOk: sidecar.ok,
-            sidecarLatencyMs: sidecar.latencyMs,
-            aiCallsCount: 1,
-            shadowSidecarCalled: true,
-        });
-        // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
-        // video-storyteller's userId is optional (anonymous recommendations
-        // are allowed); fall back to 'anon' to keep the doc-id stable.
-        void writeAgentShadowDiff({
-            agent: 'video-storyteller',
-            uid: input.userId ?? 'anon',
-            genkit: genkit.ok ? genkit.out : null,
-            sidecar: sidecar.ok ? sidecar.res : null,
-            genkitLatencyMs,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarOk: sidecar.ok,
-            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
-        });
+        void sidecarShadow.then((sidecar) => {
+            // Shadow keeps both calls live (one Genkit, one sidecar) so we
+            // can score parity offline — we DO NOT count this as a single
+            // AI call: the user-facing call is Genkit (1) but the sidecar
+            // shadow is also a Gemini-equivalent. Surfacing both counts so
+            // the cost dashboard can see shadow's true overhead.
+            logDispatch(decision, {
+                source: 'genkit',
+                uid: input.userId,
+                sidecarOk: sidecar.ok,
+                sidecarLatencyMs: sidecar.latencyMs,
+                aiCallsCount: 1,
+                shadowSidecarCalled: true,
+            });
+            // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
+            // video-storyteller's userId is optional (anonymous recommendations
+            // are allowed); fall back to 'anon' to keep the doc-id stable.
+            void writeAgentShadowDiff({
+                agent: 'video-storyteller',
+                uid: input.userId ?? 'anon',
+                genkit: genkit.ok ? genkit.out : null,
+                sidecar: sidecar.ok ? sidecar.res : null,
+                genkitLatencyMs,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarOk: sidecar.ok,
+                sidecarError: sidecar.ok ? undefined : sidecar.error.message,
+            });
+        }).catch(() => undefined);
+
         if (!genkit.ok) throw genkit.error;
         logger.info('dispatch complete', 'video_storyteller.dispatch', {
             durationMs: Date.now() - dispatchStartedAt,

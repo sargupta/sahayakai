@@ -21,6 +21,8 @@ import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import { TypingIndicator } from "./typing-indicator";
 import { PresenceDot } from "./presence-dot";
 import { cn } from "@/lib/utils";
+import { useNearBottom } from "@/hooks/use-near-bottom";
+import { shouldAutoScroll } from "@/lib/chat-autoscroll";
 import {
     Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
@@ -37,7 +39,7 @@ const SHAREABLE_TYPES: { type: SharedResource["type"]; label: string; icon: Reac
     { type: "visual-aid",         label: "Visual Aid",   icon: Images,         route: "visual-aid-designer" },
     { type: "virtual-field-trip", label: "Field Trip",   icon: Globe2,         route: "virtual-field-trip"  },
     { type: "rubric",             label: "Rubric",       icon: GraduationCap,  route: "rubric-generator"    },
-    { type: "teacher-training",   label: "Training",     icon: Wand2,          route: "teacher-training"    },
+    { type: "teacher-training",   label: "AI Coach",     icon: Wand2,          route: "teacher-training"    },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -191,6 +193,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
     const [resourceOpen, setResourceOpen] = useState(false);
     const [libraryOpen, setLibraryOpen] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const { outboxMessages, sendWithOutbox, retryMessage, mergeWithFirestore } = useMessageOutbox(conversation.id);
@@ -204,10 +207,22 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
 
     const displayMessages = mergeWithFirestore(messages);
 
-    // Auto-scroll on new messages
+    // Auto-scroll only when a message is ADDED, and only if the reader is already near the
+    // bottom or sent it themselves. `displayMessages` is a new array on every render (typing
+    // indicator, keystrokes, Firestore ticks), so keying the effect on it yanked anyone
+    // reading history back to the bottom on every render.
+    const isNearBottom = useNearBottom(scrollContainerRef, 120);
+    const nearBottomRef = useRef(isNearBottom);
+    nearBottomRef.current = isNearBottom;
+    const last = displayMessages[displayMessages.length - 1];
+    const lastKey = `${displayMessages.length}:${last?.id ?? ""}`;
+    const lastIsMine = !!last && last.senderId === user?.uid;
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [displayMessages]);
+        if (shouldAutoScroll({ nearBottom: nearBottomRef.current, lastIsMine })) {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per added message, by design
+    }, [lastKey]);
 
     // Mark read when conversation opens. We swallow errors but log them at
     // debug level so DevTools shows whether the action actually ran on the
@@ -299,7 +314,7 @@ export function ConversationThread({ conversation, onBack }: ConversationThreadP
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 scrollbar-thin scrollbar-thumb-border">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-2 scrollbar-thin scrollbar-thumb-border">
                 {/* Load older messages */}
                 {hasMore && !loading && (
                     <div className="flex justify-center py-2">
