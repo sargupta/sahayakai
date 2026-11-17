@@ -49,7 +49,13 @@ const NOT_DEPLOY_CONFIG =
     /\.(md|mdx|txt|rst|html?|csv|ipynb|png|jpe?g|gif|webp|ico|svg|ulaw|wav|mp3|mp4|webm|pdf|woff2?|ttf|otf|zip|gz|lock|tsbuildinfo|map)$|package-lock\.json$/i;
 
 /** Files other than the allowed source that may mention a protected name, each with its reason. */
-const NAME_ALLOWLIST: Record<string, string> = {};
+const NAME_ALLOWLIST: Record<string, string> = {
+    'sahayakai-agents/deploy/cloudbuild-riya-bridge.yaml': 'refusal guard: the Riya bridge build stops if its target is the live engine',
+    'sahayakai-agents/deploy/cloudbuild-vidya-voice.yaml': 'refusal guard: the VIDYA voice build stops if its target is the live engine',
+    'sahayakai-agents/deploy/monitoring/alert-policy.template.json': 'monitoring: an alert that reads the live engine logs, never a deploy',
+    'sahayakai-agents/deploy/monitoring/parent-call-monitoring.sh': 'monitoring: a log filter on the live engine, never a deploy',
+    'sahayakai-main/src/__tests__/deploy/vidya-live-production-config.test.ts': 'a test asserting the VIDYA voice URL is never the live engine',
+};
 
 interface DeployDefinition {
     file: string;

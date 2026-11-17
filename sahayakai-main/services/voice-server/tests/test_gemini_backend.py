@@ -183,8 +183,8 @@ def test_the_deploy_spec_runs_on_vertex():
     """Class gate: production calls must not depend on the AI Studio prepaid key.
 
     16 Nov 2026: that key returned 402 RESOURCE_EXHAUSTED and every live parent call
-    died after one turn. The one deploy definition for sahayakai-telephony runs the
-    engine on Vertex AI as its service account.
+    died after one turn. The live engine's one deploy definition runs it on
+    Vertex AI as its service account.
     """
     from pathlib import Path
 
