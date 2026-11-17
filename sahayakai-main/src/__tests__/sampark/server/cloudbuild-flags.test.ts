@@ -68,6 +68,9 @@ describe('Sampark deploy flags', () => {
         expect(secrets).not.toMatch(/SAMPARK_STAGING_/);
         expect(env.get('SAMPARK_DEMO_ENABLED')).not.toBe('true');
         expect(env.has('SAMPARK_FIRESTORE_DATABASE')).toBe(false);
+        // Clips go to Cloud Storage: a Cloud Run container's disk is per instance and lost on restart.
+        expect(env.get('SAMPARK_AUDIO_BUCKET')).toMatch(/^[a-z0-9][a-z0-9._-]+$/);
+        expect(env.has('SAMPARK_AUDIO_DIR')).toBe(false);
     });
 
     it('never declares a NEXT_PUBLIC_ Sampark flag', () => {
