@@ -224,14 +224,16 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
                             {view ? `${view.school.name}, ${view.school.city}` : t("Demo school")}
                         </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                    {/* min-w-0 (not shrink-0): on a phone the status text truncates instead of
+                        pushing the whole page 39px sideways; the full text stays in the tooltip. */}
+                    <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-2" data-testid="sampark-demo-header-actions">
                         {sargvision.some((c) => c.realCall) ? (
-                            <StatusPill tone="warning" title={t("Demo classes play in the browser. The Sargvision sample class places REAL calls by Riya to its allow-listed contacts, after confirmation, on this local machine only.")}>
-                                {t("Demo · Sargvision rings real phones")}
+                            <StatusPill className="min-w-0" tone="warning" title={t("Demo classes play in the browser. The Sargvision sample class places REAL calls by Riya to its allow-listed contacts, after confirmation, on this local machine only.")}>
+                                <span className="min-w-0 truncate">{t("Demo · Sargvision rings real phones")}</span>
                             </StatusPill>
                         ) : (
-                            <StatusPill tone="brand" title={t("Calls in this demo are played in the browser. No phone rings and no real parent is contacted.")}>
-                                {t("Demo · no phone rings")}
+                            <StatusPill className="min-w-0" tone="brand" title={t("Calls in this demo are played in the browser. No phone rings and no real parent is contacted.")}>
+                                <span className="min-w-0 truncate">{t("Demo · no phone rings")}</span>
                             </StatusPill>
                         )}
                         <ProviderSwitchPill />
