@@ -80,6 +80,8 @@ export default function CommunityPage() {
   const [showTeacherDirectory, setShowTeacherDirectory] = useState(false);
   const [showExploreGroups, setShowExploreGroups] = useState(false);
   const [loading, setLoading] = useState(true);
+  // My groups + discover settle after the feed (they wait for the auto-join); deep links need them.
+  const [groupsReady, setGroupsReady] = useState(false);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -107,56 +109,52 @@ export default function CommunityPage() {
         return;
       }
 
-      // Step 1: Auto-join groups FIRST — ensures membership is settled
-      // before we query myGroups and discover
-      try {
-        await ensureUserGroupsAction();
-      } catch {
-        // Non-fatal — continue loading
-      }
+      // Loading is NOT a waterfall (founder report 2026-11-17: Community took ~7 s).
+      // It used to await ensureUserGroups, then the profile read, then six calls, and showed
+      // nothing until the slowest of the six landed. Now:
+      //  - everything that does not depend on group membership starts at once;
+      //  - the page shows as soon as the FEED lands; other panels fill in as they arrive;
+      //  - only "my groups" + "discover" wait for ensureUserGroups (membership);
+      //  - a first-time teacher (groups not yet initialised) gets the feed once more after
+      //    the auto-join, so the groups they were just added to are in it.
+      const logFail = (what: string) => (err: unknown) => console.error(`Community data load [${what}] failed:`, err);
+      const loadFeed = () => getUnifiedFeedAction().then((items) => {
+        setFeedItems(items);
+        setHasMore(items.length >= 20); // Default page size
+      });
 
-      // Check if this is first community visit — show inline hints if so
-      try {
-        const userSnap = await getDoc(doc(clientDb, 'users', firebaseUser.uid));
-        const introState = userSnap.data()?.communityIntroState;
-        if (introState === 'ready' || introState === 'none') {
-          setShowFirstVisitHint(true);
-        }
-      } catch {}
+      const profileP = getDoc(doc(clientDb, 'users', firebaseUser.uid))
+        .then((snap) => {
+          const data = snap.data();
+          const introState = data?.communityIntroState;
+          if (introState === 'ready' || introState === 'none') setShowFirstVisitHint(true);
+          return data?.groupsInitialized === true;
+        })
+        .catch(() => true);
 
       // Mark community as visited (fire-and-forget — prevents future nudges)
       updateProfileAction(firebaseUser.uid, { communityIntroState: 'visited' }).catch(() => {});
 
-      // Step 2: Load all data in parallel — now that membership is settled.
-      // The 6th call hydrates `likedPostIds` so previously-liked items render
-      // with filled hearts on the very first paint instead of empty.
-      Promise.allSettled([
-        getMyGroupsAction(),
-        getUnifiedFeedAction(),
-        getMyConnectionDataAction(),
-        discoverGroupsAction(),
-        getRecommendedTeachersAction(firebaseUser.uid),
-        getLikedItemIdsAction(),
-      ])
-        .then((results) => {
-          if (results[0].status === 'fulfilled') setMyGroups(results[0].value);
-          if (results[1].status === 'fulfilled') {
-            setFeedItems(results[1].value);
-            setHasMore(results[1].value.length >= 20); // Default page size
-          }
-          if (results[2].status === 'fulfilled') setConnectionData(results[2].value);
-          if (results[3].status === 'fulfilled') setSuggestedGroups(results[3].value);
-          if (results[4].status === 'fulfilled') setTeacherSuggestions(results[4].value);
-          if (results[5].status === 'fulfilled') {
-            const { groupPostIds, resourceIds } = results[5].value;
-            setLikedPostIds(new Set([...groupPostIds, ...resourceIds]));
-          }
+      loadFeed().catch(logFail('feed')).finally(() => setLoading(false));
+      getMyConnectionDataAction().then(setConnectionData).catch(logFail('connections'));
+      getRecommendedTeachersAction(firebaseUser.uid).then(setTeacherSuggestions).catch(logFail('teachers'));
+      // Hydrates likedPostIds so previously-liked items render with filled hearts.
+      getLikedItemIdsAction()
+        .then(({ groupPostIds, resourceIds }) => setLikedPostIds(new Set([...groupPostIds, ...resourceIds])))
+        .catch(logFail('likes'));
 
-          results.forEach((r, i) => {
-            if (r.status === 'rejected') console.error(`Community data load [${i}] failed:`, r.reason);
-          });
+      // Membership-dependent: auto-join first (non-fatal), then my groups + discover.
+      ensureUserGroupsAction()
+        .catch(() => undefined)
+        .then(async () => {
+          const results = await Promise.allSettled([getMyGroupsAction(), discoverGroupsAction()]);
+          if (results[0].status === 'fulfilled') setMyGroups(results[0].value);
+          else logFail('my groups')(results[0].reason);
+          if (results[1].status === 'fulfilled') setSuggestedGroups(results[1].value);
+          else logFail('discover')(results[1].reason);
+          if (!(await profileP)) await loadFeed().catch(logFail('feed after auto-join'));
         })
-        .finally(() => setLoading(false));
+        .finally(() => setGroupsReady(true));
     });
     return () => unsub();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -190,7 +188,7 @@ export default function CommunityPage() {
   //   ?group=<id>[&post=<id>]   open that group's conversation (scrolled to
   //                             that post — the homepage Messages panel)
   useEffect(() => {
-    if (loading || deepLinkHandledRef.current || typeof window === 'undefined') return;
+    if (loading || !groupsReady || deepLinkHandledRef.current || typeof window === 'undefined') return;
     deepLinkHandledRef.current = true;
     const params = new URLSearchParams(window.location.search);
     const groupParam = params.get('group');
@@ -204,7 +202,7 @@ export default function CommunityPage() {
       openComposer(getCommunityPrompt(params.get('prompt')));
     }
     if (groupParam || params.has('compose')) window.history.replaceState(null, '', '/community');
-  }, [loading, myGroups, suggestedGroups, user, openComposer, toast, t]);
+  }, [loading, groupsReady, myGroups, suggestedGroups, user, openComposer, toast, t]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
