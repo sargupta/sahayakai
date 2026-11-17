@@ -466,12 +466,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                 {tr("Play quiz")}
                             </button>
                         </div>
-                        {onRegenerate ? (
-                            <Button variant="outline" size="default" onClick={onRegenerate} className="h-11 gap-2 rounded-pill">
-                                <RotateCw className="h-4 w-4" aria-hidden="true" />
-                                {t.regenerate}
-                            </Button>
-                        ) : null}
+                        {/* Regenerate lives once, in the result's action row (it was also here). */}
                     </div>
                 </div>
 
