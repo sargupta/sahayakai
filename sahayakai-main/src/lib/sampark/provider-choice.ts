@@ -31,6 +31,18 @@ export function providerChoiceFromCookieHeader(cookieHeader: string | null | und
 }
 
 /**
+ * Is there a calling provider to choose on this deployment? Only when Riya's AI conversation
+ * calls are switched on (SAMPARK_ELEVENLABS_ENABLED, the same switch as `riyaEnabled` in
+ * src/server/sampark/conversation.ts). Production runs SamparkAI in Practice with Riya off:
+ * both provider cards would be unavailable, and a chooser nobody can pass would lock every
+ * school out of SamparkAI. There the chooser is skipped (middleware) and the page forwards.
+ * Gate: sampark-chooser-never-traps.test.ts.
+ */
+export function providerChoiceRequired(env: Record<string, string | undefined> = process.env): boolean {
+    return env.SAMPARK_ELEVENLABS_ENABLED === 'true';
+}
+
+/**
  * Does this page (a path in the /sampark route tree) need a provider choice first?
  * The public website (/sampark) and the chooser itself do not; the signed-in workspace
  * (/sampark/workspace), every school (/sampark/<orgId>/…) and the demo school do.

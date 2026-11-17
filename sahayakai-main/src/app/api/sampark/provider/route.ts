@@ -15,7 +15,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 
-import { PROVIDER_CHOICES, PROVIDER_COOKIE, providerChoiceFromCookieHeader } from '@/lib/sampark/provider-choice';
+import { PROVIDER_CHOICES, PROVIDER_COOKIE, providerChoiceFromCookieHeader, providerChoiceRequired } from '@/lib/sampark/provider-choice';
 import { providerOptions } from '@/server/sampark/conversation';
 
 export const runtime = 'nodejs';
@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
     if (refused) return refused;
     const options = providerOptions().map((o) => ({ id: o.id, available: o.available }));
     const current = providerChoiceFromCookieHeader(req.headers.get('cookie'));
-    return NextResponse.json({ choice: current, options }, { headers: { 'cache-control': 'no-store' } });
+    // `required: false` = no calling provider on this deployment (Riya off, Practice only): the
+    // chooser page forwards straight into SamparkAI instead of showing two dead cards.
+    return NextResponse.json({ choice: current, options, required: providerChoiceRequired() }, { headers: { 'cache-control': 'no-store' } });
 }
 
 export async function POST(req: NextRequest) {

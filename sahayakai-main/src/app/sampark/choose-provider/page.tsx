@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Loader2, PhoneCall } from "lucide-react";
 import { PageShell, SectionCard } from "@/components/layout";
@@ -33,6 +33,13 @@ function ChooserContent() {
     const state = useSamparkQuery((signal) => getProviderChoice({ signal }), []);
     const [busy, setBusy] = useState<ProviderChoice | null>(null);
 
+    // No calling provider on this deployment (Riya off, Practice only): nothing to choose, so go
+    // straight in rather than showing two cards nobody can pick.
+    const choiceRequired = state.data?.required !== false;
+    useEffect(() => {
+        if (state.data && state.data.required === false) router.replace(next);
+    }, [state.data, router, next]);
+
     const pick = async (provider: ProviderChoice) => {
         setBusy(provider);
         try {
@@ -56,7 +63,8 @@ function ChooserContent() {
         >
             {state.error && <ErrorPanel error={state.error} onRetry={state.reload} />}
             {!state.data && !state.error && <LoadingBlock rows={2} />}
-            {state.data && (
+            {state.data && !choiceRequired && <LoadingBlock rows={2} />}
+            {state.data && choiceRequired && (
                 <SectionCard icon={PhoneCall} title={t("Calling provider")}>
                     <ul aria-label={t("Calling provider")} className="grid gap-4 md:grid-cols-2">
                         {state.data.options.map((o) => {
