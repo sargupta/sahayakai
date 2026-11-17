@@ -58,7 +58,12 @@ describe.each(Object.keys(PROVIDERS))('provider=%s', (provider) => {
     beforeEach(() => {
         for (const k of ENV_KEYS) delete process.env[k];
         Object.assign(process.env, PROVIDERS[provider]);
-        store = { parent_outreach: { o1: { teacherUid: 'teacher-A', parentPhone: PHONE, classId: 'c1', studentId: 's1', callStatus: 'initiated' } } };
+        store = {
+            parent_outreach: { o1: { teacherUid: 'teacher-A', parentPhone: PHONE, classId: 'c1', studentId: 's1', callStatus: 'initiated' } },
+            // The route re-reads the parent's phone from the student record at dial time.
+            classes: { c1: { teacherUid: 'teacher-A' } },
+            'classes/c1/students': { s1: { parentPhone: PHONE } },
+        };
         (global as any).__fakeDb = createFakeDb(store);
         fetchMock.mockReset();
         fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ sid: 'CA1', callSid: 'x' }) });

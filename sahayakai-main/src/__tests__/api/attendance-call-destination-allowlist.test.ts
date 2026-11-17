@@ -72,7 +72,12 @@ describe('call route with CALL_ALLOWED_DESTINATIONS', () => {
     });
     beforeEach(() => {
         for (const k of ENV_KEYS) delete process.env[k];
-        store = { parent_outreach: { o1: { teacherUid: 'teacher-A', parentPhone: REAL_PARENT, callStatus: 'initiated' } } };
+        store = {
+            parent_outreach: { o1: { teacherUid: 'teacher-A', parentPhone: REAL_PARENT, classId: 'c1', studentId: 's1', callStatus: 'initiated' } },
+            // The route re-reads the parent's phone from the student record at dial time.
+            classes: { c1: { teacherUid: 'teacher-A' } },
+            'classes/c1/students': { s1: { parentPhone: REAL_PARENT } },
+        };
         (global as any).__fakeDb = createFakeDb(store);
         placeVobizCall.mockReset().mockResolvedValue({ ok: true, handle: { requestUuid: 'uuid1' } });
         fetchMock.mockReset().mockResolvedValue({ ok: true, status: 201, json: async () => ({ sid: 'CA1' }) });

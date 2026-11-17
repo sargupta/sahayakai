@@ -20,7 +20,9 @@ const SaveOutreachSchema = z.object({
     className: z.string(),
     studentId: z.string(),
     studentName: z.string(),
-    parentPhone: z.string(),
+    // Accepted for backward compatibility and IGNORED: the service always
+    // stores the phone from the student record, never the caller's.
+    parentPhone: z.string().optional(),
     parentLanguage: z.string(),
     reason: z.string(),
     teacherNote: z.string().optional(),

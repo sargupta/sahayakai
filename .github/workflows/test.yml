@@ -85,6 +85,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          # Same heap as the production image (sahayakai-main/Dockerfile).
+          # Gate: src/__tests__/scripts/workflow-build-heap.test.ts.
+          NODE_OPTIONS: --max-old-space-size=4096
           # Stub env vars so next build doesn't fail on missing secrets
           GOOGLE_GENAI_API_KEY: stub
           GOOGLE_CLOUD_PROJECT: stub
