@@ -77,7 +77,7 @@ const ROUTES: Route[] = [
 
   // Engage
   { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend", group: "Labs", icon: Video },
-  { href: "/virtual-field-trip", label: "Virtual Field Trip", i18nKey: "Virtual Field Trip", keywords: "virtual field trip explore visit", group: "Labs", icon: Globe2 },
+  { href: "/virtual-field-trip", label: "Virtual Field Trip", i18nKey: "Virtual Field Trip", keywords: "virtual field trip explore visit tour places geography", group: "Engage", icon: Globe2 },
   { href: "/teacher-training", label: "AI Coach", i18nKey: "AI Coach", keywords: "ai coach teaching coach teacher training professional development cpd classroom strategies", group: "Engage", icon: GraduationCap },
   { href: "/community", label: "Community", i18nKey: "Community", keywords: "community teachers chat discover", group: "Engage", icon: Library },
 
@@ -86,7 +86,7 @@ const ROUTES: Route[] = [
 
   // Labs (parked tools stay searchable — registry: src/lib/labs.ts)
   { href: "/labs", label: "Labs", i18nKey: "Labs", keywords: "labs experimental beta tools", group: "Labs", icon: FlaskConical },
-  { href: "/assessment-scanner", label: "Assessment Scanner", i18nKey: "Assessment Scanner", keywords: "scan grade answer sheet omr", group: "Labs", icon: ScanLine },
+  { href: "/assessment-scanner", label: "Assessment Scanner", i18nKey: "Assessment Scanner", keywords: "assessment scanner scan grade mark answer sheet handwritten omr", group: "Assess", icon: ScanLine },
 
   // My work
   { href: "/my-library", label: "My Library", i18nKey: "My Library", keywords: "library saved my work folder", group: "My work", icon: Library },
