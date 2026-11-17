@@ -1,10 +1,15 @@
 /** @jest-environment node */
 /**
- * Sampark ships dark (plan §9 "Flags"): both regional deploy steps declare
- * SAMPARK_ENABLED=false and SAMPARK_LIVE_DIAL_ENABLED=false, so turning either
- * on is one reviewed PR, and a deploy can never inherit an ad-hoc value set on
- * the live service. They are env flags only: never NEXT_PUBLIC_ (shipped to
- * browsers) and never a Firestore feature flag (those default ON when missing).
+ * Sampark in production runs the school workspace in PRACTICE (founder decision,
+ * 17 Nov 2026): both regional deploy steps declare SAMPARK_ENABLED=true with
+ * SAMPARK_LIVE_DIAL_ENABLED=false and SAMPARK_ELEVENLABS_ENABLED=false, so no
+ * non-simulated carrier can be constructed and no phone rings. Changing any of
+ * them is one reviewed PR, and a deploy can never inherit an ad-hoc value set on
+ * the live service. With SamparkAI on, both regions bind production's own PII
+ * key and phone pepper, never run the demo school (SAMPARK_DEMO_ENABLED sends
+ * every teacher's Attendance to a fictional school) and never the non-production
+ * database. They are env flags only: never NEXT_PUBLIC_ (shipped to browsers)
+ * and never a Firestore feature flag (those default ON when missing).
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -18,11 +23,15 @@ interface Step {
     args?: string[];
 }
 
-function envVars(stepId: string): Map<string, string> {
+function stepArg(stepId: string, flag: string): string {
     const doc = yaml.load(readFileSync(path.join(APP_ROOT, 'cloudbuild.yaml'), 'utf8')) as { steps: Step[] };
     const step = doc.steps.find((s) => s.id === stepId);
     if (!step) throw new Error(`cloudbuild.yaml has no step ${stepId}`);
-    const arg = (step.args ?? []).find((a) => a.startsWith('--update-env-vars='));
+    return (step.args ?? []).find((a) => a.startsWith(flag)) ?? '';
+}
+
+function envVars(stepId: string): Map<string, string> {
+    const arg = stepArg(stepId, '--update-env-vars=');
     const out = new Map<string, string>();
     for (const pair of (arg ?? '').slice('--update-env-vars='.length).split(',')) {
         const eq = pair.indexOf('=');
@@ -43,12 +52,22 @@ function sourceFiles(dir: string): string[] {
 }
 
 describe('Sampark deploy flags', () => {
-    it.each(['deploy', 'deploy-mumbai'])('%s declares both Sampark flags false', (stepId) => {
+    it.each(['deploy', 'deploy-mumbai'])('%s runs SamparkAI in Practice: on, but nothing can dial', (stepId) => {
         const env = envVars(stepId);
-        expect(env.get('SAMPARK_ENABLED')).toBe('false');
+        expect(env.get('SAMPARK_ENABLED')).toBe('true');
         expect(env.get('SAMPARK_LIVE_DIAL_ENABLED')).toBe('false');
-        // Riya (ElevenLabs conversation calls) ships dark the same way.
+        // Riya (ElevenLabs conversation calls) stays dark the same way.
         expect(env.get('SAMPARK_ELEVENLABS_ENABLED')).toBe('false');
+    });
+
+    it.each(['deploy', 'deploy-mumbai'])('%s binds production Sampark keys, no demo school, no non-production database', (stepId) => {
+        const env = envVars(stepId);
+        const secrets = stepArg(stepId, '--update-secrets=');
+        expect(secrets).toMatch(/(^|,|=)SAMPARK_PII_KEY=SAMPARK_PII_KEY:latest(,|$)/);
+        expect(secrets).toMatch(/(^|,)SAMPARK_PHONE_PEPPER=SAMPARK_PHONE_PEPPER:latest(,|$)/);
+        expect(secrets).not.toMatch(/SAMPARK_STAGING_/);
+        expect(env.get('SAMPARK_DEMO_ENABLED')).not.toBe('true');
+        expect(env.has('SAMPARK_FIRESTORE_DATABASE')).toBe(false);
     });
 
     it('never declares a NEXT_PUBLIC_ Sampark flag', () => {
