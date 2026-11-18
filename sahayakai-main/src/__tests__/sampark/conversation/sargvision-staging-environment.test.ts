@@ -51,9 +51,23 @@ describe('production can never run the Sargvision class', () => {
     });
 
     it('the production build never sets the roster flag or the non-production database', () => {
-        expect(prodBuild).not.toMatch(/SAMPARK_SARGVISION_ROSTER/);
-        expect(prodBuild).not.toMatch(/SAMPARK_SARGVISION_ANYTIME_CALLS/);
-        expect(prodBuild).not.toMatch(/sampark-nonprod/);
+        // Only what the build runs counts: a YAML comment may name these to forbid them
+        // (main's cloudbuild.yaml says "never sampark-nonprod"), which is not a setting.
+        const prodSettings = prodBuild
+            .split(/\r?\n/)
+            .filter((line) => !/^\s*#/.test(line))
+            .map((line) => line.replace(/\s+#.*$/, ''))
+            .join('\n');
+        expect(prodSettings).not.toMatch(/SAMPARK_SARGVISION_ROSTER/);
+        expect(prodSettings).not.toMatch(/SAMPARK_SARGVISION_ANYTIME_CALLS/);
+        expect(prodSettings).not.toMatch(/sampark-nonprod/);
+    });
+
+    it('the comment-stripping above still catches a real setting', () => {
+        const strip = (s: string) => s.split(/\r?\n/).filter((l) => !/^\s*#/.test(l)).map((l) => l.replace(/\s+#.*$/, '')).join('\n');
+        expect(strip('      # never sampark-nonprod')).not.toMatch(/sampark-nonprod/);
+        expect(strip('      - --set-env-vars=^@^SAMPARK_FIRESTORE_DATABASE=sampark-nonprod')).toMatch(/sampark-nonprod/);
+        expect(strip('      - --set-env-vars=^@^X=1@SAMPARK_SARGVISION_ROSTER=true  # staging')).toMatch(/SAMPARK_SARGVISION_ROSTER/);
     });
 
     it('the production service name is never roster mode, even with every other setting on', () => {
