@@ -26,7 +26,7 @@ describe('VIDYA colours and size follow the design system', () => {
     it('VIDYA on Home has one fixed size in every state', () => {
         const src = read('src/components/dashboard/dashboard-home.tsx');
         // The design-system orb (VidyaPresence) at the one fixed Home size.
-        expect(src).toMatch(/data-testid="vidya-home-live"[\s\S]{0,120}<VidyaPresence\s+size="compact"\s+className="h-36 w-36 shrink-0 md:h-44 md:w-44"/);
+        expect(src).toMatch(/data-testid="vidya-home-live"[\s\S]{0,120}<VidyaPresence\s+size="compact"\s+className="h-32 w-32 shrink-0 md:h-\[152px\] md:w-\[152px\]"/);
     });
 
     it('VIDYA is centred; she moves aside ONLY while the messages panel is open', () => {

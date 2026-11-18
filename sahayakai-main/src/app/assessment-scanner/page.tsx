@@ -61,6 +61,7 @@ import {
     AlertCircle,
     CheckCircle2,
     Info,
+    Lightbulb,
     Loader2,
     Plus,
     RefreshCw,
@@ -69,6 +70,7 @@ import {
     X,
 } from "lucide-react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -385,36 +387,60 @@ function AssessmentScannerPageInner() {
 
     return (
         <div className="flex flex-col items-center gap-8 w-full max-w-4xl mx-auto pb-16">
-            {/* Greeting header */}
-            <div className="w-full flex items-center gap-3">
-                <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                    <ScanLine className="h-6 w-6 text-primary" />
+            {/* Tool header: what this page is, with a quiet personal greeting (no emoji: house rule). */}
+            <header className="w-full flex items-start gap-4">
+                <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-surface-lg bg-primary/10 ring-1 ring-primary/15">
+                    <ScanLine className="h-7 w-7 text-primary" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                        {greeting}, {firstName}
+                    </p>
                     <h1 className="font-headline text-2xl sm:text-3xl font-bold leading-tight">
-                        {greeting}, {firstName} 👋
+                        {t("Assessment Scanner")}
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         {t("Upload student answer pages and let AI do the grading for you.")}
                     </p>
                 </div>
-            </div>
+            </header>
 
-            {/* Coverage notice — subjects supported + page cap */}
-            <Alert className="w-full border-primary/30 bg-primary/5">
-                <Info className="h-4 w-4" />
-                <AlertTitle>
+            {/* Coverage: subjects as chips instead of a full-width banner; page cap in the title. */}
+            <section
+                aria-label={t("Subject")}
+                className="w-full rounded-surface-lg border border-border bg-card/80 px-4 py-3.5 shadow-soft"
+            >
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Info className="h-4 w-4 shrink-0 text-primary" />
                     {t("Now supporting six subject families, up to {{cap}} pages per scan").replace(
                         "{{cap}}",
                         String(ASSESSMENT_DEMO_PAGE_CAP),
                     )}
-                </AlertTitle>
-                <AlertDescription>
+                </p>
+                <ul className="mt-2.5 flex flex-wrap gap-1.5">
+                    {ASSESSMENT_SUPPORTED_SUBJECTS.filter((s) => s !== "Other").map((s) => (
+                        <li
+                            key={s}
+                            className={cn(
+                                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                                s === "Mathematics"
+                                    ? "border-primary/30 bg-primary/10 text-primary"
+                                    : "border-border bg-muted/40 text-muted-foreground",
+                            )}
+                        >
+                            {t(s)}
+                            {s === "Mathematics" && (
+                                <CheckCircle2 className="h-3 w-3" aria-label={t("Best")} />
+                            )}
+                        </li>
+                    ))}
+                </ul>
+                <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground">
                     {t(
                         "Mathematics, Science, EVS, Social Science (History / Geography / Civics), Hindi, and English. Mathematics is best-in-class — other subjects are in pilot, so please review the AI's grades carefully.",
                     )}
-                </AlertDescription>
-            </Alert>
+                </p>
+            </section>
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-5">
@@ -432,18 +458,18 @@ function AssessmentScannerPageInner() {
                                 {pageUrls.length} / {ASSESSMENT_DEMO_PAGE_CAP}
                             </span>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="grid gap-5 md:grid-cols-[minmax(0,1fr)_15rem]">
                             <FormField
                                 control={form.control}
                                 name="pageUrls"
                                 render={() => (
-                                    <FormItem>
+                                    <FormItem className="min-w-0">
                                         {pageUrls.length > 0 && (
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
                                                 {pageUrls.map((url, i) => (
                                                     <div
                                                         key={`${url}-${i}`}
-                                                        className="relative group rounded-lg border border-border overflow-hidden bg-muted/20"
+                                                        className="relative group rounded-xl border border-border overflow-hidden bg-muted/20 shadow-soft transition-shadow hover:shadow-elevated"
                                                     >
                                                         {/* Click to enlarge — object-contain so the whole
                                                             page is legible, not cropped. */}
@@ -459,7 +485,7 @@ function AssessmentScannerPageInner() {
                                                                         alt={t("Page") + ` ${i + 1}`}
                                                                         width={200}
                                                                         height={200}
-                                                                        className="w-full h-32 object-contain"
+                                                                        className="w-full h-40 object-contain bg-white"
                                                                         unoptimized
                                                                     />
                                                                 </button>
@@ -480,15 +506,15 @@ function AssessmentScannerPageInner() {
                                                         </Dialog>
                                                         <Badge
                                                             variant="secondary"
-                                                            className="absolute top-1 left-1 text-xs z-10 pointer-events-none"
+                                                            className="absolute top-1.5 left-1.5 text-xs z-10 pointer-events-none shadow-soft"
                                                         >
                                                             {t("Page")} {i + 1}
                                                         </Badge>
                                                         <Button
                                                             type="button"
-                                                            variant="destructive"
+                                                            variant="secondary"
                                                             size="icon"
-                                                            className="absolute top-1 right-1 h-7 w-7 z-10"
+                                                            className="absolute top-1.5 right-1.5 h-7 w-7 z-10 rounded-full bg-background/90 text-foreground shadow-soft hover:bg-destructive hover:text-destructive-foreground"
                                                             onClick={() => handleRemovePage(i)}
                                                             aria-label={t("Remove page") + ` ${i + 1}`}
                                                         >
@@ -564,11 +590,25 @@ function AssessmentScannerPageInner() {
                                     </FormItem>
                                 )}
                             />
+
+                            {/* Tips beside the drop zone (desktop) / under it (phone), where they help. */}
+                            <aside className="rounded-xl border border-border bg-muted/30 p-4 text-sm self-start">
+                                <p className="flex items-center gap-2 font-semibold text-foreground">
+                                    <Lightbulb className="h-4 w-4 text-primary" />
+                                    {t("Tips for a clean scan")}
+                                </p>
+                                <ul className="mt-2 space-y-2 text-xs leading-relaxed text-muted-foreground list-disc pl-4">
+                                    <li>{t("Shoot in good light with the page flat — avoid shadows and glare.")}</li>
+                                    <li>{t("Fit the whole page in frame, right-side up.")}</li>
+                                    <li>{t("One student's answers per scan; add front and back as separate pages.")}</li>
+                                </ul>
+                            </aside>
                         </CardContent>
                     </Card>
 
                     {/* Step 2 — details */}
                     <Card className="w-full bg-card border border-border shadow-soft rounded-surface-lg overflow-hidden">
+                        <div className="card-accent-bar" />
                         <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-3 md:pb-3">
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
                                 2
@@ -664,18 +704,15 @@ function AssessmentScannerPageInner() {
                                             className="ml-1 inline h-3 w-3 align-text-top text-muted-foreground/70"
                                         />
                                     </FormLabel>
-                                    <div
-                                        role="status"
-                                        className="flex h-10 items-center rounded-md bg-muted/40 px-3 text-xs text-muted-foreground"
-                                    >
+                                    <div role="status" className="flex h-10 items-center">
                                         {subject === "Mathematics" ? (
-                                            <span className="flex items-center gap-1">
-                                                <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-3 py-1 text-xs font-medium text-success">
+                                                <CheckCircle2 className="h-3.5 w-3.5" />
                                                 {t("Best-in-class")}
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-1">
-                                                <Info className="h-3 w-3 text-warning" />
+                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-3 py-1 text-xs font-medium text-foreground">
+                                                <Info className="h-3.5 w-3.5 text-warning" />
                                                 {t("Pilot — review grades")}
                                             </span>
                                         )}
@@ -691,7 +728,7 @@ function AssessmentScannerPageInner() {
                             type="submit"
                             size="lg"
                             disabled={isLoading || pageUrls.length === 0}
-                            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-saffron-500 to-warning text-white shadow-elevated hover:from-saffron-600 hover:to-warning transition-all disabled:opacity-60 disabled:shadow-none"
+                            className="w-full h-12 rounded-xl text-base font-semibold bg-primary text-primary-foreground shadow-elevated hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:shadow-none"
                         >
                             {isLoading ? (
                                 <>
@@ -786,24 +823,6 @@ function AssessmentScannerPageInner() {
                 />
             )}
 
-            {/* First-run empty state — what to photograph, before any scan. */}
-            {scan.kind === "idle" && pageUrls.length === 0 && (
-                <Alert className="w-full border-border bg-muted/30">
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>{t("Tips for a clean scan")}</AlertTitle>
-                    <AlertDescription>
-                        <ul className="list-disc pl-4 space-y-1 text-xs">
-                            <li>
-                                {t("Shoot in good light with the page flat — avoid shadows and glare.")}
-                            </li>
-                            <li>{t("Fit the whole page in frame, right-side up.")}</li>
-                            <li>
-                                {t("One student's answers per scan; add front and back as separate pages.")}
-                            </li>
-                        </ul>
-                    </AlertDescription>
-                </Alert>
-            )}
         </div>
     );
 }
