@@ -348,12 +348,13 @@ export function DashboardHome() {
               // orb on tool pages (VidyaLiveProvider); tap again to end.
               <div className="flex flex-col items-center gap-3" data-vidya-entry="home" data-vidya-state={liveOrbState}>
                 {/* The design-system VIDYA (VidyaPresence: saffron radial #FFD9AE → #C96A28, breathing
-                    ring, 5 s float; indigo while connecting/thinking) at ONE fixed size on Home
-                    (h-36 / md:h-44, ~15% smaller on request 2026-11-17) in every state. Its own button carries data-microphone. */}
+                    ring, 5 s float, slow rotating sheen; indigo while connecting/thinking) at ONE fixed size on Home
+                    (h-32 / md:h-[152px]: 128 / 152 px, smaller again on request 2026-11-18) in every state, with the
+                    nothing inside the orb (no mic glyph, no name). Its own button carries data-microphone. */}
                 <div data-testid="vidya-home-live">
                   <VidyaPresence
                     size="compact"
-                    className="h-36 w-36 shrink-0 md:h-44 md:w-44"
+                    className="h-32 w-32 shrink-0 md:h-[152px] md:w-[152px]"
                     state={live.state}
                     getLevel={live.getLevel}
                     onActivate={live.error ? () => { live.dismissError(); void live.start(); } : live.toggle}
