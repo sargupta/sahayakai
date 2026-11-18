@@ -63,8 +63,10 @@
 /* ========================================
    VIDYA orb (vidya-presence.tsx) — product-native, from the SahayakAI
    website design reference (2026-10). ONE warm radial fill, ONE soft
-   shadow, ONE state ring. No glow field, orbits, sheen or particles:
-   colour + ring carry state, so motion always means something.
+   shadow, ONE state ring. No glow field, orbits or particles: colour + ring
+   carry state. The fill carries a slow rotating light (::before, 2026-11-18
+   request "it was a rotating thing"): 14 s a turn at rest, 5 s while
+   connecting / thinking, so the speed itself says "working".
    State arrives as data-state on .vidya-stage:
    idle | connecting | listening | processing | speaking | error.
    Live mic / playback level arrives as --vidya-level (0–1). All motion is
@@ -118,10 +120,31 @@
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
+  overflow: hidden;
+  isolation: isolate;
   color: hsl(0 0% 100%);
   background: radial-gradient(circle at 34% 30%, hsl(var(--vidya-hi)), hsl(var(--vidya-lo)) 72%);
   box-shadow: 0 8px 20px -4px hsl(var(--vidya-lo) / 0.42);
   transition: background 0.5s ease, box-shadow 0.5s ease, transform 0.18s ease;
+}
+/* Rotating light inside the fill (not a separate layer: no extra DOM). */
+.vidya-core::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    hsl(0 0% 100% / 0) 0deg,
+    hsl(0 0% 100% / 0.30) 50deg,
+    hsl(0 0% 100% / 0) 120deg,
+    hsl(var(--vidya-lo) / 0.22) 200deg,
+    hsl(0 0% 100% / 0.14) 260deg,
+    hsl(0 0% 100% / 0) 330deg
+  );
+  mix-blend-mode: soft-light;
 }
 .vidya-sphere:hover .vidya-core { box-shadow: 0 10px 24px -4px hsl(var(--vidya-lo) / 0.48); }
 .vidya-sphere:active .vidya-core { transform: scale(0.97); }
@@ -144,19 +167,6 @@
 .vidya-stage[data-state="processing"] .vidya-ring { box-shadow: 0 0 0 6px hsl(var(--vidya-ring) / 0.14); }
 .vidya-stage[data-state="error"] .vidya-ring { box-shadow: 0 0 0 3px hsl(var(--vidya-ring) / 0.35); }
 
-.vidya-icon {
-  width: clamp(22px, 26%, 36px);
-  height: auto;
-  aspect-ratio: 1;
-}
-.vidya-stage[data-size="compact"] .vidya-icon { width: 24px; }
-.vidya-wordmark {
-  font-family: var(--font-bricolage), var(--font-outfit), system-ui, sans-serif;
-  font-size: clamp(10px, 7%, 13px);
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  margin-right: -0.22em;
-}
 
 /* Status pill dot (home / tool-page status line) mirrors the orb colour. */
 .vidya-status-dot {
@@ -176,9 +186,14 @@
 @keyframes vidya-rest   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes vidya-breath { 0%, 100% { box-shadow: 0 0 0 4px hsl(var(--vidya-ring) / 0.10); } 50% { box-shadow: 0 0 0 9px hsl(var(--vidya-ring) / 0.16); } }
 @keyframes vidya-dot    { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes vidya-spin   { to { transform: rotate(1turn); } }
 
 @media (prefers-reduced-motion: no-preference) {
   .vidya-stage[data-state="idle"] .vidya-core { animation: vidya-rest 5s ease-in-out infinite; }
+  .vidya-core::before { animation: vidya-spin 14s linear infinite; }
+  .vidya-stage[data-state="connecting"] .vidya-core::before,
+  .vidya-stage[data-state="processing"] .vidya-core::before { animation-duration: 5s; }
+  .vidya-stage[data-state="error"] .vidya-core::before { animation: none; }
   .vidya-stage[data-state="connecting"] .vidya-ring,
   .vidya-stage[data-state="processing"] .vidya-ring { animation: vidya-breath 1.8s ease-in-out infinite; }
   .vidya-status[data-state="listening"] .vidya-status-dot,
