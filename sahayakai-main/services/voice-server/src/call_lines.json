@@ -1,0 +1,99 @@
+{
+  "_about": [
+    "Every sentence the parent-call engine speaks from a fixed script, per call language.",
+    "Keys are the speech-language codes the engine actually uses (call_policy.LANGUAGE_CODES);",
+    "an Odia call is spoken in en-IN, so it uses the English lines.",
+    "request_to_talk: the whole greeting of every call whose reason is not positive_feedback",
+    "(founder decision, 23 Oct 2026: a concern call is a request to talk and never states the concern).",
+    "request_to_talk is the same sentence as the web app's src/locales/call-scripts/request-to-talk.json",
+    "(the Docker build context is this directory, so it is copied, and test_request_to_talk checks the copies agree).",
+    "explain_in_person: what the engine says when the parent asks why, or guesses a reason.",
+    "opt_out_noted: spoken once when the parent may have asked not to be called again. It promises only what happens (the class teacher is told); the engine never blocks a number and never says \"we will not call you again\". Gender-neutral on purpose: Hindi and Punjabi use the passive because their first-person future is gendered and the voice is chosen per call.",
+    "goodbye: the last sentence of a call the engine closes itself: after a possible stop request (from then on the model is never heard again), and in place of a last reply the AI-reveal guard blocks. Thanks only: it promises nothing about future calls.",
+    "future_calls: said in place of a model sentence that would say whether the school will or will not call again (CallManager's promise screen). Honest, not a goodbye: the call goes on.",
+    "review: translation confidence. Anything other than 'source' or 'confident' needs a native speaker",
+    "to read it aloud before it is trusted on a live call."
+  ],
+  "lines": {
+    "en-IN": {
+      "request_to_talk": "Your child's class teacher would like to speak with you this week. Is there a good time for a short call?",
+      "explain_in_person": "The class teacher would like to explain this to you in person.",
+      "opt_out_noted": "Thank you, I will let the class teacher know you would prefer not to receive these calls.",
+      "goodbye": "Thank you for your time. Goodbye.",
+      "future_calls": "The class teacher will decide about future calls.",
+      "review": "source"
+    },
+    "hi-IN": {
+      "request_to_talk": "आपके बच्चे के क्लास टीचर इस हफ़्ते आपसे बात करना चाहते हैं। क्या कोई अच्छा समय है जब थोड़ी देर बात हो सके?",
+      "explain_in_person": "यह बात क्लास टीचर आपको ख़ुद समझाना चाहते हैं।",
+      "opt_out_noted": "धन्यवाद, क्लास टीचर को बता दिया जाएगा कि आप ऐसे कॉल नहीं लेना चाहते।",
+      "goodbye": "आपका समय देने के लिए बहुत धन्यवाद।",
+      "future_calls": "आगे के कॉल के बारे में क्लास टीचर तय करेंगे।",
+      "review": "confident"
+    },
+    "bn-IN": {
+      "request_to_talk": "আপনার সন্তানের ক্লাস টিচার এই সপ্তাহে আপনার সঙ্গে একটু কথা বলতে চান। অল্প সময় কথা বলার জন্য কোনো সুবিধার সময় আছে কি?",
+      "explain_in_person": "এই বিষয়টা ক্লাস টিচার নিজেই আপনাকে বুঝিয়ে বলতে চান।",
+      "opt_out_noted": "ধন্যবাদ, আমি ক্লাস টিচারকে জানিয়ে দেব যে আপনি এই ধরনের ফোন পেতে চান না।",
+      "goodbye": "সময় দেওয়ার জন্য অনেক ধন্যবাদ।",
+      "future_calls": "পরের ফোনের ব্যাপারে ক্লাস টিচার ঠিক করবেন।",
+      "review": "unsure: needs a native Bengali speaker"
+    },
+    "mr-IN": {
+      "request_to_talk": "तुमच्या पाल्याचे वर्गशिक्षक या आठवड्यात तुमच्याशी बोलू इच्छितात. थोडा वेळ बोलण्यासाठी तुमच्यासाठी कोणती वेळ सोयीची असेल?",
+      "explain_in_person": "हे वर्गशिक्षक तुम्हाला स्वतः समजावून सांगतील.",
+      "opt_out_noted": "धन्यवाद, तुम्हाला असे फोन येऊ नयेत असं वाटतं, हे मी वर्गशिक्षकांना कळवेन.",
+      "goodbye": "वेळ दिल्याबद्दल खूप धन्यवाद.",
+      "future_calls": "पुढील फोनबद्दल वर्गशिक्षक ठरवतील.",
+      "review": "unsure: needs a native Marathi speaker"
+    },
+    "gu-IN": {
+      "request_to_talk": "તમારા બાળકના વર્ગશિક્ષક આ અઠવાડિયે તમારી સાથે વાત કરવા માંગે છે. થોડી વાર વાત કરવા માટે તમને કયો સમય અનુકૂળ રહેશે?",
+      "explain_in_person": "આ વાત વર્ગશિક્ષક તમને જાતે સમજાવવા માંગે છે.",
+      "opt_out_noted": "આભાર, હું વર્ગશિક્ષકને જણાવીશ કે તમે આવા ફોન મેળવવા માંગતા નથી.",
+      "goodbye": "સમય આપવા બદલ ખૂબ આભાર.",
+      "future_calls": "આગળના ફોન વિશે વર્ગશિક્ષક નક્કી કરશે.",
+      "review": "unsure: needs a native Gujarati speaker"
+    },
+    "pa-IN": {
+      "request_to_talk": "ਤੁਹਾਡੇ ਬੱਚੇ ਦੇ ਕਲਾਸ ਟੀਚਰ ਇਸ ਹਫ਼ਤੇ ਤੁਹਾਡੇ ਨਾਲ ਗੱਲ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹਨ। ਥੋੜ੍ਹੀ ਦੇਰ ਗੱਲ ਕਰਨ ਲਈ ਤੁਹਾਡੇ ਲਈ ਕਿਹੜਾ ਸਮਾਂ ਠੀਕ ਰਹੇਗਾ?",
+      "explain_in_person": "ਇਹ ਗੱਲ ਕਲਾਸ ਟੀਚਰ ਤੁਹਾਨੂੰ ਆਪ ਸਮਝਾਉਣਾ ਚਾਹੁੰਦੇ ਹਨ।",
+      "opt_out_noted": "ਧੰਨਵਾਦ, ਕਲਾਸ ਟੀਚਰ ਨੂੰ ਦੱਸ ਦਿੱਤਾ ਜਾਵੇਗਾ ਕਿ ਤੁਸੀਂ ਅਜਿਹੇ ਫ਼ੋਨ ਨਹੀਂ ਲੈਣਾ ਚਾਹੁੰਦੇ।",
+      "goodbye": "ਸਮਾਂ ਦੇਣ ਲਈ ਬਹੁਤ ਧੰਨਵਾਦ।",
+      "future_calls": "ਅੱਗੇ ਦੇ ਫ਼ੋਨਾਂ ਬਾਰੇ ਕਲਾਸ ਟੀਚਰ ਫ਼ੈਸਲਾ ਕਰਨਗੇ।",
+      "review": "unsure: needs a native Punjabi speaker"
+    },
+    "kn-IN": {
+      "request_to_talk": "ನಿಮ್ಮ ಮಗುವಿನ ಕ್ಲಾಸ್ ಟೀಚರ್ ಈ ವಾರ ನಿಮ್ಮೊಂದಿಗೆ ಮಾತನಾಡಲು ಬಯಸುತ್ತಾರೆ. ಸ್ವಲ್ಪ ಹೊತ್ತು ಮಾತನಾಡಲು ನಿಮಗೆ ಯಾವ ಸಮಯ ಅನುಕೂಲವಾಗುತ್ತದೆ?",
+      "explain_in_person": "ಅದನ್ನು ಕ್ಲಾಸ್ ಟೀಚರ್ ಅವರೇ ನಿಮಗೆ ಖುದ್ದಾಗಿ ತಿಳಿಸುತ್ತಾರೆ.",
+      "opt_out_noted": "ಧನ್ಯವಾದಗಳು, ನಿಮಗೆ ಇಂತಹ ಕರೆಗಳು ಬೇಡ ಎಂದು ನಾನು ಕ್ಲಾಸ್ ಟೀಚರ್ ಅವರಿಗೆ ತಿಳಿಸುತ್ತೇನೆ.",
+      "goodbye": "ನಿಮ್ಮ ಸಮಯಕ್ಕಾಗಿ ತುಂಬಾ ಧನ್ಯವಾದಗಳು.",
+      "future_calls": "ಮುಂದಿನ ಕರೆಗಳ ಬಗ್ಗೆ ಕ್ಲಾಸ್ ಟೀಚರ್ ನಿರ್ಧರಿಸುತ್ತಾರೆ.",
+      "review": "unsure: needs a native Kannada speaker"
+    },
+    "ta-IN": {
+      "request_to_talk": "உங்கள் குழந்தையின் வகுப்பு ஆசிரியர் இந்த வாரம் உங்களுடன் பேச விரும்புகிறார். சிறிது நேரம் பேச உங்களுக்கு எந்த நேரம் வசதியாக இருக்கும்?",
+      "explain_in_person": "அதை வகுப்பு ஆசிரியரே உங்களிடம் நேரடியாக விளக்குவார்.",
+      "opt_out_noted": "நன்றி, இதுபோன்ற அழைப்புகள் உங்களுக்கு வேண்டாம் என்று வகுப்பு ஆசிரியரிடம் நான் தெரிவிக்கிறேன்.",
+      "goodbye": "உங்கள் நேரத்திற்கு மிக்க நன்றி.",
+      "future_calls": "இனி வரும் அழைப்புகள் பற்றி வகுப்பு ஆசிரியர் முடிவு செய்வார்.",
+      "review": "unsure: needs a native Tamil speaker (written register may sound formal on a call)"
+    },
+    "te-IN": {
+      "request_to_talk": "మీ పిల్లల క్లాస్ టీచర్ ఈ వారం మీతో మాట్లాడాలనుకుంటున్నారు. కొద్దిసేపు మాట్లాడటానికి మీకు ఏ సమయం వీలుగా ఉంటుంది?",
+      "explain_in_person": "ఆ విషయం క్లాస్ టీచర్ గారే మీకు స్వయంగా వివరిస్తారు.",
+      "opt_out_noted": "ధన్యవాదాలు, మీకు ఇలాంటి కాల్స్ వద్దని నేను క్లాస్ టీచర్ గారికి తెలియజేస్తాను.",
+      "goodbye": "మీ సమయానికి చాలా ధన్యవాదాలు.",
+      "future_calls": "తదుపరి కాల్స్ గురించి క్లాస్ టీచర్ గారు నిర్ణయిస్తారు.",
+      "review": "unsure: needs a native Telugu speaker"
+    },
+    "ml-IN": {
+      "request_to_talk": "നിങ്ങളുടെ കുട്ടിയുടെ ക്ലാസ് ടീച്ചർ ഈ ആഴ്ച നിങ്ങളോട് സംസാരിക്കാൻ ആഗ്രഹിക്കുന്നു. കുറച്ചുനേരം സംസാരിക്കാൻ നിങ്ങൾക്ക് ഏത് സമയമാണ് സൗകര്യം?",
+      "explain_in_person": "അത് ക്ലാസ് ടീച്ചർ തന്നെ നിങ്ങളോട് നേരിട്ട് പറയും.",
+      "opt_out_noted": "നന്ദി, ഇത്തരം കോളുകൾ ലഭിക്കാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നില്ലെന്ന് ഞാൻ ക്ലാസ് ടീച്ചറെ അറിയിക്കാം.",
+      "goodbye": "നിങ്ങളുടെ സമയത്തിന് വളരെ നന്ദി.",
+      "future_calls": "ഇനിയുള്ള കോളുകളെക്കുറിച്ച് ക്ലാസ് ടീച്ചർ തീരുമാനിക്കും.",
+      "review": "unsure: needs a native Malayalam speaker"
+    }
+  }
+}

@@ -58,6 +58,7 @@ _BASE_ENV = {
 #: Probes that are safe to expose: they carry no schema and no data.
 HEALTH = {"/healthz", "/readyz"}
 SOCKET = "/telephony/vobiz/stream"
+VIDYA_SOCKET = "/v1/vidya-voice/stream"
 
 
 def _routes(**extra: str) -> list[str]:
@@ -77,6 +78,22 @@ class TestPublicSurface:
             "the public telephony service must expose nothing beyond the health "
             f"probes and the media socket; found {sorted(routes - HEALTH - {SOCKET})}"
         )
+
+    def test_public_vidya_voice_adds_only_its_token_gated_socket(self) -> None:
+        # The browser opens the VIDYA voice socket directly, so a public service
+        # may carry it — but only the socket. The router's `/start-session` POST
+        # has no token gate and must never ride along.
+        routes = set(_routes(SAHAYAKAI_TELEPHONY_ONLY="1", SAHAYAKAI_PUBLIC_VIDYA_VOICE="1"))
+        assert routes == HEALTH | {SOCKET, VIDYA_SOCKET}, sorted(routes)
+
+    def test_public_vidya_voice_is_off_unless_explicitly_on(self) -> None:
+        for value in ("", "0", "false", "no", "off"):
+            routes = set(_routes(SAHAYAKAI_TELEPHONY_ONLY="1", SAHAYAKAI_PUBLIC_VIDYA_VOICE=value))
+            assert routes == HEALTH | {SOCKET}
+
+    def test_public_vidya_voice_does_not_narrow_the_agent_service(self) -> None:
+        # Without the telephony-only flag it must change nothing.
+        assert set(_routes(SAHAYAKAI_PUBLIC_VIDYA_VOICE="1")) == set(_routes())
 
     def test_publishes_no_schema_docs_or_agent_card(self) -> None:
         # A public OpenAPI document is free reconnaissance, and it would

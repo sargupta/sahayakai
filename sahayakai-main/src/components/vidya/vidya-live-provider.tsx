@@ -14,7 +14,8 @@
  * same `executeAction` path instead of duplicating business logic.
  */
 
-import { createContext, useCallback, useContext, useMemo, useRef } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useVidyaLive, type VidyaLiveHandle } from "@/lib/vidya-live/use-vidya-live";
 import { createLiveConversationRecorder } from "@/lib/vidya-live/live-conversation";
@@ -23,13 +24,39 @@ import type { VidyaLiveOptions, VidyaLiveToolCall } from "@/lib/vidya-live/live-
 type SessionInput = Pick<VidyaLiveOptions, "startSessionBody" | "setup">;
 
 interface VidyaLiveContextValue extends VidyaLiveHandle {
+  /**
+   * True only when this build has Live VIDYA AND the server says this teacher may
+   * use it (/api/vidya-voice/eligibility). Every VIDYA surface shows the hands-free
+   * orb only when this is true, and the tap-to-talk VIDYA otherwise: a teacher
+   * outside the Live cohort, or a deployment whose voice service is down, never
+   * gets a voice orb that can only say "not available".
+   */
+  liveEnabled: boolean;
   registerToolHandler: (fn: ((call: VidyaLiveToolCall) => void) | null) => void;
   registerInputBuilder: (fn: (() => SessionInput) | null) => void;
 }
 
 const Ctx = createContext<VidyaLiveContextValue | null>(null);
 
+/** This build includes Live VIDYA. Whether THIS teacher gets it is `liveEnabled` (server-decided). */
 export const VIDYA_LIVE_VOICE_ENABLED = process.env.NEXT_PUBLIC_VIDYA_LIVE_VOICE === "1";
+
+/** Asks the server whether the signed-in teacher may use Live VIDYA. Any failure means no. */
+async function fetchLiveEligibility(getIdToken: () => Promise<string | null>): Promise<boolean> {
+  try {
+    const token = await getIdToken();
+    if (!token) return false;
+    const res = await fetch("/api/vidya-voice/eligibility", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return false;
+    const body = (await res.json().catch(() => null)) as { live?: unknown } | null;
+    return body?.live === true;
+  } catch {
+    return false;
+  }
+}
 
 function fallbackInput(): SessionInput {
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -62,6 +89,34 @@ export function VidyaLiveProvider({ children }: { children: React.ReactNode }) {
     [getIdToken],
   );
 
+  // Server-decided per teacher; false until the answer arrives, so nobody sees a
+  // Live orb the server would refuse. Re-asked whenever the signed-in user changes.
+  const [eligible, setEligible] = useState(false);
+  useEffect(() => {
+    if (!VIDYA_LIVE_VOICE_ENABLED) return;
+    let current = 0;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const ask = ++current;
+      if (!user) {
+        setEligible(false);
+        return;
+      }
+      void fetchLiveEligibility(getIdToken).then((ok) => {
+        if (ask === current) setEligible(ok);
+      });
+    });
+    return () => {
+      current += 1;
+      unsubscribe();
+    };
+  }, [getIdToken]);
+
+  // If a session is refused anyway (voice service down, cohort changed), go back
+  // to the tap-to-talk VIDYA for the rest of this page's life.
+  const onErrorCode = useCallback((code: string) => {
+    if (code === "unavailable") setEligible(false);
+  }, []);
+
   const live = useVidyaLive({
     scope: "teacher",
     getIdToken,
@@ -69,6 +124,7 @@ export function VidyaLiveProvider({ children }: { children: React.ReactNode }) {
     onToolCall: (call) => toolRef.current?.(call),
     onTranscript: recorder.onTranscript,
     onStateChange: recorder.onState,
+    onErrorCode,
   });
 
   const registerToolHandler = useCallback((fn: ((call: VidyaLiveToolCall) => void) | null) => {
@@ -78,9 +134,10 @@ export function VidyaLiveProvider({ children }: { children: React.ReactNode }) {
     inputRef.current = fn;
   }, []);
 
+  const liveEnabled = VIDYA_LIVE_VOICE_ENABLED && eligible;
   const value = useMemo(
-    () => ({ ...live, registerToolHandler, registerInputBuilder }),
-    [live, registerToolHandler, registerInputBuilder],
+    () => ({ ...live, liveEnabled, registerToolHandler, registerInputBuilder }),
+    [live, liveEnabled, registerToolHandler, registerInputBuilder],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

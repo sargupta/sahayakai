@@ -295,34 +295,36 @@ export async function dispatchLessonPlan(
     if (decision.mode === 'shadow') {
         const sidecarReq = toSidecarRequest(input);
         const shadowStartedAt = Date.now();
-        const [genkit, sidecar] = await Promise.all([
-            runGenkitSafe(input),
-            runSidecarSafe(sidecarReq),
-        ]);
+        // Shadow never makes the teacher wait for the sidecar: it is started now, and its outcome is
+        // logged and diffed when it lands, after the Genkit answer has gone back
+        // (gate: shadow-never-blocks.test.ts).
+        const sidecarShadow = runSidecarSafe(sidecarReq);
+        const genkit = await runGenkitSafe(input);
         const genkitLatencyMs = Date.now() - shadowStartedAt;
+        void sidecarShadow.then((sidecar) => {
+            // Log both outcomes so offline parity scoring can be assembled
+            // from log queries until the shadow-diff collection lands.
+            logDispatch(decision, {
+                source: 'genkit',
+                uid: input.userId,
+                sidecarOk: sidecar.ok,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarErrorType: sidecar.ok ? undefined : sidecar.error.name,
+                sidecarRevisionsRun: sidecar.ok ? sidecar.res.revisionsRun : undefined,
+            });
 
-        // Log both outcomes so offline parity scoring can be assembled
-        // from log queries until the shadow-diff collection lands.
-        logDispatch(decision, {
-            source: 'genkit',
-            uid: input.userId,
-            sidecarOk: sidecar.ok,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarErrorType: sidecar.ok ? undefined : sidecar.error.name,
-            sidecarRevisionsRun: sidecar.ok ? sidecar.res.revisionsRun : undefined,
-        });
-
-        // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
-        void writeAgentShadowDiff({
-            agent: 'lesson-plan',
-            uid: input.userId,
-            genkit: genkit.ok ? genkit.out : null,
-            sidecar: sidecar.ok ? sidecar.res : null,
-            genkitLatencyMs,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarOk: sidecar.ok,
-            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
-        });
+            // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
+            void writeAgentShadowDiff({
+                agent: 'lesson-plan',
+                uid: input.userId,
+                genkit: genkit.ok ? genkit.out : null,
+                sidecar: sidecar.ok ? sidecar.res : null,
+                genkitLatencyMs,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarOk: sidecar.ok,
+                sidecarError: sidecar.ok ? undefined : sidecar.error.message,
+            });
+        }).catch(() => undefined);
 
         if (!genkit.ok) throw genkit.error;
         return genkitToLessonPlan(genkit.out, 'genkit', decision);

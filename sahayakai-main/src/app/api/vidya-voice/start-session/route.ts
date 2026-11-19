@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logger } from '@/lib/logger';
 import { mintStreamToken } from '@/lib/sidecar/signing';
+import { liveVoiceAccess } from '@/lib/vidya-live/live-access';
 import {
   callSidecarVidyaVoiceStartSession,
   VidyaVoiceSidecarConfigError,
@@ -33,8 +34,8 @@ import {
  *
  * Two gates, both closed by default:
  *   1. `VIDYA_VOICE_LIVE_ENABLED` must be `"true"`.
- *   2. the caller's uid must appear in `VIDYA_VOICE_LIVE_ALLOWED_UIDS`
- *      (comma-separated). Unset or empty means NOBODY — a live socket is
+ *   2. the caller's uid must be on the Live allowlist, a comma-separated list of uids
+ *      (liveVoiceAccess, src/lib/vidya-live/live-access.ts). Unset or empty means NOBODY — a live socket is
  *      billable and unrehearsed, so it opens for a named canary cohort,
  *      not for whoever happens to tap the orb.
  *   Either gate closed returns the same 503 and the client stays on the
@@ -47,8 +48,6 @@ import {
  */
 export const runtime = 'nodejs';
 
-const BASE_URL_ENV = 'NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL';
-const ALLOWLIST_ENV = 'VIDYA_VOICE_LIVE_ALLOWED_UIDS';
 const STREAM_PATH = '/v1/vidya-voice/stream';
 
 /**
@@ -96,15 +95,6 @@ function clampStr(v: unknown, max: number): string | undefined {
  * an allowlist that defaulted to "everyone" would open a billable Live
  * socket for the whole user base the moment this merges.
  */
-function parseAllowlist(raw: string | undefined): Set<string> {
-  if (!raw) return new Set();
-  return new Set(
-    raw
-      .split(',')
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0),
-  );
-}
 
 /** Convert the sidecar https base URL to the wss stream endpoint. */
 function toStreamWsUrl(baseUrl: string): string {
@@ -128,23 +118,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // 2. Feature flag — default OFF keeps the client on the turn-based pipeline.
-  if (process.env.VIDYA_VOICE_LIVE_ENABLED !== 'true') {
-    return NextResponse.json(
-      { error: 'Live voice is not available right now' },
-      { status: 503 },
-    );
-  }
-
-  // 3. Canary allowlist. Same 503 as the flag being off — a teacher who
-  //    is not in the cohort should see the ordinary "not available"
-  //    fallback, not an access-denied that invites probing.
-  const allowlist = parseAllowlist(process.env[ALLOWLIST_ENV]);
-  // `*` is a LOCAL-DEVELOPMENT convenience only (any signed-in uid on this
-  // machine). Production builds ignore it, so the deployed gate stays an
-  // exact-match, fail-closed allowlist.
-  const devWildcard = process.env.NODE_ENV !== 'production' && allowlist.has('*');
-  if (!devWildcard && !allowlist.has(uid)) {
+  // 2-3. Feature flag, exact-match allowlist and voice-service URL, decided in ONE
+  //      place (src/lib/vidya-live/live-access.ts) that /api/vidya-voice/eligibility
+  //      also uses, so the app only shows the Live orb to teachers this route serves.
+  //      Same 503 for every refusal: a teacher outside the cohort sees the ordinary
+  //      "not available" fallback, not an access-denied that invites probing.
+  const access = liveVoiceAccess(uid);
+  if (!access.ok) {
+    if (access.reason === 'no_base_url') {
+      logger.error('neither VIDYA_VOICE_STREAM_BASE_URL nor NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL is set', undefined, 'VIDYA_VOICE');
+    }
     return NextResponse.json(
       { error: 'Live voice is not available right now' },
       { status: 503 },
@@ -244,14 +227,10 @@ export async function POST(request: NextRequest) {
   //     a malformed payload still fails the same way it did when the
   //     sidecar mint consumed it; the proxy only needs uid + language,
   //     but the client contract must not silently loosen.
-  const baseUrl = process.env[BASE_URL_ENV];
-  if (!baseUrl) {
-    logger.error(`${BASE_URL_ENV} is not set`, undefined, 'VIDYA_VOICE');
-    return NextResponse.json(
-      { error: 'Live voice is not available right now' },
-      { status: 503 },
-    );
-  }
+  // The media socket may be served by a different service from the agents
+  // sidecar (which sits behind Cloud Run IAM, where a browser cannot reach it):
+  // VIDYA_VOICE_STREAM_BASE_URL names that service (liveVoiceBaseUrl).
+  const baseUrl = access.baseUrl;
 
   try {
     const { token, expiresInSeconds } = await mintStreamToken(uid);

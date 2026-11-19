@@ -41,7 +41,7 @@ function ProviderSwitchPillContent() {
         <Link
             href={href}
             data-testid="provider-switch"
-            className="focus-ring inline-flex min-h-9 items-center gap-1.5 rounded-pill border border-line-hairline bg-surface-glass px-3 text-xs font-medium text-ink-700 hover:bg-milk-300"
+            className="focus-ring inline-flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-line-hairline bg-surface-glass px-3 text-xs font-medium text-ink-700 hover:bg-milk-300"
             title={t("Choose the calling provider again")}
         >
             <ArrowLeftRight aria-hidden="true" className="h-3.5 w-3.5" />

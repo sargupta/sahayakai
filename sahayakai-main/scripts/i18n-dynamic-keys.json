@@ -115,7 +115,7 @@
     "src/app/(marketing)/school-pricing/school-pricing-client.tsx": { "c.name": ["school-pricing-savings"] },
     "src/app/(marketing)/terms/terms-client.tsx": { "key": ["terms-tldr"] },
     "src/app/assess-assignment/assess-client.tsx": { "s": ["assess-processing-stages"] },
-    "src/app/assessment-scanner/page.tsx": { "s": ["assessment-subjects"] },
+    "src/app/assessment-scanner/page.tsx": { "s": { "sources": ["assessment-subjects"], "count": 2 } },
     "src/app/attendance/page.tsx": { "cls.gradeLevel": ["vocab-grades"], "cls.subject": ["vocab-subjects"] },
     "src/app/community-library/page.tsx": { "resource.titleKey": ["community-library-mock"] },
     "src/app/community/page.tsx": { "cfg.label": ["community-post-types"], "prompt.text": ["community-prompts"] },
@@ -230,7 +230,7 @@
       "lessonPlan.duration": ["runtime-ai-duration"],
       "lessonPlan.subject": ["vocab-subjects"]
     },
-    "src/components/library/library-card.tsx": { "resource.gradeLevel": ["vocab-grades"], "resource.subject": ["vocab-subjects"] },
+    "src/components/library/library-card.tsx": { "resource.gradeLevel": ["vocab-grades"], "resource.subject": ["vocab-subjects"], "languageMap[resource.language]": ["vocab-languages"], "resource.language": ["vocab-languages"] },
     "src/components/messages/conversation-thread.tsx": { "st.label": ["shareable-types"], "lbl": ["shareable-types"] },
     "src/components/messages/library-picker-dialog.tsx": { "s": ["vocab-grades", "vocab-subjects"] },
     "src/components/messages/message-bubble.tsx": {

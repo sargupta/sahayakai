@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify, importX509, createRemoteJWKSet } from 'jose';
-import { CHOOSER_SEGMENT, needsProviderChoice, parseProviderChoice, PROVIDER_COOKIE } from '@/lib/sampark/provider-choice';
+import { CHOOSER_SEGMENT, needsProviderChoice, parseProviderChoice, PROVIDER_COOKIE, providerChoiceRequired } from '@/lib/sampark/provider-choice';
 import {
     PROFILE_COMPLETE_COOKIE,
     verifyProfileCompleteCookie,
@@ -509,7 +509,9 @@ export async function middleware(request: NextRequest) {
         // lands on the chooser page — ElevenLabs Calls or Vobiz Calls — even when a choice
         // is already stored; the page marks the one "Used last". Deep links inside SamparkAI
         // only go through it when no choice exists yet (below).
-        if (needsProviderChoice(samparkPath) && !parseProviderChoice(request.cookies.get(PROVIDER_COOKIE)?.value)) {
+        // Only where there is a provider to choose (Riya on): production's Practice-only SamparkAI
+        // has none, and a chooser nobody can pass would lock every school out.
+        if (providerChoiceRequired() && needsProviderChoice(samparkPath) && !parseProviderChoice(request.cookies.get(PROVIDER_COOKIE)?.value)) {
             const chooser = request.nextUrl.clone();
             chooser.pathname = samparkRewrite ? `/${CHOOSER_SEGMENT}` : `${SAMPARK_PREFIX}/${CHOOSER_SEGMENT}`;
             chooser.search = '';

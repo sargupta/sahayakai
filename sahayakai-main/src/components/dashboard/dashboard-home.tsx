@@ -33,7 +33,7 @@ import { MicrophoneInput, type MicStatus } from "@/components/microphone-input";
 import { greetingFirstName } from "@/lib/teacher-name";
 import { VidyaSphere, type VidyaOrbState } from "@/components/vidya/vidya-sphere";
 import { VidyaPresence } from "@/components/vidya/vidya-presence";
-import { useVidyaLiveSession, VIDYA_LIVE_VOICE_ENABLED } from "@/components/vidya/vidya-live-provider";
+import { useVidyaLiveSession } from "@/components/vidya/vidya-live-provider";
 import { vidyaStatusKey } from "@/lib/vidya-live/use-vidya-live";
 import { deriveOrbState } from "@/components/vidya/orb-state";
 import { usePrefersReducedMotion, useVidyaSpeaking } from "@/components/vidya/use-vidya-signals";
@@ -45,6 +45,7 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
+import { tts } from "@/lib/tts";
 import { SectionCard } from "@/components/layout";
 import { SampleOutputSection } from "@/components/landing/sample-output-section";
 import { useCommunityIntro } from "@/hooks/use-community-intro";
@@ -156,7 +157,8 @@ export function DashboardHome() {
   const orbState = deriveOrbState({ failed: orbFailed, micStatus, speaking: vidyaSpeaking, awaitingReply: isThinking });
   // Hands-free Live session (null when the flag is off or outside the app shell).
   const liveSession = useVidyaLiveSession();
-  const live = VIDYA_LIVE_VOICE_ENABLED ? liveSession : null;
+  // Hands-free VIDYA only when this teacher may use it; otherwise the tap-to-talk mic.
+  const live = liveSession?.liveEnabled ? liveSession : null;
   const liveOrbState: VidyaOrbState = !live ? orbState
     : live.state === "error" ? "error"
     : live.state === "listening" || live.state === "interrupted" ? "listening"
@@ -183,8 +185,12 @@ export function DashboardHome() {
   // Guards the URL voice_transcript auto-submit so it fires at most once,
   // even when the greeting effect re-runs on a language change.
   const voiceHandledRef = useRef(false);
+  // The current request was spoken (the tap-to-talk mic), so VIDYA answers it aloud too.
+  const spokenTurnRef = useRef(false);
 
   const onSubmit = async (values: FormValues) => {
+    const spoken = spokenTurnRef.current;
+    spokenTurnRef.current = false;
     if (!requireAuth()) return;
     // Determine intent using the Smart Router
     setIsThinking(true);
@@ -233,6 +239,8 @@ export function DashboardHome() {
         trackGeneration();
         setAnswer(result.content);
         setIsThinking(false);
+        // A spoken question gets a spoken answer (before, Home only showed it as text).
+        if (spoken && result.content) void tts.speak(result.content, `${LANGUAGE_TO_ISO[userLanguage] ?? "en"}-IN`);
       } else {
         // Fallback or error
         toast({
@@ -292,6 +300,7 @@ export function DashboardHome() {
   }, [form, t]);
 
   const handleTranscript = (transcript: string, _language?: string) => {
+    spokenTurnRef.current = true;
     form.setValue("topic", transcript);
     form.handleSubmit(onSubmit)();
   };
@@ -349,12 +358,13 @@ export function DashboardHome() {
               <div className="flex flex-col items-center gap-3" data-vidya-entry="home" data-vidya-state={liveOrbState}>
                 {/* The design-system VIDYA (VidyaPresence: saffron radial, breathing
                     ring, 5 s float; indigo while connecting/thinking) at ONE fixed size on Home
-                    (h-40 / md:h-52) in every state. Its own button carries data-microphone.
+                    (h-32 / md:h-[152px]: 128 / 152 px, smaller on request 2026-11-18) in every state, with a slow
+                    rotating light and nothing inside the orb (no mic glyph, no name). Its own button carries data-microphone.
                     Radial #FFD9AE → #C96A28 (design-token-allow: a comment quoting the orb tokens from DESIGN_TOKENS.md, not a style). */}
                 <div data-testid="vidya-home-live">
                   <VidyaPresence
                     size="compact"
-                    className="h-40 w-40 shrink-0 md:h-52 md:w-52"
+                    className="h-32 w-32 shrink-0 md:h-[152px] md:w-[152px]"
                     state={live.state}
                     getLevel={live.getLevel}
                     onActivate={live.error ? () => { live.dismissError(); void live.start(); } : live.toggle}

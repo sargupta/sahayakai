@@ -342,34 +342,36 @@ export async function dispatchVidya(
     // ── shadow ─────────────────────────────────────────────────────────
     if (decision.mode === 'shadow') {
         const shadowStartedAt = Date.now();
-        const [genkit, sidecar] = await Promise.all([
-            runGenkitSafe(input.request),
-            runSidecarSafe(sidecarRequest, appCheckToken),
-        ]);
+        // Shadow never makes the teacher wait for the sidecar: it is started now, and its outcome is
+        // logged and diffed when it lands, after the Genkit answer has gone back
+        // (gate: shadow-never-blocks.test.ts).
+        const sidecarShadow = runSidecarSafe(sidecarRequest, appCheckToken);
+        const genkit = await runGenkitSafe(input.request);
         const genkitLatencyMs = Date.now() - shadowStartedAt;
+        void sidecarShadow.then((sidecar) => {
+            logDispatch(decision, {
+                source: 'genkit',
+                uid: input.uid,
+                sidecarOk: sidecar.ok,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarErrorType: sidecar.ok ? undefined : sidecar.error.name,
+                sidecarIntent: sidecar.ok ? sidecar.res.intent : undefined,
+            });
 
-        logDispatch(decision, {
-            source: 'genkit',
-            uid: input.uid,
-            sidecarOk: sidecar.ok,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarErrorType: sidecar.ok ? undefined : sidecar.error.name,
-            sidecarIntent: sidecar.ok ? sidecar.res.intent : undefined,
-        });
-
-        // Phase M.5 — also persist the (genkit, sidecar) pair to
-        // Firestore so the offline aggregator can score parity before
-        // the canary flip. Fire-and-forget; never blocks the response.
-        void writeAgentShadowDiff({
-            agent: 'vidya',
-            uid: input.uid,
-            genkit: genkit.ok ? genkit.out : null,
-            sidecar: sidecar.ok ? sidecar.res : null,
-            genkitLatencyMs,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarOk: sidecar.ok,
-            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
-        });
+            // Phase M.5 — also persist the (genkit, sidecar) pair to
+            // Firestore so the offline aggregator can score parity before
+            // the canary flip. Fire-and-forget; never blocks the response.
+            void writeAgentShadowDiff({
+                agent: 'vidya',
+                uid: input.uid,
+                genkit: genkit.ok ? genkit.out : null,
+                sidecar: sidecar.ok ? sidecar.res : null,
+                genkitLatencyMs,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarOk: sidecar.ok,
+                sidecarError: sidecar.ok ? undefined : sidecar.error.message,
+            });
+        }).catch(() => undefined);
 
         if (!genkit.ok) throw genkit.error;
         return genkitToDispatched(genkit.out, 'genkit', decision);

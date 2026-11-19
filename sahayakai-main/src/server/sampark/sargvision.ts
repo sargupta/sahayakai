@@ -9,14 +9,12 @@ import { logger } from '@/lib/logger';
 import { hashPhone } from '@/lib/sampark/phone';
 import { getSamparkRepo, SAMPARK_NONPROD_DATABASE } from '@/lib/sampark/repo/factory';
 import { SARGVISION_ORG_ID, type SargvisionContact } from '@/lib/sampark/sargvision';
+import { sargvisionRosterEnvironment } from '@/server/sampark/sargvision-environment';
 
 type Env = Record<string, string | undefined>;
 
 export function sargvisionRosterEnabled(env: Env = process.env): boolean {
-    return env.SAMPARK_SARGVISION_ROSTER === 'true'
-        && Boolean(env.FIRESTORE_EMULATOR_HOST?.trim())
-        && env.NODE_ENV !== 'production'
-        && env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE;
+    return sargvisionRosterEnvironment(env);
 }
 
 /** A Sargvision call really rings only in Test mode with live dialling on; Practice simulates it. */

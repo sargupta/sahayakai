@@ -55,9 +55,11 @@ function unavailable() {
 export async function POST(request: NextRequest) {
   if (process.env.VIDYA_VOICE_PUBLIC_ENABLED !== 'true') return unavailable();
 
-  const baseUrl = process.env[BASE_URL_ENV];
+  // Same override as start-session: the browser-reachable media socket may be served by a
+  // different service from the agents sidecar. Unset = the agents URL, as before.
+  const baseUrl = process.env.VIDYA_VOICE_STREAM_BASE_URL?.trim() || process.env[BASE_URL_ENV];
   if (!baseUrl) {
-    logger.error(`${BASE_URL_ENV} is not set`, undefined, 'VIDYA_VOICE');
+    logger.error(`neither VIDYA_VOICE_STREAM_BASE_URL nor ${BASE_URL_ENV} is set`, undefined, 'VIDYA_VOICE');
     return unavailable();
   }
   if (!allow(clientIp(request))) {

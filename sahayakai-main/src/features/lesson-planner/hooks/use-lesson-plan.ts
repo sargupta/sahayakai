@@ -353,15 +353,12 @@ export function useLessonPlan() {
                         success: true,
                     });
 
+                    // A cached plan appears silently: no "Instant Load / Loaded from local DB
+                    // cache" popup (founder request 2026-11-17).
                     setTimeout(() => {
                         setLessonPlan(cachedPlan);
                         setIsLoading(false);
                         setLoadingMessage("");
-                        toast({
-                            title: "⚡ Instant Load",
-                            description: "Loaded from local DB cache.",
-                            className: "bg-green-50 border-green-200 text-green-800",
-                        });
                     }, 300);
                     return;
                 }
@@ -383,11 +380,7 @@ export function useLessonPlan() {
                     setLessonPlan(cloudCachedPlan);
                     setIsLoading(false);
                     setLoadingMessage("");
-                    toast({
-                        title: "☁️ Community Cache",
-                        description: "Found a plan shared by another teacher!",
-                        className: "bg-blue-50 border-blue-200 text-blue-800",
-                    });
+                    // Silent as well: no "Community Cache" popup.
                     if (typeof window !== 'undefined') {
                         await saveCache(cacheKey, cloudCachedPlan);
                     }

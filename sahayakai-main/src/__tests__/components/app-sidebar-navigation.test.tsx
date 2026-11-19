@@ -141,6 +141,14 @@ describe('AppSidebar — information architecture', () => {
         }
     });
 
+    it('shows Virtual Field Trip and Assessment Scanner to every teacher (not parked in Labs)', () => {
+        // mockAccess is { staff: false, labs: false }: an ordinary teacher with no Labs link.
+        render(<AppSidebar />);
+        const hrefs = sidebar().getAllByRole('link').map((a) => a.getAttribute('href'));
+        expect(hrefs).toContain('/virtual-field-trip');
+        expect(hrefs).toContain('/assessment-scanner');
+    });
+
     it('Attendance opens the class registers at /attendance, with SamparkAI off or on', () => {
         for (const access of [NO_ACCESS, { ...NO_ACCESS, sampark: true }]) {
             mockAccess = access;

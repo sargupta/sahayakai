@@ -335,36 +335,38 @@ async function _dispatchInstantAnswerInner(
     // ── shadow ─────────────────────────────────────────────────────────
     if (decision.mode === 'shadow') {
         const shadowStartedAt = Date.now();
-        const [genkit, sidecar] = await Promise.all([
-            runGenkitSafe(input),
-            runSidecarSafe(sidecarRequest),
-        ]);
+        // Shadow never makes the teacher wait for the sidecar: it is started now, and its outcome is
+        // logged and diffed when it lands, after the Genkit answer has gone back
+        // (gate: shadow-never-blocks.test.ts).
+        const sidecarShadow = runSidecarSafe(sidecarRequest);
+        const genkit = await runGenkitSafe(input);
         const genkitLatencyMs = Date.now() - shadowStartedAt;
+        void sidecarShadow.then((sidecar) => {
+            logDispatch(decision, {
+                source: 'genkit',
+                uid: input.userId,
+                sidecarOk: sidecar.ok,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarErrorType: sidecar.ok ? undefined : sidecar.error.name,
+                groundingUsed: sidecar.ok ? sidecar.res.groundingUsed : undefined,
+            });
 
-        logDispatch(decision, {
-            source: 'genkit',
-            uid: input.userId,
-            sidecarOk: sidecar.ok,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarErrorType: sidecar.ok ? undefined : sidecar.error.name,
-            groundingUsed: sidecar.ok ? sidecar.res.groundingUsed : undefined,
-        });
-
-        // Phase M.5 — persist (genkit, sidecar) pair so the offline
-        // aggregator can score parity. The other 13 non-parent-call
-        // dispatchers already do this; instant-answer was missed when
-        // the writer landed, which is why QA Lane A2 saw 0 instant-answer
-        // diff docs in `agent_shadow_diffs` despite the flag flip.
-        void writeAgentShadowDiff({
-            agent: 'instant-answer',
-            uid: input.userId,
-            genkit: genkit.ok ? genkit.out : null,
-            sidecar: sidecar.ok ? sidecar.res : null,
-            genkitLatencyMs,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarOk: sidecar.ok,
-            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
-        });
+            // Phase M.5 — persist (genkit, sidecar) pair so the offline
+            // aggregator can score parity. The other 13 non-parent-call
+            // dispatchers already do this; instant-answer was missed when
+            // the writer landed, which is why QA Lane A2 saw 0 instant-answer
+            // diff docs in `agent_shadow_diffs` despite the flag flip.
+            void writeAgentShadowDiff({
+                agent: 'instant-answer',
+                uid: input.userId,
+                genkit: genkit.ok ? genkit.out : null,
+                sidecar: sidecar.ok ? sidecar.res : null,
+                genkitLatencyMs,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarOk: sidecar.ok,
+                sidecarError: sidecar.ok ? undefined : sidecar.error.message,
+            });
+        }).catch(() => undefined);
 
         if (!genkit.ok) throw genkit.error;
         logger.info('complete', 'instant_answer.dispatch', {

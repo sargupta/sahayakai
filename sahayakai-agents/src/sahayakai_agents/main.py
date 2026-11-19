@@ -41,7 +41,7 @@ from .agents.rubric.router import rubric_router
 from .agents.teacher_training.router import teacher_training_router
 from .agents.video_storyteller.router import video_storyteller_router
 from .agents.vidya.router import vidya_router
-from .agents.vidya_voice.router import vidya_voice_router
+from .agents.vidya_voice.router import vidya_voice_router, vidya_voice_stream
 from .agents.virtual_field_trip.router import virtual_field_trip_router
 from .agents.visual_aid.router import visual_aid_router
 from .agents.voice_to_text.router import voice_to_text_router
@@ -83,7 +83,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     init_telemetry(app)
     # VIDYA voice: import ADK/genai and resolve credentials in the background so the
     # teacher's first tap does not pay ~4 s of cold start (startup itself is not delayed).
-    if not TELEPHONY_ONLY:
+    if not TELEPHONY_ONLY or PUBLIC_VIDYA_VOICE:
         from .agents.vidya_voice.adk_live import warm_up_vidya_live
 
         threading.Thread(target=warm_up_vidya_live, name="vidya-warm-up", daemon=True).start()
@@ -101,6 +101,20 @@ TELEPHONY_ONLY = os.environ.get("SAHAYAKAI_TELEPHONY_ONLY", "").strip().lower() 
     "yes",
     "on",
 )
+
+# `SAHAYAKAI_PUBLIC_VIDYA_VOICE` adds ONE more route to the telephony-only
+# surface: the hands-free VIDYA media socket (`/v1/vidya-voice/stream`).
+# A browser opens that socket directly, so — exactly like the carrier socket —
+# it cannot sit behind Cloud Run IAM. It gates itself on a short-lived signed
+# token before `accept()` and carries its own cost controls (single-use tokens,
+# one session per uid, hourly and process-wide limits, idle and wall-clock
+# cut-offs). Nothing else from the VIDYA voice router is mounted: its
+# `/start-session` POST has no such gate and stays private.
+# Has no effect unless `SAHAYAKAI_TELEPHONY_ONLY` is also set; the full agent
+# service already serves the socket behind IAM.
+PUBLIC_VIDYA_VOICE = TELEPHONY_ONLY and os.environ.get(
+    "SAHAYAKAI_PUBLIC_VIDYA_VOICE", ""
+).strip().lower() in ("1", "true", "yes", "on")
 
 app = FastAPI(
     title="sahayakai-agents",
@@ -258,6 +272,9 @@ if not TELEPHONY_ONLY:
 if TELEPHONY_ONLY:
     # Public service: the token-gated media socket and nothing else.
     app.include_router(telephony_router)
+    if PUBLIC_VIDYA_VOICE:
+        # Plus the token-gated VIDYA voice socket — the route alone, never the router.
+        app.add_api_websocket_route("/v1/vidya-voice/stream", vidya_voice_stream)
 else:
     app.include_router(parent_call_router)
     app.include_router(lesson_plan_router)

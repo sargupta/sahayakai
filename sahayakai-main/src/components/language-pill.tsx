@@ -44,7 +44,7 @@ export function LanguagePill() {
         onClick={() => setOpen(true)}
         aria-label={t("Change language")}
         className={cn(
-          "inline-flex items-center justify-center gap-1.5 h-9 min-w-9 px-2 sm:px-3 rounded-pill",
+          "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap h-9 min-w-9 px-2 sm:px-3 rounded-pill",
           "bg-primary/10 text-primary font-medium text-sm",
           "hover:bg-primary/15 transition-colors duration-micro ease-out-quart",
         )}

@@ -189,6 +189,8 @@ export function setMode(orgId: string, mode: SamparkMode): Promise<SamparkSchool
 export interface ProviderChoiceState {
     choice: 'elevenlabs' | 'vobiz' | null;
     options: { id: 'elevenlabs' | 'vobiz'; available: boolean }[];
+    /** false: this deployment has no calling provider to choose (Riya off); skip the chooser. */
+    required?: boolean;
 }
 
 /** GET /api/sampark/provider — this session's calling-provider choice and what the deployment offers. */

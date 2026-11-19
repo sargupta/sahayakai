@@ -252,3 +252,82 @@ describe('decideAssessmentScannerDispatch — bucket function', () => {
         expect(buckets.size).toBeGreaterThan(50);
     });
 });
+
+// ── Multi-page routing (2026-10) ────────────────────────────────────────────
+// The sidecar was built for ≤3 pages; anything larger must run on the Genkit
+// flow, or it times out and its fallback can't finish inside the route budget.
+describe('dispatchAssessmentScanner — page-count routing', () => {
+    const pages = (n: number) =>
+        Array.from({ length: n }, (_, i) => `https://example.com/page${i + 1}.jpg`);
+
+    it.each(['canary', 'full', 'shadow'] as const)(
+        '%s: a 4-page scan never touches the sidecar and is graded by Genkit',
+        async (mode) => {
+            setMode(mode, 100);
+            mockGenkit.mockResolvedValue({ ...GENKIT_OUTPUT, pageCount: 4 });
+            const out = await dispatchAssessmentScanner({ ...BASE_INPUT, pageUrls: pages(4) });
+            expect(out.source).toBe('genkit');
+            expect(out.decision.mode).toBe('off');
+            expect(out.decision.reason).toBe('pages_4_over_sidecar_max_3');
+            expect(mockSidecar).not.toHaveBeenCalled();
+            expect(mockGenkit).toHaveBeenCalledTimes(1);
+            expect(mockGenkit.mock.calls[0][0].pageUrls).toHaveLength(4);
+        },
+    );
+
+    it('canary: a 3-page scan (the old boundary) is still served by the sidecar', async () => {
+        setMode('canary', 100);
+        mockSidecar.mockResolvedValue({ ...SIDECAR_OUTPUT, pageCount: 3 });
+        const out = await dispatchAssessmentScanner({ ...BASE_INPUT, pageUrls: pages(3) });
+        expect(out.source).toBe('sidecar');
+        expect(mockSidecar).toHaveBeenCalledTimes(1);
+        expect(mockGenkit).not.toHaveBeenCalled();
+    });
+
+    it('canary out-of-bucket: no background sidecar call for a 10-page scan', async () => {
+        setMode('canary', 0);
+        mockGenkit.mockResolvedValue({ ...GENKIT_OUTPUT, pageCount: 10 });
+        await dispatchAssessmentScanner({ ...BASE_INPUT, pageUrls: pages(10) });
+        await new Promise((r) => setImmediate(r));
+        expect(mockSidecar).not.toHaveBeenCalled();
+    });
+});
+
+describe('dispatchAssessmentScanner — route time budget', () => {
+    it('does not start a Genkit fallback the route budget cannot fit (typed timeout instead)', async () => {
+        setMode('canary', 100);
+        let now = 1_000_000;
+        jest.spyOn(Date, 'now').mockImplementation(() => now);
+        mockSidecar.mockImplementation(async () => {
+            now += 100_000; // the sidecar burns 100 s of the 110 s budget, then times out
+            throw new AssessmentScannerSidecarTimeoutError(100_000);
+        });
+        await expect(dispatchAssessmentScanner(BASE_INPUT)).rejects.toMatchObject({
+            name: 'WithTimeoutError',
+        });
+        expect(mockGenkit).not.toHaveBeenCalled();
+    });
+
+    it('clamps the fallback to the remaining budget', async () => {
+        setMode('canary', 100);
+        let now = 5_000_000;
+        jest.spyOn(Date, 'now').mockImplementation(() => now);
+        const timeouts: number[] = [];
+        const realSetTimeout = global.setTimeout;
+        jest.spyOn(global, 'setTimeout').mockImplementation(((fn: () => void, ms?: number) => {
+            timeouts.push(ms ?? 0);
+            return realSetTimeout(fn, 0); // fire at once: the clamp value is what's under test
+        }) as typeof setTimeout);
+        mockSidecar.mockImplementation(async () => {
+            now += 80_000; // 30 s left of the 110 s budget
+            throw new AssessmentScannerSidecarTimeoutError(80_000);
+        });
+        mockGenkit.mockImplementation(() => new Promise(() => {})); // never settles
+        await expect(dispatchAssessmentScanner(BASE_INPUT)).rejects.toMatchObject({
+            name: 'WithTimeoutError',
+        });
+        expect(mockGenkit).toHaveBeenCalledTimes(1);
+        expect(timeouts).toContain(30_000);
+        expect(Math.max(...timeouts)).toBeLessThanOrEqual(30_000);
+    });
+});

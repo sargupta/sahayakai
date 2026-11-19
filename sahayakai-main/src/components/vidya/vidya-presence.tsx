@@ -28,7 +28,6 @@
  */
 
 import { useEffect, useRef } from "react";
-import { Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VidyaLiveState } from "@/lib/vidya-live/live-session";
 
@@ -160,12 +159,9 @@ export function VidyaPresence({
           data-state={state}
         >
           <span aria-hidden className="vidya-ring" />
-          <span aria-hidden className="vidya-core">
-            <span className="relative z-10 flex flex-col items-center gap-1.5">
-              {!active && <Mic className="vidya-icon" strokeWidth={1.9} />}
-              {!compact && <span className="vidya-wordmark">VIDYA</span>}
-            </span>
-          </span>
+          {/* No mic glyph and no "VIDYA" text inside the orb (both removed on request
+              2026-11-18): the orb itself is the control, and its aria-label says what a tap does. */}
+          <span aria-hidden className="vidya-core" />
         </button>
       </div>
       {decorations}

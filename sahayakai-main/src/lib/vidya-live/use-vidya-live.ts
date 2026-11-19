@@ -32,6 +32,8 @@ export interface UseVidyaLiveArgs {
   /** Observers only (e.g. conversation history) — never affect the session. */
   onTranscript?: (tr: VidyaLiveTranscript) => void;
   onStateChange?: (state: VidyaLiveState) => void;
+  /** The session's error code (e.g. `unavailable` when start-session answers 503). */
+  onErrorCode?: (code: string) => void;
 }
 
 export interface VidyaLiveHandle {
@@ -74,7 +76,7 @@ function observe(fn: () => void): void {
   }
 }
 
-export function useVidyaLive({ scope, getIdToken, buildSessionInput, onToolCall, onTranscript, onStateChange }: UseVidyaLiveArgs): VidyaLiveHandle {
+export function useVidyaLive({ scope, getIdToken, buildSessionInput, onToolCall, onTranscript, onStateChange, onErrorCode }: UseVidyaLiveArgs): VidyaLiveHandle {
   const [state, setState] = useState<VidyaLiveState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [caption, setCaption] = useState<VidyaLiveCaption | null>(null);
@@ -86,6 +88,8 @@ export function useVidyaLive({ scope, getIdToken, buildSessionInput, onToolCall,
   transcriptRef.current = onTranscript;
   const stateRef = useRef(onStateChange);
   stateRef.current = onStateChange;
+  const errorCodeRef = useRef(onErrorCode);
+  errorCodeRef.current = onErrorCode;
   const inputRef = useRef(buildSessionInput);
   inputRef.current = buildSessionInput;
   const appContextRef = useRef<Record<string, unknown> | null>(null);
@@ -118,7 +122,10 @@ export function useVidyaLive({ scope, getIdToken, buildSessionInput, onToolCall,
           prev && prev.role === tr.role && !tr.final ? { role: tr.role, text: prev.text + tr.text } : { role: tr.role, text: tr.text },
         );
       },
-      onError: (code) => setError(FRIENDLY[code] ?? GENERIC),
+      onError: (code) => {
+        setError(FRIENDLY[code] ?? GENERIC);
+        observe(() => errorCodeRef.current?.(code));
+      },
     });
     sessionRef.current = session;
     session.setAppContext(appContextRef.current); // sent right after setup once the socket opens

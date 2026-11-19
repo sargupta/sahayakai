@@ -4,6 +4,7 @@ import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
 import { getSection } from '@/lib/vidya/app-manifest';
+import { toolRequested } from '@/lib/intent/tool-request';
 
 /** Same bound as /api/assistant's MAX_MESSAGE_CHARS. */
 const MAX_INTENT_PROMPT_CHARS = 4000;
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
             userId
         });
         const {
-            type: intent,
+            type: classifiedIntent,
             topic: extractedTopic,
             gradeLevel: extractedGrade,
             subject: extractedSubject,
@@ -113,6 +114,16 @@ export async function POST(request: Request) {
             // for instantAnswer / unknown / unroutable single-step.
             plannedActions = [],
         } = flowOutput;
+
+        // A request that names a tool and asks for it opens that tool, even when the
+        // classifier said `unknown` / `instantAnswer` (17 Nov: "help me generate a lesson
+        // plan" became a one-line instant answer). src/lib/intent/tool-request.ts.
+        const askedTool =
+            classifiedIntent === 'unknown' || classifiedIntent === 'instantAnswer' ? toolRequested(prompt) : null;
+        const intent = askedTool ?? classifiedIntent;
+        if (askedTool) {
+            logger.info('intent overridden by named tool', 'INTENT', { classifiedIntent, intent: askedTool });
+        }
 
         // BUG #7 (2026-05-28): Prefer the model's CONCISE extracted topic.
         // Previously we fell back to the raw `prompt` whenever extraction

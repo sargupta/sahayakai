@@ -277,29 +277,33 @@ async function _dispatchQuizInner(
 
     if (decision.mode === 'shadow') {
         const shadowStartedAt = Date.now();
-        const [genkit, sidecar] = await Promise.all([
-            runGenkitSafe(input),
-            runSidecarSafe(sidecarRequest),
-        ]);
+        // Shadow never makes the teacher wait for the sidecar: it is started now, and its outcome is
+        // logged and diffed when it lands, after the Genkit answer has gone back
+        // (gate: shadow-never-blocks.test.ts).
+        const sidecarShadow = runSidecarSafe(sidecarRequest);
+        const genkit = await runGenkitSafe(input);
         const genkitLatencyMs = Date.now() - shadowStartedAt;
-        logDispatch(decision, {
-            source: 'genkit',
-            uid: input.userId,
-            sidecarOk: sidecar.ok,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarVariantsGenerated: sidecar.ok ? sidecar.res.variantsGenerated : undefined,
-        });
-        // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
-        void writeAgentShadowDiff({
-            agent: 'quiz',
-            uid: input.userId,
-            genkit: genkit.ok ? genkit.out : null,
-            sidecar: sidecar.ok ? sidecar.res : null,
-            genkitLatencyMs,
-            sidecarLatencyMs: sidecar.latencyMs,
-            sidecarOk: sidecar.ok,
-            sidecarError: sidecar.ok ? undefined : sidecar.error.message,
-        });
+        void sidecarShadow.then((sidecar) => {
+            logDispatch(decision, {
+                source: 'genkit',
+                uid: input.userId,
+                sidecarOk: sidecar.ok,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarVariantsGenerated: sidecar.ok ? sidecar.res.variantsGenerated : undefined,
+            });
+            // Phase M.5 — persist (genkit, sidecar) pair for offline parity.
+            void writeAgentShadowDiff({
+                agent: 'quiz',
+                uid: input.userId,
+                genkit: genkit.ok ? genkit.out : null,
+                sidecar: sidecar.ok ? sidecar.res : null,
+                genkitLatencyMs,
+                sidecarLatencyMs: sidecar.latencyMs,
+                sidecarOk: sidecar.ok,
+                sidecarError: sidecar.ok ? undefined : sidecar.error.message,
+            });
+        }).catch(() => undefined);
+
         if (!genkit.ok) throw genkit.error;
         // eslint-disable-next-line no-console
         logger.info('complete', 'quiz.dispatch', {
