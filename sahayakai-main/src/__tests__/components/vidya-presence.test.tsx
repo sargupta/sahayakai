@@ -65,6 +65,15 @@ describe('VidyaPresence', () => {
         }
     });
 
+    it.each(['hero', 'workspace', 'compact'] as const)('%s: nothing inside the orb, no mic glyph and no name (the orb is the control)', (size) => {
+        const { container } = render(<VidyaPresence state="idle" size={size} onActivate={() => {}} label="Talk to VIDYA" />);
+        expect(container.querySelector('svg')).toBeNull();
+        expect(container.querySelector('.vidya-icon')).toBeNull();
+        expect(container.querySelector('.vidya-wordmark')).toBeNull();
+        expect(container.querySelector('.vidya-core')?.textContent).toBe('');
+        expect(screen.getByTestId('vidya-presence')).toHaveAttribute('aria-label', 'Talk to VIDYA');
+    });
+
     it('compact orb is 64px and has no wordmark (does not cover page controls)', () => {
         const { container } = render(<VidyaPresence state="idle" size="compact" onActivate={() => {}} label="x" />);
         const stage = container.querySelector('.vidya-stage')!;

@@ -118,6 +118,7 @@ const localEnv = (over: Record<string, string | undefined> = {}): Record<string,
     ELEVENLABS_SOURCE_AGENT_ID: 'agent_0000sourcesourcesourcesource00',
     ELEVENLABS_WEBHOOK_SECRET: 'whsec_test_only',
     SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod',
+    SAMPARK_SARGVISION_ROSTER: 'true',
     FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
     NODE_ENV: 'development',
     SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: ALLOWED.join(','),
@@ -229,9 +230,10 @@ describe('Sargvision roster calls (Riya service)', () => {
         expect(sargvisionRosterMode(localEnv(), { ...sv, orgId: 'riya-test-local' })).toBe(false);
         expect(sargvisionRosterMode(localEnv(), { ...sv, isDemo: true })).toBe(false);
         expect(sargvisionRosterMode(localEnv(), { ...sv, mode: 'practice' })).toBe(false);
-        expect(sargvisionRosterEnabled({ ...localEnv(), SAMPARK_SARGVISION_ROSTER: 'true' })).toBe(true);
-        expect(sargvisionRosterEnabled({ ...localEnv({ NODE_ENV: 'production' }), SAMPARK_SARGVISION_ROSTER: 'true' })).toBe(false);
-        expect(sargvisionRosterEnabled(localEnv())).toBe(false);
+        expect(sargvisionRosterEnabled(localEnv())).toBe(true);
+        expect(sargvisionRosterEnabled(localEnv({ NODE_ENV: 'production' }))).toBe(false);
+        expect(sargvisionRosterEnabled(localEnv({ SAMPARK_SARGVISION_ROSTER: undefined }))).toBe(false);
+        expect(sargvisionRosterMode(localEnv({ SAMPARK_SARGVISION_ROSTER: undefined }), sv)).toBe(false);
     });
 
     it('in production the roster school falls back to the test-phone rule and never rings a contact', async () => {

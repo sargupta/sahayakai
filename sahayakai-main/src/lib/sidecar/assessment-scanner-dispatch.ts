@@ -16,6 +16,16 @@
  *              dispatcher falls back to Genkit.
  *
  * **Currently defaults to `off`** via `FALLBACK_CONFIG.assessmentScannerSidecarMode`.
+ *
+ * Page-count routing (2026-10): the Python sidecar was built and timed for at
+ * most 3 pages (one 45 s Pass-2 call over every page, unbounded Pass-1 fan-out,
+ * a 90 s client budget sized for "up to 3 OCR calls"). The website accepts up to
+ * ASSESSMENT_DEMO_PAGE_CAP (10) pages, so a larger scan routed to the sidecar
+ * would time out and then start a 90 s Genkit fallback that cannot finish inside
+ * the route's 120 s `maxDuration` — the request is killed and the teacher sees a
+ * failed scan for anything past ~3 pages. Scans above ASSESSMENT_SIDECAR_MAX_PAGES
+ * therefore always run on the Genkit flow (fan-out Pass 1 + chunked Pass 2), and
+ * every Genkit call is clamped to the time left in the route budget.
  */
 
 import {
@@ -41,10 +51,35 @@ import {
 } from './assessment-scanner-client';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
-import { withTimeout } from './with-timeout';
+import { withTimeout, WithTimeoutError } from './with-timeout';
 
 const FALLBACK_TIMEOUT_MS =
     Number(process.env.ASSESSMENT_SCANNER_FALLBACK_TIMEOUT_MS) || 90_000;
+
+/** Most pages a scan may have and still be served (or shadowed) by the sidecar. */
+export const ASSESSMENT_SIDECAR_MAX_PAGES = 3;
+
+/**
+ * Wall-clock budget for the whole dispatch, measured from its start. Kept below
+ * the route's `maxDuration` (120 s) so a slow scan ends with a typed timeout
+ * (→ 503 "try again") instead of the platform killing the request mid-flight.
+ */
+export const ASSESSMENT_DISPATCH_BUDGET_MS = 110_000;
+
+/** Below this much remaining budget a Genkit fallback is not worth starting. */
+const MIN_FALLBACK_BUDGET_MS = 15_000;
+
+function genkitWithinBudget(
+    input: AssessmentScannerDispatchInput,
+    startedAt: number,
+): Promise<AssessmentScannerOutput> {
+    const remaining = ASSESSMENT_DISPATCH_BUDGET_MS - (Date.now() - startedAt);
+    const label = 'assessment-scanner genkit fallback';
+    if (remaining < MIN_FALLBACK_BUDGET_MS) {
+        return Promise.reject(new WithTimeoutError(label, Date.now() - startedAt));
+    }
+    return withTimeout(gradeAssessment(input), Math.min(FALLBACK_TIMEOUT_MS, remaining), label);
+}
 
 export interface AssessmentScannerSidecarDecision {
     mode: SidecarMode;
@@ -235,16 +270,23 @@ function logDispatch(
 export async function dispatchAssessmentScanner(
     input: AssessmentScannerDispatchInput,
 ): Promise<DispatchedAssessmentScanner> {
-    const decision = await decideAssessmentScannerDispatch(input.userId);
+    const startedAt = Date.now();
+    const flagDecision = await decideAssessmentScannerDispatch(input.userId);
+    const pageCount = input.pageUrls.length;
+    const sidecarEligible = pageCount <= ASSESSMENT_SIDECAR_MAX_PAGES;
+    const decision: AssessmentScannerSidecarDecision =
+        sidecarEligible || flagDecision.mode === 'off'
+            ? flagDecision
+            : {
+                  ...flagDecision,
+                  mode: 'off',
+                  reason: `pages_${pageCount}_over_sidecar_max_${ASSESSMENT_SIDECAR_MAX_PAGES}`,
+              };
     const sidecarRequest = inputToSidecarRequest(input);
 
     if (decision.mode === 'off') {
-        const out = await withTimeout(
-            gradeAssessment(input),
-            FALLBACK_TIMEOUT_MS,
-            'assessment-scanner genkit fallback',
-        );
-        logDispatch(decision, { source: 'genkit', uid: input.userId });
+        const out = await genkitWithinBudget(input, startedAt);
+        logDispatch(decision, { source: 'genkit', uid: input.userId, pageCount });
 
         // Q4C — canary "bucket-overshoot" observation. When the agent
         // is mid-canary (configuredMode==='canary') but THIS teacher's
@@ -252,6 +294,7 @@ export async function dispatchAssessmentScanner(
         // sidecar in the background and write a shadow_diff so the
         // promotion gate has a non-zero denominator.
         if (
+            sidecarEligible &&
             shouldRunCanaryShadowDiff() &&
             decision.configuredMode === 'canary'
         ) {
@@ -361,11 +404,7 @@ export async function dispatchAssessmentScanner(
         sidecarErrorClass: errorClass,
         sidecarLatencyMs: sidecar.latencyMs,
     });
-    const out = await withTimeout(
-        gradeAssessment(input),
-        FALLBACK_TIMEOUT_MS,
-        'assessment-scanner genkit fallback',
-    );
+    const out = await genkitWithinBudget(input, startedAt);
     return genkitToDispatched(out, 'genkit_fallback', decision);
 }
 

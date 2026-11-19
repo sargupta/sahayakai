@@ -27,10 +27,8 @@ export type LabsTool = {
 export const LABS_TOOLS: LabsTool[] = [
     { href: '/visual-aid-designer', titleKey: 'Visual Aid Designer', descriptionKey: 'Diagrams & illustrations.', icon: 'Images' },
     { href: '/content-creator', titleKey: 'Content Creator', descriptionKey: 'Stories & visual aids.', icon: 'BookOpen' },
-    { href: '/assessment-scanner', titleKey: 'Assessment Scanner', descriptionKey: 'Scan and grade answer sheets.', icon: 'ScanLine' },
     { href: '/assess-assignment', titleKey: 'Assess Work', descriptionKey: 'Grade handwritten work from a photo.', icon: 'ScanEye' },
     { href: '/video-storyteller', titleKey: 'Video Storyteller', descriptionKey: 'Curated videos for your topic.', icon: 'Video' },
-    { href: '/virtual-field-trip', titleKey: 'Virtual Field Trip', descriptionKey: 'Explore places from the classroom.', icon: 'Globe2' },
     { href: '/impact-dashboard', titleKey: 'Impact', descriptionKey: 'Your usage and time saved.', icon: 'BarChart' },
 ];
 

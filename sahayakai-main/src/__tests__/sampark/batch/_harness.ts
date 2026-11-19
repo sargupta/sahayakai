@@ -83,6 +83,7 @@ export function vobizRosterEnv(allowed: string[], over: Record<string, string | 
         FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
         SAMPARK_LIVE_DIAL_ENABLED: 'true',
         SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod',
+        SAMPARK_SARGVISION_ROSTER: 'true',
         SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: allowed.join(','),
         SAMPARK_RIYA_TEST_DAILY_CAP: '5',
         SAMPARK_VOBIZ_RIYA_ENABLED: 'true',

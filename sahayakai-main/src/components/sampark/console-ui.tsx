@@ -75,7 +75,10 @@ export function Panel({
     children?: ReactNode;
 }) {
     return (
-        <section className={cn("rounded-xl border p-4 shadow-sampark-card md:p-6", PANEL_TONE[tone], className)}>
+        // min-w-0: as a grid/flex item a panel must not grow to its widest child (a 460px
+        // table pushed the principal dashboard's cards 130px past a phone screen, clipped).
+        // Wide content scrolls inside the panel instead.
+        <section className={cn("min-w-0 rounded-xl border p-4 shadow-sampark-card md:p-6", PANEL_TONE[tone], className)}>
             {(title || action) && (
                 <div className="mb-4 flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-1 items-start gap-3">

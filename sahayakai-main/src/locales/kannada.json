@@ -3570,5 +3570,18 @@
   "Automatic calls are not available in this parent's language yet. Please use the WhatsApp copy instead.": "ಈ ಪೋಷಕರ ಭಾಷೆಯಲ್ಲಿ ಸ್ವಯಂಚಾಲಿತ ಕರೆಗಳು ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಬದಲಿಗೆ WhatsApp ನಕಲನ್ನು ಬಳಸಿ.",
   "We could not place the call just now. Please try again in a few minutes.": "ಈಗ ಕರೆ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಕೆಲವು ನಿಮಿಷಗಳ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
   "You contacted this parent a few minutes ago. Please wait a few minutes before trying again.": "ನೀವು ಕೆಲವು ನಿಮಿಷಗಳ ಹಿಂದೆ ಈ ಪೋಷಕರನ್ನು ಸಂಪರ್ಕಿಸಿದ್ದೀರಿ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸುವ ಮೊದಲು ದಯವಿಟ್ಟು ಕೆಲವು ನಿಮಿಷ ಕಾಯಿರಿ.",
-  "Calls to this number are not allowed on this server.": "ಈ ಸರ್ವರ್‌ನಿಂದ ಈ ಸಂಖ್ಯೆಗೆ ಕರೆ ಮಾಡಲು ಅನುಮತಿ ಇಲ್ಲ."
+  "Calls to this number are not allowed on this server.": "ಈ ಸರ್ವರ್‌ನಿಂದ ಈ ಸಂಖ್ಯೆಗೆ ಕರೆ ಮಾಡಲು ಅನುಮತಿ ಇಲ್ಲ.",
+  "Now supporting six subject families, up to {{cap}} pages per scan": "ಈಗ ಆರು ವಿಷಯ ಕುಟುಂಬಗಳಿಗೆ ಬೆಂಬಲ, ಪ್ರತಿ ಸ್ಕ್ಯಾನ್‌ಗೆ {{cap}} ಪುಟಗಳವರೆಗೆ",
+  "Reading PDF page {{done}} of {{total}}…": "PDF ಪುಟ {{done}} / {{total}} ಓದಲಾಗುತ್ತಿದೆ…",
+  "Uploading and grading 1 page. This can take up to 2 minutes.": "1 ಪುಟವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ ಮೌಲ್ಯಮಾಪನ ಮಾಡಲಾಗುತ್ತಿದೆ. ಇದಕ್ಕೆ 2 ನಿಮಿಷಗಳವರೆಗೆ ಬೇಕಾಗಬಹುದು.",
+  "Uploading and grading {{count}} pages. This can take up to 2 minutes.": "{{count}} ಪುಟಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ ಮೌಲ್ಯಮಾಪನ ಮಾಡಲಾಗುತ್ತಿದೆ. ಇದಕ್ಕೆ 2 ನಿಮಿಷಗಳವರೆಗೆ ಬೇಕಾಗಬಹುದು.",
+  "This PDF is {{size}} MB — the limit is {{limit}} MB. Re-export it at a lower resolution, or upload the pages as photos.": "ಈ PDF {{size}} MB ಇದೆ — ಮಿತಿ {{limit}} MB. ಕಡಿಮೆ ರೆಸಲ್ಯೂಶನ್‌ನಲ್ಲಿ ಮತ್ತೆ ಉಳಿಸಿ, ಅಥವಾ ಪುಟಗಳ ಫೋಟೋಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+  "This PDF is password-protected. Remove the password (or print it to a new PDF), then upload it again.": "ಈ PDF ಪಾಸ್‌ವರ್ಡ್‌ನಿಂದ ರಕ್ಷಿತವಾಗಿದೆ. ಪಾಸ್‌ವರ್ಡ್ ತೆಗೆದುಹಾಕಿ (ಅಥವಾ ಹೊಸ PDF ಆಗಿ ಪ್ರಿಂಟ್ ಮಾಡಿ), ನಂತರ ಮತ್ತೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+  "This PDF has no pages to add.": "ಈ PDF ನಲ್ಲಿ ಸೇರಿಸಲು ಯಾವುದೇ ಪುಟಗಳಿಲ್ಲ.",
+  "This PDF has {{total}} pages, but only {{remaining}} more can be added (limit {{cap}} pages per scan). Nothing was added. Split the PDF, or remove pages already added.": "ಈ PDF ನಲ್ಲಿ {{total}} ಪುಟಗಳಿವೆ, ಆದರೆ ಇನ್ನೂ {{remaining}} ಮಾತ್ರ ಸೇರಿಸಬಹುದು (ಪ್ರತಿ ಸ್ಕ್ಯಾನ್‌ಗೆ ಮಿತಿ {{cap}} ಪುಟಗಳು). ಏನನ್ನೂ ಸೇರಿಸಿಲ್ಲ. PDF ಅನ್ನು ವಿಭಜಿಸಿ, ಅಥವಾ ಈಗಾಗಲೇ ಸೇರಿಸಿದ ಪುಟಗಳನ್ನು ತೆಗೆದುಹಾಕಿ.",
+  "Page {{page}} of this PDF could not be read, so nothing was added. Re-export the PDF, or upload that page as a photo.": "ಈ PDF ನ ಪುಟ {{page}} ಓದಲಾಗಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಏನನ್ನೂ ಸೇರಿಸಿಲ್ಲ. PDF ಅನ್ನು ಮತ್ತೆ ಉಳಿಸಿ, ಅಥವಾ ಆ ಪುಟದ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+  "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "ನಿಮ್ಮ ಬ್ರೌಸರ್ ಈ PDF ಅನ್ನು ತೋರಿಸಲಾಗಲಿಲ್ಲ. ಬೇರೆ ಬ್ರೌಸರ್ ಪ್ರಯತ್ನಿಸಿ, ಅಥವಾ ಪುಟಗಳ ಫೋಟೋಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+  "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "ಈ PDF ತೆರೆಯಲಾಗಲಿಲ್ಲ — ಅದು ಹಾಳಾಗಿರಬಹುದು. ಮತ್ತೆ ಉಳಿಸಿ, ಅಥವಾ ಪುಟಗಳನ್ನು ಚಿತ್ರಗಳಾಗಿ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+  "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "ಈ ಪುಟಗಳು ಒಟ್ಟು {{size}} MB — ಒಂದು ಸ್ಕ್ಯಾನ್‌ನಲ್ಲಿ ಗರಿಷ್ಠ {{limit}} MB ಮಾತ್ರ ಅಪ್‌ಲೋಡ್ ಮಾಡಬಹುದು. ಒಂದೆರಡು ಪುಟಗಳನ್ನು ತೆಗೆದುಹಾಕಿ, ಅಥವಾ ಚಿಕ್ಕ ಫೋಟೋಗಳನ್ನು ಬಳಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "Page notices": "ಪುಟ ಸೂಚನೆಗಳು"
 }

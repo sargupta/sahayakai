@@ -15,6 +15,7 @@ import {
   FileText,
   FlaskConical,
   Gauge,
+  Globe2,
   GraduationCap,
   HeartPulse,
   Home,
@@ -24,6 +25,7 @@ import {
   MessageCircle,
   PencilRuler,
   PenLine,
+  ScanLine,
   ShieldCheck,
   Terminal,
   User,
@@ -46,9 +48,11 @@ import { pressVidyaEntry } from "@/lib/vidya-entry"
  *
  *   Talk to VIDYA
  *   Home · Library · Community · Profile      the four destinations
- *   Make      lesson plan, worksheet, quiz, exam paper, rubric, instant answer
+ *   Make      lesson plan, worksheet, quiz, exam paper, rubric, instant answer,
+ *             virtual field trip
  *   Class     attendance at /attendance, for every teacher (the class
  *             registers; parent calls start from a class register)
+ *             assessment scanner (grade a student's answer sheets)
  *   Messages · Notifications                  with unread counts
  *   Explore   folded: shared resources, usage, privacy; Labs and the
  *             internal dashboards only for staff / labsNav beta testers
@@ -94,7 +98,10 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
   useEffect(() => {
     let unsubConv: (() => void) | undefined
     let unsubNotif: (() => void) | undefined
+    let generation = 0 // bumps on every auth change, so a pending retry for an old user is dropped
+    let disposed = false
     const unsubAuth = onAuthStateChanged(auth, (user) => {
+      generation++
       unsubConv?.()
       unsubNotif?.()
       unsubConv = undefined
@@ -108,33 +115,68 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
       }
 
       setSidebarUserId(user.uid)
-      const convQ = query(
-        collection(db, "conversations"),
-        where("participantIds", "array-contains", user.uid),
-      )
-      unsubConv = onSnapshot(convQ, (snap) => {
-        let count = 0
-        snap.docs.forEach((d) => { count += d.data().unreadCount?.[user.uid] ?? 0 })
-        setTotalUnread(count)
-      })
+      const uid = user.uid
+      const myGeneration = generation
+      const live = () => myGeneration === generation && !disposed
 
-      const notifQ = query(
-        collection(db, "notifications"),
-        where("recipientId", "==", user.uid),
-        where("isRead", "==", false),
+      // Right after sign-in Firestore can refuse the first listen (permission-denied) because
+      // the new ID token has not reached it yet. Every listener here therefore has an error
+      // handler (an unhandled one surfaced as the red "1 issue" overlay at login) and is
+      // re-attached after a token refresh, a few times with back-off. A badge that still
+      // cannot load just stays hidden; it never breaks the page.
+      const subscribe = (
+        label: string,
+        start: (onError: (err: unknown) => void) => () => void,
+        reset: () => void,
+        set: (unsub: () => void) => void,
+        attempt = 0,
+      ) => {
+        set(start((err) => {
+          console.warn(`[AppSidebar] ${label} subscription error`, err)
+          reset()
+          const code = (err as { code?: string })?.code
+          if ((code === 'permission-denied' || code === 'unauthenticated') && attempt < 3 && live()) {
+            setTimeout(() => {
+              if (!live()) return
+              Promise.resolve()
+                .then(() => user.getIdToken(true))
+                .catch(() => undefined)
+                .then(() => { if (live()) subscribe(label, start, reset, set, attempt + 1) })
+            }, 1000 * (attempt + 1))
+          }
+        }))
+      }
+
+      subscribe(
+        'conversations',
+        (onError) => onSnapshot(
+          query(collection(db, "conversations"), where("participantIds", "array-contains", uid)),
+          (snap) => {
+            let count = 0
+            snap.docs.forEach((d) => { count += d.data().unreadCount?.[uid] ?? 0 })
+            setTotalUnread(count)
+          },
+          onError,
+        ),
+        () => setTotalUnread(0),
+        (u) => { unsubConv?.(); unsubConv = u },
       )
-      unsubNotif = onSnapshot(
-        notifQ,
-        (snap) => { setUnreadNotifications(snap.size) },
-        (err) => {
+
+      subscribe(
+        'notifications',
+        (onError) => onSnapshot(
+          query(collection(db, "notifications"), where("recipientId", "==", uid), where("isRead", "==", false)),
+          (snap) => { setUnreadNotifications(snap.size) },
           // A missing composite index must not break the sidebar; the badge just won't show.
-          console.warn('[AppSidebar] notifications subscription error', err)
-          setUnreadNotifications(0)
-        },
+          onError,
+        ),
+        () => setUnreadNotifications(0),
+        (u) => { unsubNotif?.(); unsubNotif = u },
       )
     })
 
     return () => {
+      disposed = true
       unsubAuth()
       unsubConv?.()
       unsubNotif?.()
@@ -181,6 +223,8 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
         { key: "exam-paper", label: t("Exam Paper"), icon: FileText, href: "/exam-paper", active: starts("/exam-paper") },
         { key: "rubric", label: t("Rubric"), icon: ClipboardCheck, href: "/rubric-generator", active: starts("/rubric-generator") },
         { key: "instant-answer", label: t("Instant Answer"), icon: Lightbulb, href: "/instant-answer", active: starts("/instant-answer") },
+        // Un-parked from Labs (parked by the July IA refocus) so every teacher can find it.
+        { key: "virtual-field-trip", label: t("Virtual Field Trip"), icon: Globe2, href: "/virtual-field-trip", active: starts("/virtual-field-trip") },
       ],
     },
     {
@@ -191,6 +235,8 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
         // The teacher's class registers and parent-call modal. Never a SamparkAI URL: SamparkAI is off in
         // production and admits school admins only (src/__tests__/components/nav-surfaces-sampark-gate.test.tsx).
         { key: "attendance", label: t("Attendance"), shortLabel: t("Class"), icon: ClipboardList, href: "/attendance", active: starts("/attendance") },
+        // Un-parked from Labs: grading a class's answer sheets sits with the class, not with experiments.
+        { key: "assessment-scanner", label: t("Assessment Scanner"), icon: ScanLine, href: "/assessment-scanner", active: starts("/assessment-scanner") },
       ],
     },
     {

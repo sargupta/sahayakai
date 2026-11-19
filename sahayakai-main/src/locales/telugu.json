@@ -3560,5 +3560,18 @@
   "Automatic calls are not available in this parent's language yet. Please use the WhatsApp copy instead.": "ఈ తల్లిదండ్రుల భాషలో ఆటోమేటిక్ కాల్‌లు ఇంకా అందుబాటులో లేవు. దయచేసి బదులుగా WhatsApp కాపీని ఉపయోగించండి.",
   "We could not place the call just now. Please try again in a few minutes.": "ప్రస్తుతం కాల్ చేయలేకపోయాము. దయచేసి కొన్ని నిమిషాల తర్వాత మళ్ళీ ప్రయత్నించండి.",
   "You contacted this parent a few minutes ago. Please wait a few minutes before trying again.": "మీరు కొన్ని నిమిషాల క్రితం ఈ తల్లిదండ్రులను సంప్రదించారు. మళ్ళీ ప్రయత్నించే ముందు దయచేసి కొన్ని నిమిషాలు వేచి ఉండండి.",
-  "Calls to this number are not allowed on this server.": "ఈ సర్వర్ నుండి ఈ నంబర్‌కు కాల్ చేయడానికి అనుమతి లేదు."
+  "Calls to this number are not allowed on this server.": "ఈ సర్వర్ నుండి ఈ నంబర్‌కు కాల్ చేయడానికి అనుమతి లేదు.",
+  "Now supporting six subject families, up to {{cap}} pages per scan": "ఇప్పుడు ఆరు విషయ కుటుంబాలకు మద్దతు, ఒక్కో స్కాన్‌కు {{cap}} పేజీల వరకు",
+  "Reading PDF page {{done}} of {{total}}…": "PDF పేజీ {{done}} / {{total}} చదువుతోంది…",
+  "Uploading and grading 1 page. This can take up to 2 minutes.": "1 పేజీ అప్‌లోడ్ చేసి మూల్యాంకనం చేస్తోంది. దీనికి 2 నిమిషాల వరకు పట్టవచ్చు.",
+  "Uploading and grading {{count}} pages. This can take up to 2 minutes.": "{{count}} పేజీలు అప్‌లోడ్ చేసి మూల్యాంకనం చేస్తోంది. దీనికి 2 నిమిషాల వరకు పట్టవచ్చు.",
+  "This PDF is {{size}} MB — the limit is {{limit}} MB. Re-export it at a lower resolution, or upload the pages as photos.": "ఈ PDF {{size}} MB — పరిమితి {{limit}} MB. తక్కువ రిజల్యూషన్‌లో మళ్లీ సేవ్ చేయండి, లేదా పేజీల ఫోటోలను అప్‌లోడ్ చేయండి.",
+  "This PDF is password-protected. Remove the password (or print it to a new PDF), then upload it again.": "ఈ PDF పాస్‌వర్డ్‌తో రక్షించబడింది. పాస్‌వర్డ్ తీసివేసి (లేదా కొత్త PDFగా ప్రింట్ చేసి), మళ్లీ అప్‌లోడ్ చేయండి.",
+  "This PDF has no pages to add.": "ఈ PDFలో జోడించడానికి పేజీలు లేవు.",
+  "This PDF has {{total}} pages, but only {{remaining}} more can be added (limit {{cap}} pages per scan). Nothing was added. Split the PDF, or remove pages already added.": "ఈ PDFలో {{total}} పేజీలు ఉన్నాయి, కానీ ఇంకా {{remaining}} మాత్రమే జోడించవచ్చు (ఒక్కో స్కాన్‌కు పరిమితి {{cap}} పేజీలు). ఏమీ జోడించలేదు. PDFను విభజించండి, లేదా ఇప్పటికే జోడించిన పేజీలను తీసివేయండి.",
+  "Page {{page}} of this PDF could not be read, so nothing was added. Re-export the PDF, or upload that page as a photo.": "ఈ PDF యొక్క పేజీ {{page}} చదవలేకపోయాము, కాబట్టి ఏమీ జోడించలేదు. PDFను మళ్లీ సేవ్ చేయండి, లేదా ఆ పేజీ ఫోటోను అప్‌లోడ్ చేయండి.",
+  "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "మీ బ్రౌజర్ ఈ PDFను చూపించలేకపోయింది. వేరే బ్రౌజర్ ప్రయత్నించండి, లేదా పేజీల ఫోటోలను అప్‌లోడ్ చేయండి.",
+  "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "ఈ PDF తెరవలేకపోయాము — అది పాడై ఉండవచ్చు. మళ్లీ సేవ్ చేయండి, లేదా పేజీలను చిత్రాలుగా అప్‌లోడ్ చేయండి.",
+  "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "ఈ పేజీలు మొత్తం {{size}} MB — ఒక స్కాన్‌లో గరిష్టంగా {{limit}} MB మాత్రమే అప్‌లోడ్ చేయవచ్చు. ఒకటి రెండు పేజీలు తీసివేయండి, లేదా చిన్న ఫోటోలు వాడి మళ్లీ ప్రయత్నించండి.",
+  "Page notices": "పేజీ సూచనలు"
 }
