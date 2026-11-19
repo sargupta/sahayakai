@@ -9277,6 +9277,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You\'re all caught up'**
   String get cmFeedCaughtUp;
+
+  /// Group page: the full-width button that joins the group.
+  ///
+  /// In en, this message translates to:
+  /// **'Join group'**
+  String get cmGroupJoin;
+
+  /// How many teachers are in a group, or how many teachers a teacher is connected with.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 teacher} other{{count} teachers}}'**
+  String cmGroupTeacherCount(int count);
+
+  /// When a group last had activity; {time} is a short relative time such as 2h or 3d.
+  ///
+  /// In en, this message translates to:
+  /// **'active {time} ago'**
+  String cmGroupActiveAgo(String time);
+
+  /// A group had activity in the last minute.
+  ///
+  /// In en, this message translates to:
+  /// **'active now'**
+  String get cmGroupActiveNow;
+
+  /// Group page: section label over the group's posts.
+  ///
+  /// In en, this message translates to:
+  /// **'In this group'**
+  String get cmGroupInThisGroup;
+
+  /// Group page: screen-reader name of the row of post-kind filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Show posts'**
+  String get cmGroupShowPosts;
+
+  /// Group page: the chosen post-kind filter matches no post.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts of this kind yet.'**
+  String get cmGroupFilterEmpty;
+
+  /// Group page: the quiet line after the last post; {group} is the group's name.
+  ///
+  /// In en, this message translates to:
+  /// **'That is everything in {group}'**
+  String cmGroupEnd(String group);
+
+  /// Group page, before joining: title of the card that says the posts are for members.
+  ///
+  /// In en, this message translates to:
+  /// **'For members'**
+  String get cmGroupForMembersTitle;
+
+  /// Group page, before joining: why to join.
+  ///
+  /// In en, this message translates to:
+  /// **'Join to read the posts and talk in the group chat.'**
+  String get cmGroupForMembersBody;
+
+  /// Group page, before joining: section label over the placeholder post shapes.
+  ///
+  /// In en, this message translates to:
+  /// **'What teachers share here'**
+  String get cmGroupWhatShared;
+
+  /// Your network: the line under the page title.
+  ///
+  /// In en, this message translates to:
+  /// **'The groups you are in and the teachers you know'**
+  String get cmNetSubtitle;
+
+  /// Your network: count pill, how many groups the teacher is in.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 group} other{{count} groups}}'**
+  String cmNetGroupCount(int count);
+
+  /// Your network: section label over the teacher's groups, with how many.
+  ///
+  /// In en, this message translates to:
+  /// **'Your groups · {count}'**
+  String cmNetYourGroups(int count);
+
+  /// Your network: section label over suggested groups to join.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups for you'**
+  String get cmNetGroupsForYou;
+
+  /// Your network: section label over suggested teachers to connect with.
+  ///
+  /// In en, this message translates to:
+  /// **'Teachers you may know'**
+  String get cmNetTeachersYouMayKnow;
+
+  /// Your network: section label over the teachers the user is connected with, with how many.
+  ///
+  /// In en, this message translates to:
+  /// **'Your teachers · {count}'**
+  String cmNetYourTeachers(int count);
 }
 
 class _AppLocalizationsDelegate

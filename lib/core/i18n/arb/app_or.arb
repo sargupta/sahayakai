@@ -1544,5 +1544,22 @@
   "cmFeedFindGroups": "ଆହୁରି ଗ୍ରୁପ୍ ଖୋଜନ୍ତୁ",
   "cmFeedFromGroups": "ଆପଣଙ୍କ ଗ୍ରୁପରୁ",
   "cmFeedSeeAll": "ସବୁ ଦେଖନ୍ତୁ",
-  "cmFeedCaughtUp": "ଆପଣ ସବୁ ଦେଖିସାରିଛନ୍ତି"
+  "cmFeedCaughtUp": "ଆପଣ ସବୁ ଦେଖିସାରିଛନ୍ତି",
+  "cmGroupJoin": "ଗୋଷ୍ଠୀରେ ଯୋଗ ଦିଅନ୍ତୁ",
+  "cmGroupTeacherCount": "{count, plural, =1{1 ଜଣ ଶିକ୍ଷକ} other{{count} ଜଣ ଶିକ୍ଷକ}}",
+  "cmGroupActiveAgo": "{time} ପୂର୍ବରୁ ସକ୍ରିୟ",
+  "cmGroupActiveNow": "ଏବେ ସକ୍ରିୟ",
+  "cmGroupInThisGroup": "ଏହି ଗୋଷ୍ଠୀରେ",
+  "cmGroupShowPosts": "ପୋଷ୍ଟ ଦେଖାନ୍ତୁ",
+  "cmGroupFilterEmpty": "ଏହି ପ୍ରକାରର ପୋଷ୍ଟ ଏପର୍ଯ୍ୟନ୍ତ ନାହିଁ।",
+  "cmGroupEnd": "{group}ରେ ଏତିକି ହିଁ ଅଛି",
+  "cmGroupForMembersTitle": "ସଦସ୍ୟଙ୍କ ପାଇଁ",
+  "cmGroupForMembersBody": "ପୋଷ୍ଟ ପଢ଼ିବା ଓ ଗ୍ରୁପ ଚାଟ୍‌ରେ କଥା ହେବା ପାଇଁ ଯୋଗ ଦିଅନ୍ତୁ।",
+  "cmGroupWhatShared": "ଏଠାରେ ଶିକ୍ଷକମାନେ କ'ଣ ସେୟାର କରନ୍ତି",
+  "cmNetSubtitle": "ଆପଣ ଥିବା ଗୋଷ୍ଠୀ ଓ ଆପଣ ଜାଣିଥିବା ଶିକ୍ଷକ",
+  "cmNetGroupCount": "{count, plural, =1{1ଟି ଗୋଷ୍ଠୀ} other{{count}ଟି ଗୋଷ୍ଠୀ}}",
+  "cmNetYourGroups": "ଆପଣଙ୍କ ଗୋଷ୍ଠୀ · {count}",
+  "cmNetGroupsForYou": "ଆପଣଙ୍କ ପାଇଁ ଗୋଷ୍ଠୀ",
+  "cmNetTeachersYouMayKnow": "ଆପଣ ଜାଣିଥିବା ଶିକ୍ଷକ",
+  "cmNetYourTeachers": "ଆପଣଙ୍କ ଶିକ୍ଷକ · {count}"
 }

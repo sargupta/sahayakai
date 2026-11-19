@@ -1544,5 +1544,22 @@
   "cmFeedFindGroups": "ಇನ್ನಷ್ಟು ಗುಂಪುಗಳನ್ನು ಹುಡುಕಿ",
   "cmFeedFromGroups": "ನಿಮ್ಮ ಗುಂಪುಗಳಿಂದ",
   "cmFeedSeeAll": "ಎಲ್ಲವನ್ನೂ ನೋಡಿ",
-  "cmFeedCaughtUp": "ನೀವು ಎಲ್ಲವನ್ನೂ ನೋಡಿದ್ದೀರಿ"
+  "cmFeedCaughtUp": "ನೀವು ಎಲ್ಲವನ್ನೂ ನೋಡಿದ್ದೀರಿ",
+  "cmGroupJoin": "ಗುಂಪಿಗೆ ಸೇರಿ",
+  "cmGroupTeacherCount": "{count, plural, =1{1 ಶಿಕ್ಷಕ} other{{count} ಶಿಕ್ಷಕರು}}",
+  "cmGroupActiveAgo": "{time} ಹಿಂದೆ ಸಕ್ರಿಯ",
+  "cmGroupActiveNow": "ಈಗ ಸಕ್ರಿಯ",
+  "cmGroupInThisGroup": "ಈ ಗುಂಪಿನಲ್ಲಿ",
+  "cmGroupShowPosts": "ಪೋಸ್ಟ್‌ಗಳನ್ನು ತೋರಿಸಿ",
+  "cmGroupFilterEmpty": "ಈ ರೀತಿಯ ಪೋಸ್ಟ್‌ಗಳು ಇನ್ನೂ ಇಲ್ಲ.",
+  "cmGroupEnd": "{group} ನಲ್ಲಿ ಇಷ್ಟೇ ಇದೆ",
+  "cmGroupForMembersTitle": "ಸದಸ್ಯರಿಗಾಗಿ",
+  "cmGroupForMembersBody": "ಪೋಸ್ಟ್‌ಗಳನ್ನು ಓದಲು ಮತ್ತು ಗುಂಪು ಚಾಟ್‌ನಲ್ಲಿ ಮಾತನಾಡಲು ಸೇರಿ.",
+  "cmGroupWhatShared": "ಇಲ್ಲಿ ಶಿಕ್ಷಕರು ಏನು ಹಂಚಿಕೊಳ್ಳುತ್ತಾರೆ",
+  "cmNetSubtitle": "ನೀವು ಇರುವ ಗುಂಪುಗಳು ಮತ್ತು ನಿಮಗೆ ಗೊತ್ತಿರುವ ಶಿಕ್ಷಕರು",
+  "cmNetGroupCount": "{count, plural, =1{1 ಗುಂಪು} other{{count} ಗುಂಪುಗಳು}}",
+  "cmNetYourGroups": "ನಿಮ್ಮ ಗುಂಪುಗಳು · {count}",
+  "cmNetGroupsForYou": "ನಿಮಗಾಗಿ ಗುಂಪುಗಳು",
+  "cmNetTeachersYouMayKnow": "ನಿಮಗೆ ಗೊತ್ತಿರಬಹುದಾದ ಶಿಕ್ಷಕರು",
+  "cmNetYourTeachers": "ನಿಮ್ಮ ಶಿಕ್ಷಕರು · {count}"
 }

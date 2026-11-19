@@ -5439,4 +5439,80 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get cmFeedCaughtUp => 'आपने सब देख लिया';
+
+  @override
+  String get cmGroupJoin => 'समूह से जुड़ें';
+
+  @override
+  String cmGroupTeacherCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count शिक्षक',
+      one: '1 शिक्षक',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmGroupActiveAgo(String time) {
+    return '$time पहले सक्रिय';
+  }
+
+  @override
+  String get cmGroupActiveNow => 'अभी सक्रिय';
+
+  @override
+  String get cmGroupInThisGroup => 'इस समूह में';
+
+  @override
+  String get cmGroupShowPosts => 'पोस्ट दिखाएँ';
+
+  @override
+  String get cmGroupFilterEmpty => 'इस तरह की कोई पोस्ट अभी नहीं है।';
+
+  @override
+  String cmGroupEnd(String group) {
+    return '$group में बस इतना ही है';
+  }
+
+  @override
+  String get cmGroupForMembersTitle => 'सदस्यों के लिए';
+
+  @override
+  String get cmGroupForMembersBody =>
+      'पोस्ट पढ़ने और समूह चैट में बात करने के लिए जुड़ें।';
+
+  @override
+  String get cmGroupWhatShared => 'यहाँ शिक्षक क्या साझा करते हैं';
+
+  @override
+  String get cmNetSubtitle => 'आपके समूह और आपके परिचित शिक्षक';
+
+  @override
+  String cmNetGroupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count समूह',
+      one: '1 समूह',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmNetYourGroups(int count) {
+    return 'आपके समूह · $count';
+  }
+
+  @override
+  String get cmNetGroupsForYou => 'आपके लिए समूह';
+
+  @override
+  String get cmNetTeachersYouMayKnow => 'शिक्षक जिन्हें आप जानते होंगे';
+
+  @override
+  String cmNetYourTeachers(int count) {
+    return 'आपके शिक्षक · $count';
+  }
 }

@@ -1544,5 +1544,22 @@
   "cmFeedFindGroups": "மேலும் குழுக்களைக் கண்டறியுங்கள்",
   "cmFeedFromGroups": "உங்கள் குழுக்களிலிருந்து",
   "cmFeedSeeAll": "அனைத்தையும் பாருங்கள்",
-  "cmFeedCaughtUp": "நீங்கள் அனைத்தையும் பார்த்துவிட்டீர்கள்"
+  "cmFeedCaughtUp": "நீங்கள் அனைத்தையும் பார்த்துவிட்டீர்கள்",
+  "cmGroupJoin": "குழுவில் இணையுங்கள்",
+  "cmGroupTeacherCount": "{count, plural, =1{1 ஆசிரியர்} other{{count} ஆசிரியர்கள்}}",
+  "cmGroupActiveAgo": "{time} முன்பு செயலில்",
+  "cmGroupActiveNow": "இப்போது செயலில்",
+  "cmGroupInThisGroup": "இந்தக் குழுவில்",
+  "cmGroupShowPosts": "பதிவுகளைக் காட்டு",
+  "cmGroupFilterEmpty": "இந்த வகைப் பதிவுகள் இன்னும் இல்லை.",
+  "cmGroupEnd": "{group} இல் இவ்வளவுதான்",
+  "cmGroupForMembersTitle": "உறுப்பினர்களுக்கு",
+  "cmGroupForMembersBody": "பதிவுகளைப் படிக்கவும் குழு அரட்டையில் பேசவும் இணையுங்கள்.",
+  "cmGroupWhatShared": "இங்கே ஆசிரியர்கள் பகிர்வது",
+  "cmNetSubtitle": "நீங்கள் உள்ள குழுக்களும் உங்களுக்குத் தெரிந்த ஆசிரியர்களும்",
+  "cmNetGroupCount": "{count, plural, =1{1 குழு} other{{count} குழுக்கள்}}",
+  "cmNetYourGroups": "உங்கள் குழுக்கள் · {count}",
+  "cmNetGroupsForYou": "உங்களுக்கான குழுக்கள்",
+  "cmNetTeachersYouMayKnow": "உங்களுக்குத் தெரிந்திருக்கக்கூடிய ஆசிரியர்கள்",
+  "cmNetYourTeachers": "உங்கள் ஆசிரியர்கள் · {count}"
 }

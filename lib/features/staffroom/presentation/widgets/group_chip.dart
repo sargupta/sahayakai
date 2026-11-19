@@ -8,6 +8,27 @@ import '../../../../shared/widgets/map_card.dart';
 import '../../../../shared/widgets/map_icon_tile.dart';
 import '../../domain/group.dart';
 
+/// A group's tint family, from its kind: a class-and-subject group is indigo,
+/// a school amber, a region leaf, and an interest group saffron. The server's
+/// `coverColor` (a CSS gradient) is never painted; every surface that shows a
+/// group (chip, hero band, network tile) reads this, so a group keeps one
+/// colour across the app.
+MapTint groupTint(Group group) => switch (group.type) {
+  GroupType.subjectGrade => MapTint.indigo,
+  GroupType.school => MapTint.amber,
+  GroupType.region => MapTint.leaf,
+  GroupType.interest => MapTint.saffron,
+};
+
+/// A group's glyph, from its kind. Always shown beside the group's name, never
+/// as the only signal.
+IconData groupIcon(Group group) => switch (group.type) {
+  GroupType.subjectGrade => LucideIcons.bookOpen,
+  GroupType.school => LucideIcons.school,
+  GroupType.region => LucideIcons.mapPin,
+  GroupType.interest => LucideIcons.users,
+};
+
 /// A group chip for the horizontal "Your groups" / "Discover groups" strips
 /// (SPEC §A3.1). A fixed-width tappable `MapCard(flat)`: an [IconWell] spine
 /// (the group `coverColor` degrades to the deterministic saffron token tint —
@@ -37,7 +58,7 @@ class GroupChip extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const MapIconTile(icon: LucideIcons.users, tint: MapTint.leaf),
+            MapIconTile(icon: groupIcon(group), tint: groupTint(group)),
             const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: Column(

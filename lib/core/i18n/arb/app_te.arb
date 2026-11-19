@@ -1544,5 +1544,22 @@
   "cmFeedFindGroups": "మరిన్ని గ్రూపులు కనుగొనండి",
   "cmFeedFromGroups": "మీ గ్రూపుల నుండి",
   "cmFeedSeeAll": "అన్నీ చూడండి",
-  "cmFeedCaughtUp": "మీరు అన్నీ చూసేశారు"
+  "cmFeedCaughtUp": "మీరు అన్నీ చూసేశారు",
+  "cmGroupJoin": "గ్రూప్‌లో చేరండి",
+  "cmGroupTeacherCount": "{count, plural, =1{1 ఉపాధ్యాయుడు} other{{count} ఉపాధ్యాయులు}}",
+  "cmGroupActiveAgo": "{time} క్రితం యాక్టివ్",
+  "cmGroupActiveNow": "ఇప్పుడు యాక్టివ్",
+  "cmGroupInThisGroup": "ఈ గ్రూప్‌లో",
+  "cmGroupShowPosts": "పోస్ట్‌లు చూపించు",
+  "cmGroupFilterEmpty": "ఈ రకమైన పోస్ట్‌లు ఇంకా లేవు.",
+  "cmGroupEnd": "{group}లో ఇంతే ఉంది",
+  "cmGroupForMembersTitle": "సభ్యుల కోసం",
+  "cmGroupForMembersBody": "పోస్ట్‌లు చదవడానికి, గ్రూప్ చాట్‌లో మాట్లాడడానికి చేరండి.",
+  "cmGroupWhatShared": "ఇక్కడ ఉపాధ్యాయులు పంచుకునేవి",
+  "cmNetSubtitle": "మీరు ఉన్న గ్రూపులు, మీకు తెలిసిన ఉపాధ్యాయులు",
+  "cmNetGroupCount": "{count, plural, =1{1 గ్రూప్} other{{count} గ్రూపులు}}",
+  "cmNetYourGroups": "మీ గ్రూపులు · {count}",
+  "cmNetGroupsForYou": "మీ కోసం గ్రూపులు",
+  "cmNetTeachersYouMayKnow": "మీకు తెలిసి ఉండే ఉపాధ్యాయులు",
+  "cmNetYourTeachers": "మీ ఉపాధ్యాయులు · {count}"
 }

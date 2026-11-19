@@ -1544,5 +1544,22 @@
   "cmFeedFindGroups": "आणखी गट शोधा",
   "cmFeedFromGroups": "तुमच्या गटांमधून",
   "cmFeedSeeAll": "सर्व पहा",
-  "cmFeedCaughtUp": "तुम्ही सर्व पाहिले आहे"
+  "cmFeedCaughtUp": "तुम्ही सर्व पाहिले आहे",
+  "cmGroupJoin": "गटात सामील व्हा",
+  "cmGroupTeacherCount": "{count, plural, =1{1 शिक्षक} other{{count} शिक्षक}}",
+  "cmGroupActiveAgo": "{time} पूर्वी सक्रिय",
+  "cmGroupActiveNow": "आत्ता सक्रिय",
+  "cmGroupInThisGroup": "या गटात",
+  "cmGroupShowPosts": "पोस्ट दाखवा",
+  "cmGroupFilterEmpty": "या प्रकारची पोस्ट अजून नाही.",
+  "cmGroupEnd": "{group} मध्ये एवढेच आहे",
+  "cmGroupForMembersTitle": "सदस्यांसाठी",
+  "cmGroupForMembersBody": "पोस्ट वाचण्यासाठी आणि ग्रुप चॅटमध्ये बोलण्यासाठी सामील व्हा.",
+  "cmGroupWhatShared": "इथे शिक्षक काय शेअर करतात",
+  "cmNetSubtitle": "तुमचे गट आणि तुमच्या ओळखीचे शिक्षक",
+  "cmNetGroupCount": "{count, plural, =1{1 गट} other{{count} गट}}",
+  "cmNetYourGroups": "तुमचे गट · {count}",
+  "cmNetGroupsForYou": "तुमच्यासाठी गट",
+  "cmNetTeachersYouMayKnow": "तुम्ही ओळखत असाल असे शिक्षक",
+  "cmNetYourTeachers": "तुमचे शिक्षक · {count}"
 }

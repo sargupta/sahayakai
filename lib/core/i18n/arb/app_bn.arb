@@ -1544,5 +1544,22 @@
   "cmFeedFindGroups": "আরও গ্রুপ খুঁজুন",
   "cmFeedFromGroups": "আপনার গ্রুপ থেকে",
   "cmFeedSeeAll": "সব দেখুন",
-  "cmFeedCaughtUp": "আপনি সব দেখে ফেলেছেন"
+  "cmFeedCaughtUp": "আপনি সব দেখে ফেলেছেন",
+  "cmGroupJoin": "গ্রুপে যোগ দিন",
+  "cmGroupTeacherCount": "{count, plural, =1{1 জন শিক্ষক} other{{count} জন শিক্ষক}}",
+  "cmGroupActiveAgo": "{time} আগে সক্রিয়",
+  "cmGroupActiveNow": "এখন সক্রিয়",
+  "cmGroupInThisGroup": "এই গ্রুপে",
+  "cmGroupShowPosts": "পোস্ট দেখান",
+  "cmGroupFilterEmpty": "এই ধরনের পোস্ট এখনও নেই।",
+  "cmGroupEnd": "{group}-এ এটুকুই আছে",
+  "cmGroupForMembersTitle": "সদস্যদের জন্য",
+  "cmGroupForMembersBody": "পোস্ট পড়তে আর গ্রুপ চ্যাটে কথা বলতে যোগ দিন।",
+  "cmGroupWhatShared": "এখানে শিক্ষকরা কী শেয়ার করেন",
+  "cmNetSubtitle": "আপনার গ্রুপ আর আপনার চেনা শিক্ষকরা",
+  "cmNetGroupCount": "{count, plural, =1{1টি গ্রুপ} other{{count}টি গ্রুপ}}",
+  "cmNetYourGroups": "আপনার গ্রুপ · {count}",
+  "cmNetGroupsForYou": "আপনার জন্য গ্রুপ",
+  "cmNetTeachersYouMayKnow": "যে শিক্ষকদের আপনি চিনতে পারেন",
+  "cmNetYourTeachers": "আপনার শিক্ষকরা · {count}"
 }
