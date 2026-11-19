@@ -368,21 +368,39 @@ class _MessagesTab extends ConsumerWidget {
                   ),
                 )
               else
-                for (final conversation in conversations)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-                    child: ConversationRow(
-                      key: ValueKey<String>(
-                        'network-inbox-${conversation.id.value}',
-                      ),
-                      conversation: conversation,
-                      myUid: myUid,
-                      onTap: () => context.push(
-                        Routes.conversationThreadPath(conversation.id.value),
-                        extra: conversation,
-                      ),
-                    ),
+                // One card, rows split by hairlines.
+                MapCard(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final (i, conversation)
+                          in conversations.indexed) ...[
+                        if (i > 0)
+                          const Divider(
+                            height: 1,
+                            indent: 14,
+                            endIndent: 14,
+                            color: AppColors.borderHairline,
+                          ),
+                        ConversationRow(
+                          key: ValueKey<String>(
+                            'network-inbox-${conversation.id.value}',
+                          ),
+                          conversation: conversation,
+                          myUid: myUid,
+                          framed: false,
+                          onTap: () => context.push(
+                            Routes.conversationThreadPath(
+                              conversation.id.value,
+                            ),
+                            extra: conversation,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
+                ),
               const _FindMoreTeachers(),
             ],
           ),
