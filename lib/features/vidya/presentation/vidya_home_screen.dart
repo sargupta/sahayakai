@@ -13,12 +13,18 @@ import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/language_switcher.dart';
+import '../../../shared/widgets/map_icon_tile.dart';
+import '../../../shared/widgets/tool_tint.dart';
 import '../../attendance/presentation/attendance_providers.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import '../../notifications/data/notifications_store.dart';
+import '../../notifications/domain/teacher_notification.dart';
+import '../../notifications/presentation/widgets/notification_row.dart'
+    show notificationTitle;
 import '../../parent_hotline/presentation/hotline_copy.dart' show firstName;
 import '../../parent_hotline/presentation/parent_hotline_controller.dart';
+import '../../profile/domain/teacher_profile.dart';
 import '../../profile/presentation/profile_controller.dart';
 import '../domain/deliverable.dart';
 import 'deliver_tray.dart';
@@ -85,50 +91,75 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
     // transparent so it shows through.
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          onRefresh: () async {
-            try {
-              await ref.read(profileControllerProvider.notifier).refresh();
-            } catch (_) {}
-          },
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screenGutter,
-              AppSpacing.space4,
-              AppSpacing.screenGutter,
-              // Clears the floating tab bar (the shell's Scaffold extends
-              // the body under it and reports its height here).
-              MediaQuery.paddingOf(context).bottom + AppSpacing.space8,
+      body: Stack(
+        children: [
+          Positioned.fill(child: _homeScroll(context, profile)),
+          // A soft fade behind the floating tab bar, so a card scrolling
+          // under it never clashes with the Home pill. Under the bar only;
+          // taps and the screen reader pass straight through.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: MediaQuery.paddingOf(context).bottom + AppSpacing.space6,
+            child: const IgnorePointer(
+              child: ExcludeSemantics(
+                child: DecoratedBox(
+                  key: ValueKey('home-dock-fade'),
+                  decoration: BoxDecoration(gradient: AppGradients.dockFade),
+                ),
+              ),
             ),
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _HeaderRow(onOpenTab: widget.onOpenTab),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _homeScroll(BuildContext context, TeacherProfile? profile) {
+    return SafeArea(
+      bottom: false,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          try {
+            await ref.read(profileControllerProvider.notifier).refresh();
+          } catch (_) {}
+        },
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.screenGutter,
+            AppSpacing.space4,
+            AppSpacing.screenGutter,
+            // Clears the floating tab bar (the shell's Scaffold extends
+            // the body under it and reports its height here).
+            MediaQuery.paddingOf(context).bottom + AppSpacing.space8,
+          ),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _HeaderRow(onOpenTab: widget.onOpenTab),
+              const SizedBox(height: AppSpacing.space6),
+              const _AskHeading(),
+              const SizedBox(height: AppSpacing.space3),
+              const _SayItList(),
+              const _BigOrb(),
+              const _AskBox(),
+              const SizedBox(height: AppSpacing.space8),
+              _WaitingCard(onOpenTab: widget.onOpenTab),
+              const SizedBox(height: AppSpacing.space6),
+              if (profile != null && profile.isEmpty) ...[
+                const _CompleteProfileCard(),
                 const SizedBox(height: AppSpacing.space6),
-                const _AskHeading(),
-                const SizedBox(height: AppSpacing.space3),
-                const _SayItList(),
-                const _BigOrb(),
-                const _AskBox(),
-                const SizedBox(height: AppSpacing.space8),
-                _WaitingCard(onOpenTab: widget.onOpenTab),
-                const SizedBox(height: AppSpacing.space6),
-                if (profile != null && profile.isEmpty) ...[
-                  const _CompleteProfileCard(),
-                  const SizedBox(height: AppSpacing.space6),
-                ],
-                _Eyebrow(context.l10n.homeYourTools),
-                const SizedBox(height: AppSpacing.space3),
-                const _ToolGrid(),
-                const SizedBox(height: AppSpacing.space3),
-                const _AllToolsLink(),
               ],
-            ),
+              _Eyebrow(context.l10n.homeYourTools),
+              const SizedBox(height: AppSpacing.space3),
+              const _ToolGrid(),
+              const SizedBox(height: AppSpacing.space3),
+              const _AllToolsLink(),
+            ],
           ),
         ),
       ),
@@ -689,8 +720,14 @@ class _RoundButton extends StatelessWidget {
 
 // ─── Waiting for you ────────────────────────────────────────────────────────
 
-/// What needs the teacher, from real state only: results VIDYA finished in
-/// the background, unread messages and unread updates. Nothing waiting says so.
+/// What needs the teacher, from real state only: a parent call left running,
+/// today's absentees, results VIDYA finished in the background, unread
+/// messages and unread updates.
+///
+/// The eyebrow sits above the card, like "Your tools", with how many things
+/// wait beside it. Each item is one row: its icon, what it is, a detail line
+/// when the data has one (the result's subtitle, the newest chat, the newest
+/// update) and the action a tap takes. Nothing waiting is one slim line.
 class _WaitingCard extends ConsumerWidget {
   const _WaitingCard({required this.onOpenTab});
 
@@ -706,7 +743,17 @@ class _WaitingCard extends ConsumerWidget {
           data: (snapshot) => snapshot.isReady ? snapshot.data : 0,
           orElse: () => 0,
         );
+    final newestChat = unreadMessages > 0 ? _newestUnreadChat(ref) : null;
     final unreadUpdates = ref.watch(unreadNotificationCountProvider);
+    TeacherNotification? newestUpdate;
+    if (unreadUpdates > 0) {
+      for (final n in ref.watch(notificationsProvider)) {
+        if (n.isRead) continue;
+        if (newestUpdate == null || n.at.isAfter(newestUpdate.at)) {
+          newestUpdate = n;
+        }
+      }
+    }
     // Students marked absent today in a SAVED register: the map's "N
     // absentees to call" reminder. Zero while loading or on a failed read —
     // a reminder never shows an error.
@@ -728,34 +775,49 @@ class _WaitingCard extends ConsumerWidget {
     final rows = <Widget>[
       if (callingStudent != null && callingStudent.isNotEmpty)
         _WaitingRow(
-          dot: AppColors.leaf500,
+          icon: LucideIcons.phoneCall,
+          tint: MapTint.leaf,
           label: l10n.homeWaitingParentCall(firstName(callingStudent)),
+          action: l10n.actionOpen,
           onOpen: () => context.push(Routes.parentHotline),
         ),
       // While a call is running the row above already leads to outreach.
       if (absentToday > 0 && (callingStudent?.isEmpty ?? true))
         _WaitingRow(
-          dot: AppColors.red500,
+          icon: LucideIcons.userX,
+          tint: MapTint.saffron,
           label: l10n.attendanceCallParents(absentToday),
+          action: l10n.homeBriefingActionCall,
           onOpen: () => context.push(Routes.parentHotline),
         ),
       for (final Deliverable item in ready.reversed.take(3))
         _WaitingRow(
-          dot: AppColors.leaf500,
+          icon: LucideIcons.fileCheck,
+          tint: MapTint.leaf,
           label: l10n.homeWaitingReady(item.title),
+          detail: item.subtitle,
+          action: l10n.actionOpen,
           onOpen: () => showDeliverTray(context, item),
         ),
       if (unreadMessages > 0)
         _WaitingRow(
-          dot: AppColors.amber500,
+          icon: LucideIcons.messageCircle,
+          tint: MapTint.indigo,
           label:
               '${l10n.inboxTitle} · ${l10n.inboxUnreadLabel(unreadMessages)}',
+          detail: newestChat,
+          action: l10n.homeWaitingRead,
           onOpen: () => context.push(Routes.inbox),
         ),
       if (unreadUpdates > 0)
         _WaitingRow(
-          dot: AppColors.indigo500,
+          icon: LucideIcons.bell,
+          tint: MapTint.amber,
           label: l10n.homeWaitingUpdates(unreadUpdates),
+          detail: newestUpdate == null
+              ? null
+              : notificationTitle(newestUpdate, l10n),
+          action: l10n.homeWaitingSee,
           onOpen: () {
             final open = onOpenTab;
             if (open != null) {
@@ -767,86 +829,185 @@ class _WaitingCard extends ConsumerWidget {
         ),
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceGlass,
-        borderRadius: AppRadius.rCard,
-        border: Border.all(color: AppColors.borderGlass),
-        boxShadow: const [AppShadows.card],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _Eyebrow(l10n.homeEyebrowWaiting),
-          const SizedBox(height: AppSpacing.space2),
-          if (rows.isEmpty)
-            Text(
-              l10n.homeWaitingNothing,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.textBody),
-            )
-          else
-            for (var i = 0; i < rows.length; i++) ...[
-              if (i > 0)
-                const Divider(height: 1, color: AppColors.borderHairline),
-              rows[i],
-            ],
-        ],
-      ),
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(child: _Eyebrow(l10n.homeEyebrowWaiting)),
+            if (rows.isNotEmpty)
+              Text(
+                l10n.homeWaitingCount(rows.length),
+                style: text.bodySmall?.copyWith(
+                  fontSize: 12.5,
+                  color: AppColors.textMuted,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        Container(
+          padding: rows.isEmpty
+              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 15)
+              : const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceGlass,
+            borderRadius: AppRadius.rCard,
+            border: Border.all(color: AppColors.borderGlass),
+            boxShadow: const [AppShadows.card],
+          ),
+          child: rows.isEmpty
+              ? Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.checkCircle,
+                      size: 20,
+                      color: AppColors.tileLeafInk,
+                    ),
+                    const SizedBox(width: AppSpacing.space3),
+                    Expanded(
+                      child: Text(
+                        l10n.homeWaitingNothing,
+                        style: text.bodyLarge?.copyWith(
+                          color: AppColors.textBody,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < rows.length; i++) ...[
+                      if (i > 0)
+                        const Divider(
+                          height: 1,
+                          color: AppColors.borderHairline,
+                        ),
+                      rows[i],
+                    ],
+                  ],
+                ),
+        ),
+      ],
     );
+  }
+
+  /// The newest conversation with something unread for this teacher, as
+  /// "Name: last message". Null while the list loads or has no such chat.
+  static String? _newestUnreadChat(WidgetRef ref) {
+    final myUid = ref.watch(currentInboxUserIdProvider);
+    if (myUid == null) return null;
+    final list = ref
+        .watch(inboxListProvider)
+        .maybeWhen(
+          data: (snapshot) => snapshot.isReady ? snapshot.data : null,
+          orElse: () => null,
+        );
+    if (list == null) return null;
+    for (final chat in list) {
+      if (chat.unreadFor(myUid) <= 0) continue;
+      final message = chat.lastMessage.trim();
+      if (message.isEmpty) return null;
+      final who = (chat.otherParticipant(myUid)?.displayName ?? chat.name)
+          ?.trim();
+      return who == null || who.isEmpty ? message : '$who: $message';
+    }
+    return null;
   }
 }
 
-/// One waiting item: a meaning dot, what it is, and Open. The dot is never the
-/// only signal — the words say what is waiting.
+/// One waiting item: its icon in a tint, what it is, a detail line when there
+/// is one, and the action as a pill. The whole row is one button; the icon is
+/// never the only signal — the words say what is waiting.
 class _WaitingRow extends StatelessWidget {
   const _WaitingRow({
-    required this.dot,
+    required this.icon,
+    required this.tint,
     required this.label,
+    required this.action,
     required this.onOpen,
+    this.detail,
   });
 
-  final Color dot;
+  final IconData icon;
+  final MapTint tint;
   final String label;
+  final String? detail;
+  final String action;
   final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
+    final detail = this.detail?.trim();
+    final hasDetail = detail != null && detail.isNotEmpty;
     return Semantics(
       button: true,
-      label: '$label, ${l10n.actionOpen}',
+      label: [label, if (hasDetail) detail, action].join(', '),
       excludeSemantics: true,
       child: InkWell(
         onTap: onOpen,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: AppSpacing.targetMin),
-          child: Row(
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
-                child: const SizedBox.square(dimension: 8),
-              ),
-              const SizedBox(width: AppSpacing.space3),
-              Expanded(
-                child: Text(
-                  label,
-                  style: text.bodyLarge?.copyWith(color: AppColors.textStrong),
+          constraints: const BoxConstraints(minHeight: 62),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.space2),
+            child: Row(
+              children: [
+                MapIconTile(icon: icon, tint: tint),
+                const SizedBox(width: AppSpacing.space3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: text.bodyLarge?.copyWith(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textStrong,
+                        ),
+                      ),
+                      if (hasDetail) ...[
+                        const SizedBox(height: 2),
+                        // A preview of someone else's words: two lines at
+                        // most; the rest is one tap away.
+                        Text(
+                          detail,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.bodySmall?.copyWith(
+                            fontSize: 12.5,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.space2),
-              Text(
-                l10n.actionOpen,
-                style: text.labelMedium?.copyWith(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textLink,
+                const SizedBox(width: AppSpacing.space2),
+                Container(
+                  constraints: const BoxConstraints(minHeight: 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.tileSaffronBg,
+                    borderRadius: AppRadius.rPill,
+                  ),
+                  child: Text(
+                    action,
+                    style: text.labelMedium?.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.tileAmberInk,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -866,44 +1027,52 @@ class _ToolGrid extends ConsumerWidget {
     final tiles = <Widget>[
       _Tile(
         title: l10n.homeTileRollCall,
+        toolId: 'attendance',
         subtitle: l10n.homeTileRollCallSub,
         onTap: () => context.push(Routes.attendance),
       ),
       _Tile(
         title: l10n.homeTileLesson,
+        toolId: 'lesson-plan',
         subtitle: l10n.homeTileLessonSub,
         onTap: () => context.push(Routes.lessonPlan),
       ),
       _Tile(
         key: const ValueKey('home-tile-scan'),
         title: l10n.homeTileScan,
+        toolId: 'assessment-scanner',
         subtitle: l10n.homeTileScanSub,
         onTap: () => context.push(Routes.assessmentScanner),
       ),
       _Tile(
         title: l10n.homeTileCall,
+        toolId: 'parent-hotline',
         subtitle: l10n.homeTileCallSubLanguage(language.nativeLabel),
         onTap: () => context.push(Routes.parentHotline),
       ),
       _Tile(
         key: const ValueKey('home-tile-quiz'),
         title: l10n.quizTitle,
+        toolId: 'quiz',
         subtitle: l10n.homeTileQuizSub,
         onTap: () => context.push(Routes.quizGenerator),
       ),
       _Tile(
         title: l10n.worksheetTitle,
+        toolId: 'worksheet',
         subtitle: l10n.homeTileWorksheetSub,
         onTap: () => context.push(Routes.worksheetWizard),
       ),
       _Tile(
         title: l10n.instantAnswerTitle,
+        toolId: 'instant-answer',
         subtitle: l10n.homeTileAnswerSub,
         onTap: () => context.push(Routes.instantAnswer),
       ),
       _Tile(
         key: const ValueKey('home-tile-exam'),
         title: l10n.examPaperTitle,
+        toolId: 'exam-paper',
         subtitle: l10n.homeTileExamSub,
         onTap: () => context.push(Routes.examPaper),
       ),
@@ -934,17 +1103,30 @@ class _Tile extends StatelessWidget {
   const _Tile({
     super.key,
     required this.title,
+    required this.toolId,
     required this.subtitle,
     required this.onTap,
   });
 
   final String title;
+
+  /// The registry id: the tile's icon and tint are the ones the tool has on
+  /// the Tools page, so a tool looks the same everywhere.
+  final String toolId;
   final String subtitle;
   final VoidCallback onTap;
+
+  static IconData _toolIcon(String id) {
+    for (final tool in [...kToolRegistry, kAttendanceEntry]) {
+      if (tool.id == id) return tool.icon;
+    }
+    return LucideIcons.sparkles;
+  }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final tint = toolTint(toolId);
     return Semantics(
       button: true,
       label: '$title, $subtitle',
@@ -964,6 +1146,18 @@ class _Tile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Above the name, never beside it: a long Malayalam or Tamil
+                // name at large text needs the tile's whole width.
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: tint.fill,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(_toolIcon(toolId), size: 15, color: tint.ink),
+                ),
+                const SizedBox(height: AppSpacing.space2),
                 Text(
                   title,
                   style: text.titleLarge?.copyWith(

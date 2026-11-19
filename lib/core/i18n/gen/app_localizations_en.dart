@@ -5150,4 +5150,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String meUsageResets(String date) {
     return 'Counts start again on $date';
   }
+
+  @override
+  String get homeWaitingRead => 'Read';
+
+  @override
+  String get homeWaitingSee => 'See';
+
+  @override
+  String homeWaitingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count things',
+      one: '1 thing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lessonComposerGenerateTime => 'about 30 seconds';
+
+  @override
+  String staffroomBriefingAlso(String headlines) {
+    return 'Also: $headlines';
+  }
+
+  @override
+  String staffroomBriefingReadAll(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Read all $count',
+      one: 'Read the story',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxSubtitle => 'Chats with teachers you are connected to';
+
+  @override
+  String get moderationBlockedSubtitle =>
+      'Their posts and messages are hidden from you';
+
+  @override
+  String get moderationBlockedHint =>
+      'To block a teacher, open the menu on one of their posts.';
+
+  @override
+  String get lessonJumpObjectives => 'Objectives';
+
+  @override
+  String get lessonJumpVocabulary => 'Vocabulary';
+
+  @override
+  String get settingsVidyaStartsWith => 'VIDYA starts with';
+
+  @override
+  String get settingsStartVoice => 'Voice';
+
+  @override
+  String get settingsStartText => 'Text';
 }

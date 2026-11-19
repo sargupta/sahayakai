@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/motion/animated_entrance.dart';
@@ -175,7 +176,7 @@ class FloatingBottomNav extends StatelessWidget {
     final capsule = DecoratedBox(
       decoration: BoxDecoration(
         color: camera ? AppColors.cameraGlass : AppColors.surfaceTabBar,
-        borderRadius: BorderRadius.circular(9999),
+        borderRadius: AppRadius.rPill,
         border: Border.all(
           color: camera ? AppColors.cameraBorder : AppColors.borderGlass,
         ),
@@ -270,7 +271,8 @@ class FloatingBottomNav extends StatelessWidget {
     final l10n = context.l10n;
     return [
       l10n.navHome,
-      l10n.navLibrary,
+      // The tab matches the page it opens, "My work", not the old "Library".
+      l10n.libraryMyWork,
       l10n.communityTitle,
       l10n.navProfile,
     ];

@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
+import '../../../../core/platform/link_opener.dart';
 import '../../../../core/platform/share_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/map_card.dart';
+import '../../../../shared/widgets/map_icon_tile.dart';
 import '../../../inbox/data/block_c_transport.dart';
 import '../../../inbox/presentation/inbox_time.dart';
 import '../../../moderation/domain/moderation.dart';
@@ -15,6 +17,7 @@ import '../../../moderation/presentation/blocked_teachers_controller.dart';
 import '../../../moderation/presentation/moderation_actions.dart';
 import '../../data/staffroom_providers.dart';
 import '../../data/staffroom_transport.dart';
+import '../../domain/daily_briefing.dart';
 import '../../domain/group.dart';
 import 'post_type_style.dart';
 import 'staffroom_avatar.dart';
@@ -161,6 +164,9 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
     );
     if (blocked) return const SizedBox.shrink();
     final othersPost = post.authorUid.isNotEmpty && post.authorUid != myUid;
+    // A Daily Briefing reads as a digest of its stories; null for any other
+    // post (or a briefing whose text does not have the server's shape).
+    final briefing = parseDailyBriefing(post.content);
 
     final group = widget.groupName?.trim() ?? '';
     final timestamp = inboxRelativeTime(post.createdAt, DateTime.now(), l10n);
@@ -221,14 +227,17 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
             ],
           ),
           const SizedBox(height: 9),
-          // Body: server-authored prose (full ink, matra-safe). A long post (a
-          // daily briefing runs to a screen and more) opens folded, with
+          // Body: server-authored prose (full ink, matra-safe). A Daily
+          // Briefing opens as a short digest — the lead story, the other
+          // headlines, "Read all N". Any other long post opens folded, with
           // "Read more"; short posts show whole.
-          if (_isLong && !_expanded)
+          if (briefing != null && !_expanded)
+            _BriefingDigest(briefing: briefing)
+          else if (_isLong && !_expanded)
             AiText(_folded(post.content))
           else
             AiText(post.content),
-          if (_isLong)
+          if (briefing != null || _isLong)
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: TextButton(
@@ -240,7 +249,11 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                   foregroundColor: AppColors.textLink,
                 ),
                 child: Text(
-                  _expanded ? l10n.staffroomShowLess : l10n.staffroomReadMore,
+                  _expanded
+                      ? l10n.staffroomShowLess
+                      : briefing != null
+                      ? '${l10n.staffroomBriefingReadAll(briefing.headlines.length)} ›'
+                      : l10n.staffroomReadMore,
                   style: text.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.textLink,
@@ -250,38 +263,43 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
             )
           else
             const SizedBox(height: 2),
-          // Footer: the like, the comment count when there is one, and Share.
-          // Connect lives on the teacher's profile and in Your network, not on
-          // every post.
+          // What the post shares (a worksheet, a link): one row each. A folded
+          // briefing keeps them back until "Read all".
+          if (post.attachments.isNotEmpty && (briefing == null || _expanded))
+            _PostAttachments(attachments: post.attachments),
+          // Footer: the like, the comment affordance (always shown, so every
+          // post invites a reply — the count appears only once there is one),
+          // and Share. Connect lives on the teacher's profile and in Your
+          // network, not on every post.
           Row(
             children: [
               _LikeButton(liked: _isLiked, count: _likeCount, onTap: _toggle),
-              if (post.commentsCount > 0) ...[
-                const SizedBox(width: AppSpacing.space2),
-                Semantics(
-                  label: l10n.staffroomCommentsCount(post.commentsCount),
-                  excludeSemantics: true,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        LucideIcons.messageCircle,
-                        size: 16,
-                        color: AppColors.textMuted,
-                      ),
+              const SizedBox(width: AppSpacing.space2),
+              Semantics(
+                label: l10n.staffroomCommentsCount(post.commentsCount),
+                excludeSemantics: true,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      LucideIcons.messageCircle,
+                      size: AppIconSize.small,
+                      color: AppColors.textMuted,
+                    ),
+                    if (post.commentsCount > 0) ...[
                       const SizedBox(width: 4),
                       Text(
                         '${post.commentsCount}',
                         style: text.bodySmall?.copyWith(
-                          fontSize: 12.5,
+                          fontSize: AppText.metaSize,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textBody,
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
-              ],
+              ),
               const Spacer(),
               TextButton.icon(
                 key: ValueKey('post-share-${post.id}'),
@@ -290,7 +308,7 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                   minimumSize: const Size(44, 44),
                   foregroundColor: AppColors.textBody,
                 ),
-                icon: const Icon(LucideIcons.share2, size: 16),
+                icon: const Icon(LucideIcons.share2, size: AppIconSize.small),
                 label: Text(l10n.actionShare),
               ),
             ],
@@ -315,6 +333,154 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
 }
 
 /// The post type as the map's pill: tinted, bold, small caps in Latin script.
+/// A post's attachments, one row each: a tinted icon, the title and, for a
+/// link, its site. A row opens only an absolute http(s) link with a host —
+/// attachment URLs come from other teachers, so nothing else (javascript:,
+/// file:, relative) is ever handed to the OS.
+class _PostAttachments extends ConsumerWidget {
+  const _PostAttachments({required this.attachments});
+
+  final List<PostAttachment> attachments;
+
+  static Uri? _safe(String? raw) {
+    final uri = raw == null ? null : Uri.tryParse(raw.trim());
+    if (uri == null || uri.host.isEmpty) return null;
+    return uri.scheme == 'https' || uri.scheme == 'http' ? uri : null;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final text = Theme.of(context).textTheme;
+    final rows = [
+      for (final a in attachments)
+        if ((a.title ?? '').trim().isNotEmpty || _safe(a.url) != null) a,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final a in rows)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.space2),
+            child: Builder(
+              builder: (context) {
+                final url = _safe(a.url);
+                final isLink = a.type == 'link' || a.resourceId == null;
+                final title = (a.title ?? '').trim().isNotEmpty
+                    ? a.title!.trim()
+                    : url!.host;
+                return Semantics(
+                  button: url != null,
+                  label: title,
+                  excludeSemantics: true,
+                  child: Material(
+                    color: AppColors.surfaceMapCard,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: AppRadius.rRow,
+                      side: BorderSide(color: AppColors.borderHairline),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: url == null
+                          ? null
+                          : () => ref.read(linkOpenerProvider).open(url),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Row(
+                          children: [
+                            MapIconTile(
+                              icon: isLink
+                                  ? LucideIcons.link
+                                  : LucideIcons.fileText,
+                              tint: isLink ? MapTint.indigo : MapTint.leaf,
+                            ),
+                            const SizedBox(width: AppSpacing.space3),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: text.bodyLarge?.copyWith(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textStrong,
+                                    ),
+                                  ),
+                                  if (url != null)
+                                    Text(
+                                      url.host.replaceFirst('www.', ''),
+                                      style: text.bodySmall?.copyWith(
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (url != null)
+                              const Icon(
+                                LucideIcons.externalLink,
+                                size: 16,
+                                color: AppColors.textMuted,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// The Daily Briefing, folded to a digest: the lead headline, then the other
+/// headlines on one quiet "Also:" line. "Read all N" (in the card) unfolds the
+/// whole briefing, summaries and sources included.
+class _BriefingDigest extends StatelessWidget {
+  const _BriefingDigest({required this.briefing});
+
+  final DailyBriefing briefing;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final rest = briefing.headlines.skip(1).toList(growable: false);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          briefing.headlines.first,
+          style: text.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.textStrong,
+            height: 1.35,
+          ),
+        ),
+        if (rest.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.space1),
+          Text(
+            l10n.staffroomBriefingAlso(rest.join(' · ')),
+            // A preview of the other stories: two lines at most; "Read all"
+            // shows every one of them in full.
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _TypePill extends StatelessWidget {
   const _TypePill({required this.type});
 
@@ -381,7 +547,7 @@ class _LikeButton extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
-        borderRadius: AppRadius.rControl,
+        borderRadius: AppRadius.rRow,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           child: Row(
@@ -395,13 +561,17 @@ class _LikeButton extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: liked ? AppColors.mapRequiredBg : null,
                 ),
-                child: Icon(LucideIcons.heart, size: 15, color: ink),
+                child: Icon(
+                  LucideIcons.heart,
+                  size: AppIconSize.micro,
+                  color: ink,
+                ),
               ),
               const SizedBox(width: 2),
               Text(
                 '$count',
                 style: text.bodySmall?.copyWith(
-                  fontSize: 12.5,
+                  fontSize: AppText.metaSize,
                   fontWeight: FontWeight.w600,
                   fontFeatures: const [FontFeature.tabularFigures()],
                   color: liked ? AppColors.red700 : AppColors.textBody,

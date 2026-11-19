@@ -47,6 +47,24 @@ const List<String> kIndicFallback = kIndicSansFallback;
 class AppText {
   AppText._();
 
+  // ---------------------------------------------------------------------------
+  // OFF-SCALE SIZE OVERRIDES — exact px values that screens apply on top of a
+  // TextTheme slot via `copyWith(fontSize: …)`. They are not slots themselves.
+  // ---------------------------------------------------------------------------
+
+  /// UX-map page title (map page header, Library, Settings, Network hub).
+  static const double pageTitleSize = 27;
+
+  /// Display-family title one step below the page title (sheet titles,
+  /// the profile name).
+  static const double compactTitleSize = 19;
+
+  /// Bold row / card title in the UI family.
+  static const double rowTitleSize = 14.5;
+
+  /// Meta text: counts, captions, helper lines.
+  static const double metaSize = 12.5;
+
   static const List<FontFeature> _tabular = [
     FontFeature.tabularFigures(),
     FontFeature.liningFigures(),
@@ -180,13 +198,7 @@ class AppText {
         ls: 1.6, // 0.16em at 10px = 1.6px
         c: saffronText,
       ),
-      overline: ui(
-        10,
-        FontWeight.w600,
-        h(1.60, 1.70),
-        ls: 1.6,
-        c: saffronText,
-      ),
+      overline: ui(10, FontWeight.w600, h(1.60, 1.70), ls: 1.6, c: saffronText),
       // Data large: 700 26px/1.05 tabular (Outfit 28 → Bricolage 26 for mobile)
       dataLarge: display(26, FontWeight.w700, 1.05, ls: -0.3, feats: _tabular),
       // Data medium: 500 12px tabular

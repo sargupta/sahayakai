@@ -313,7 +313,7 @@ class _ViewfinderState extends State<_Viewfinder>
                   context.l10n.assessmentScannerFrameGuide,
                   textAlign: TextAlign.center,
                   style: text.bodySmall?.copyWith(
-                    fontSize: 12.5,
+                    fontSize: AppText.metaSize,
                     color: AppColors.textBody,
                   ),
                 ),
@@ -627,7 +627,7 @@ class _Chip extends StatelessWidget {
                 child: Text(
                   label,
                   style: text.labelMedium?.copyWith(
-                    fontSize: 12.5,
+                    fontSize: AppText.metaSize,
                     fontWeight: FontWeight.w600,
                     color: fg,
                   ),

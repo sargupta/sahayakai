@@ -40,6 +40,16 @@ class AppGradients {
     transform: GradientRotation(12 * 3.14159 / 180),
   );
 
+  /// The soft fade behind the floating tab bar: transparent at the top, the
+  /// wash's closing `#FFF7EC` underneath the pill, so a card scrolling under
+  /// the bar dissolves instead of clashing with it. Used on every tab.
+  static const LinearGradient dockFade = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0x00FFF7EC), Color(0xB3FFF7EC), Color(0xE6FFF7EC)],
+    stops: [0, 0.5, 1],
+  );
+
   /// Onboarding (Screen 01) — `#FFF2E0 → #FCEEEC → #EFF4EE → #FFF7EC`
   static const LinearGradient washOnboarding = LinearGradient(
     begin: Alignment.topCenter,

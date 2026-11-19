@@ -105,7 +105,7 @@ void main() {
       // The map's Library glyph is a folder.
       expect(find.byIcon(LucideIcons.library), findsNothing);
       // The active tab carries its name; the others are icon-only.
-      expect(find.text('Library'), findsOneWidget);
+      expect(find.text('My work'), findsOneWidget);
       expect(find.text('Home'), findsNothing);
       expect(find.text('Profile'), findsNothing);
       // No fifth tab, no Create action.

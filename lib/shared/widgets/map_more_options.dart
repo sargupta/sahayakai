@@ -97,7 +97,7 @@ class _MapMoreOptionsState extends State<MapMoreOptions> {
                       duration: motion ? AppMotion.small : Duration.zero,
                       child: Icon(
                         LucideIcons.chevronRight,
-                        size: 16,
+                        size: AppIconSize.small,
                         color: dark ? AppColors.scanMuted : AppColors.textMuted,
                       ),
                     ),

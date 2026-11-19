@@ -23,7 +23,7 @@ class InstantAnswerSkeleton extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.space4),
             decoration: BoxDecoration(
               color: scheme.surfaceContainer,
-              borderRadius: AppRadius.rLg,
+              borderRadius: AppRadius.rRow,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

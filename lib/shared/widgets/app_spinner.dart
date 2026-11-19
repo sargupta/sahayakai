@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_motion.dart';
+import '../motion/animated_entrance.dart';
 
 /// Branded loading indicator: a saffron arc spinner whose sweep length varies
 /// as it rotates (1.1s per rotation). Sizes 20/32/48dp. Optional app mark in
@@ -45,7 +46,7 @@ class _AppSpinnerState extends State<AppSpinner>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     if (reduce) {
       _ctrl.stop();
     } else if (!_ctrl.isAnimating) {
@@ -61,7 +62,7 @@ class _AppSpinnerState extends State<AppSpinner>
 
   @override
   Widget build(BuildContext context) {
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     final stroke = widget.strokeWidth ?? (widget.size <= 20 ? 2.0 : 3.0);
     final color = widget.color ?? AppColors.saffron500;
 

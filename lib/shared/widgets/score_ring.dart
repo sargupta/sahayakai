@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../motion/animated_entrance.dart';
 
 /// ScoreRing (PREMIUM_DESIGN_SPEC.md §5). A `CustomPaint` gauge for a scorecard:
 /// a `surfaceContainerHigh` track, a `primary` progress arc that sweeps on
@@ -30,9 +31,8 @@ class ScoreRing extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final extras = AppTextExtras.of(context);
-    final fraction =
-        max <= 0 ? 0.0 : (score / max).clamp(0.0, 1.0).toDouble();
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final fraction = max <= 0 ? 0.0 : (score / max).clamp(0.0, 1.0).toDouble();
+    final reduce = !context.motionEnabled;
 
     return SizedBox(
       width: size,

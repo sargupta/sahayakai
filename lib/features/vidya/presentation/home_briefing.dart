@@ -463,7 +463,7 @@ class _ListenButton extends StatelessWidget {
                 children: [
                   Icon(
                     speaking ? LucideIcons.square : LucideIcons.volume2,
-                    size: 16,
+                    size: AppIconSize.small,
                     color: AppColors.textLink,
                   ),
                   const SizedBox(width: 6),

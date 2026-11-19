@@ -7,6 +7,7 @@ import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_icon_size.dart';
 import '../../../../core/theme/app_motion.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/ai_report_sheet.dart';
@@ -159,9 +160,7 @@ class _VidyaBubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.milk50,
-          // 18 = AppRadius.card (token guard takes numeric literals only
-          // outside lib/core/theme).
-          borderRadius: const BorderRadius.all(Radius.circular(18)),
+          borderRadius: AppRadius.rCard,
           border: Border.all(
             color: AppColors.ink900.withValues(alpha: 0.08),
             width: 1,

@@ -159,7 +159,7 @@ class _RemedialPrompt extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppRadius.rPanel,
         border: Border.all(color: scheme.primary.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
@@ -248,9 +248,9 @@ class _PillButton extends StatelessWidget {
 
     return Material(
       color: filled ? scheme.primary : Colors.transparent,
-      borderRadius: BorderRadius.circular(9999),
+      borderRadius: AppRadius.rPill,
       child: InkWell(
-        borderRadius: BorderRadius.circular(9999),
+        borderRadius: AppRadius.rPill,
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
@@ -262,7 +262,7 @@ class _PillButton extends StatelessWidget {
                   border: Border.all(
                     color: scheme.primary.withValues(alpha: 0.35),
                   ),
-                  borderRadius: BorderRadius.circular(9999),
+                  borderRadius: AppRadius.rPill,
                 ),
           child: Text(
             label,
@@ -270,7 +270,7 @@ class _PillButton extends StatelessWidget {
             style: text.labelSmall?.copyWith(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: filled ? Colors.white : scheme.primary,
+              color: filled ? AppColors.textOnAccent : scheme.primary,
             ),
           ),
         ),
@@ -384,7 +384,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.9),
         border: Border.all(color: Colors.white.withValues(alpha: 0.95)),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: AppRadius.rField,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

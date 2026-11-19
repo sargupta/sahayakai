@@ -303,7 +303,6 @@ void main() {
         'Reminders and updates',
         'Live voice (beta)',
         'Keep listening after replies',
-        'VIDYA on the left',
       ]) {
         await checkAll(
           find.byWidgetPredicate((w) => w is MapToggle && w.label == label),

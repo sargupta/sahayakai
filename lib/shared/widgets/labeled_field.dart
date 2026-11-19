@@ -72,7 +72,7 @@ class LabeledField extends StatelessWidget {
       color: AppColors.textEyebrow,
     );
     final mutedStyle = text.bodySmall?.copyWith(
-      fontSize: 12.5,
+      fontSize: AppText.metaSize,
       color: AppColors.textMuted,
     );
 

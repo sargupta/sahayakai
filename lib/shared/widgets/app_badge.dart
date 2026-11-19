@@ -42,10 +42,10 @@ class AppBadge extends StatelessWidget {
   /// accent pill that stays a legible circle for a single digit and grows to a
   /// pill for two.
   const AppBadge.count(this.label, {super.key})
-      : icon = null,
-        tone = AppBadgeTone.accent,
-        size = AppBadgeSize.regular,
-        _count = true;
+    : icon = null,
+      tone = AppBadgeTone.accent,
+      size = AppBadgeSize.regular,
+      _count = true;
 
   final String label;
   final IconData? icon;
@@ -93,16 +93,14 @@ class AppBadge extends StatelessWidget {
         weight = FontWeight.w600;
     }
 
-    final baseStyle =
-        size == AppBadgeSize.small ? text.labelSmall : text.labelMedium;
+    final baseStyle = size == AppBadgeSize.small
+        ? text.labelSmall
+        : text.labelMedium;
     final labelStyle = baseStyle?.copyWith(
       color: labelColor,
       fontWeight: weight,
       fontFeatures: _count
-          ? const [
-              FontFeature.tabularFigures(),
-              FontFeature.liningFigures(),
-            ]
+          ? const [FontFeature.tabularFigures(), FontFeature.liningFigures()]
           : null,
     );
 
@@ -111,8 +109,9 @@ class AppBadge extends StatelessWidget {
     final double verticalPadding = _count
         ? 0
         : (size == AppBadgeSize.small ? AppSpacing.space1 : AppSpacing.space2);
-    final double horizontalPadding =
-        _count ? AppSpacing.space2 : AppSpacing.space3;
+    final double horizontalPadding = _count
+        ? AppSpacing.space2
+        : AppSpacing.space3;
 
     final Widget content = icon == null
         ? Text(label, style: labelStyle)
@@ -140,7 +139,10 @@ class AppBadge extends StatelessWidget {
     // the existing pill.
     final fillPill = Container(
       constraints: _count
-          ? const BoxConstraints(minWidth: _countExtent, minHeight: _countExtent)
+          ? const BoxConstraints(
+              minWidth: _countExtent,
+              minHeight: _countExtent,
+            )
           : null,
       alignment: _count ? Alignment.center : null,
       padding: EdgeInsets.symmetric(
@@ -154,15 +156,16 @@ class AppBadge extends StatelessWidget {
       child: content,
     );
 
-    final borderGradient =
-        isDark ? AppGlass.dBorderGradient : AppGlass.lBorderGradient;
+    final borderGradient = isDark
+        ? AppGlass.dBorderGradient
+        : AppGlass.lBorderGradient;
     return DecoratedBox(
       decoration: ShapeDecoration(
         shape: const StadiumBorder(),
         gradient: borderGradient,
         shadows: [
           BoxShadow(
-            color: (isDark ? Colors.black : AppColors.lShadowBase)
+            color: (isDark ? AppColors.dShadowBase : AppColors.lShadowBase)
                 .withValues(alpha: isDark ? 0.30 : 0.08),
             offset: const Offset(0, 2),
             blurRadius: 6,

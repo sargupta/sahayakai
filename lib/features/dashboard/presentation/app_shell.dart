@@ -130,12 +130,42 @@ class _AppShellState extends ConsumerState<AppShell> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         extendBody: true,
-        body: PageView(
-          controller: _pageController,
-          onPageChanged: _onPageChanged,
-          allowImplicitScrolling: true,
-          physics: const PageScrollPhysics(),
-          children: _pages,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: _onPageChanged,
+                allowImplicitScrolling: true,
+                physics: const PageScrollPhysics(),
+                children: _pages,
+              ),
+            ),
+            // The soft fade behind the tab bar on My work, Community and
+            // Profile, so cards scrolling under it dissolve instead of
+            // clashing with the pill. Home draws its own. Taps and the screen
+            // reader pass straight through.
+            if (_currentIndex != 0)
+              Builder(
+                builder: (context) => Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height:
+                      MediaQuery.paddingOf(context).bottom + AppSpacing.space6,
+                  child: const IgnorePointer(
+                    child: ExcludeSemantics(
+                      child: DecoratedBox(
+                        key: ValueKey('shell-dock-fade'),
+                        decoration: BoxDecoration(
+                          gradient: AppGradients.dockFade,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         // VIDYA is docked in the bar on the shell (v2 9a); the floating orb
         // hides here and rides only over the pushed tool screens. On Home the
@@ -180,8 +210,8 @@ class _CreatePaletteState extends State<_CreatePalette> {
   static String _fold(String s) => s.trim().toLowerCase();
 
   static final BorderRadius _sheetRadius = BorderRadius.only(
-    topLeft: AppRadius.rHero.topLeft,
-    topRight: AppRadius.rHero.topRight,
+    topLeft: AppRadius.rPanel.topLeft,
+    topRight: AppRadius.rPanel.topRight,
   );
 
   @override

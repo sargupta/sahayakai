@@ -44,7 +44,7 @@ Future<MapChoice<T>?> showMapChoiceSheet<T>(
                 child: Text(
                   title,
                   style: text.displayLarge?.copyWith(
-                    fontSize: 19,
+                    fontSize: AppText.compactTitleSize,
                     color: AppColors.textStrong,
                   ),
                 ),
@@ -86,7 +86,7 @@ Future<MapChoice<T>?> showMapChoiceSheet<T>(
                                   if (value == selected)
                                     const Icon(
                                       LucideIcons.check,
-                                      size: 18,
+                                      size: AppIconSize.compact,
                                       color: AppColors.leaf500,
                                     ),
                                 ],

@@ -18,6 +18,7 @@ class PrimaryButton extends StatelessWidget {
     this.isBusy = false,
     this.icon,
     this.ink = false,
+    this.subLabel,
   });
 
   final String label;
@@ -28,6 +29,10 @@ class PrimaryButton extends StatelessWidget {
   /// The map's ink button (`background: var(--a-ink)`, no lift) for a
   /// tool whose primary action is not a making step (Instant Answer).
   final bool ink;
+
+  /// A small second line under [label] (e.g. a time estimate). Null keeps the
+  /// button a single centred line, pixel-for-pixel unchanged.
+  final String? subLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -97,20 +102,52 @@ class PrimaryButton extends StatelessWidget {
                         const SizedBox(width: AppSpacing.space2),
                       ],
                       Flexible(
-                        child: Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          // Cap the wrap at two lines (then ellipsis) and clamp
-                          // accessibility scaling at the project's tested 1.3
-                          // ceiling, so a long localized label can never bleed
-                          // past the pill — the same no-overflow discipline the
-                          // floating nav slot applies.
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textScaler: MediaQuery.textScalerOf(
-                            context,
-                          ).clamp(maxScaleFactor: 1.3),
-                        ),
+                        // No sub-label: the original single centred line, kept
+                        // byte-for-byte so every existing button is unchanged.
+                        // Cap the wrap at two lines (then ellipsis) and clamp
+                        // accessibility scaling at the project's tested 1.3
+                        // ceiling, so a long localized label can never bleed
+                        // past the pill.
+                        child: subLabel == null
+                            ? Text(
+                                label,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textScaler: MediaQuery.textScalerOf(
+                                  context,
+                                ).clamp(maxScaleFactor: 1.3),
+                              )
+                            : Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    label,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textScaler: MediaQuery.textScalerOf(
+                                      context,
+                                    ).clamp(maxScaleFactor: 1.3),
+                                  ),
+                                  Text(
+                                    subLabel!,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textScaler: MediaQuery.textScalerOf(
+                                      context,
+                                    ).clamp(maxScaleFactor: 1.3),
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: scheme.onPrimary.withValues(
+                                        alpha: 0.85,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ],
                   ),

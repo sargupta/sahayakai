@@ -5210,4 +5210,66 @@ class AppLocalizationsTe extends AppLocalizations {
   String meUsageResets(String date) {
     return 'లెక్క $dateన మళ్ళీ మొదలవుతుంది';
   }
+
+  @override
+  String get homeWaitingRead => 'చదవండి';
+
+  @override
+  String get homeWaitingSee => 'చూడండి';
+
+  @override
+  String homeWaitingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count పనులు',
+      one: '1 పని',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lessonComposerGenerateTime => 'సుమారు 30 సెకన్లు';
+
+  @override
+  String staffroomBriefingAlso(String headlines) {
+    return 'అలాగే: $headlines';
+  }
+
+  @override
+  String staffroomBriefingReadAll(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'మొత్తం $count చదవండి',
+      one: 'వార్త చదవండి',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxSubtitle => 'మీరు అనుసంధానమైన ఉపాధ్యాయులతో సంభాషణలు';
+
+  @override
+  String get moderationBlockedSubtitle =>
+      'వారి పోస్ట్‌లు, సందేశాలు మీకు కనిపించవు';
+
+  @override
+  String get moderationBlockedHint =>
+      'ఒక ఉపాధ్యాయుడిని బ్లాక్ చేయడానికి, వారి ఏదైనా పోస్ట్‌లోని మెనూను తెరవండి.';
+
+  @override
+  String get lessonJumpObjectives => 'లక్ష్యాలు';
+
+  @override
+  String get lessonJumpVocabulary => 'పదజాలం';
+
+  @override
+  String get settingsVidyaStartsWith => 'VIDYA దేనితో మొదలవ్వాలి';
+
+  @override
+  String get settingsStartVoice => 'వాయిస్';
+
+  @override
+  String get settingsStartText => 'టెక్స్ట్';
 }

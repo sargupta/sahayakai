@@ -56,7 +56,7 @@ class _CriterionBlock extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius: AppRadius.rLg,
+        borderRadius: AppRadius.rRow,
         border: Border.all(color: scheme.outline, width: 1),
         boxShadow: AppShadows.soft,
       ),

@@ -47,7 +47,7 @@ class MapPageHeader extends StatelessWidget {
                       height: 40,
                       child: Icon(
                         LucideIcons.chevronLeft,
-                        size: 18,
+                        size: AppIconSize.compact,
                         color: dark ? AppColors.scanInk : AppColors.textStrong,
                       ),
                     ),
@@ -90,7 +90,7 @@ class MapPageTitle extends StatelessWidget {
           child: Text(
             title,
             style: text.displayLarge?.copyWith(
-              fontSize: 27,
+              fontSize: AppText.pageTitleSize,
               height: 1.12,
               letterSpacing: -0.5,
               color: dark ? AppColors.scanInk : AppColors.textStrong,

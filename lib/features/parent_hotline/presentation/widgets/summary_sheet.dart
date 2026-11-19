@@ -246,7 +246,7 @@ class _FullSummary extends StatelessWidget {
               ),
               child: const Icon(
                 LucideIcons.check,
-                size: 20,
+                size: AppIconSize.inline,
                 color: AppColors.textOnAccent,
               ),
             ),

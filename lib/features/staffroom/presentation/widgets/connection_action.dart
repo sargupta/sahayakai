@@ -404,7 +404,11 @@ class _Settled extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(LucideIcons.check, size: 15, color: AppColors.textLink),
+          const Icon(
+            LucideIcons.check,
+            size: AppIconSize.micro,
+            color: AppColors.textLink,
+          ),
           const SizedBox(width: AppSpacing.space1),
           Flexible(
             child: Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../motion/animated_entrance.dart';
 import 'glass_surface.dart';
 
 /// AppCard v2 — the keystone card grammar (PREMIUM_DESIGN_SPEC.md §5).
@@ -75,12 +76,13 @@ class _AppCardState extends State<AppCard> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     final animate = _tappable && !reduce;
 
     // Card padding: 16 phone / 24 tablet (>=600dp), unless overridden.
     final width = MediaQuery.maybeOf(context)?.size.width ?? 0;
-    final pad = widget.padding ??
+    final pad =
+        widget.padding ??
         EdgeInsets.all(width >= 600 ? AppSpacing.space6 : AppSpacing.space4);
 
     List<BoxShadow>? shadow;
@@ -190,10 +192,7 @@ class _AppCardState extends State<AppCard> {
         borderRadius: AppRadius.rCard,
         border: Border.all(color: scheme.outline, width: 1),
       ),
-      child: ClipRRect(
-        borderRadius: AppRadius.rCard,
-        child: tapLayer,
-      ),
+      child: ClipRRect(borderRadius: AppRadius.rCard, child: tapLayer),
     );
   }
 }

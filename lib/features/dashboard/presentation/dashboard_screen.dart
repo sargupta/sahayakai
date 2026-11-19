@@ -166,7 +166,11 @@ class _RecentChip extends StatelessWidget {
                     color: tint.fill,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(tool.icon, size: 15, color: tint.ink),
+                  child: Icon(
+                    tool.icon,
+                    size: AppIconSize.micro,
+                    color: tint.ink,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.space2),
                 Text(
@@ -327,13 +331,13 @@ class _Tile extends StatelessWidget {
                       color: tint.fill,
                       borderRadius: BorderRadius.circular(9),
                     ),
-                    child: Icon(icon, size: 15, color: tint.ink),
+                    child: Icon(icon, size: AppIconSize.micro, color: tint.ink),
                   ),
                   const SizedBox(height: AppSpacing.space2),
                   Text(
                     title,
                     style: text.bodyLarge?.copyWith(
-                      fontSize: 14.5,
+                      fontSize: AppText.rowTitleSize,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textStrong,
                     ),

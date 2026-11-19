@@ -7,6 +7,7 @@ import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/lesson_planner/domain/lesson_plan.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/widgets/lesson_plan_result_view.dart';
 import 'package:sahayakai/shared/widgets/document_sheet.dart';
+import 'package:sahayakai/shared/widgets/map_chip.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
@@ -346,5 +347,55 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(DocumentSheet), findsOneWidget);
     expect(find.text('Photosynthesis for Class 6'), findsOneWidget);
+  });
+
+  group('a saved plan reopened from My work', () {
+    testWidgets('shows the saved date under the title', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          LessonPlanResultView(
+            plan: _plan(),
+            savedAt: DateTime(2026, 11, 15, 10),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Saved'), findsOneWidget);
+    });
+
+    testWidgets('chips jump to each section the plan has', (tester) async {
+      await tester.pumpWidget(
+        _host(LessonPlanResultView(plan: _plan(), jumpChips: true)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('lesson-jump-chips')), findsOneWidget);
+      // One chip per section; Activities carries its count.
+      expect(
+        find.byKey(const ValueKey('lesson-jump-objectives')),
+        findsOneWidget,
+      );
+      expect(find.text('Activities 2'), findsOneWidget);
+
+      // Objectives starts selected; tapping Activities selects it and
+      // scrolls its section into view.
+      MapChip chip(String name) =>
+          tester.widget<MapChip>(find.byKey(ValueKey('lesson-jump-$name')));
+      expect(chip('objectives').selected, isTrue);
+      await tester.tap(find.byKey(const ValueKey('lesson-jump-activities')));
+      await tester.pumpAndSettle();
+      expect(chip('activities').selected, isTrue);
+      expect(chip('objectives').selected, isFalse);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a fresh plan has no chips and no saved date', (tester) async {
+      await tester.pumpWidget(_host(LessonPlanResultView(plan: _plan())));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('lesson-jump-chips')), findsNothing);
+      expect(find.textContaining('Saved'), findsNothing);
+    });
   });
 }

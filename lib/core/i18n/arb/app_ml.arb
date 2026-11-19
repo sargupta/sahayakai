@@ -1484,5 +1484,19 @@
   "communityRequestsWaiting": "{count, plural, =1{1 അഭ്യർത്ഥന} other{{count} അഭ്യർത്ഥനകൾ}}",
   "staffroomReadMore": "കൂടുതൽ വായിക്കുക",
   "staffroomShowLess": "കുറച്ച് കാണിക്കുക",
-  "meUsageResets": "എണ്ണം {date}-ന് വീണ്ടും തുടങ്ങും"
+  "meUsageResets": "എണ്ണം {date}-ന് വീണ്ടും തുടങ്ങും",
+  "homeWaitingRead": "വായിക്കുക",
+  "homeWaitingSee": "കാണുക",
+  "homeWaitingCount": "{count, plural, =1{1 കാര്യം} other{{count} കാര്യങ്ങൾ}}",
+  "lessonComposerGenerateTime": "ഏകദേശം 30 സെക്കൻഡ്",
+  "staffroomBriefingAlso": "കൂടാതെ: {headlines}",
+  "staffroomBriefingReadAll": "{count, plural, =1{വാർത്ത വായിക്കുക} other{എല്ലാ {count} എണ്ണവും വായിക്കുക}}",
+  "inboxSubtitle": "നിങ്ങൾ ബന്ധപ്പെട്ട അധ്യാപകരുമായുള്ള സംഭാഷണങ്ങൾ",
+  "moderationBlockedSubtitle": "അവരുടെ പോസ്റ്റുകളും സന്ദേശങ്ങളും നിങ്ങൾക്ക് കാണില്ല",
+  "moderationBlockedHint": "ഒരു അധ്യാപകനെ ബ്ലോക്ക് ചെയ്യാൻ അവരുടെ ഏതെങ്കിലും പോസ്റ്റിലെ മെനു തുറക്കുക.",
+  "lessonJumpObjectives": "ലക്ഷ്യങ്ങൾ",
+  "lessonJumpVocabulary": "പദാവലി",
+  "settingsVidyaStartsWith": "VIDYA എങ്ങനെ തുടങ്ങണം",
+  "settingsStartVoice": "ശബ്ദം",
+  "settingsStartText": "ടെക്സ്റ്റ്"
 }

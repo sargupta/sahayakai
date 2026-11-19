@@ -58,7 +58,7 @@ class SecondaryButton extends StatelessWidget {
         scheme.primary.withValues(alpha: 0.55),
       ],
     );
-    final innerRadius = AppGlass.insetBorderRadius(AppRadius.rControl);
+    final innerRadius = AppGlass.insetBorderRadius(AppRadius.rRow);
 
     return PressableScale(
       pressedScale: 0.97,
@@ -76,7 +76,7 @@ class SecondaryButton extends StatelessWidget {
         ),
         child: DecoratedBox(
           decoration: ShapeDecoration(
-            shape: const RoundedRectangleBorder(borderRadius: AppRadius.rControl),
+            shape: const RoundedRectangleBorder(borderRadius: AppRadius.rRow),
             gradient: borderGradient,
           ),
           child: Padding(

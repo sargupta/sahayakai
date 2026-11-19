@@ -338,9 +338,20 @@ void main() {
       return api;
     }
 
-    testWidgets('empty list says so', (tester) async {
+    testWidgets('empty list says so, and how to block someone', (tester) async {
       await pumpScreen(tester, const []);
       expect(find.text("You haven't blocked anyone."), findsOneWidget);
+      expect(
+        find.text('To block a teacher, open the menu on one of their posts.'),
+        findsOneWidget,
+      );
+      // The map page header: the big title over the line saying what blocking
+      // does.
+      expect(find.text('Blocked teachers'), findsOneWidget);
+      expect(
+        find.text('Their posts and messages are hidden from you'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Unblock removes the teacher', (tester) async {

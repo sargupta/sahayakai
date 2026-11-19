@@ -1484,5 +1484,19 @@
   "communityRequestsWaiting": "{count, plural, =1{1 கோரிக்கை} other{{count} கோரிக்கைகள்}}",
   "staffroomReadMore": "மேலும் படிக்க",
   "staffroomShowLess": "குறைவாகக் காட்டு",
-  "meUsageResets": "எண்ணிக்கை {date} அன்று மீண்டும் தொடங்கும்"
+  "meUsageResets": "எண்ணிக்கை {date} அன்று மீண்டும் தொடங்கும்",
+  "homeWaitingRead": "படிக்க",
+  "homeWaitingSee": "பார்க்க",
+  "homeWaitingCount": "{count, plural, =1{1 வேலை} other{{count} வேலைகள்}}",
+  "lessonComposerGenerateTime": "சுமார் 30 வினாடிகள்",
+  "staffroomBriefingAlso": "மேலும்: {headlines}",
+  "staffroomBriefingReadAll": "{count, plural, =1{செய்தியைப் படிக்க} other{அனைத்து {count}-ஐயும் படிக்க}}",
+  "inboxSubtitle": "நீங்கள் இணைந்துள்ள ஆசிரியர்களுடனான உரையாடல்கள்",
+  "moderationBlockedSubtitle": "அவர்களின் இடுகைகளும் செய்திகளும் உங்களுக்கு மறைக்கப்படும்",
+  "moderationBlockedHint": "ஒரு ஆசிரியரைத் தடுக்க, அவருடைய ஏதேனும் ஒரு இடுகையின் மெனுவைத் திறக்கவும்.",
+  "lessonJumpObjectives": "நோக்கங்கள்",
+  "lessonJumpVocabulary": "சொற்களஞ்சியம்",
+  "settingsVidyaStartsWith": "VIDYA எதில் தொடங்க வேண்டும்",
+  "settingsStartVoice": "குரல்",
+  "settingsStartText": "உரை"
 }

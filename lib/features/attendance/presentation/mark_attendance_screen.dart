@@ -251,7 +251,7 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppRadius.rRow,
                 ),
                 child: Text(
                   l10n.attendanceFromTask,

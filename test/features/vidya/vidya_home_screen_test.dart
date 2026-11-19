@@ -483,6 +483,43 @@ void main() {
       expect(find.text('Fractions worksheet is ready'), findsOneWidget);
       expect(find.text('Nothing is waiting for you right now'), findsNothing);
     });
+
+    testWidgets('a waiting row carries its detail, its action and the count', (
+      tester,
+    ) async {
+      await _pumpHome(tester);
+
+      _container(tester)
+          .read(deliverablesControllerProvider.notifier)
+          .add(
+            const Deliverable(
+              id: 'lp-1',
+              title: 'Water cycle',
+              subtitle: 'Lesson plan · Class 7',
+              text: 'Objectives',
+            ),
+          );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Water cycle is ready'), findsOneWidget);
+      expect(find.text('Lesson plan · Class 7'), findsOneWidget);
+      expect(find.text('1 thing'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          'Water cycle is ready, Lesson plan · Class 7, Open',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('nothing waiting is one slim line with no count', (
+      tester,
+    ) async {
+      await _pumpHome(tester);
+
+      expect(find.byIcon(LucideIcons.checkCircle), findsOneWidget);
+      expect(find.textContaining(RegExp(r'^\d+ things?$')), findsNothing);
+    });
   });
 
   group('your tools', () {
@@ -552,6 +589,31 @@ void main() {
       );
 
       expect(find.byKey(const Key('dest-prep-desk')), findsOneWidget);
+    });
+  });
+
+  group('the tiles and the tab bar', () {
+    testWidgets('each tile carries its tool icon from the registry', (
+      tester,
+    ) async {
+      await _pumpHome(tester);
+
+      expect(find.byIcon(LucideIcons.users), findsOneWidget); // Roll call
+      expect(find.byIcon(LucideIcons.bookOpen), findsOneWidget); // Lesson
+      expect(find.byIcon(LucideIcons.scrollText), findsOneWidget); // Exam
+    });
+
+    testWidgets('the fade behind the tab bar never takes a tap', (
+      tester,
+    ) async {
+      await _pumpHome(tester);
+
+      final fade = find.byKey(const ValueKey('home-dock-fade'));
+      expect(fade, findsOneWidget);
+      expect(
+        find.ancestor(of: fade, matching: find.byType(IgnorePointer)),
+        findsWidgets,
+      );
     });
   });
 

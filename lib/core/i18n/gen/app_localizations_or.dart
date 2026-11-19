@@ -5209,4 +5209,66 @@ class AppLocalizationsOr extends AppLocalizations {
   String meUsageResets(String date) {
     return 'ଗଣନା $date ରେ ପୁଣି ଆରମ୍ଭ ହେବ';
   }
+
+  @override
+  String get homeWaitingRead => 'ପଢ଼ନ୍ତୁ';
+
+  @override
+  String get homeWaitingSee => 'ଦେଖନ୍ତୁ';
+
+  @override
+  String homeWaitingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countଟି କାମ',
+      one: '1ଟି କାମ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lessonComposerGenerateTime => 'ପ୍ରାୟ 30 ସେକେଣ୍ଡ';
+
+  @override
+  String staffroomBriefingAlso(String headlines) {
+    return 'ଏହା ସହିତ: $headlines';
+  }
+
+  @override
+  String staffroomBriefingReadAll(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ସବୁ $countଟି ପଢ଼ନ୍ତୁ',
+      one: 'ଖବର ପଢ଼ନ୍ତୁ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxSubtitle => 'ଆପଣ ଯୋଡ଼ି ହୋଇଥିବା ଶିକ୍ଷକଙ୍କ ସହ କଥାବାର୍ତ୍ତା';
+
+  @override
+  String get moderationBlockedSubtitle =>
+      'ସେମାନଙ୍କ ପୋଷ୍ଟ ଓ ସନ୍ଦେଶ ଆପଣଙ୍କଠାରୁ ଲୁଚି ରହେ';
+
+  @override
+  String get moderationBlockedHint =>
+      'ଜଣେ ଶିକ୍ଷକଙ୍କୁ ବ୍ଲକ୍ କରିବାକୁ ତାଙ୍କ କୌଣସି ପୋଷ୍ଟର ମେନୁ ଖୋଲନ୍ତୁ।';
+
+  @override
+  String get lessonJumpObjectives => 'ଉଦ୍ଦେଶ୍ୟ';
+
+  @override
+  String get lessonJumpVocabulary => 'ଶବ୍ଦାବଳୀ';
+
+  @override
+  String get settingsVidyaStartsWith => 'VIDYA କେଉଁଥିରେ ଆରମ୍ଭ କରିବ';
+
+  @override
+  String get settingsStartVoice => 'ସ୍ୱର';
+
+  @override
+  String get settingsStartText => 'ଲେଖା';
 }

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/platform/share_service.dart';
@@ -34,6 +33,7 @@ import '../../visual_aid/presentation/widgets/visual_aid_result_view.dart';
 import '../../worksheet_wizard/presentation/widgets/worksheet_result_view.dart';
 import '../data/library_item_detail_provider.dart';
 import '../data/library_result_mapper.dart';
+import 'library_share_text.dart';
 
 /// One saved generation, opened from a Library (or dashboard Recent) row.
 ///
@@ -74,7 +74,7 @@ class LibraryDetailScreen extends ConsumerWidget {
     // them once (the old metadata card repeated them, and could disagree).
     final full = fetched.valueOrNull;
     final rendersOwnHeader = full != null && _savedResultView(full) != null;
-    final shareText = full == null ? null : _savedShareText(full, l10n);
+    final shareText = full == null ? null : libraryShareText(full, l10n);
     // The type ("Lesson plan") names the screen; the long title is in the
     // document itself, where it is never cut off.
     final appBarTitle = header != null
@@ -133,8 +133,11 @@ class LibraryDetailScreen extends ConsumerWidget {
               _DetailHeader(item: header),
               const SizedBox(height: AppSpacing.space6),
             ],
-            if (header?.createdAt != null && rendersOwnHeader) ...[
-              _SavedOn(createdAt: header!.createdAt!),
+            // A lesson plan shows its saved date inside its own card.
+            if (header?.createdAt != null &&
+                rendersOwnHeader &&
+                header!.type != ContentType.lessonPlan) ...[
+              _SavedOn(createdAt: header.createdAt!),
               const SizedBox(height: AppSpacing.space3),
             ],
             _DetailBody(
@@ -223,7 +226,10 @@ class _SavedShareBar extends ConsumerWidget {
                     foregroundColor: AppColors.textOnAccent,
                     shape: const StadiumBorder(),
                   ),
-                  icon: const Icon(LucideIcons.share2, size: 18),
+                  icon: const Icon(
+                    LucideIcons.share2,
+                    size: AppIconSize.compact,
+                  ),
                   label: Text(l10n.actionShare),
                 ),
               ),
@@ -449,7 +455,15 @@ Widget? _savedResultView(LibraryItem full) {
   switch (full.type) {
     case ContentType.lessonPlan:
       final plan = mapSavedLessonPlan(full.data);
-      return plan == null ? null : LessonPlanResultView(plan: plan);
+      // A saved plan: the date sits under its title, and chips jump to each
+      // section, since a teacher reopens a plan to find one part of it.
+      return plan == null
+          ? null
+          : LessonPlanResultView(
+              plan: plan,
+              savedAt: full.createdAt,
+              jumpChips: true,
+            );
 
     case ContentType.quiz:
       final quiz = mapSavedQuiz(full.data);
@@ -515,57 +529,6 @@ Widget? _savedResultView(LibraryItem full) {
 /// The plain text Share and Copy hand out for [full]: the same export its
 /// tool's live result uses. Null when the saved data cannot be reshaped (the
 /// screen then shows no share bar rather than sharing a blank).
-String? _savedShareText(LibraryItem full, AppLocalizations l10n) {
-  switch (full.type) {
-    case ContentType.lessonPlan:
-      final plan = mapSavedLessonPlan(full.data);
-      return plan == null ? null : lessonPlanAsPlainText(plan, l10n);
-    case ContentType.quiz:
-      final quiz = mapSavedQuiz(full.data);
-      return quiz == null ? null : quizAsPlainText(quiz, l10n);
-    case ContentType.worksheet:
-      final worksheet = mapSavedWorksheet(full.data);
-      return worksheet == null ? null : worksheetAsPlainText(worksheet, l10n);
-    case ContentType.rubric:
-      final rubric = mapSavedRubric(full.data);
-      return rubric == null ? null : rubricAsPlainText(rubric, l10n);
-    case ContentType.instantAnswer:
-      final answer = mapSavedInstantAnswer(full.data);
-      return answer == null
-          ? null
-          : instantAnswerAsPlainText(
-              answer,
-              question: full.title.isEmpty ? null : full.title,
-            );
-    case ContentType.teacherTraining:
-      final advice = mapSavedTeacherAdvice(full.data);
-      return advice == null ? null : teacherAdviceAsPlainText(advice, l10n);
-    case ContentType.examPaper:
-      final ready = mapSavedExamPaper(full.data);
-      return ready == null ? null : examPaperAsPlainText(ready.paper, l10n);
-    case ContentType.assessment:
-      final assessment = mapSavedAssessment(full.data);
-      return assessment == null
-          ? null
-          : assessmentAsPlainText(assessment, l10n);
-    case ContentType.visualAid:
-      final aid = mapSavedVisualAid(full.data);
-      return aid == null
-          ? null
-          : visualAidAsPlainText(
-              aid,
-              l10n,
-              prompt: full.title.isEmpty ? null : full.title,
-            );
-    case ContentType.assessmentSubmission:
-      final result = mapSavedAssessmentScanner(full.data);
-      return result == null ? null : assessmentResultAsPlainText(result, l10n);
-    case ContentType.microLesson:
-    case ContentType.virtualFieldTrip:
-    case ContentType.unknown:
-      return null;
-  }
-}
 
 /// A shaped shimmer while the item opens — never a bare spinner (DESIGN_RUBRIC
 /// §6). Sized to a couple of body lines, since the header already carries the

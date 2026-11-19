@@ -75,7 +75,7 @@ class MapOption extends StatelessWidget {
                     const SizedBox(width: AppSpacing.space2),
                     const Icon(
                       LucideIcons.check,
-                      size: 16,
+                      size: AppIconSize.small,
                       color: AppColors.accent,
                     ),
                   ],

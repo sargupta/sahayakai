@@ -117,7 +117,7 @@ class ModerationMenuButton extends ConsumerWidget {
     return PopupMenuButton<_ModerationChoice>(
       key: const ValueKey('moderation-menu'),
       tooltip: l10n.moderationMoreActions,
-      icon: const Icon(LucideIcons.moreVertical, size: 18),
+      icon: const Icon(LucideIcons.moreVertical, size: AppIconSize.compact),
       color: AppColors.milk50,
       onSelected: (choice) async {
         switch (choice) {
@@ -227,7 +227,7 @@ class _MenuRow extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 18, color: AppColors.textBody),
+      Icon(icon, size: AppIconSize.compact, color: AppColors.textBody),
       const SizedBox(width: AppSpacing.space2),
       Flexible(child: Text(label)),
     ],

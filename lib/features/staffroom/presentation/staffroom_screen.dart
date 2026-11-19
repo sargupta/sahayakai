@@ -359,7 +359,7 @@ class _HubTile extends StatelessWidget {
                   Text(
                     title,
                     style: text.bodyLarge?.copyWith(
-                      fontSize: 14.5,
+                      fontSize: AppText.rowTitleSize,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textStrong,
                     ),

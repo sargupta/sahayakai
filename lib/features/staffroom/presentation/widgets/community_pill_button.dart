@@ -82,7 +82,7 @@ class CommunityPillButton extends StatelessWidget {
                             ),
                           )
                         else if (icon != null)
-                          Icon(icon, size: 15, color: ink),
+                          Icon(icon, size: AppIconSize.micro, color: ink),
                         if (busy || icon != null)
                           const SizedBox(width: AppSpacing.space1),
                         Flexible(

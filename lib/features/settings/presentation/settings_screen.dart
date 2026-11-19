@@ -23,10 +23,10 @@ import '../../../shared/widgets/map_choice_sheet.dart';
 import '../../../shared/widgets/map_segmented.dart';
 import '../../../shared/widgets/map_toggle.dart';
 import '../../../shared/widgets/offline_view.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../profile/domain/profile_settings.dart';
 import '../../profile/domain/teacher_profile.dart';
 import '../../profile/presentation/profile_controller.dart';
-import '../../vidya/presentation/vidya_orb_placement_controller.dart';
 import '../data/notification_prefs_provider.dart';
 import '../data/voice_mode_provider.dart';
 import 'settings_controller.dart';
@@ -116,10 +116,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       const _LanguageSection(),
       const _NotificationSection(),
       const _VoiceModeSection(),
-      const _OrbHandSection(),
+      // VIDYA-hand placement, Privacy for teachers and Blocked teachers already
+      // live on the Profile tab; they are not repeated here (they used to be the
+      // same rows twice). Save now sits at the end of the teaching-profile card.
       if (signedIn) _profileSection(l10n) else const _SignedOutCard(),
-      const _PrivacyRow(),
-      if (signedIn) const _BlockedTeachersRow(),
       if (signedIn) _deleteSection(l10n),
     ];
 
@@ -145,7 +145,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: Text(
                   l10n.settingsTitle,
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontSize: 27,
+                    fontSize: AppText.pageTitleSize,
                     color: AppColors.textStrong,
                   ),
                 ),
@@ -220,21 +220,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     : _roleLabel(l10n, role),
                 onTap: () => _pickRole(l10n, profile),
               ),
+              // Save belongs to the rows it saves, so it sits inside the card
+              // as the saffron primary action, not loose further down the page.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                child: PrimaryButton(
+                  label: l10n.settingsSaveProfile,
+                  isBusy: saveState.isLoading,
+                  onPressed: saveState.isLoading
+                      ? null
+                      : () => _saveProfile(profile),
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.space2),
-        _Note(l10n.settingsProfileHint),
         if (saveState.hasError) ...[
           const SizedBox(height: AppSpacing.space3),
           InlineError(message: _saveErrorText(l10n, saveState.error)),
         ],
-        const SizedBox(height: AppSpacing.space3),
-        _WhiteButton(
-          label: l10n.settingsSaveProfile,
-          busy: saveState.isLoading,
-          onPressed: saveState.isLoading ? null : () => _saveProfile(profile),
-        ),
+        const SizedBox(height: AppSpacing.space2),
+        _Note(l10n.settingsProfileHint),
       ],
     );
   }
@@ -381,7 +387,7 @@ class _BackButton extends StatelessWidget {
                 ),
                 child: const Icon(
                   LucideIcons.arrowLeft,
-                  size: 18,
+                  size: AppIconSize.compact,
                   color: AppColors.textStrong,
                 ),
               ),
@@ -531,7 +537,7 @@ class _ValueRow extends StatelessWidget {
                 const SizedBox(width: AppSpacing.space1),
                 const Icon(
                   LucideIcons.chevronRight,
-                  size: 16,
+                  size: AppIconSize.small,
                   color: AppColors.textMuted,
                 ),
               ],
@@ -575,15 +581,10 @@ class _Note extends StatelessWidget {
 
 /// The map's white button (`.btn.w`): a 52px pill with a hairline.
 class _WhiteButton extends StatelessWidget {
-  const _WhiteButton({
-    required this.label,
-    required this.onPressed,
-    this.busy = false,
-  });
+  const _WhiteButton({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback? onPressed;
-  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -598,16 +599,14 @@ class _WhiteButton extends StatelessWidget {
         child: SizedBox(
           height: 52,
           child: Center(
-            child: busy
-                ? const _ButtonSpinner(color: AppColors.textStrong)
-                : Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textStrong,
-                    ),
-                  ),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textStrong,
+              ),
+            ),
           ),
         ),
       ),
@@ -707,6 +706,19 @@ class _VoiceModeSection extends ConsumerWidget {
               onChanged: setLive,
             ),
           ),
+          const SizedBox(height: AppSpacing.space3),
+          // "VIDYA starts with" names the choice once; the segments are then
+          // just Voice and Text, not "Default: Voice" / "Default: Text".
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: 2),
+            child: Text(
+              l10n.settingsVidyaStartsWith,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textStrong,
+              ),
+            ),
+          ),
           const SizedBox(height: AppSpacing.space2),
           MapSegmented<VidyaDefaultInput>(
             value: defaultInput,
@@ -715,11 +727,11 @@ class _VoiceModeSection extends ConsumerWidget {
             segments: [
               MapSegment(
                 value: VidyaDefaultInput.voice,
-                label: l10n.settingsDefaultVoice,
+                label: l10n.settingsStartVoice,
               ),
               MapSegment(
                 value: VidyaDefaultInput.text,
-                label: l10n.settingsDefaultText,
+                label: l10n.settingsStartText,
               ),
             ],
           ),
@@ -742,107 +754,17 @@ class _VoiceModeSection extends ConsumerWidget {
 
 /// Which side VIDYA sits on: the tab bar and the floating orb follow it. The
 /// title says where she is now.
-class _OrbHandSection extends ConsumerWidget {
-  const _OrbHandSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final hand = ref.watch(
-      vidyaOrbPlacementControllerProvider.select((p) => p.hand),
-    );
-    void setLeft(bool left) => ref
-        .read(vidyaOrbPlacementControllerProvider.notifier)
-        .setHand(left ? VidyaHand.left : VidyaHand.right);
-
-    return _Section(
-      title: l10n.settingsOrbHandTitle,
-      child: _SettingCard(
-        title: hand == VidyaHand.left
-            ? l10n.vidyaSideLeft
-            : l10n.vidyaSideRight,
-        subtitle: l10n.settingsOrbHandHint,
-        onTap: () => setLeft(hand != VidyaHand.left),
-        trailing: MapToggle(
-          value: hand == VidyaHand.left,
-          label: l10n.vidyaSideLeft,
-          onChanged: setLeft,
-        ),
-      ),
-    );
-  }
-}
-
-/// The privacy explainer, as the map's plain card row.
-class _PrivacyRow extends StatelessWidget {
-  const _PrivacyRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Semantics(
-      button: true,
-      child: MapCard(
-        onTap: () => context.push(Routes.privacyForTeachers),
-        padding: const EdgeInsetsDirectional.fromSTEB(14, 14, 10, 14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n.mePrivacyForTeachers,
-                style: text.bodyLarge?.copyWith(
-                  fontSize: 14,
-                  color: AppColors.textStrong,
-                ),
-              ),
-            ),
-            const _Chevron(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Settings → Blocked teachers (report/block for community content).
-class _BlockedTeachersRow extends StatelessWidget {
-  const _BlockedTeachersRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Semantics(
-      button: true,
-      child: MapCard(
-        key: const ValueKey('settings-blocked-teachers'),
-        onTap: () => context.push(Routes.blockedTeachers),
-        padding: const EdgeInsetsDirectional.fromSTEB(14, 14, 10, 14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n.moderationBlockedTitle,
-                style: text.bodyLarge?.copyWith(
-                  fontSize: 14,
-                  color: AppColors.textStrong,
-                ),
-              ),
-            ),
-            const _Chevron(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _Chevron extends StatelessWidget {
   const _Chevron();
 
   @override
   Widget build(BuildContext context) => const Padding(
     padding: EdgeInsetsDirectional.only(end: 4),
-    child: Icon(LucideIcons.chevronRight, size: 16, color: AppColors.textMuted),
+    child: Icon(
+      LucideIcons.chevronRight,
+      size: AppIconSize.small,
+      color: AppColors.textMuted,
+    ),
   );
 }
 
@@ -887,7 +809,7 @@ class _QualificationsSheetState extends State<_QualificationsSheet> {
             Text(
               widget.title,
               style: text.displayLarge?.copyWith(
-                fontSize: 19,
+                fontSize: AppText.compactTitleSize,
                 color: AppColors.textStrong,
               ),
             ),

@@ -1,3 +1,4 @@
+import 'dart:ui' show SemanticsFlag;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,7 +63,7 @@ void main() {
     expect(find.text('SR'), findsOneWidget);
   });
 
-  testWidgets('the comment count shows only when there are comments', (
+  testWidgets('the comment icon always shows; the number only with comments', (
     tester,
   ) async {
     await _pump(tester, _post(comments: 12));
@@ -70,8 +71,10 @@ void main() {
     expect(find.text('12'), findsOneWidget);
     expect(find.bySemanticsLabel('12 comments'), findsOneWidget);
 
+    // With no comments the icon still invites a reply, but shows no number.
     await _pump(tester, _post());
-    expect(find.byIcon(LucideIcons.messageCircle), findsNothing);
+    expect(find.byIcon(LucideIcons.messageCircle), findsOneWidget);
+    expect(find.text('0'), findsNothing);
   });
 
   testWidgets('every post can be shared', (tester) async {
@@ -134,5 +137,75 @@ void main() {
   testWidgets('no Connect on my own post', (tester) async {
     await _pump(tester, _post(author: _me));
     expect(find.text('Connect'), findsNothing);
+  });
+
+  testWidgets('a Daily Briefing opens as a digest, Read all unfolds it', (
+    tester,
+  ) async {
+    const briefing =
+        '🗓 Daily Briefing — Thu, 19 Nov\n\n'
+        '🤖 Teachers should shape AI policy\n'
+        '   A new report says teachers belong at the table.\n'
+        '   ↪ Rediff · rediff.com\n\n'
+        '📚 New Class 9 social science text\n'
+        '   NCERT releases the revised book.\n'
+        '   ↪ NCERT · ncert.nic.in';
+    await _pump(tester, _post(content: briefing));
+
+    // The digest: lead headline, the rest on one line, and Read all N.
+    expect(find.text('Teachers should shape AI policy'), findsOneWidget);
+    expect(find.text('Also: New Class 9 social science text'), findsOneWidget);
+    expect(find.text('Read all 2 ›'), findsOneWidget);
+    expect(find.textContaining('belong at the table'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('post-more-p1')));
+    await tester.pumpAndSettle();
+    // Unfolded: the whole briefing, summaries and sources included.
+    expect(find.textContaining('belong at the table'), findsOneWidget);
+    expect(find.text('Show less'), findsOneWidget);
+  });
+
+  testWidgets('an attachment shows as a row; only a safe web link opens', (
+    tester,
+  ) async {
+    final post = GroupPost(
+      id: 'p2',
+      groupId: 'g1',
+      authorUid: 'u-sr',
+      authorName: 'Suresh Reddy',
+      content: 'Sharing the sheet I made.',
+      postType: PostType.share,
+      createdAt: '2026-11-04T09:00:00Z',
+      attachments: const [
+        PostAttachment(
+          type: 'link',
+          url: 'https://ncert.nic.in/sheet',
+          title: 'Water cycle activity sheet',
+        ),
+        // A hostile link: never handed to the OS, so its row is inert.
+        PostAttachment(
+          type: 'link',
+          url: 'javascript:alert(1)',
+          title: 'Click me',
+        ),
+      ],
+    );
+    await _pump(tester, post);
+
+    expect(find.text('Water cycle activity sheet'), findsOneWidget);
+    expect(find.text('ncert.nic.in'), findsOneWidget);
+    // The safe link is a button; the javascript: one is not.
+    expect(
+      tester
+          .getSemantics(find.bySemanticsLabel('Water cycle activity sheet'))
+          .hasFlag(SemanticsFlag.isButton),
+      isTrue,
+    );
+    expect(
+      tester
+          .getSemantics(find.bySemanticsLabel('Click me'))
+          .hasFlag(SemanticsFlag.isButton),
+      isFalse,
+    );
   });
 }

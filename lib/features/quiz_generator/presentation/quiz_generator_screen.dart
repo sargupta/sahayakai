@@ -157,7 +157,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     if (!mounted) return;
     final ctx = _resultKey.currentContext;
     if (ctx == null) return;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     Scrollable.ensureVisible(
       ctx,
       duration: reduce ? Duration.zero : AppMotion.medium,
@@ -431,7 +431,11 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
                 MapChip(
                   label: _bloomName(l10n, level),
                   selected: _blooms.contains(level),
-                  selectedFill: AppColors.accentFill,
+                  // Tinted + tick, matching the question-type options above,
+                  // instead of a solid saffron fill.
+                  selectedFill: AppColors.tileSaffronBg,
+                  selectedInk: AppColors.tileAmberInk,
+                  showCheck: true,
                   onTap: () => setState(() {
                     if (!_blooms.remove(level)) _blooms.add(level);
                   }),
@@ -471,7 +475,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
                       ],
                     ),
                     style: text.bodySmall?.copyWith(
-                      fontSize: 12.5,
+                      fontSize: AppText.metaSize,
                       color: AppColors.saffron700,
                     ),
                   ),

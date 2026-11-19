@@ -1484,5 +1484,19 @@
   "communityRequestsWaiting": "{count, plural, =1{1 ਬੇਨਤੀ} other{{count} ਬੇਨਤੀਆਂ}}",
   "staffroomReadMore": "ਹੋਰ ਪੜ੍ਹੋ",
   "staffroomShowLess": "ਘੱਟ ਵਿਖਾਓ",
-  "meUsageResets": "ਗਿਣਤੀ {date} ਨੂੰ ਮੁੜ ਸ਼ੁਰੂ ਹੋਵੇਗੀ"
+  "meUsageResets": "ਗਿਣਤੀ {date} ਨੂੰ ਮੁੜ ਸ਼ੁਰੂ ਹੋਵੇਗੀ",
+  "homeWaitingRead": "ਪੜ੍ਹੋ",
+  "homeWaitingSee": "ਵੇਖੋ",
+  "homeWaitingCount": "{count, plural, =1{1 ਕੰਮ} other{{count} ਕੰਮ}}",
+  "lessonComposerGenerateTime": "ਲਗਭਗ 30 ਸਕਿੰਟ",
+  "staffroomBriefingAlso": "ਨਾਲ ਹੀ: {headlines}",
+  "staffroomBriefingReadAll": "{count, plural, =1{ਖ਼ਬਰ ਪੜ੍ਹੋ} other{ਸਾਰੀਆਂ {count} ਪੜ੍ਹੋ}}",
+  "inboxSubtitle": "ਉਹਨਾਂ ਅਧਿਆਪਕਾਂ ਨਾਲ ਗੱਲਬਾਤ ਜਿਨ੍ਹਾਂ ਨਾਲ ਤੁਸੀਂ ਜੁੜੇ ਹੋ",
+  "moderationBlockedSubtitle": "ਉਹਨਾਂ ਦੀਆਂ ਪੋਸਟਾਂ ਅਤੇ ਸੁਨੇਹੇ ਤੁਹਾਡੇ ਤੋਂ ਲੁਕੇ ਰਹਿੰਦੇ ਹਨ",
+  "moderationBlockedHint": "ਕਿਸੇ ਅਧਿਆਪਕ ਨੂੰ ਬਲੌਕ ਕਰਨ ਲਈ ਉਹਨਾਂ ਦੀ ਕਿਸੇ ਪੋਸਟ ਦਾ ਮੀਨੂ ਖੋਲ੍ਹੋ।",
+  "lessonJumpObjectives": "ਉਦੇਸ਼",
+  "lessonJumpVocabulary": "ਸ਼ਬਦਾਵਲੀ",
+  "settingsVidyaStartsWith": "VIDYA ਕਿਸ ਨਾਲ ਸ਼ੁਰੂ ਕਰੇ",
+  "settingsStartVoice": "ਆਵਾਜ਼",
+  "settingsStartText": "ਲਿਖਤ"
 }

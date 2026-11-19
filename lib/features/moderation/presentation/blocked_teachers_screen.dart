@@ -4,9 +4,12 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_background.dart';
 import '../../../shared/widgets/app_skeleton.dart';
-import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/map_card.dart';
+import '../../../shared/widgets/map_empty_card.dart';
+import '../../../shared/widgets/map_icon_tile.dart';
+import '../../../shared/widgets/map_page_header.dart';
 import '../../staffroom/presentation/widgets/staffroom_avatar.dart';
 import '../domain/moderation.dart';
 import 'blocked_teachers_controller.dart';
@@ -21,33 +24,69 @@ class BlockedTeachersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final async = ref.watch(blockedTeachersProvider);
-    return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.moderationBlockedTitle)),
-      body: SafeArea(
-        child: switch (async) {
-          AsyncData(:final value) when value.isEmpty => ListView(
-            padding: AppSpacing.pagePadding,
+    // The map's page shape — round back button, big title, one line under it —
+    // the same header Messages and Settings use.
+    const body = EdgeInsets.fromLTRB(
+      AppSpacing.mapGutter,
+      0,
+      AppSpacing.mapGutter,
+      AppSpacing.space6,
+    );
+    return AppBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              MapCard(
-                child: MapEmptyNote(
-                  icon: LucideIcons.ban,
-                  message: l10n.moderationBlockedEmpty,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.mapGutter,
+                  AppSpacing.space2,
+                  AppSpacing.mapGutter,
+                  AppSpacing.space4,
                 ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const MapPageHeader(),
+                    const SizedBox(height: AppSpacing.space2),
+                    MapPageTitle(
+                      title: l10n.moderationBlockedTitle,
+                      subtitle: l10n.moderationBlockedSubtitle,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: switch (async) {
+                  AsyncData(:final value) when value.isEmpty =>
+                    SingleChildScrollView(
+                      padding: body,
+                      child: MapEmptyCard(
+                        icon: LucideIcons.checkCircle,
+                        tint: MapTint.leaf,
+                        title: l10n.moderationBlockedEmpty,
+                        message: l10n.moderationBlockedHint,
+                      ),
+                    ),
+                  AsyncData(:final value) => ListView.separated(
+                    padding: body,
+                    itemCount: value.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.space3),
+                    itemBuilder: (context, i) => _BlockedRow(teacher: value[i]),
+                  ),
+                  _ => const Padding(
+                    padding: body,
+                    child: AppSkeleton(lines: 3),
+                  ),
+                },
               ),
             ],
           ),
-          AsyncData(:final value) => ListView.separated(
-            padding: AppSpacing.pagePadding,
-            itemCount: value.length,
-            separatorBuilder: (_, _) =>
-                const SizedBox(height: AppSpacing.space3),
-            itemBuilder: (context, i) => _BlockedRow(teacher: value[i]),
-          ),
-          _ => const Padding(
-            padding: AppSpacing.pagePadding,
-            child: AppSkeleton(lines: 3),
-          ),
-        },
+        ),
       ),
     );
   }

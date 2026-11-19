@@ -220,7 +220,7 @@ class _PostComposerState extends ConsumerState<PostComposer> {
                 onPressed: _busy ? null : () => setState(() => _open = false),
                 icon: const Icon(
                   LucideIcons.x,
-                  size: 18,
+                  size: AppIconSize.compact,
                   color: AppColors.textMuted,
                 ),
               ),

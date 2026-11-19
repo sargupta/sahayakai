@@ -13,6 +13,15 @@ class AppIconSize {
   /// Carries its own line or leads a state block: empty/error/offline glyphs.
   static const double standalone = 24;
 
+  /// Compact glyph: header back/close buttons, menu rows, composer actions.
+  static const double compact = 18;
+
+  /// Small glyph: trailing chevrons, check marks, count glyphs.
+  static const double small = 16;
+
+  /// Smallest glyph: inside a 28px tool tile, inline check / heart marks.
+  static const double micro = 15;
+
   /// The glyph inside an [IconWell] — NOT the well itself, which is [wellBox].
   static const double well = inline;
 

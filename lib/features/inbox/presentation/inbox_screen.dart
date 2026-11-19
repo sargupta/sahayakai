@@ -7,10 +7,12 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
+import '../../../shared/widgets/app_background.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
-import '../../../shared/widgets/glass_app_bar.dart';
+import '../../../shared/widgets/map_empty_card.dart';
+import '../../../shared/widgets/map_page_header.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../moderation/presentation/blocked_teachers_controller.dart';
 import '../data/block_c_transport.dart';
@@ -43,19 +45,52 @@ class InboxScreen extends ConsumerWidget {
     final async = ref.watch(inboxListProvider);
     final myUid = ref.watch(currentInboxUserIdProvider);
 
-    return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.inboxTitle)),
-      body: SafeArea(
-        child: async.when(
-          loading: () => const Padding(
-            padding: AppSpacing.pagePadding,
-            child: AppSkeleton(lines: 5),
+    // The map's page shape — round back button, big title, one line under it —
+    // the same header Blocked teachers and Settings use.
+    return AppBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.mapGutter,
+                  AppSpacing.space2,
+                  AppSpacing.mapGutter,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const MapPageHeader(),
+                    const SizedBox(height: AppSpacing.space2),
+                    MapPageTitle(
+                      title: l10n.inboxTitle,
+                      subtitle: l10n.inboxSubtitle,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: async.when(
+                  loading: () => const Padding(
+                    padding: AppSpacing.pagePadding,
+                    child: AppSkeleton(lines: 5),
+                  ),
+                  // A stream-level error (the transport maps Firestore failures
+                  // into a ready `TransportSnapshot.error` instead, so this is
+                  // the defensive outer path) — still an ErrorView, never a
+                  // hang.
+                  error: (_, _) => const _InboxError(),
+                  data: (snapshot) =>
+                      _InboxBody(snapshot: snapshot, myUid: myUid),
+                ),
+              ),
+            ],
           ),
-          // A stream-level error (the transport maps Firestore failures into a
-          // ready `TransportSnapshot.error` instead, so this is the defensive
-          // outer path) — still an ErrorView, never a hang.
-          error: (_, _) => const _InboxError(),
-          data: (snapshot) => _InboxBody(snapshot: snapshot, myUid: myUid),
         ),
       ),
     );
@@ -183,10 +218,23 @@ class _InboxEmpty extends StatelessWidget {
       padding: AppSpacing.pagePadding,
       child: staggeredItem(
         context,
-        EmptyView(
+        // The map's centred empty card, shared with Blocked teachers, with the
+        // one next step: find teachers to talk to.
+        MapEmptyCard(
           icon: LucideIcons.messagesSquare,
           title: l10n.inboxEmptyTitle,
           message: l10n.inboxEmptyBody,
+          action: FilledButton(
+            key: const ValueKey('inbox-find-teachers'),
+            onPressed: () => context.push(Routes.network),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              backgroundColor: AppColors.tileSaffronBg,
+              foregroundColor: AppColors.tileAmberInk,
+              shape: const StadiumBorder(),
+            ),
+            child: Text(l10n.communityFindMoreAction),
+          ),
         ),
         index: 0,
       ),

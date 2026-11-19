@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/document_sheet.dart';
+import '../../../../shared/widgets/map_chip.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/result_actions_bar.dart';
@@ -29,12 +30,14 @@ import '../../domain/lesson_plan.dart';
 /// 1.7 + Indic height behaviour) so matras and vowel signs never clip, and long
 /// compound words wrap instead of scrolling — the matra-safety guarantee is
 /// untouched. See DESIGN_RUBRIC §3 / §8.
-class LessonPlanResultView extends StatelessWidget {
+class LessonPlanResultView extends StatefulWidget {
   const LessonPlanResultView({
     super.key,
     required this.plan,
     this.onRegenerate,
     this.saveRequest,
+    this.savedAt,
+    this.jumpChips = false,
   });
 
   final LessonPlan plan;
@@ -52,9 +55,49 @@ class LessonPlanResultView extends StatelessWidget {
   /// only, rather than a button that could save a hollow document.
   final LessonPlanRequest? saveRequest;
 
+  /// When the plan was saved; shown as "Saved (date)" under the title on a
+  /// saved plan reopened from My work. Null on a freshly generated plan.
+  final DateTime? savedAt;
+
+  /// A row of chips over the document that jump to each section (Objectives,
+  /// Vocabulary, Materials, Activities). On for a saved plan, where a teacher
+  /// comes back to find one part; off for a fresh plan read top to bottom.
+  final bool jumpChips;
+
+  @override
+  State<LessonPlanResultView> createState() => _LessonPlanResultViewState();
+}
+
+/// The sections a jump chip can land on, in reading order.
+enum _LessonSection { objectives, vocabulary, materials, activities }
+
+class _LessonPlanResultViewState extends State<LessonPlanResultView> {
+  final Map<_LessonSection, GlobalKey> _keys = {
+    for (final section in _LessonSection.values) section: GlobalKey(),
+  };
+  _LessonSection _current = _LessonSection.objectives;
+
+  /// Wraps a section so a chip can scroll to it; untouched without chips.
+  Widget _anchor(_LessonSection section, Widget child) => widget.jumpChips
+      ? KeyedSubtree(key: _keys[section], child: child)
+      : child;
+
+  void _jump(_LessonSection section) {
+    setState(() => _current = section);
+    final target = _keys[section]?.currentContext;
+    if (target == null) return;
+    Scrollable.ensureVisible(
+      target,
+      duration: context.motionEnabled ? AppMotion.medium : Duration.zero,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final plan = widget.plan;
+    final onRegenerate = widget.onRegenerate;
 
     // The document blocks, in reading order. Content is unchanged from the flat
     // renderer — only the composition around it is new.
@@ -66,24 +109,36 @@ class LessonPlanResultView extends StatelessWidget {
           body: plan.validationWarning!.message,
         ),
       if (plan.objectives.isNotEmpty)
-        DocumentSheetSection(
-          title: l10n.lessonPlanObjectives,
-          child: _Bullets(items: plan.objectives),
+        _anchor(
+          _LessonSection.objectives,
+          DocumentSheetSection(
+            title: l10n.lessonPlanObjectives,
+            child: _Bullets(items: plan.objectives),
+          ),
         ),
       if (plan.keyVocabulary.isNotEmpty)
-        DocumentSheetSection(
-          title: l10n.lessonPlanVocabulary,
-          child: _Vocabulary(terms: plan.keyVocabulary),
+        _anchor(
+          _LessonSection.vocabulary,
+          DocumentSheetSection(
+            title: l10n.lessonPlanVocabulary,
+            child: _Vocabulary(terms: plan.keyVocabulary),
+          ),
         ),
       if (plan.materials.isNotEmpty)
-        DocumentSheetSection(
-          title: l10n.lessonPlanMaterials,
-          child: _Bullets(items: plan.materials),
+        _anchor(
+          _LessonSection.materials,
+          DocumentSheetSection(
+            title: l10n.lessonPlanMaterials,
+            child: _Bullets(items: plan.materials),
+          ),
         ),
       if (plan.activities.isNotEmpty)
-        DocumentSheetSection(
-          title: l10n.lessonPlanActivities,
-          child: _Activities(activities: plan.activities),
+        _anchor(
+          _LessonSection.activities,
+          DocumentSheetSection(
+            title: l10n.lessonPlanActivities,
+            child: _Activities(activities: plan.activities),
+          ),
         ),
       if (plan.assessment != null)
         DocumentSheetSection(
@@ -117,18 +172,73 @@ class LessonPlanResultView extends StatelessWidget {
         AppBadge(icon: LucideIcons.clock, label: plan.duration!),
     ];
 
-    return DocumentSheet(
+    final savedAt = widget.savedAt;
+    final sheet = DocumentSheet(
       docType: l10n.lessonPlanTitle,
       title: plan.title,
       meta: meta,
+      subline: savedAt == null
+          ? null
+          : l10n.libraryDetailSavedOn(
+              MaterialLocalizations.of(
+                context,
+              ).formatMediumDate(savedAt.toLocal()),
+            ),
       footer: onRegenerate == null
           ? null
           : _ActionBar(
               plan: plan,
-              onRegenerate: onRegenerate!,
-              saveRequest: saveRequest,
+              onRegenerate: onRegenerate,
+              saveRequest: widget.saveRequest,
             ),
       children: revealed,
+    );
+
+    // The sections this plan actually has, each with its chip label.
+    final chips = <(_LessonSection, String)>[
+      if (plan.objectives.isNotEmpty)
+        (_LessonSection.objectives, l10n.lessonJumpObjectives),
+      if (plan.keyVocabulary.isNotEmpty)
+        (_LessonSection.vocabulary, l10n.lessonJumpVocabulary),
+      if (plan.materials.isNotEmpty)
+        (_LessonSection.materials, l10n.lessonPlanMaterials),
+      if (plan.activities.isNotEmpty)
+        (
+          _LessonSection.activities,
+          '${l10n.lessonPlanActivities} ${plan.activities.length}',
+        ),
+    ];
+    // Jumping is only worth a row when there is somewhere to jump to.
+    if (!widget.jumpChips || chips.length < 2) return sheet;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SingleChildScrollView(
+          key: const ValueKey('lesson-jump-chips'),
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final (section, label) in chips) ...[
+                if (section != chips.first.$1)
+                  const SizedBox(width: AppSpacing.space2),
+                MapChip(
+                  key: ValueKey('lesson-jump-${section.name}'),
+                  label: label,
+                  selected: _current == section,
+                  selectedFill: AppColors.accentFill,
+                  idleFill: AppColors.tileSaffronBg,
+                  idleInk: AppColors.tileAmberInk,
+                  onTap: () => _jump(section),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        sheet,
+      ],
     );
   }
 }

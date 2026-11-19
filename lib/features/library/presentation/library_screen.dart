@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/platform/share_service.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/data/library_items_provider.dart';
@@ -21,6 +23,8 @@ import '../../../shared/widgets/map_icon_tile.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
+import '../data/library_item_detail_provider.dart';
+import 'library_share_text.dart';
 
 /// My work: the teacher's own saved work, drawn to the UX map's Library screen
 /// (App board E1). A large title, a voice-friendly search pill, leaf filter
@@ -84,7 +88,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         l10n.libraryMyWork,
                         style: Theme.of(context).textTheme.displayLarge
                             ?.copyWith(
-                              fontSize: 27,
+                              fontSize: AppText.pageTitleSize,
                               color: AppColors.textStrong,
                             ),
                       ),
@@ -568,6 +572,9 @@ class _WorkRow extends StatelessWidget {
                   ],
                 ),
               ),
+              // A saved item can be shared straight from the list, not only
+              // from inside it. Hidden while multi-selecting.
+              if (!selecting) _RowShareButton(item: item),
               // No "Synced": everything listed came from the server. A state
               // label returns only for a problem (an offline save waiting to
               // upload), which this build does not make yet.
@@ -575,6 +582,61 @@ class _WorkRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A saved item's Share button in the My-work list. The row carries only a
+/// summary, so this fetches the full document, renders it to plain text (the
+/// same text the detail screen's Share bar sends) and hands it to the OS share
+/// sheet, falling back to the clipboard if that is unavailable.
+class _RowShareButton extends ConsumerWidget {
+  const _RowShareButton({required this.item});
+
+  final LibraryItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+
+    Future<void> share() async {
+      String? shareText;
+      try {
+        final full = await ref.read(libraryItemDetailProvider(item.id).future);
+        shareText = libraryShareText(full, l10n);
+      } catch (_) {
+        shareText = null;
+      }
+      if (!context.mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      if (shareText == null || shareText.isEmpty) {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(l10n.resultShareFailed)));
+        return;
+      }
+      final subject = item.title.isEmpty ? null : item.title;
+      try {
+        await ref
+            .read(shareServiceProvider)
+            .shareText(shareText, subject: subject);
+      } catch (_) {
+        await Clipboard.setData(ClipboardData(text: shareText));
+        if (!context.mounted) return;
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(l10n.resultShareFailed)));
+      }
+    }
+
+    return IconButton(
+      icon: const Icon(
+        LucideIcons.share2,
+        size: 18,
+        color: AppColors.textMuted,
+      ),
+      tooltip: l10n.actionShare,
+      onPressed: share,
     );
   }
 }
@@ -717,14 +779,14 @@ class _NewButton extends StatelessWidget {
               children: [
                 const Icon(
                   LucideIcons.plus,
-                  size: 18,
+                  size: AppIconSize.compact,
                   color: AppColors.textOnAccent,
                 ),
                 const SizedBox(width: AppSpacing.space1),
                 Text(
                   context.l10n.libraryNew,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontSize: 14.5,
+                    fontSize: AppText.rowTitleSize,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textOnAccent,
                   ),

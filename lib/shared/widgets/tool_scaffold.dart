@@ -57,6 +57,7 @@ class ToolScaffold extends ConsumerStatefulWidget {
     this.result,
     this.onSubmit,
     this.submitLabel,
+    this.submitSubLabel,
     this.isBusy = false,
     this.vidyaAction = true,
     this.onMinimise,
@@ -93,6 +94,9 @@ class ToolScaffold extends ConsumerStatefulWidget {
   final Widget? result;
   final VoidCallback? onSubmit;
   final String? submitLabel;
+
+  /// A small second line under the submit label (e.g. a time estimate).
+  final String? submitSubLabel;
   final bool isBusy;
 
   /// The per-screen v3 wash (Design System v3: every screen has its own
@@ -224,6 +228,7 @@ class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
         label: widget.submitLabel ?? 'Generate',
         onPressed: widget.onResubmit,
         ink: widget.inkSubmit,
+        subLabel: widget.submitSubLabel,
       );
     } else if (widget.onSubmit != null) {
       bottom = PrimaryButton(
@@ -233,6 +238,7 @@ class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
             : widget.onSubmit,
         isBusy: widget.isBusy,
         ink: widget.inkSubmit,
+        subLabel: widget.submitSubLabel,
       );
     } else {
       bottom = null;
@@ -266,11 +272,14 @@ class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
               Opacity(
                 opacity: working ? 0.4 : 1,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                     AppSpacing.mapGutter,
                     AppSpacing.space2,
                     AppSpacing.mapGutter,
-                    AppSpacing.space6,
+                    // Clear the floating VIDYA orb that parks bottom-right over
+                    // tool screens: extra end-space so the last field or tile
+                    // always scrolls above the orb instead of under it.
+                    AppSpacing.space6 + (widget.vidyaAction ? 56 : 0),
                   ),
                   child: Align(
                     alignment: Alignment.topCenter,
@@ -416,10 +425,7 @@ class _WorkingBarState extends State<_WorkingBar>
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    );
+    _pulse = AnimationController(vsync: this, duration: AppMotion.orbWorkPulse);
     // NOTE: no inherited-lookups here — `_syncPulse` reads `motionEnabled`,
     // which must happen in didChangeDependencies (called before the first
     // build) instead.
@@ -460,7 +466,7 @@ class _WorkingBarState extends State<_WorkingBar>
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: AppColors.milk50,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+        borderRadius: AppRadius.rSheet,
         boxShadow: [AppShadows.sheet],
       ),
       child: Padding(
@@ -576,15 +582,15 @@ class _ScaffoldPill extends StatelessWidget {
       color: tonal
           ? AppColors.ink900.withValues(alpha: 0.06)
           : Colors.transparent,
-      borderRadius: BorderRadius.circular(9999),
+      borderRadius: AppRadius.rPill,
       child: InkWell(
-        borderRadius: BorderRadius.circular(9999),
+        borderRadius: AppRadius.rPill,
         onTap: onTap,
         child: Container(
           height: 46,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(9999),
+            borderRadius: AppRadius.rPill,
             border: tonal
                 ? null
                 : Border.all(color: AppColors.ink900.withValues(alpha: 0.14)),

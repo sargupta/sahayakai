@@ -143,7 +143,7 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
     if (!mounted) return;
     final ctx = _resultKey.currentContext;
     if (ctx == null) return;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     Scrollable.ensureVisible(
       ctx,
       duration: reduce ? Duration.zero : AppMotion.medium,

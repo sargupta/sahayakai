@@ -46,8 +46,8 @@ class _RollCallVoiceSheetState extends ConsumerState<RollCallVoiceSheet> {
   _Phase _phase = _Phase.starting;
 
   static final BorderRadius _sheetRadius = BorderRadius.only(
-    topLeft: AppRadius.rHero.topLeft,
-    topRight: AppRadius.rHero.topRight,
+    topLeft: AppRadius.rPanel.topLeft,
+    topRight: AppRadius.rPanel.topRight,
   );
 
   @override

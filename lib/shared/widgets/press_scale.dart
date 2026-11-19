@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../motion/animated_entrance.dart';
 
 /// The app-wide tap-depress: presses its child from 1.0 to [pressedScale] on
 /// pointer-down and releases on up/cancel. It only OBSERVES pointers (a
@@ -30,7 +31,7 @@ class _PressableScaleState extends State<PressableScale> {
 
   @override
   Widget build(BuildContext context) {
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     final active = widget.enabled && !reduce;
 
     void set(bool v) {

@@ -217,7 +217,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     if (!mounted) return;
     final ctx = _resultKey.currentContext;
     if (ctx == null) return;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     Scrollable.ensureVisible(
       ctx,
       duration: reduce ? Duration.zero : AppMotion.medium,
@@ -291,6 +291,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       onResubmit: _submit,
       deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.lessonComposerGenerate,
+      submitSubLabel: l10n.lessonComposerGenerateTime,
       // Hide the sticky Generate button once a plan is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
@@ -327,7 +328,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppRadius.rRow,
                     ),
                     child: Text(
                       'From your task: ${widget.taskId}',

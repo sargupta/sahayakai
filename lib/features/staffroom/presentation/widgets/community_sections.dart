@@ -139,7 +139,7 @@ class CommunitySectionsCloseTab extends StatelessWidget {
               ),
               child: const Icon(
                 LucideIcons.chevronLeft,
-                size: 16,
+                size: AppIconSize.small,
                 color: AppColors.textLink,
               ),
             ),
@@ -288,7 +288,7 @@ class _SectionRow extends StatelessWidget {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: AppRadius.rPanel,
       side: BorderSide(
         color: selected ? AppColors.mapOptOnRing : AppColors.borderHairline,
       ),
@@ -317,7 +317,7 @@ class _SectionRow extends StatelessWidget {
                     height: 38,
                     decoration: BoxDecoration(
                       color: wellColor,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppRadius.rRow,
                     ),
                     child: Icon(icon, size: 19, color: iconColor),
                   ),

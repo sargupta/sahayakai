@@ -57,8 +57,9 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
     });
     widget.onJoinedChanged?.call(true);
     try {
-      final newlyJoined =
-          await ref.read(staffroomTransportProvider).joinGroup(widget.groupId);
+      final newlyJoined = await ref
+          .read(staffroomTransportProvider)
+          .joinGroup(widget.groupId);
       if (!mounted) return;
       // `joined: false` = "already a member" (idempotent) — still a member.
       setState(() {
@@ -105,12 +106,16 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: scheme.primary.withValues(alpha: 0.12),
-            borderRadius: AppRadius.rControl,
+            borderRadius: AppRadius.rRow,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.check, size: AppIconSize.inline, color: saffronText),
+              Icon(
+                LucideIcons.check,
+                size: AppIconSize.inline,
+                color: saffronText,
+              ),
               const SizedBox(width: AppSpacing.space2),
               Flexible(
                 child: Text(

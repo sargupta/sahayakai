@@ -8917,6 +8917,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Counts start again on {date}'**
   String meUsageResets(String date);
+
+  /// Home, Waiting for you: the action on the unread-messages row.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get homeWaitingRead;
+
+  /// Home, Waiting for you: the action on the new-updates row.
+  ///
+  /// In en, this message translates to:
+  /// **'See'**
+  String get homeWaitingSee;
+
+  /// Home, beside Waiting for you: how many things wait.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 thing} other{{count} things}}'**
+  String homeWaitingCount(int count);
+
+  /// Small line under the Generate lesson button: how long generation takes.
+  ///
+  /// In en, this message translates to:
+  /// **'about 30 seconds'**
+  String get lessonComposerGenerateTime;
+
+  /// Community, Daily Briefing card: the other headlines after the lead story.
+  ///
+  /// In en, this message translates to:
+  /// **'Also: {headlines}'**
+  String staffroomBriefingAlso(String headlines);
+
+  /// Community, Daily Briefing card: button that unfolds every story.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Read the story} other{Read all {count}}}'**
+  String staffroomBriefingReadAll(int count);
+
+  /// Messages page: line under the title.
+  ///
+  /// In en, this message translates to:
+  /// **'Chats with teachers you are connected to'**
+  String get inboxSubtitle;
+
+  /// Blocked teachers page: line under the title.
+  ///
+  /// In en, this message translates to:
+  /// **'Their posts and messages are hidden from you'**
+  String get moderationBlockedSubtitle;
+
+  /// Blocked teachers, empty: how to block someone.
+  ///
+  /// In en, this message translates to:
+  /// **'To block a teacher, open the menu on one of their posts.'**
+  String get moderationBlockedHint;
+
+  /// Saved lesson: short chip that jumps to Learning objectives.
+  ///
+  /// In en, this message translates to:
+  /// **'Objectives'**
+  String get lessonJumpObjectives;
+
+  /// Saved lesson: short chip that jumps to Key vocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Vocabulary'**
+  String get lessonJumpVocabulary;
+
+  /// Settings, Voice: label over the Voice/Text choice.
+  ///
+  /// In en, this message translates to:
+  /// **'VIDYA starts with'**
+  String get settingsVidyaStartsWith;
+
+  /// Settings: VIDYA starts listening by voice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get settingsStartVoice;
+
+  /// Settings: VIDYA starts with the typing box.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get settingsStartText;
 }
 
 class _AppLocalizationsDelegate

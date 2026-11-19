@@ -480,10 +480,10 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
               height: 48,
               child: IconButton(
                 onPressed: () => controller.cancel(),
-                icon: const Icon(LucideIcons.square, size: 18),
+                icon: const Icon(LucideIcons.square, size: AppIconSize.compact),
                 style: IconButton.styleFrom(
                   backgroundColor: AppColors.accentFill,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.textOnAccent,
                 ),
               ),
             )
@@ -522,8 +522,8 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                       ),
                       child: Icon(
                         hasText ? LucideIcons.arrowUp : LucideIcons.mic,
-                        size: 18,
-                        color: Colors.white,
+                        size: AppIconSize.compact,
+                        color: AppColors.textOnAccent,
                       ),
                     ),
                   ),
@@ -600,7 +600,7 @@ class _StatusLine extends StatelessWidget {
                 children: [
                   const Icon(
                     LucideIcons.volume1,
-                    size: 18,
+                    size: AppIconSize.compact,
                     color: AppColors.saffron800,
                   ),
                   const SizedBox(width: AppSpacing.space2),

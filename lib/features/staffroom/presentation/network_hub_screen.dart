@@ -242,7 +242,7 @@ class _NetworkHubScreenState extends ConsumerState<NetworkHubScreen> {
                         l10n.communityTitle,
                         style: Theme.of(context).textTheme.displayLarge
                             ?.copyWith(
-                              fontSize: 27,
+                              fontSize: AppText.pageTitleSize,
                               color: AppColors.textStrong,
                             ),
                       ),
@@ -327,7 +327,7 @@ class _NotificationsBell extends ConsumerWidget {
                   ),
                   child: const Icon(
                     LucideIcons.bell,
-                    size: 18,
+                    size: AppIconSize.compact,
                     color: AppColors.textStrong,
                   ),
                 ),

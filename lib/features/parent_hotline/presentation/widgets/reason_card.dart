@@ -82,7 +82,7 @@ class ReasonCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.space2),
                   Icon(
                     selected ? LucideIcons.checkCircle2 : LucideIcons.circle,
-                    size: 18,
+                    size: AppIconSize.compact,
                     color: selected ? AppColors.accent : AppColors.textFaint,
                   ),
                 ],

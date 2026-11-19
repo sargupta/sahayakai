@@ -21,6 +21,7 @@ class DocumentSheet extends StatelessWidget {
     required this.title,
     required this.children,
     this.meta = const [],
+    this.subline,
     this.footer,
     this.maxWidth = 640,
   });
@@ -29,6 +30,10 @@ class DocumentSheet extends StatelessWidget {
   final String title;
   final List<Widget> children;
   final List<Widget> meta;
+
+  /// A quiet line under the meta badges (e.g. "Saved Sun, 15 Nov" on a saved
+  /// document). Null draws nothing, so live documents are unchanged.
+  final String? subline;
   final Widget? footer;
   final double maxWidth;
 
@@ -38,7 +43,9 @@ class DocumentSheet extends StatelessWidget {
     final extras = AppTextExtras.of(context);
     final width = MediaQuery.maybeOf(context)?.size.width ?? 0;
     final pad = width >= 600 ? AppSpacing.space8 : AppSpacing.space6; // 32 / 24
-    final docTypeLabel = _hasNonLatin(docType) ? docType : docType.toUpperCase();
+    final docTypeLabel = _hasNonLatin(docType)
+        ? docType
+        : docType.toUpperCase();
 
     final body = <Widget>[];
     for (var i = 0; i < children.length; i++) {
@@ -74,6 +81,13 @@ class DocumentSheet extends StatelessWidget {
                   spacing: AppSpacing.space2,
                   runSpacing: AppSpacing.space2,
                   children: meta,
+                ),
+              ],
+              if (subline != null) ...[
+                const SizedBox(height: AppSpacing.space2),
+                Text(
+                  subline!,
+                  style: text.bodySmall?.copyWith(color: AppColors.textMuted),
                 ),
               ],
               const SizedBox(height: AppSpacing.space6),

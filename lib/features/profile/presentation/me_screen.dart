@@ -252,7 +252,7 @@ class _Identity extends StatelessWidget {
                       Text(
                         displayName,
                         style: text.displayLarge?.copyWith(
-                          fontSize: 19,
+                          fontSize: AppText.compactTitleSize,
                           color: AppColors.textStrong,
                         ),
                       ),
@@ -750,7 +750,7 @@ class _SettingsRow extends StatelessWidget {
         padding: const EdgeInsetsDirectional.only(start: 14, end: 8),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: AppColors.textBody),
+            Icon(icon, size: AppIconSize.compact, color: AppColors.textBody),
             const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: Padding(

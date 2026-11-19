@@ -513,7 +513,7 @@ class _Preview extends StatelessWidget {
                   tooltip: l10n.imageInputRemove,
                   icon: const Icon(
                     LucideIcons.trash2,
-                    size: 18,
+                    size: AppIconSize.compact,
                     color: AppColors.textMuted,
                   ),
                 ),

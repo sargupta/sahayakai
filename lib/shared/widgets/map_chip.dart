@@ -17,6 +17,7 @@ class MapChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.selectedFill = AppColors.leaf500,
+    this.selectedInk,
     this.idleFill,
     this.idleInk = AppColors.textStrong,
     this.showCheck = false,
@@ -26,6 +27,11 @@ class MapChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final Color selectedFill;
+
+  /// Label (and tick) colour while selected. Null keeps the default white-on-
+  /// fill; pass a dark ink for a light [selectedFill] (a tinted, not solid,
+  /// selected chip).
+  final Color? selectedInk;
 
   /// Draws a tick before the label while [selected], so "on" reads by shape
   /// as well as by colour (multi-select chips such as a form's Include row).
@@ -38,7 +44,7 @@ class MapChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fill = selected ? selectedFill : (idleFill ?? Colors.white);
-    final ink = selected ? AppColors.textOnAccent : idleInk;
+    final ink = selected ? (selectedInk ?? AppColors.textOnAccent) : idleInk;
     final edge = selected || idleFill != null
         ? BorderSide.none
         : const BorderSide(color: AppColors.borderHairline);

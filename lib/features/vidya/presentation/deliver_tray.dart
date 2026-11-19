@@ -110,10 +110,12 @@ class DeliverTray extends ConsumerWidget {
                   // Primary CTA: 50px pill, saffron500, 0 8 20 saffron@.34 lift.
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(9999),
+                      borderRadius: AppRadius.rPill,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.saffron500.withValues(alpha: 0.34), // rgba(201,106,40,.34)
+                          color: AppColors.saffron500.withValues(
+                            alpha: 0.34,
+                          ), // rgba(201,106,40,.34)
                           offset: Offset(0, 8),
                           blurRadius: 20,
                         ),
@@ -123,19 +125,21 @@ class DeliverTray extends ConsumerWidget {
                       onPressed: () => _run(
                         context,
                         ref,
-                        () => ref.read(shareServiceProvider).shareText(
+                        () => ref
+                            .read(shareServiceProvider)
+                            .shareText(
                               deliverable.text,
                               subject: deliverable.shareSubject,
                             ),
                       ),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.accentFill,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.textOnAccent,
                         minimumSize: const Size.fromHeight(50),
                         padding: EdgeInsets.zero,
                         elevation: 0,
                         shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(9999)),
+                          borderRadius: AppRadius.rPill,
                         ),
                       ),
                       child: Text(
@@ -143,7 +147,7 @@ class DeliverTray extends ConsumerWidget {
                         style: text.titleMedium?.copyWith(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: AppColors.textOnAccent,
                         ),
                       ),
                     ),
@@ -157,11 +161,7 @@ class DeliverTray extends ConsumerWidget {
     );
   }
 
-  Widget _grid(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l10n,
-  ) {
+  Widget _grid(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
     final tiles = <Widget>[
       _DeliverTile(
         label: l10n.deliverParentGroup,
@@ -170,10 +170,9 @@ class DeliverTray extends ConsumerWidget {
         onTap: () => _run(
           context,
           ref,
-          () => ref.read(shareServiceProvider).shareText(
-                deliverable.text,
-                subject: deliverable.shareSubject,
-              ),
+          () => ref
+              .read(shareServiceProvider)
+              .shareText(deliverable.text, subject: deliverable.shareSubject),
         ),
       ),
       _DeliverTile(
@@ -182,10 +181,9 @@ class DeliverTray extends ConsumerWidget {
         onTap: () => _run(
           context,
           ref,
-          () => ref.read(shareServiceProvider).shareText(
-                deliverable.text,
-                subject: deliverable.shareSubject,
-              ),
+          () => ref
+              .read(shareServiceProvider)
+              .shareText(deliverable.text, subject: deliverable.shareSubject),
         ),
       ),
       _DeliverTile(
@@ -212,10 +210,9 @@ class DeliverTray extends ConsumerWidget {
         onTap: () => _run(
           context,
           ref,
-          () => ref.read(shareServiceProvider).shareText(
-                deliverable.text,
-                subject: deliverable.shareSubject,
-              ),
+          () => ref
+              .read(shareServiceProvider)
+              .shareText(deliverable.text, subject: deliverable.shareSubject),
         ),
       ),
       _DeliverTile(
@@ -338,7 +335,7 @@ class _Header extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: AppColors.saffron500.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(9999),
+            borderRadius: AppRadius.rPill,
           ),
           child: Text(
             l10n.deliverPreview,

@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/media/image_input.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -119,7 +120,7 @@ class _AssessAssignmentScreenState
     if (!mounted) return;
     final ctx = _resultKey.currentContext;
     if (ctx == null) return;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     Scrollable.ensureVisible(
       ctx,
       duration: reduce ? Duration.zero : AppMotion.medium,

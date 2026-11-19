@@ -11,6 +11,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/media/image_input.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/map_card.dart';
@@ -210,7 +211,7 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
     if (!mounted) return;
     final ctx = _resultKey.currentContext;
     if (ctx == null) return;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     Scrollable.ensureVisible(
       ctx,
       duration: reduce ? Duration.zero : AppMotion.medium,

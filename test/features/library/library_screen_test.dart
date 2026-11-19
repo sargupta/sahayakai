@@ -209,8 +209,10 @@ void main() {
       expect(find.text('Fractions quiz'), findsOneWidget);
       expect(find.byType(MapEmptyNote), findsNothing);
       // UX map: the screen is titled "My work"; VIDYA is docked in the tab
-      // bar, so the screen carries no app-bar launcher of its own.
-      expect(find.text('My work'), findsOneWidget);
+      // bar, so the screen carries no app-bar launcher of its own. "My work"
+      // now shows twice: the page title and the active tab's label (the tab
+      // was renamed from "Library" to match the page).
+      expect(find.text('My work'), findsNWidgets(2));
     });
 
     testWidgets('shows a shaped skeleton while the read is in flight, never a '

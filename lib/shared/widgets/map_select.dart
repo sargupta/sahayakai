@@ -111,7 +111,7 @@ class MapSelect<T> extends StatelessWidget {
                       Text(
                         _valueLabel,
                         style: text.bodyLarge?.copyWith(
-                          fontSize: 14.5,
+                          fontSize: AppText.rowTitleSize,
                           fontWeight: FontWeight.w700,
                           color: dark
                               ? AppColors.scanInk

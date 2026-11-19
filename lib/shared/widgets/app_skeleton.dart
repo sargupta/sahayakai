@@ -73,7 +73,7 @@ class SkeletonBar extends StatelessWidget {
 }
 
 /// A card-sized shimmer block: a placeholder for a question or activity card.
-/// Carries the card radius ([AppRadius.rLg]), unlike the text-line [SkeletonBar].
+/// Carries the card radius ([AppRadius.rRow]), unlike the text-line [SkeletonBar].
 class SkeletonBlock extends StatelessWidget {
   const SkeletonBlock({super.key, this.height = card});
 
@@ -89,7 +89,7 @@ class SkeletonBlock extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: scheme.surfaceContainer,
-        borderRadius: AppRadius.rLg,
+        borderRadius: AppRadius.rRow,
       ),
     );
   }

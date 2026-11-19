@@ -521,7 +521,7 @@ class _Medallion extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.rectangle,
-        borderRadius: AppRadius.rWell,
+        borderRadius: AppRadius.rField,
         color: scheme.primaryContainer,
       ),
       child: Text(

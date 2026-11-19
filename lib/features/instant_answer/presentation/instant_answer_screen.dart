@@ -146,7 +146,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     if (!mounted) return;
     final ctx = _resultKey.currentContext;
     if (ctx == null) return;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     Scrollable.ensureVisible(
       ctx,
       duration: reduce ? Duration.zero : AppMotion.medium,
@@ -213,7 +213,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     return ToolScaffold(
       title: l10n.instantAnswerTitle,
       subtitle: l10n.instantComposerSubtitle,
-      inkSubmit: true,
+      // Saffron CTA, consistent with every other tool's primary action.
       isBusy: state.isLoading,
       // Output screen (UX map Flow 4): the result replaces the form;
       // Edit brings the form back and keeps the result until a new one lands.

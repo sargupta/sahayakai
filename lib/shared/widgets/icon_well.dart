@@ -39,16 +39,22 @@ class IconWell extends StatelessWidget {
     final box = feature ? 64.0 : AppIconSize.wellBox; // 64 / 48
     final glyph = feature ? 28.0 : AppIconSize.well; // 28 / 20
 
-    final borderGradient =
-        isDark ? AppGlass.dBorderGradient : AppGlass.lBorderGradient;
-    final outerShape = AppGlass.squircle(AppRadius.well);
-    final innerShape = AppGlass.squircle(AppRadius.well - AppGlass.borderWidth);
+    final borderGradient = isDark
+        ? AppGlass.dBorderGradient
+        : AppGlass.lBorderGradient;
+    final outerShape = AppGlass.squircle(AppRadius.field);
+    final innerShape = AppGlass.squircle(
+      AppRadius.field - AppGlass.borderWidth,
+    );
 
     return SizedBox(
       width: box,
       height: box,
       child: DecoratedBox(
-        decoration: ShapeDecoration(shape: outerShape, gradient: borderGradient),
+        decoration: ShapeDecoration(
+          shape: outerShape,
+          gradient: borderGradient,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(AppGlass.borderWidth),
           child: DecoratedBox(
@@ -64,11 +70,14 @@ class IconWell extends StatelessWidget {
               ),
             ),
             child: Center(
-        child: Transform.translate(
-          offset: const Offset(1, 0), // optical alignment for asymmetric icons
-          child: Icon(icon, size: glyph, color: scheme.primary),
-        ),
-      ),
+              child: Transform.translate(
+                offset: const Offset(
+                  1,
+                  0,
+                ), // optical alignment for asymmetric icons
+                child: Icon(icon, size: glyph, color: scheme.primary),
+              ),
+            ),
           ),
         ),
       ),

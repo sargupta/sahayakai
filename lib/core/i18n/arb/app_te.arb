@@ -1484,5 +1484,19 @@
   "communityRequestsWaiting": "{count, plural, =1{1 అభ్యర్థన} other{{count} అభ్యర్థనలు}}",
   "staffroomReadMore": "మరింత చదవండి",
   "staffroomShowLess": "తక్కువ చూపించు",
-  "meUsageResets": "లెక్క {date}న మళ్ళీ మొదలవుతుంది"
+  "meUsageResets": "లెక్క {date}న మళ్ళీ మొదలవుతుంది",
+  "homeWaitingRead": "చదవండి",
+  "homeWaitingSee": "చూడండి",
+  "homeWaitingCount": "{count, plural, =1{1 పని} other{{count} పనులు}}",
+  "lessonComposerGenerateTime": "సుమారు 30 సెకన్లు",
+  "staffroomBriefingAlso": "అలాగే: {headlines}",
+  "staffroomBriefingReadAll": "{count, plural, =1{వార్త చదవండి} other{మొత్తం {count} చదవండి}}",
+  "inboxSubtitle": "మీరు అనుసంధానమైన ఉపాధ్యాయులతో సంభాషణలు",
+  "moderationBlockedSubtitle": "వారి పోస్ట్‌లు, సందేశాలు మీకు కనిపించవు",
+  "moderationBlockedHint": "ఒక ఉపాధ్యాయుడిని బ్లాక్ చేయడానికి, వారి ఏదైనా పోస్ట్‌లోని మెనూను తెరవండి.",
+  "lessonJumpObjectives": "లక్ష్యాలు",
+  "lessonJumpVocabulary": "పదజాలం",
+  "settingsVidyaStartsWith": "VIDYA దేనితో మొదలవ్వాలి",
+  "settingsStartVoice": "వాయిస్",
+  "settingsStartText": "టెక్స్ట్"
 }

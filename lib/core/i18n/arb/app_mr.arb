@@ -1484,5 +1484,19 @@
   "communityRequestsWaiting": "{count, plural, =1{1 विनंती} other{{count} विनंत्या}}",
   "staffroomReadMore": "अधिक वाचा",
   "staffroomShowLess": "कमी दाखवा",
-  "meUsageResets": "मोजणी {date} रोजी पुन्हा सुरू होईल"
+  "meUsageResets": "मोजणी {date} रोजी पुन्हा सुरू होईल",
+  "homeWaitingRead": "वाचा",
+  "homeWaitingSee": "पहा",
+  "homeWaitingCount": "{count, plural, =1{1 काम} other{{count} कामे}}",
+  "lessonComposerGenerateTime": "सुमारे 30 सेकंद",
+  "staffroomBriefingAlso": "तसेच: {headlines}",
+  "staffroomBriefingReadAll": "{count, plural, =1{बातमी वाचा} other{सर्व {count} वाचा}}",
+  "inboxSubtitle": "तुम्ही जोडलेल्या शिक्षकांशी गप्पा",
+  "moderationBlockedSubtitle": "त्यांच्या पोस्ट आणि संदेश तुमच्यापासून लपवले जातात",
+  "moderationBlockedHint": "शिक्षकाला ब्लॉक करण्यासाठी त्यांच्या एखाद्या पोस्टवरील मेनू उघडा.",
+  "lessonJumpObjectives": "उद्दिष्टे",
+  "lessonJumpVocabulary": "शब्दसंग्रह",
+  "settingsVidyaStartsWith": "VIDYA कशाने सुरू करावी",
+  "settingsStartVoice": "आवाज",
+  "settingsStartText": "मजकूर"
 }

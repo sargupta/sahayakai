@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/glass_surface.dart';
 
 /// P0.1 — Splash. "The Seal" (PREMIUM_DESIGN_SPEC.md §4 / §6b U5).
@@ -132,7 +133,7 @@ class _SealBrandState extends State<_SealBrand>
     // jumps to the final composed frame, everyone else plays the sequence.
     if (_kicked) return;
     _kicked = true;
-    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduce = !context.motionEnabled;
     if (reduce) {
       _c.value = 1.0;
     } else {
@@ -290,7 +291,11 @@ class _Seal extends StatelessWidget {
         boxShadow: AppShadows.e2,
       ),
       alignment: Alignment.center,
-      child: const Icon(LucideIcons.graduationCap, size: 40, color: AppColors.textOnAccent),
+      child: const Icon(
+        LucideIcons.graduationCap,
+        size: 40,
+        color: AppColors.textOnAccent,
+      ),
     );
   }
 }
