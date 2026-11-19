@@ -8,7 +8,6 @@ import '../../../../core/platform/clock.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/map_card.dart';
-import '../../../../shared/widgets/map_icon_tile.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../inbox/presentation/inbox_time.dart';
 import '../../data/chat_stream_provider.dart';
@@ -19,6 +18,7 @@ import '../../domain/teacher.dart';
 import '../community_network_screen.dart' show openCommunityNetwork;
 import '../share_to_community_sheet.dart';
 import 'connection_action.dart';
+import 'group_chip.dart' show groupIcon, groupTint;
 import 'post_type_style.dart';
 import 'staffroom_avatar.dart';
 
@@ -494,14 +494,6 @@ class _KindStart extends StatelessWidget {
 
 // ─── Your groups ────────────────────────────────────────────────────────────
 
-/// A group's tint and icon on its card, from what kind of group it is.
-(MapTint, IconData) groupLook(GroupType type) => switch (type) {
-  GroupType.subjectGrade => (MapTint.indigo, LucideIcons.bookOpen),
-  GroupType.school => (MapTint.saffron, LucideIcons.school),
-  GroupType.region => (MapTint.leaf, LucideIcons.mapPin),
-  GroupType.interest => (MapTint.amber, LucideIcons.users),
-};
-
 /// The teacher's groups as a row of cards (a tinted band with the group's
 /// icon, the name, members and when it was last active), then "Find more
 /// groups".
@@ -598,7 +590,8 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
-    final (tint, icon) = groupLook(group.type);
+    final tint = groupTint(group);
+    final icon = groupIcon(group);
     final active = inboxRelativeTime(group.lastActivityAt, now, l10n);
     final meta = [
       l10n.staffroomMemberCount(group.memberCount),
