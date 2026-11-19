@@ -5468,4 +5468,82 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get cmPostKindResourceHint => 'தாள், திட்டம் அல்லது இணைப்பு';
+
+  @override
+  String get cmPostReply => 'பதில்';
+
+  @override
+  String get cmPostHelpOut => 'உதவுங்கள்';
+
+  @override
+  String get cmPostReplyHint =>
+      'இந்தப் பதிவை மேற்கோள் காட்டி குழு அரட்டையைத் திறக்கும்';
+
+  @override
+  String get cmShareTitle => 'ஆசிரியர்களுடன் பகிருங்கள்';
+
+  @override
+  String get cmFeedStaffRoom => 'ஆசிரியர் அறை';
+
+  @override
+  String cmFeedTalkingToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'இன்று $count பேர் பேசுகின்றனர்',
+      one: 'இன்று 1 பேர் பேசுகிறார்',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmFeedInChatOne(String name) {
+    return '$name இன்று அரட்டையில் உள்ளார்';
+  }
+
+  @override
+  String cmFeedInChatTwo(String first, String second) {
+    return '$first, $second இன்று அரட்டையில் உள்ளனர்';
+  }
+
+  @override
+  String cmFeedInChatMany(String first, String second, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'இன்னும் $count ஆசிரியர்கள்',
+      one: 'இன்னும் 1 ஆசிரியர்',
+    );
+    return '$first, $second மற்றும் $_temp0 இன்று அரட்டையில் உள்ளனர்';
+  }
+
+  @override
+  String get cmFeedJoinChat => 'உரையாடலில் சேருங்கள்';
+
+  @override
+  String get cmFeedChatQuiet =>
+      'ஆசிரியர் அறையில் இன்னும் யாரும் எழுதவில்லை. வணக்கம் சொல்லுங்கள்.';
+
+  @override
+  String get cmFeedVoiceNote => 'குரல் செய்தி';
+
+  @override
+  String get cmFeedBriefing => 'தினசரி சுருக்கம்';
+
+  @override
+  String cmFeedYourGroups(int count) {
+    return 'உங்கள் குழுக்கள் · $count';
+  }
+
+  @override
+  String get cmFeedFindGroups => 'மேலும் குழுக்களைக் கண்டறியுங்கள்';
+
+  @override
+  String get cmFeedFromGroups => 'உங்கள் குழுக்களிலிருந்து';
+
+  @override
+  String get cmFeedSeeAll => 'அனைத்தையும் பாருங்கள்';
+
+  @override
+  String get cmFeedCaughtUp => 'நீங்கள் அனைத்தையும் பார்த்துவிட்டீர்கள்';
 }

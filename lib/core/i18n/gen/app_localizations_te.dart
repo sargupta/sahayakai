@@ -5396,4 +5396,81 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get cmPostKindResourceHint => 'షీట్, ప్రణాళిక లేదా లింక్';
+
+  @override
+  String get cmPostReply => 'జవాబు';
+
+  @override
+  String get cmPostHelpOut => 'సహాయం చేయండి';
+
+  @override
+  String get cmPostReplyHint => 'ఈ పోస్ట్‌ను ఉటంకిస్తూ గ్రూప్ చాట్ తెరుస్తుంది';
+
+  @override
+  String get cmShareTitle => 'ఉపాధ్యాయులతో పంచుకోండి';
+
+  @override
+  String get cmFeedStaffRoom => 'స్టాఫ్ రూమ్';
+
+  @override
+  String cmFeedTalkingToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ఈరోజు $count మంది మాట్లాడుతున్నారు',
+      one: 'ఈరోజు 1 మంది మాట్లాడుతున్నారు',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmFeedInChatOne(String name) {
+    return '$name ఈరోజు చాట్‌లో ఉన్నారు';
+  }
+
+  @override
+  String cmFeedInChatTwo(String first, String second) {
+    return '$first, $second ఈరోజు చాట్‌లో ఉన్నారు';
+  }
+
+  @override
+  String cmFeedInChatMany(String first, String second, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'మరో $count మంది ఉపాధ్యాయులు',
+      one: 'మరో 1 ఉపాధ్యాయులు',
+    );
+    return '$first, $second మరియు $_temp0 ఈరోజు చాట్‌లో ఉన్నారు';
+  }
+
+  @override
+  String get cmFeedJoinChat => 'సంభాషణలో చేరండి';
+
+  @override
+  String get cmFeedChatQuiet =>
+      'స్టాఫ్ రూమ్‌లో ఇంకా ఎవరూ రాయలేదు. నమస్కారం చెప్పండి.';
+
+  @override
+  String get cmFeedVoiceNote => 'వాయిస్ నోట్';
+
+  @override
+  String get cmFeedBriefing => 'రోజువారీ సంగ్రహం';
+
+  @override
+  String cmFeedYourGroups(int count) {
+    return 'మీ గ్రూపులు · $count';
+  }
+
+  @override
+  String get cmFeedFindGroups => 'మరిన్ని గ్రూపులు కనుగొనండి';
+
+  @override
+  String get cmFeedFromGroups => 'మీ గ్రూపుల నుండి';
+
+  @override
+  String get cmFeedSeeAll => 'అన్నీ చూడండి';
+
+  @override
+  String get cmFeedCaughtUp => 'మీరు అన్నీ చూసేశారు';
 }

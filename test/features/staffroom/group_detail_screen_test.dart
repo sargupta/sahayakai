@@ -250,7 +250,7 @@ void main() {
       await _pump(tester, fake: fake, initialLocation: Routes.staffroom);
 
       // The "Your groups" strip chip is present; tap it.
-      await tester.tap(find.byKey(const ValueKey<String>('group-chip-g1')));
+      await tester.tap(find.byKey(const ValueKey<String>('group-card-g1')));
       await tester.pumpAndSettle();
 
       expect(find.byType(GroupDetailScreen), findsOneWidget);

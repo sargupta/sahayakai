@@ -5364,4 +5364,81 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get cmPostKindResourceHint => 'ਸ਼ੀਟ, ਯੋਜਨਾ ਜਾਂ ਲਿੰਕ';
+
+  @override
+  String get cmPostReply => 'ਜਵਾਬ ਦਿਓ';
+
+  @override
+  String get cmPostHelpOut => 'ਮਦਦ ਕਰੋ';
+
+  @override
+  String get cmPostReplyHint => 'ਇਸ ਪੋਸਟ ਦਾ ਹਵਾਲਾ ਦੇ ਕੇ ਗਰੁੱਪ ਚੈਟ ਖੋਲ੍ਹਦਾ ਹੈ';
+
+  @override
+  String get cmShareTitle => 'ਅਧਿਆਪਕਾਂ ਨਾਲ ਸਾਂਝਾ ਕਰੋ';
+
+  @override
+  String get cmFeedStaffRoom => 'ਸਟਾਫ਼ ਰੂਮ';
+
+  @override
+  String cmFeedTalkingToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ਅੱਜ $count ਗੱਲ ਕਰ ਰਹੇ ਹਨ',
+      one: 'ਅੱਜ 1 ਗੱਲ ਕਰ ਰਿਹਾ ਹੈ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmFeedInChatOne(String name) {
+    return '$name ਅੱਜ ਚੈਟ ਵਿੱਚ ਹਨ';
+  }
+
+  @override
+  String cmFeedInChatTwo(String first, String second) {
+    return '$first ਅਤੇ $second ਅੱਜ ਚੈਟ ਵਿੱਚ ਹਨ';
+  }
+
+  @override
+  String cmFeedInChatMany(String first, String second, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ਹੋਰ ਅਧਿਆਪਕ',
+      one: '1 ਹੋਰ ਅਧਿਆਪਕ',
+    );
+    return '$first, $second ਅਤੇ $_temp0 ਅੱਜ ਚੈਟ ਵਿੱਚ ਹਨ';
+  }
+
+  @override
+  String get cmFeedJoinChat => 'ਗੱਲਬਾਤ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ';
+
+  @override
+  String get cmFeedChatQuiet =>
+      'ਸਟਾਫ਼ ਰੂਮ ਵਿੱਚ ਅਜੇ ਕਿਸੇ ਨੇ ਨਹੀਂ ਲਿਖਿਆ। ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਕਹੋ।';
+
+  @override
+  String get cmFeedVoiceNote => 'ਵੌਇਸ ਨੋਟ';
+
+  @override
+  String get cmFeedBriefing => 'ਰੋਜ਼ਾਨਾ ਬ੍ਰੀਫ਼ਿੰਗ';
+
+  @override
+  String cmFeedYourGroups(int count) {
+    return 'ਤੁਹਾਡੇ ਗਰੁੱਪ · $count';
+  }
+
+  @override
+  String get cmFeedFindGroups => 'ਹੋਰ ਗਰੁੱਪ ਲੱਭੋ';
+
+  @override
+  String get cmFeedFromGroups => 'ਤੁਹਾਡੇ ਗਰੁੱਪਾਂ ਤੋਂ';
+
+  @override
+  String get cmFeedSeeAll => 'ਸਭ ਵੇਖੋ';
+
+  @override
+  String get cmFeedCaughtUp => 'ਤੁਸੀਂ ਸਭ ਕੁਝ ਵੇਖ ਲਿਆ';
 }

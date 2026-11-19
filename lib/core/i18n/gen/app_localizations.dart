@@ -9169,6 +9169,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A sheet, plan or link'**
   String get cmPostKindResourceHint;
+
+  /// Community post footer: replies in the group chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get cmPostReply;
+
+  /// Community post footer on a request for help: answers in the group chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Help out'**
+  String get cmPostHelpOut;
+
+  /// Screen-reader hint on Reply / Help out.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the group chat with this post quoted'**
+  String get cmPostReplyHint;
+
+  /// Title of the sheet for writing a Community post.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with teachers'**
+  String get cmShareTitle;
+
+  /// Community: overline of the live staff room card.
+  ///
+  /// In en, this message translates to:
+  /// **'The staff room'**
+  String get cmFeedStaffRoom;
+
+  /// Community staff room card: teachers who wrote in the chat today.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 talking today} other{{count} talking today}}'**
+  String cmFeedTalkingToday(int count);
+
+  /// Community staff room card: the one teacher who wrote today.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is in the chat today'**
+  String cmFeedInChatOne(String name);
+
+  /// Community staff room card: the two teachers who wrote today.
+  ///
+  /// In en, this message translates to:
+  /// **'{first} and {second} are in the chat today'**
+  String cmFeedInChatTwo(String first, String second);
+
+  /// Community staff room card: two names and how many others wrote today.
+  ///
+  /// In en, this message translates to:
+  /// **'{first}, {second} and {count, plural, =1{1 more teacher are} other{{count} more teachers are}} in the chat today'**
+  String cmFeedInChatMany(String first, String second, int count);
+
+  /// Community staff room card: opens the staff room chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Join the conversation'**
+  String get cmFeedJoinChat;
+
+  /// Community staff room card when the chat has no messages.
+  ///
+  /// In en, this message translates to:
+  /// **'No one has written in the staff room yet. Say hello.'**
+  String get cmFeedChatQuiet;
+
+  /// Community staff room card: the newest message is a voice note.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note'**
+  String get cmFeedVoiceNote;
+
+  /// Community: overline over the pinned Daily Briefing post.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Briefing'**
+  String get cmFeedBriefing;
+
+  /// Community: overline over the row of the teacher's groups.
+  ///
+  /// In en, this message translates to:
+  /// **'Your groups · {count}'**
+  String cmFeedYourGroups(int count);
+
+  /// Community: last card of the groups row, opens Your network.
+  ///
+  /// In en, this message translates to:
+  /// **'Find more groups'**
+  String get cmFeedFindGroups;
+
+  /// Community: overline over the feed.
+  ///
+  /// In en, this message translates to:
+  /// **'From your groups'**
+  String get cmFeedFromGroups;
+
+  /// Community: link beside teachers you may know, opens Your network.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get cmFeedSeeAll;
+
+  /// Community: end of the feed.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get cmFeedCaughtUp;
 }
 
 class _AppLocalizationsDelegate

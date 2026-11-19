@@ -2,11 +2,14 @@ import 'dart:ui' show SemanticsFlag;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_transport.dart';
+import 'package:sahayakai/features/staffroom/domain/chat_quote.dart';
 import 'package:sahayakai/features/staffroom/domain/connection.dart';
 import 'package:sahayakai/features/staffroom/domain/group.dart';
 import 'package:sahayakai/features/staffroom/presentation/widgets/feed_post_card.dart';
@@ -63,18 +66,104 @@ void main() {
     expect(find.text('SR'), findsOneWidget);
   });
 
-  testWidgets('the comment icon always shows; the number only with comments', (
+  testWidgets('the kind strip names the kind in words and the group', (
     tester,
   ) async {
-    await _pump(tester, _post(comments: 12));
-    // An icon and the number, read out as "12 comments".
-    expect(find.text('12'), findsOneWidget);
-    expect(find.bySemanticsLabel('12 comments'), findsOneWidget);
+    final fake = FakeStaffroomTransport();
+    addTearDown(fake.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          staffroomTransportProvider.overrideWithValue(fake),
+          currentStaffroomUserIdProvider.overrideWithValue(_me),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: FeedPostCard(post: _post(), groupName: 'Class 5 Maths'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Tried this in class'), findsOneWidget);
+    expect(find.text('Class 5 Maths'), findsOneWidget);
+    expect(find.byIcon(LucideIcons.flaskConical), findsOneWidget);
+    // No dead comment icon: the server keeps no comments.
+    expect(find.byIcon(LucideIcons.messageCircle), findsNothing);
+  });
 
-    // With no comments the icon still invites a reply, but shows no number.
-    await _pump(tester, _post());
-    expect(find.byIcon(LucideIcons.messageCircle), findsOneWidget);
-    expect(find.text('0'), findsNothing);
+  testWidgets('Reply opens the group chat with the post quoted', (
+    tester,
+  ) async {
+    final fake = FakeStaffroomTransport();
+    addTearDown(fake.dispose);
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => Scaffold(
+            body: FeedPostCard(post: _post(), groupName: 'G'),
+          ),
+        ),
+        GoRoute(
+          path: Routes.groupChatPattern,
+          builder: (_, state) {
+            final args = state.extra! as ChatRouteArgs;
+            return Scaffold(
+              body: Text(
+                'chat ${state.pathParameters['id']} ${args.quote!.asDraft()}',
+              ),
+            );
+          },
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          staffroomTransportProvider.overrideWithValue(fake),
+          currentStaffroomUserIdProvider.overrideWithValue(_me),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('post-reply-p1')));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining(
+        'chat g1 ↩ Suresh Reddy: “Taught fractions by cutting chapatis.”',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a request for help offers Help out instead of Reply', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const GroupPost(
+        id: 'p1',
+        groupId: 'g1',
+        authorUid: 'u-sr',
+        authorName: 'Suresh Reddy',
+        content: 'Any game for fractions?',
+        postType: PostType.askHelp,
+      ),
+    );
+    expect(find.text('Help out'), findsOneWidget);
+    expect(find.text('Reply'), findsNothing);
+    expect(find.text('Asking for help'), findsOneWidget);
   });
 
   testWidgets('every post can be shared', (tester) async {

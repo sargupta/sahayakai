@@ -6,14 +6,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/platform/clock.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/inbox/data/block_c_transport.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_transport.dart';
+import 'package:sahayakai/features/staffroom/domain/chat_message.dart';
 import 'package:sahayakai/features/staffroom/domain/community_post.dart';
 import 'package:sahayakai/features/staffroom/domain/group.dart';
 import 'package:sahayakai/features/staffroom/domain/staffroom_results.dart';
+import 'package:sahayakai/features/staffroom/domain/teacher.dart';
 import 'package:sahayakai/features/staffroom/presentation/staffroom_screen.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
@@ -365,6 +368,150 @@ void main() {
       // The write WAS attempted (recorded) before it threw.
       expect(fake.likes.single.postId, 'p1');
     });
+  });
+
+  group('the approved Community layout', () {
+    final now = DateTime(2026, 11, 19, 10);
+    String today(int hour) =>
+        DateTime(2026, 11, 19, hour).toUtc().toIso8601String();
+
+    FakeStaffroomTransport busy() {
+      final fake = FakeStaffroomTransport()
+        ..myGroups = [_group()]
+        ..recommended = const [
+          TeacherSuggestion(
+            uid: 't1',
+            displayName: 'Kavita Nair',
+            subjects: ['Science'],
+            gradeLevels: ['Class 8'],
+            schoolName: 'Govt. High School, Kochi',
+            recommendationReason: 'Also teaches Science',
+          ),
+        ]
+        ..feed = [
+          _feedPost(
+            _post(
+              id: 'brief',
+              author: 'SahayakAI',
+              content:
+                  '🗓 Daily Briefing — Thu, 19 Nov\n\n'
+                  '🤖 Teachers should shape AI policy\n   Summary.\n\n'
+                  '📚 New Class 9 text\n   Summary.',
+            ),
+            groupName: 'Daily Briefing',
+          ),
+          _feedPost(_post(id: 'p1', content: 'first post')),
+          _feedPost(_post(id: 'p2', content: 'second post')),
+          _feedPost(_post(id: 'p3', content: 'third post')),
+        ];
+      fake.emitStaffRoomChat(
+        TransportSnapshot<List<ChatMessage>>.ready([
+          ChatMessage(
+            id: 'm1',
+            text: 'Older hello',
+            authorId: 'a1',
+            authorName: 'Sushma Patil',
+            isDemoPersona: true,
+            createdAt: today(8),
+          ),
+          ChatMessage(
+            id: 'm2',
+            text: 'Morning all',
+            authorId: 'a2',
+            authorName: 'Gurpreet Singh',
+            createdAt: today(9),
+          ),
+          ChatMessage(
+            id: 'm3',
+            text: 'Rain gauge worked!',
+            authorId: 'a3',
+            authorName: 'Ravi Teja',
+            createdAt: today(9),
+          ),
+        ]),
+      );
+      return fake;
+    }
+
+    testWidgets('the staff room card names who is talking today', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        fake: busy(),
+        extraOverrides: [nowProvider.overrideWithValue(() => now)],
+      );
+      final l10n = _en();
+      expect(find.text(l10n.cmFeedTalkingToday(3)), findsOneWidget);
+      expect(
+        find.textContaining('and 1 more teacher are in the chat today'),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.cmFeedJoinChat), findsOneWidget);
+    });
+
+    testWidgets('the briefing is pinned above the feed, not repeated in it', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        fake: busy(),
+        extraOverrides: [nowProvider.overrideWithValue(() => now)],
+      );
+      final l10n = _en();
+      expect(find.text('DAILY BRIEFING'), findsOneWidget);
+      expect(find.text('Teachers should shape AI policy'), findsOneWidget);
+      final briefingY = tester.getTopLeft(find.text('DAILY BRIEFING')).dy;
+      final feedY = tester
+          .getTopLeft(find.text(l10n.cmFeedFromGroups.toUpperCase()))
+          .dy;
+      expect(briefingY, lessThan(feedY));
+    });
+
+    testWidgets('teachers you may know sit after the second post', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        fake: busy(),
+        surface: const Size(390, 3200),
+        extraOverrides: [nowProvider.overrideWithValue(() => now)],
+      );
+      final rail = tester.getTopLeft(find.byKey(const ValueKey('people-rail')));
+      expect(
+        rail.dy,
+        greaterThan(tester.getTopLeft(find.text('second post')).dy),
+      );
+      expect(rail.dy, lessThan(tester.getTopLeft(find.text('third post')).dy));
+      expect(find.text('Also teaches Science'), findsOneWidget);
+    });
+
+    testWidgets('a kind quick-start opens Share with teachers on that kind', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        fake: busy(),
+        extraOverrides: [nowProvider.overrideWithValue(() => now)],
+      );
+      await tester.tap(find.byKey(const ValueKey('share-kind-ask_help')));
+      await tester.pumpAndSettle();
+      expect(find.text(_en().cmShareTitle), findsOneWidget);
+    });
+
+    for (final code in ['hi', 'ta', 'ml']) {
+      testWidgets('no overflow in $code at 360dp × 1.3', (tester) async {
+        await _pump(
+          tester,
+          fake: busy(),
+          locale: Locale(code),
+          surface: const Size(360, 2400),
+          textScale: 1.3,
+          extraOverrides: [nowProvider.overrideWithValue(() => now)],
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
   });
 
   group('overflow probe — 360dp × 1.3, light + dark', () {

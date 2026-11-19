@@ -12,19 +12,17 @@ import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/map_card.dart';
 import '../../../shared/widgets/map_chip.dart';
-import '../../../shared/widgets/map_icon_tile.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/community_post.dart';
+import '../domain/daily_briefing.dart';
 import '../domain/group.dart';
 import '../domain/staffroom_results.dart';
 import '../domain/teacher.dart';
 import 'community_network_screen.dart';
 import 'widgets/feed_item_view.dart';
-import 'widgets/group_chip.dart';
-import 'widgets/post_composer.dart';
 import 'widgets/post_type_style.dart';
-import 'widgets/teacher_suggestion_card.dart';
+import 'widgets/staffroom_sections.dart';
 
 /// The Staffroom home: the two hub tiles (the live staff room, and "Your
 /// network"), the "What did you do today?" composer, the typed feed with its
@@ -150,15 +148,45 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
     final likedIds =
         ref.watch(likedItemIdsProvider).valueOrNull ?? const LikedItemIds();
     final myGroups = ref.watch(myGroupsProvider).valueOrNull ?? const <Group>[];
-    final discover =
-        ref.watch(discoverGroupsProvider).valueOrNull ?? const <Group>[];
     final people =
         ref.watch(recommendedTeachersProvider).valueOrNull ??
         const <TeacherSuggestion>[];
 
-    final shown = [
+    // The newest Daily Briefing gets its own card near the top; the feed
+    // below shows everything else.
+    FeedItem? briefing;
+    for (final item in feed) {
+      final post = item.post;
+      if (item.type == FeedItemType.groupPost &&
+          post != null &&
+          parseDailyBriefing(post.content) != null) {
+        briefing = item;
+        break;
+      }
+    }
+    final rest = [
       for (final item in feed)
+        if (!identical(item, briefing)) item,
+    ];
+    final shown = [
+      for (final item in rest)
         if (matchesFilter(item, _filter)) item,
+    ];
+    // Teachers you may know sit inside the feed, after its second post (or
+    // after the last one when there are fewer), and only under "All".
+    final peopleAt = _filter == null && people.isNotEmpty
+        ? (shown.length < 2 ? shown.length : 2)
+        : -1;
+
+    List<Widget> peopleBlock() => [
+      const SizedBox(height: AppSpacing.space2),
+      StaffroomSectionHead(
+        label: l10n.staffroomSectionPeople,
+        linkLabel: l10n.cmFeedSeeAll,
+        onLink: () => openCommunityNetwork(context),
+      ),
+      PeopleRail(people: people),
+      const SizedBox(height: AppSpacing.space4),
     ];
 
     return RefreshIndicator(
@@ -171,62 +199,47 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
           AppSpacing.mapBottomClearance,
         ),
         children: [
-          // The map's two tiles: the live staff room, and the teacher's own
-          // network further down this page.
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _HubTile(
-                    icon: LucideIcons.messageCircle,
-                    tint: MapTint.saffron,
-                    title: l10n.staffroomChatTitle,
-                    subtitle: l10n.communityOpenChat,
-                    onTap: () => context.push(Routes.staffRoomChat),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      // Waiting requests are what's new in the network: say
-                      // so on the tile instead of the generic line.
-                      final requests =
-                          ref
-                              .watch(connectionsControllerProvider)
-                              .valueOrNull
-                              ?.receivedRequests
-                              .length ??
-                          0;
-                      return _HubTile(
-                        icon: LucideIcons.users,
-                        tint: MapTint.leaf,
-                        title: l10n.communityYourNetwork,
-                        subtitle: requests > 0
-                            ? l10n.communityRequestsWaiting(requests)
-                            : l10n.communityGroupsAndPeople,
-                        highlight: requests > 0,
-                        onTap: () => openCommunityNetwork(context),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space3),
+          const StaffRoomLiveCard(),
 
-          // "What did you do today?" — every post belongs to a group, so the
-          // composer only appears once the teacher has one to post to.
+          // Share with teachers: every post belongs to a group, so it only
+          // appears once the teacher has one to post to.
           if (myGroups.isNotEmpty) ...[
-            PostComposer(groups: myGroups),
             const SizedBox(height: AppSpacing.space3),
+            const ShareWithTeachersCard(),
           ],
 
-          if (feed.isEmpty)
-            const MapCard(child: _FeedEmpty())
-          else ...[
+          if (briefing != null) ...[
+            const SizedBox(height: AppSpacing.space5),
+            StaffroomSectionHead(label: l10n.cmFeedBriefing),
+            const SizedBox(height: AppSpacing.space2),
+            FeedItemView(
+              key: ValueKey<String>('feed-${briefing.id}'),
+              item: briefing,
+              likedIds: likedIds,
+            ),
+          ],
+
+          const SizedBox(height: AppSpacing.space5),
+          StaffroomSectionHead(
+            label: l10n.cmFeedYourGroups(myGroups.length),
+            linkLabel: l10n.communityYourNetwork,
+            onLink: () => openCommunityNetwork(context),
+          ),
+          if (myGroups.isEmpty)
+            const MapCard(child: _GroupsEmpty())
+          else
+            YourGroupsRail(groups: myGroups),
+
+          const SizedBox(height: AppSpacing.space5),
+          StaffroomSectionHead(label: l10n.cmFeedFromGroups),
+          const SizedBox(height: AppSpacing.space2),
+          if (rest.isEmpty) ...[
+            const MapCard(child: _FeedEmpty()),
+            if (people.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.space3),
+              ...peopleBlock(),
+            ],
+          ] else ...[
             // One row that scrolls sideways, so a long translation never
             // drops a chip onto a second line.
             SingleChildScrollView(
@@ -250,59 +263,25 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.space1),
-            if (shown.isEmpty)
-              const MapCard(child: _FeedEmpty())
-            else
-              ...shown.asMap().entries.map(
-                (entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-                  child: staggeredItem(
-                    context,
-                    FeedItemView(
-                      key: ValueKey<String>('feed-${entry.value.id}'),
-                      item: entry.value,
-                      likedIds: likedIds,
-                    ),
-                    index: entry.key,
-                  ),
-                ),
-              ),
-          ],
-
-          // Your network: groups, groups to discover, people you may know.
-          const SizedBox(height: AppSpacing.space3),
-          MapOverline(l10n.staffroomSectionGroups),
-          const SizedBox(height: AppSpacing.space2),
-          if (myGroups.isEmpty)
-            const MapCard(child: _GroupsEmpty())
-          else
-            _GroupStrip(groups: myGroups),
-
-          if (discover.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.space5),
-            MapOverline(l10n.staffroomSectionDiscover),
-            const SizedBox(height: AppSpacing.space2),
-            _GroupStrip(groups: discover),
-          ],
-
-          if (people.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.space5),
-            MapOverline(l10n.staffroomSectionPeople),
-            const SizedBox(height: AppSpacing.space2),
-            ...people.asMap().entries.map(
-              (entry) => Padding(
+            const SizedBox(height: AppSpacing.space3),
+            if (shown.isEmpty) const MapCard(child: _FeedEmpty()),
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i == peopleAt) ...peopleBlock(),
+              Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.space3),
                 child: staggeredItem(
                   context,
-                  TeacherSuggestionCard(
-                    key: ValueKey<String>('pymk-${entry.value.uid}'),
-                    teacher: entry.value,
+                  FeedItemView(
+                    key: ValueKey<String>('feed-${shown[i].id}'),
+                    item: shown[i],
+                    likedIds: likedIds,
                   ),
-                  index: entry.key,
+                  index: i,
                 ),
               ),
-            ),
+            ],
+            if (peopleAt == shown.length && shown.isNotEmpty) ...peopleBlock(),
+            if (shown.isNotEmpty) const _CaughtUp(),
           ],
         ],
       ),
@@ -310,129 +289,33 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
   }
 }
 
-/// The map's `.tile`: a white rounded block with a bold name over a muted
-/// line, tappable as a whole.
-class _HubTile extends StatelessWidget {
-  const _HubTile({
-    required this.icon,
-    required this.tint,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.highlight = false,
-  });
-
-  final IconData icon;
-  final MapTint tint;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  /// The line says something new (e.g. "2 requests"): drawn in the tint's
-  /// ink and bold instead of muted.
-  final bool highlight;
+/// The feed's last line: there is nothing older to scroll to.
+class _CaughtUp extends StatelessWidget {
+  const _CaughtUp();
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Semantics(
-      button: true,
-      child: MapCard(
-        onTap: onTap,
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: tint.fill,
-                borderRadius: AppRadius.rRow,
-              ),
-              child: Icon(icon, size: 17, color: tint.ink),
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.space2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            LucideIcons.checkCircle,
+            size: 16,
+            color: AppColors.tileLeafInk,
+          ),
+          const SizedBox(width: AppSpacing.space2),
+          Flexible(
+            child: Text(
+              context.l10n.cmFeedCaughtUp,
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: text.bodyLarge?.copyWith(
-                      fontSize: AppText.rowTitleSize,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textStrong,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    style: text.bodyMedium?.copyWith(
-                      color: highlight ? tint.ink : AppColors.textMuted,
-                      fontWeight: highlight ? FontWeight.w700 : null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A horizontal strip of [GroupChip]s, sized to the tallest chip.
-///
-/// ## Why this is measured, not a constant
-/// This strip used to be a `SizedBox(height: 116)` wrapping a horizontal
-/// `ListView.separated`. A horizontal list has to be given a cross-axis extent
-/// from somewhere, and 116 was the number a Latin group name at textScale 1.0
-/// happened to need. It is not a number the *content* agrees with: [GroupChip]
-/// stacks a two-line `titleSmall` name over a `dataMedium` member count beside
-/// a 48dp [IconWell], inside [AppCard]'s 16dp padding and 1dp glass border. A
-/// Bengali name at textScale 1.3 wants 117dp of that box's 114dp of usable
-/// height — the RenderFlex overflowed by exactly 3dp, and a teacher on a cheap
-/// Android with large text saw the member count clipped.
-///
-/// Bumping 116 to 120 would only move the cliff: Devanagari and Malayalam stack
-/// taller matras still, and textScale goes to 2.0. So the extent is now
-/// **derived from the content**. [IntrinsicHeight] asks the row how tall its
-/// tallest chip actually wants to be and tightens the strip to that, and
-/// `CrossAxisAlignment.stretch` levels every chip to the same measured height
-/// so the strip still reads as one even row.
-///
-/// The lazy `ListView` gives way to a `SingleChildScrollView` + `Row` because a
-/// viewport reports no intrinsic dimensions — it cannot be measured, only
-/// bounded. That trade is safe here: `groups` is a single teacher's group
-/// membership (a handful of chips), not an unbounded feed, so the whole row is
-/// cheap to build and to measure eagerly.
-class _GroupStrip extends StatelessWidget {
-  const _GroupStrip({required this.groups});
-
-  final List<Group> groups;
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        clipBehavior: Clip.none,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: AppSpacing.space3,
-          children: [
-            for (final group in groups)
-              GroupChip(
-                key: ValueKey<String>('group-chip-${group.id}'),
-                group: group,
-                onTap: () => context.push(
-                  Routes.groupDetailPath(group.id),
-                  extra: group,
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

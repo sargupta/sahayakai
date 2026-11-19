@@ -5439,4 +5439,82 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get cmPostKindResourceHint => 'ഷീറ്റ്, പ്ലാൻ അല്ലെങ്കിൽ ലിങ്ക്';
+
+  @override
+  String get cmPostReply => 'മറുപടി';
+
+  @override
+  String get cmPostHelpOut => 'സഹായിക്കൂ';
+
+  @override
+  String get cmPostReplyHint =>
+      'ഈ പോസ്റ്റ് ഉദ്ധരിച്ച് ഗ്രൂപ്പ് ചാറ്റ് തുറക്കുന്നു';
+
+  @override
+  String get cmShareTitle => 'അധ്യാപകരുമായി പങ്കിടൂ';
+
+  @override
+  String get cmFeedStaffRoom => 'സ്റ്റാഫ് റൂം';
+
+  @override
+  String cmFeedTalkingToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ഇന്ന് $count പേർ സംസാരിക്കുന്നു',
+      one: 'ഇന്ന് 1 പേർ സംസാരിക്കുന്നു',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmFeedInChatOne(String name) {
+    return '$name ഇന്ന് ചാറ്റിലുണ്ട്';
+  }
+
+  @override
+  String cmFeedInChatTwo(String first, String second) {
+    return '$first, $second എന്നിവർ ഇന്ന് ചാറ്റിലുണ്ട്';
+  }
+
+  @override
+  String cmFeedInChatMany(String first, String second, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'മറ്റ് $count അധ്യാപകർ',
+      one: 'മറ്റൊരു അധ്യാപകൻ',
+    );
+    return '$first, $second, $_temp0 എന്നിവർ ഇന്ന് ചാറ്റിലുണ്ട്';
+  }
+
+  @override
+  String get cmFeedJoinChat => 'സംഭാഷണത്തിൽ ചേരൂ';
+
+  @override
+  String get cmFeedChatQuiet =>
+      'സ്റ്റാഫ് റൂമിൽ ഇതുവരെ ആരും എഴുതിയിട്ടില്ല. ഹലോ പറയൂ.';
+
+  @override
+  String get cmFeedVoiceNote => 'വോയ്സ് നോട്ട്';
+
+  @override
+  String get cmFeedBriefing => 'ദിനവാർത്താ സംഗ്രഹം';
+
+  @override
+  String cmFeedYourGroups(int count) {
+    return 'നിങ്ങളുടെ ഗ്രൂപ്പുകൾ · $count';
+  }
+
+  @override
+  String get cmFeedFindGroups => 'കൂടുതൽ ഗ്രൂപ്പുകൾ കണ്ടെത്തൂ';
+
+  @override
+  String get cmFeedFromGroups => 'നിങ്ങളുടെ ഗ്രൂപ്പുകളിൽ നിന്ന്';
+
+  @override
+  String get cmFeedSeeAll => 'എല്ലാം കാണൂ';
+
+  @override
+  String get cmFeedCaughtUp => 'നിങ്ങൾ എല്ലാം കണ്ടു';
 }

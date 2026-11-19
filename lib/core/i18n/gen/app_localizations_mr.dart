@@ -5361,4 +5361,81 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get cmPostKindResourceHint => 'शीट, योजना किंवा लिंक';
+
+  @override
+  String get cmPostReply => 'उत्तर द्या';
+
+  @override
+  String get cmPostHelpOut => 'मदत करा';
+
+  @override
+  String get cmPostReplyHint => 'ही पोस्ट उद्धृत करून गट चॅट उघडते';
+
+  @override
+  String get cmShareTitle => 'शिक्षकांसोबत शेअर करा';
+
+  @override
+  String get cmFeedStaffRoom => 'स्टाफ रूम';
+
+  @override
+  String cmFeedTalkingToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'आज $count जण बोलत आहेत',
+      one: 'आज 1 जण बोलत आहे',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmFeedInChatOne(String name) {
+    return '$name आज चॅटमध्ये आहेत';
+  }
+
+  @override
+  String cmFeedInChatTwo(String first, String second) {
+    return '$first आणि $second आज चॅटमध्ये आहेत';
+  }
+
+  @override
+  String cmFeedInChatMany(String first, String second, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'आणखी $count शिक्षक',
+      one: 'आणखी 1 शिक्षक',
+    );
+    return '$first, $second आणि $_temp0 आज चॅटमध्ये आहेत';
+  }
+
+  @override
+  String get cmFeedJoinChat => 'संवादात सामील व्हा';
+
+  @override
+  String get cmFeedChatQuiet =>
+      'स्टाफ रूममध्ये अजून कोणी लिहिले नाही. नमस्कार म्हणा.';
+
+  @override
+  String get cmFeedVoiceNote => 'व्हॉइस नोट';
+
+  @override
+  String get cmFeedBriefing => 'दैनिक ब्रीफिंग';
+
+  @override
+  String cmFeedYourGroups(int count) {
+    return 'तुमचे गट · $count';
+  }
+
+  @override
+  String get cmFeedFindGroups => 'आणखी गट शोधा';
+
+  @override
+  String get cmFeedFromGroups => 'तुमच्या गटांमधून';
+
+  @override
+  String get cmFeedSeeAll => 'सर्व पहा';
+
+  @override
+  String get cmFeedCaughtUp => 'तुम्ही सर्व पाहिले आहे';
 }

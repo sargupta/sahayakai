@@ -157,11 +157,15 @@ Future<ProviderContainer> _pumpHub(
 
 AppLocalizations _en() => lookupAppLocalizations(const Locale('en'));
 
-/// Pulls the sections panel out from the left-edge grip and picks [label].
+/// Taps the section tab named [label] (Staffroom, Messages or Updates).
 Future<void> _openSection(WidgetTester tester, String label) async {
-  await tester.tap(find.byKey(const ValueKey('community-sections-grip')));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(label));
+  final l10n = _en();
+  final index = [
+    l10n.networkTabStaffroom,
+    l10n.networkTabMessages,
+    l10n.networkTabUpdates,
+  ].indexOf(label);
+  await tester.tap(find.byKey(ValueKey('community-tab-$index')));
   await tester.pumpAndSettle();
 }
 
@@ -171,7 +175,7 @@ void main() {
   // The Updates pane reads the on-device store, which touches prefs on build.
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
-  testWidgets('the sections pull out from the edge; Staffroom is the default', (
+  testWidgets('the sections are tabs on screen; Staffroom is the default', (
     tester,
   ) async {
     await _pumpHub(
@@ -182,38 +186,22 @@ void main() {
       ),
     );
 
-    // No bar across the top: the sections sit behind the edge grip, and the
-    // deck line names the open one.
-    expect(find.text(l10n.networkTabMessages), findsNothing);
-    expect(
-      find.byKey(const ValueKey('community-sections-grip')),
-      findsOneWidget,
-    );
+    // The title, the deck line and all three sections as visible tabs: no
+    // grip, no panel to find them behind.
     expect(find.text(l10n.communityTitle), findsOneWidget);
-    expect(
-      find.text(
-        l10n.communityDeckWithSection(
-          l10n.networkTabStaffroom,
-          l10n.communityDeck,
-        ),
-      ),
-      findsOneWidget,
-    );
-
-    // Pulled out, the panel lists all three sections, Staffroom selected.
-    await tester.tap(find.byKey(const ValueKey('community-sections-grip')));
-    await tester.pumpAndSettle();
-    expect(find.text(l10n.communitySectionsTitle), findsOneWidget);
-    expect(find.text(l10n.networkTabStaffroom), findsOneWidget);
+    expect(find.text(l10n.communityDeck), findsOneWidget);
+    for (var i = 0; i < 3; i++) {
+      expect(find.byKey(ValueKey('community-tab-$i')), findsOneWidget);
+    }
     expect(find.text(l10n.networkTabMessages), findsOneWidget);
     expect(find.text(l10n.networkTabUpdates), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(l10n.networkTabStaffroom),
+      findsAtLeastNWidgets(1),
+    );
 
-    // The chevron tab puts it away again, and it leaves the tree.
-    await tester.tap(find.byKey(const ValueKey('community-sections-close')));
-    await tester.pumpAndSettle();
-    expect(find.text(l10n.communitySectionsTitle), findsNothing);
-    // The Staffroom tab is active → the feed body shows; the Messages tab is
-    // offstage → its conversation is not found.
+    // The Staffroom tab is active → the feed body shows; the Messages pane
+    // is offstage → its conversation is not found.
     expect(find.text('staffroom body'), findsOneWidget);
     expect(find.text('Bina Devi'), findsNothing);
   });
@@ -363,7 +351,7 @@ void main() {
       expect(find.text(l10n.inboxEmptyTitle), findsNothing);
     });
 
-    testWidgets('the app-bar bell badges unread and selects the Updates pane', (
+    testWidgets('the Updates tab carries the unread count and opens the pane', (
       tester,
     ) async {
       await _pumpHub(
@@ -378,8 +366,7 @@ void main() {
         updates: [callRow()],
       );
 
-      // Unread: the map's red dot on the bell, and the count in its label,
-      // visible from the Staffroom tab.
+      // Unread: the count on the Updates tab, visible from the Staffroom tab.
       expect(
         find.bySemanticsLabel(
           '${l10n.networkTabUpdates}, ${l10n.inboxUnreadLabel(1)}',
@@ -388,8 +375,7 @@ void main() {
       );
       expect(find.text('staffroom body'), findsOneWidget);
 
-      await tester.tap(find.byIcon(LucideIcons.bell));
-      await tester.pumpAndSettle();
+      await _openSection(tester, l10n.networkTabUpdates);
 
       expect(
         find.text(l10n.notificationCallCompletedTitle('Asha Devi')),
@@ -397,7 +383,7 @@ void main() {
       );
     });
 
-    testWidgets('with nothing unread the bell is the quiet glyph', (
+    testWidgets('with nothing unread the Updates tab carries no count', (
       tester,
     ) async {
       await _pumpHub(
@@ -410,9 +396,8 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(LucideIcons.bell), findsOneWidget);
-      // No unread count in the bell's label (the plain name is shared with
-      // the Updates segment, so look for the count suffix).
+      expect(find.byKey(const ValueKey('community-tab-2')), findsOneWidget);
+      // No unread count in the tab's label (look for the count suffix).
       expect(
         find.bySemanticsLabel(RegExp('^${l10n.networkTabUpdates}, ')),
         findsNothing,

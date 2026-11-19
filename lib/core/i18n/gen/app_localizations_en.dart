@@ -5336,4 +5336,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cmPostKindResourceHint => 'A sheet, plan or link';
+
+  @override
+  String get cmPostReply => 'Reply';
+
+  @override
+  String get cmPostHelpOut => 'Help out';
+
+  @override
+  String get cmPostReplyHint => 'Opens the group chat with this post quoted';
+
+  @override
+  String get cmShareTitle => 'Share with teachers';
+
+  @override
+  String get cmFeedStaffRoom => 'The staff room';
+
+  @override
+  String cmFeedTalkingToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count talking today',
+      one: '1 talking today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmFeedInChatOne(String name) {
+    return '$name is in the chat today';
+  }
+
+  @override
+  String cmFeedInChatTwo(String first, String second) {
+    return '$first and $second are in the chat today';
+  }
+
+  @override
+  String cmFeedInChatMany(String first, String second, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more teachers are',
+      one: '1 more teacher are',
+    );
+    return '$first, $second and $_temp0 in the chat today';
+  }
+
+  @override
+  String get cmFeedJoinChat => 'Join the conversation';
+
+  @override
+  String get cmFeedChatQuiet =>
+      'No one has written in the staff room yet. Say hello.';
+
+  @override
+  String get cmFeedVoiceNote => 'Voice note';
+
+  @override
+  String get cmFeedBriefing => 'Daily Briefing';
+
+  @override
+  String cmFeedYourGroups(int count) {
+    return 'Your groups · $count';
+  }
+
+  @override
+  String get cmFeedFindGroups => 'Find more groups';
+
+  @override
+  String get cmFeedFromGroups => 'From your groups';
+
+  @override
+  String get cmFeedSeeAll => 'See all';
+
+  @override
+  String get cmFeedCaughtUp => 'You\'re all caught up';
 }

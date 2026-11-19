@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/platform/link_opener.dart';
 import '../../../../core/platform/share_service.dart';
+import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/map_card.dart';
@@ -17,6 +19,7 @@ import '../../../moderation/presentation/blocked_teachers_controller.dart';
 import '../../../moderation/presentation/moderation_actions.dart';
 import '../../data/staffroom_providers.dart';
 import '../../data/staffroom_transport.dart';
+import '../../domain/chat_quote.dart';
 import '../../domain/daily_briefing.dart';
 import '../../domain/group.dart';
 import 'post_type_style.dart';
@@ -170,169 +173,168 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
 
     final group = widget.groupName?.trim() ?? '';
     final timestamp = inboxRelativeTime(post.createdAt, DateTime.now(), l10n);
-    final meta = [
-      if (group.isNotEmpty) group,
-      if (timestamp.isNotEmpty) timestamp,
-    ].join(' · ');
 
     return MapCard(
+      padding: EdgeInsets.zero,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Masthead (UX map post): avatar, the author over "group · time",
-          // and the post type as a tinted pill.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              StaffroomAvatar(
-                name: post.authorName,
-                photoUrl: post.authorPhotoURL,
-                size: 36,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+          // The kind as a tinted strip across the top (icon + words, never
+          // colour alone), with the group it was posted in.
+          _KindStrip(type: post.postType, group: group),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      post.authorName,
-                      style: text.bodyLarge?.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textStrong,
+                    StaffroomAvatar(
+                      name: post.authorName,
+                      photoUrl: post.authorPhotoURL,
+                      size: 40,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            post.authorName,
+                            style: text.titleLarge?.copyWith(
+                              fontSize: 15,
+                              color: AppColors.textStrong,
+                            ),
+                          ),
+                          if (timestamp.isNotEmpty)
+                            Text(
+                              timestamp,
+                              style: text.bodyMedium?.copyWith(
+                                fontSize: AppText.metaSize,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    if (meta.isNotEmpty)
-                      Text(
-                        meta,
-                        style: text.bodyMedium?.copyWith(
-                          color: AppColors.textMuted,
-                        ),
+                    if (othersPost)
+                      ModerationMenuButton(
+                        reportLabel: l10n.moderationReportPost,
+                        target: ReportTarget.post,
+                        targetId: post.id,
+                        authorUid: post.authorUid,
+                        authorName: post.authorName,
                       ),
                   ],
                 ),
-              ),
-              const SizedBox(width: AppSpacing.space2),
-              _TypePill(type: post.postType),
-              if (othersPost)
-                ModerationMenuButton(
-                  reportLabel: l10n.moderationReportPost,
-                  target: ReportTarget.post,
-                  targetId: post.id,
-                  authorUid: post.authorUid,
-                  authorName: post.authorName,
-                ),
-            ],
+                const SizedBox(height: 10),
+                // Body: server-authored prose (full ink, matra-safe). A Daily
+                // Briefing opens as a short digest: the lead story, the other
+                // headlines, "Read all N". Any other long post opens folded,
+                // with "Read more"; short posts show whole.
+                if (briefing != null && !_expanded)
+                  _BriefingDigest(briefing: briefing)
+                else if (_isLong && !_expanded)
+                  AiText(_folded(post.content))
+                else
+                  AiText(post.content),
+                if (briefing != null || _isLong)
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton(
+                      key: ValueKey('post-more-${post.id}'),
+                      onPressed: () => setState(() => _expanded = !_expanded),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 40),
+                        foregroundColor: AppColors.textLink,
+                      ),
+                      child: Text(
+                        _expanded
+                            ? l10n.staffroomShowLess
+                            : briefing != null
+                            ? '${l10n.staffroomBriefingReadAll(briefing.headlines.length)} ›'
+                            : l10n.staffroomReadMore,
+                        style: text.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textLink,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 4),
+                // What the post shares (a worksheet, a link): one row each. A
+                // folded briefing keeps them back until "Read all".
+                if (post.attachments.isNotEmpty &&
+                    (briefing == null || _expanded))
+                  _PostAttachments(attachments: post.attachments),
+              ],
+            ),
           ),
-          const SizedBox(height: 9),
-          // Body: server-authored prose (full ink, matra-safe). A Daily
-          // Briefing opens as a short digest — the lead story, the other
-          // headlines, "Read all N". Any other long post opens folded, with
-          // "Read more"; short posts show whole.
-          if (briefing != null && !_expanded)
-            _BriefingDigest(briefing: briefing)
-          else if (_isLong && !_expanded)
-            AiText(_folded(post.content))
-          else
-            AiText(post.content),
-          if (briefing != null || _isLong)
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TextButton(
-                key: ValueKey('post-more-${post.id}'),
-                onPressed: () => setState(() => _expanded = !_expanded),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 40),
-                  foregroundColor: AppColors.textLink,
+          // Footer: Like, Reply (Help out on a request for help) and Share.
+          // The server keeps no comments, so Reply opens the group's chat
+          // with the post quoted instead of a dead comment icon.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+            child: Row(
+              children: [
+                _LikeButton(liked: _isLiked, count: _likeCount, onTap: _toggle),
+                if (post.groupId.isNotEmpty)
+                  _ReplyButton(
+                    key: ValueKey('post-reply-${post.id}'),
+                    helpOut: post.postType == PostType.askHelp,
+                    onTap: _reply,
+                  ),
+                const Spacer(),
+                TextButton.icon(
+                  key: ValueKey('post-share-${post.id}'),
+                  onPressed: _share,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(44, 44),
+                    foregroundColor: AppColors.textBody,
+                  ),
+                  icon: const Icon(LucideIcons.share2, size: AppIconSize.small),
+                  label: Text(l10n.actionShare),
                 ),
+              ],
+            ),
+          ),
+          if (_failed)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              child: Align(
+                alignment: AlignmentDirectional.centerEnd,
                 child: Text(
-                  _expanded
-                      ? l10n.staffroomShowLess
-                      : briefing != null
-                      ? '${l10n.staffroomBriefingReadAll(briefing.headlines.length)} ›'
-                      : l10n.staffroomReadMore,
-                  style: text.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textLink,
+                  l10n.staffroomLikeFailed,
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
               ),
-            )
-          else
-            const SizedBox(height: 2),
-          // What the post shares (a worksheet, a link): one row each. A folded
-          // briefing keeps them back until "Read all".
-          if (post.attachments.isNotEmpty && (briefing == null || _expanded))
-            _PostAttachments(attachments: post.attachments),
-          // Footer: the like, the comment affordance (always shown, so every
-          // post invites a reply — the count appears only once there is one),
-          // and Share. Connect lives on the teacher's profile and in Your
-          // network, not on every post.
-          Row(
-            children: [
-              _LikeButton(liked: _isLiked, count: _likeCount, onTap: _toggle),
-              const SizedBox(width: AppSpacing.space2),
-              Semantics(
-                label: l10n.staffroomCommentsCount(post.commentsCount),
-                excludeSemantics: true,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      LucideIcons.messageCircle,
-                      size: AppIconSize.small,
-                      color: AppColors.textMuted,
-                    ),
-                    if (post.commentsCount > 0) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        '${post.commentsCount}',
-                        style: text.bodySmall?.copyWith(
-                          fontSize: AppText.metaSize,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textBody,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const Spacer(),
-              TextButton.icon(
-                key: ValueKey('post-share-${post.id}'),
-                onPressed: _share,
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(44, 44),
-                  foregroundColor: AppColors.textBody,
-                ),
-                icon: const Icon(LucideIcons.share2, size: AppIconSize.small),
-                label: Text(l10n.actionShare),
-              ),
-            ],
-          ),
-          if (_failed) ...[
-            const SizedBox(height: AppSpacing.space1),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                l10n.staffroomLikeFailed,
-                style: text.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
             ),
-          ],
         ],
+      ),
+    );
+  }
+
+  /// Opens the post's group chat with the composer holding a quote of it.
+  void _reply() {
+    final post = widget.post;
+    context.push(
+      Routes.groupChatPath(post.groupId),
+      extra: ChatRouteArgs(
+        title: widget.groupName,
+        quote: ChatQuote(author: post.authorName, text: post.content),
       ),
     );
   }
 }
 
-/// The post type as the map's pill: tinted, bold, small caps in Latin script.
 /// A post's attachments, one row each: a tinted icon, the title and, for a
 /// link, its site. A row opens only an absolute http(s) link with a host —
 /// attachment URLs come from other teachers, so nothing else (javascript:,
@@ -481,32 +483,103 @@ class _BriefingDigest extends StatelessWidget {
   }
 }
 
-class _TypePill extends StatelessWidget {
-  const _TypePill({required this.type});
+/// The post's kind across the top of the card: its icon and line ("Tried
+/// this in class") in the kind's tint, and the group on the right.
+class _KindStrip extends StatelessWidget {
+  const _KindStrip({required this.type, required this.group});
 
   final PostType type;
+  final String group;
 
   @override
   Widget build(BuildContext context) {
     final tint = postTypeTint(type);
-    final latin = Localizations.localeOf(context).languageCode == 'en';
-    final label = postTypeLabel(context.l10n, type);
-    return Container(
-      height: 24,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: ShapeDecoration(
-        color: tint.fill,
-        shape: const StadiumBorder(),
+    final style = Theme.of(context).textTheme.labelLarge?.copyWith(
+      fontSize: 12.5,
+      fontWeight: FontWeight.w700,
+      color: tint.ink,
+    );
+    return ColoredBox(
+      color: tint.fill,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Row(
+          children: [
+            Icon(postTypeIcon(type), size: 15, color: tint.ink),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(postKindLine(context.l10n, type), style: style),
+            ),
+            if (group.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  group,
+                  textAlign: TextAlign.end,
+                  style: style?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
-      child: Center(
-        widthFactor: 1,
-        child: Text(
-          latin ? label.toUpperCase() : label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontSize: latin ? 10.5 : 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: latin ? 0.6 : 0,
-            color: tint.ink,
+    );
+  }
+}
+
+/// Reply: opens the group chat with the post quoted. On a request for help it
+/// is a tinted "Help out" pill, so the ask stands out.
+class _ReplyButton extends StatelessWidget {
+  const _ReplyButton({super.key, required this.helpOut, required this.onTap});
+
+  final bool helpOut;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final label = helpOut ? l10n.cmPostHelpOut : l10n.cmPostReply;
+    final ink = helpOut ? AppColors.tileIndigoInk : AppColors.textBody;
+    return Semantics(
+      button: true,
+      label: label,
+      hint: l10n.cmPostReplyHint,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadius.rPill,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+          child: Center(
+            widthFactor: 1,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: helpOut ? 14 : 8,
+                vertical: 7,
+              ),
+              decoration: helpOut
+                  ? const ShapeDecoration(
+                      color: AppColors.tileIndigoBg,
+                      shape: StadiumBorder(),
+                    )
+                  : null,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.cornerUpLeft, size: 16, color: ink),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: text.labelLarge?.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

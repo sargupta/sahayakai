@@ -29,11 +29,42 @@ Future<void> showShareToCommunitySheet(
   );
 }
 
+/// "Share with teachers" from Community: the same sheet with an empty draft,
+/// opened on [type] (Tried this when the teacher tapped the field itself).
+Future<void> showShareWithTeachers(
+  BuildContext context, {
+  PostType type = PostType.share,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    isScrollControlled: true,
+    barrierColor: AppColors.ink900.withValues(alpha: 0.18),
+    builder: (sheetContext) => ShareToCommunitySheet(
+      text: '',
+      initialType: type,
+      title: sheetContext.l10n.cmShareTitle,
+    ),
+  );
+}
+
 class ShareToCommunitySheet extends ConsumerWidget {
-  const ShareToCommunitySheet({super.key, required this.text});
+  const ShareToCommunitySheet({
+    super.key,
+    required this.text,
+    this.initialType = PostType.resource,
+    this.title,
+  });
 
   /// The draft the composer opens on.
   final String text;
+
+  /// The kind of post the composer starts on.
+  final PostType initialType;
+
+  /// The sheet's heading; null is "Post to Community".
+  final String? title;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -76,7 +107,7 @@ class ShareToCommunitySheet extends ConsumerWidget {
           : PostComposer(
               groups: mine,
               initialText: text,
-              initialType: PostType.resource,
+              initialType: initialType,
               startOpen: true,
               onPosted: () => Navigator.of(context).maybePop(),
             ),
@@ -116,7 +147,7 @@ class ShareToCommunitySheet extends ConsumerWidget {
                   Semantics(
                     header: true,
                     child: Text(
-                      l10n.deliverPostCommunity,
+                      title ?? l10n.deliverPostCommunity,
                       style: textTheme.titleLarge?.copyWith(
                         color: AppColors.textStrong,
                       ),

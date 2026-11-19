@@ -5395,4 +5395,81 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get cmPostKindResourceHint => 'ସିଟ୍, ଯୋଜନା ବା ଲିଙ୍କ';
+
+  @override
+  String get cmPostReply => 'ଉତ୍ତର ଦିଅନ୍ତୁ';
+
+  @override
+  String get cmPostHelpOut => 'ସାହାଯ୍ୟ କରନ୍ତୁ';
+
+  @override
+  String get cmPostReplyHint => 'ଏହି ପୋଷ୍ଟ ଉଦ୍ଧୃତ କରି ଗ୍ରୁପ୍ ଚାଟ୍ ଖୋଲେ';
+
+  @override
+  String get cmShareTitle => 'ଶିକ୍ଷକଙ୍କ ସହ ସେୟାର କରନ୍ତୁ';
+
+  @override
+  String get cmFeedStaffRoom => 'ଷ୍ଟାଫ ରୁମ';
+
+  @override
+  String cmFeedTalkingToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ଆଜି $count ଜଣ କଥା ହେଉଛନ୍ତି',
+      one: 'ଆଜି 1 ଜଣ କଥା ହେଉଛନ୍ତି',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmFeedInChatOne(String name) {
+    return '$name ଆଜି ଚାଟରେ ଅଛନ୍ତି';
+  }
+
+  @override
+  String cmFeedInChatTwo(String first, String second) {
+    return '$first ଓ $second ଆଜି ଚାଟରେ ଅଛନ୍ତି';
+  }
+
+  @override
+  String cmFeedInChatMany(String first, String second, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ଆଉ $count ଜଣ ଶିକ୍ଷକ',
+      one: 'ଆଉ 1 ଜଣ ଶିକ୍ଷକ',
+    );
+    return '$first, $second ଓ $_temp0 ଆଜି ଚାଟରେ ଅଛନ୍ତି';
+  }
+
+  @override
+  String get cmFeedJoinChat => 'ଆଲୋଚନାରେ ଯୋଗ ଦିଅନ୍ତୁ';
+
+  @override
+  String get cmFeedChatQuiet =>
+      'ଷ୍ଟାଫ ରୁମରେ ଏଯାଏଁ କେହି ଲେଖିନାହାନ୍ତି। ନମସ୍କାର କୁହନ୍ତୁ।';
+
+  @override
+  String get cmFeedVoiceNote => 'ଭଏସ୍ ନୋଟ୍';
+
+  @override
+  String get cmFeedBriefing => 'ଦୈନିକ ବ୍ରିଫିଂ';
+
+  @override
+  String cmFeedYourGroups(int count) {
+    return 'ଆପଣଙ୍କ ଗ୍ରୁପ୍ · $count';
+  }
+
+  @override
+  String get cmFeedFindGroups => 'ଆହୁରି ଗ୍ରୁପ୍ ଖୋଜନ୍ତୁ';
+
+  @override
+  String get cmFeedFromGroups => 'ଆପଣଙ୍କ ଗ୍ରୁପରୁ';
+
+  @override
+  String get cmFeedSeeAll => 'ସବୁ ଦେଖନ୍ତୁ';
+
+  @override
+  String get cmFeedCaughtUp => 'ଆପଣ ସବୁ ଦେଖିସାରିଛନ୍ତି';
 }
