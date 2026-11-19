@@ -5528,4 +5528,39 @@ class AppLocalizationsBn extends AppLocalizations {
   String cmNetYourTeachers(int count) {
     return 'আপনার শিক্ষকরা · $count';
   }
+
+  @override
+  String cmChatHereToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'আজ $count জন সক্রিয়',
+      one: 'আজ 1 জন সক্রিয়',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmChatYou => 'আপনি';
+
+  @override
+  String cmThreadMembers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count জন শিক্ষক',
+      one: '1 জন শিক্ষক',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmThreadLanguage(String language) {
+    return 'পছন্দের ভাষা: $language';
+  }
+
+  @override
+  String cmThreadYouSaid(String message) {
+    return 'আপনি: $message';
+  }
 }

@@ -1561,5 +1561,10 @@
   "cmNetYourGroups": "നിങ്ങളുടെ ഗ്രൂപ്പുകൾ · {count}",
   "cmNetGroupsForYou": "നിങ്ങൾക്കുള്ള ഗ്രൂപ്പുകൾ",
   "cmNetTeachersYouMayKnow": "നിങ്ങൾക്ക് അറിയാവുന്ന അധ്യാപകർ",
-  "cmNetYourTeachers": "നിങ്ങളുടെ അധ്യാപകർ · {count}"
+  "cmNetYourTeachers": "നിങ്ങളുടെ അധ്യാപകർ · {count}",
+  "cmChatHereToday": "{count, plural, =1{ഇന്ന് 1 പേർ സജീവം} other{ഇന്ന് {count} പേർ സജീവം}}",
+  "cmChatYou": "നിങ്ങൾ",
+  "cmThreadMembers": "{count, plural, =1{1 അധ്യാപകൻ} other{{count} അധ്യാപകർ}}",
+  "cmThreadLanguage": "ഇഷ്ട ഭാഷ: {language}",
+  "cmThreadYouSaid": "നിങ്ങൾ: {message}"
 }

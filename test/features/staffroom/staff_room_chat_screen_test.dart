@@ -9,6 +9,7 @@ import 'package:sahayakai/features/staffroom/data/chat_stream_provider.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_transport.dart';
 import 'package:sahayakai/features/staffroom/domain/chat_message.dart';
+import 'package:sahayakai/features/staffroom/domain/chat_quote.dart';
 import 'package:sahayakai/features/staffroom/presentation/staff_room_chat_screen.dart';
 import 'package:sahayakai/features/staffroom/presentation/widgets/staffroom_avatar.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
@@ -137,32 +138,214 @@ void main() {
       expect(find.byType(StaffroomAvatar), findsOneWidget); // only the other's
     });
 
-    testWidgets(
-      'AI persona bubble is honestly labelled + distinct (no avatar)',
-      (tester) async {
-        await _pump(
-          tester,
-          chat: TransportSnapshot<List<ChatMessage>>.ready([
-            _msg(
-              id: 'p1',
-              text: 'Try a chapati fraction demo!',
-              authorId: 'persona-1',
-              authorName: 'Meera',
-              persona: true,
-            ),
-          ]),
-        );
+    testWidgets('AI persona bubble is honestly labelled twice: a sparkles '
+        'badge on the avatar and an "AI teacher" chip', (tester) async {
+      await _pump(
+        tester,
+        chat: TransportSnapshot<List<ChatMessage>>.ready([
+          _msg(
+            id: 'p1',
+            text: 'Try a chapati fraction demo!',
+            authorId: 'persona-1',
+            authorName: 'Meera',
+            persona: true,
+          ),
+        ]),
+      );
 
-        expect(find.text('Try a chapati fraction demo!'), findsOneWidget);
-        expect(find.text('Meera'), findsOneWidget); // the persona name
-        // Honest AI label present…
-        expect(find.text(l10n.staffroomChatAiBadge), findsOneWidget);
-        // …and it is rendered distinctly (sparkles glyph), NOT with a teacher's
-        // StaffroomAvatar — never posing as a real teacher.
-        expect(find.byIcon(LucideIcons.sparkles), findsWidgets);
-        expect(find.byType(StaffroomAvatar), findsNothing);
-      },
+      expect(find.text('Try a chapati fraction demo!'), findsOneWidget);
+      expect(find.text('Meera'), findsOneWidget); // the persona name
+      // Honest AI label present…
+      expect(find.text(l10n.staffroomChatAiBadge), findsOneWidget);
+      // …and the avatar carries the sparkles badge, so the face itself never
+      // poses as a real teacher.
+      expect(find.byType(StaffroomAvatar), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.ancestor(
+            of: find.byType(StaffroomAvatar),
+            matching: find.byType(Stack),
+          ),
+          matching: find.byIcon(LucideIcons.sparkles),
+        ),
+        findsOneWidget,
+      );
+      // The screen reader hears author, the disclosure, the text — in order.
+      expect(
+        find.bySemanticsLabel(
+          RegExp(
+            '^Meera, ${l10n.staffroomChatAiBadge}, '
+            'Try a chapati fraction demo!, ',
+          ),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a run from one author shows the name and avatar once', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        chat: TransportSnapshot<List<ChatMessage>>.ready([
+          _msg(id: 'm1', text: 'One', authorId: _other, authorName: 'Bina'),
+          _msg(id: 'm2', text: 'Two', authorId: _other, authorName: 'Bina'),
+          _msg(id: 'm3', text: 'Three', authorId: _me, authorName: 'Me'),
+          _msg(id: 'm4', text: 'Four', authorId: _other, authorName: 'Bina'),
+        ]),
+      );
+
+      expect(find.text('One'), findsOneWidget);
+      expect(find.text('Two'), findsOneWidget);
+      // The first run (m1, m2) names Bina once; m4 starts a new run.
+      expect(find.text('Bina'), findsNWidgets(2));
+      expect(find.byType(StaffroomAvatar), findsNWidgets(2));
+    });
+
+    testWidgets('day separators come from the timestamps', (tester) async {
+      final now = DateTime.now();
+      final yesterday = now.subtract(const Duration(days: 1));
+      await _pump(
+        tester,
+        chat: TransportSnapshot<List<ChatMessage>>.ready([
+          _msg(
+            id: 'm1',
+            text: 'Old news',
+            authorId: _other,
+            authorName: 'Bina',
+            createdAt: yesterday.toUtc().toIso8601String(),
+          ),
+          _msg(
+            id: 'm2',
+            text: 'Fresh news',
+            authorId: _other,
+            authorName: 'Bina',
+            createdAt: now.toUtc().toIso8601String(),
+          ),
+        ]),
+      );
+
+      expect(find.text(l10n.libraryDayYesterday), findsOneWidget);
+      expect(find.text(l10n.libraryDayToday), findsOneWidget);
+      // A new day starts a new run, so the name shows again.
+      expect(find.text('Bina'), findsNWidgets(2));
+    });
+
+    testWidgets('a voice note is an honest row, with no fake player', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        chat: const TransportSnapshot<List<ChatMessage>>.ready([
+          ChatMessage(
+            id: 'v1',
+            text: '',
+            authorId: _other,
+            authorName: 'Bina',
+            audioUrl: 'https://example.invalid/v1.m4a',
+            createdAt: '2026-07-19T11:00:00Z',
+          ),
+        ]),
+      );
+
+      expect(find.text(l10n.inboxVoiceNoteLabel), findsOneWidget);
+      expect(find.byIcon(LucideIcons.mic), findsOneWidget);
+      expect(find.byIcon(LucideIcons.play), findsNothing);
+    });
+  });
+
+  group('header', () {
+    testWidgets('community subline counts the real teachers here today', (
+      tester,
+    ) async {
+      final now = DateTime.now().toUtc().toIso8601String();
+      await _pump(
+        tester,
+        chat: TransportSnapshot<List<ChatMessage>>.ready([
+          _msg(id: 'a', text: 'a', authorId: _other, createdAt: now),
+          _msg(id: 'b', text: 'b', authorId: _other, createdAt: now),
+          _msg(id: 'c', text: 'c', authorId: _me, createdAt: now),
+          // An AI persona is never counted as a teacher who is here.
+          _msg(
+            id: 'p',
+            text: 'p',
+            authorId: 'persona-1',
+            persona: true,
+            createdAt: now,
+          ),
+          // Nor is anyone who only wrote on another day.
+          _msg(id: 'o', text: 'o', authorId: 'u-old'),
+        ]),
+      );
+
+      expect(find.text(l10n.staffroomChatTitle), findsOneWidget);
+      expect(
+        find.text('${l10n.communityDeck} · ${l10n.cmChatHereToday(2)}'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('with nobody here today the subline is just the room', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        chat: TransportSnapshot<List<ChatMessage>>.ready([
+          _msg(id: 'o', text: 'old', authorId: _other),
+        ]),
+      );
+      expect(find.text(l10n.communityDeck), findsOneWidget);
+    });
+
+    test('chatAuthorsToday leaves out blocked teachers', () {
+      final now = DateTime.now();
+      final iso = now.toUtc().toIso8601String();
+      final count = chatAuthorsToday(
+        [
+          _msg(id: 'a', text: 'a', authorId: 'u-a', createdAt: iso),
+          _msg(id: 'b', text: 'b', authorId: 'u-b', createdAt: iso),
+        ],
+        blocked: {'u-b'},
+        now: now,
+      );
+      expect(count, 1);
+    });
+  });
+
+  testWidgets('a quoted post prefills the composer', (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    final fake = FakeStaffroomTransport();
+    addTearDown(fake.dispose);
+    addTearDown(() async => tester.pumpWidget(const SizedBox.shrink()));
+    fake.emitStaffRoomChat(
+      const TransportSnapshot<List<ChatMessage>>.ready(<ChatMessage>[]),
     );
+    const quote = ChatQuote(author: 'Lata Joshi', text: 'Any game for ½?');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          staffroomTransportProvider.overrideWithValue(fake),
+          currentStaffroomUserIdProvider.overrideWithValue(_me),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const StaffRoomChatScreen(
+            room: ChatRoom.community(),
+            quote: quote,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, quote.asDraft());
   });
 
   group('state → surface', () {
@@ -412,6 +595,58 @@ void main() {
               authorName: 'মীরা',
               persona: true,
               text: 'দারুণ আইডিয়া! ভগ্নাংশ শেখাতে রুটি কেটে দেখানো যেতে পারে।',
+            ),
+          ]),
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    for (final code in ['hi', 'ta', 'ml']) {
+      testWidgets('no overflow in $code with a long group name and a voice '
+          'note', (tester) async {
+        final now = DateTime.now().toUtc().toIso8601String();
+        await _pump(
+          tester,
+          room: const ChatRoom.group('g1'),
+          title: 'कक्षा आठ विज्ञान शिक्षक समूह — प्रयोगशाला और गतिविधियाँ',
+          surface: const Size(360, 800),
+          textScale: 1.3,
+          locale: Locale(code),
+          chat: TransportSnapshot<List<ChatMessage>>.ready([
+            _msg(
+              id: 'm1',
+              authorId: _other,
+              authorName: 'ശ്രീലക്ഷ്മി രാധാകൃഷ്ണൻ നായർ',
+              createdAt: now,
+              text:
+                  'നാളത്തെ സ്റ്റാഫ് മീറ്റിംഗിന് നിങ്ങളുടെ പാഠ പദ്ധതിയും '
+                  'മൂല്യനിർണയ കുറിപ്പുകളും ദയവായി കൊണ്ടുവരിക.',
+            ),
+            ChatMessage(
+              id: 'v1',
+              text: '',
+              authorId: _other,
+              authorName: 'ശ്രീലക്ഷ്മി രാധാകൃഷ്ണൻ നായർ',
+              audioUrl: 'https://example.invalid/v1.m4a',
+              createdAt: now,
+            ),
+            _msg(
+              id: 'p1',
+              authorId: 'persona-1',
+              authorName: 'मीरा',
+              persona: true,
+              createdAt: now,
+              text: 'बढ़िया विचार! भिन्न सिखाने के लिए रोटी काटकर दिखाइए।',
+            ),
+            _msg(
+              id: 'm2',
+              authorId: _me,
+              authorName: 'Me',
+              createdAt: now,
+              text:
+                  'நாளை ஆசிரியர் கூட்டத்திற்கு உங்கள் பாடத் திட்டத்தையும் '
+                  'மதிப்பீட்டுக் குறிப்புகளையும் கொண்டு வாருங்கள்.',
             ),
           ]),
         );

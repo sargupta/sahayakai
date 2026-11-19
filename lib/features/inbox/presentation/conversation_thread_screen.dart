@@ -4,16 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/i18n/app_locale.dart';
+import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
-import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../moderation/domain/moderation.dart';
 import '../../moderation/presentation/moderation_actions.dart';
+import '../../staffroom/presentation/widgets/chat_parts.dart';
 import '../../vidya/presentation/vidya_cta_clearance.dart';
 import '../data/block_c_transport.dart';
 import '../data/inbox_transport.dart';
@@ -283,34 +285,46 @@ class _ConversationThreadScreenState
         : convo?.otherParticipant(myUid)?.displayName ?? '';
 
     return Scaffold(
-      appBar: GlassAppBar(
-        title: _ThreadTitle(conversation: widget.conversation, myUid: myUid),
-        actions: [
-          if (otherUid != null && otherUid.isNotEmpty)
-            ModerationMenuButton(
-              reportLabel: context.l10n.moderationReportTeacher(
-                moderationName(context.l10n, otherName),
-              ),
-              target: ReportTarget.profile,
-              targetId: otherUid,
-              authorUid: otherUid,
-              authorName: otherName,
-              // They can no longer message each other: leave the thread.
-              onBlocked: () {
-                if (mounted) Navigator.of(context).maybePop();
-              },
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: async.when(
-          loading: () => const Padding(
-            padding: AppSpacing.pagePadding,
-            child: AppSkeleton(lines: 5),
+      body: Column(
+        children: [
+          ChatHeader(
+            title: threadTitle(context.l10n, convo, myUid),
+            subline: threadSubline(context.l10n, convo, myUid),
+            leading: (convo == null || myUid == null)
+                ? null
+                : InboxAvatarShim(conversation: convo, myUid: myUid, size: 38),
+            actions: [
+              if (otherUid != null && otherUid.isNotEmpty)
+                ModerationMenuButton(
+                  reportLabel: context.l10n.moderationReportTeacher(
+                    moderationName(context.l10n, otherName),
+                  ),
+                  target: ReportTarget.profile,
+                  targetId: otherUid,
+                  authorUid: otherUid,
+                  authorName: otherName,
+                  // They can no longer message each other: leave the thread.
+                  onBlocked: () {
+                    if (mounted) Navigator.of(context).maybePop();
+                  },
+                ),
+            ],
           ),
-          error: (_, _) => _ThreadError(conversationId: widget.conversationId),
-          data: (snapshot) => _body(context, snapshot, myUid),
-        ),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: async.when(
+                loading: () => const Padding(
+                  padding: AppSpacing.pagePadding,
+                  child: AppSkeleton(lines: 5),
+                ),
+                error: (_, _) =>
+                    _ThreadError(conversationId: widget.conversationId),
+                data: (snapshot) => _body(context, snapshot, myUid),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -366,34 +380,67 @@ class _ConversationThreadScreenState
               ? const _ThreadEmpty()
               : ListView.builder(
                   reverse: true,
-                  padding: AppSpacing.pagePadding,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.space4,
+                    vertical: AppSpacing.space3,
+                  ),
                   itemCount: ordered.length + (showLoadOlder ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index < ordered.length) {
-                      final m = ordered[ordered.length - 1 - index];
+                      final i = ordered.length - 1 - index;
+                      final m = ordered[i];
+                      final previous = i > 0 ? ordered[i - 1] : null;
+                      final day = chatDay(m.createdAt);
+                      // A new day opens with a pill — only when timestamps
+                      // allow (an optimistic send has none yet).
+                      final newDay =
+                          day != null && day != chatDay(previous?.createdAt);
+                      final sameRun =
+                          previous != null &&
+                          !newDay &&
+                          previous.senderId == m.senderId;
                       final bubble = MessageBubble(
                         key: ValueKey<String>('msg-${m.id}'),
                         message: m,
                         myUid: myUid,
                         otherParticipantIds: otherIds,
                         isGroup: isGroup,
+                        showSender: !sameRun,
+                        continued: sameRun,
                       );
                       return staggeredItem(
                         context,
-                        m.senderId.isEmpty || m.senderId == myUid
-                            ? bubble
-                            // Someone else's message: long-press to report it
-                            // or block them.
-                            : GestureDetector(
-                                onLongPress: () => showMessageModerationSheet(
-                                  context,
-                                  ref,
-                                  messageId: m.id,
-                                  authorUid: m.senderId,
-                                  authorName: m.senderName,
-                                ),
-                                child: bubble,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (newDay)
+                              ChatDayPill(
+                                chatDayLabel(context, day, DateTime.now()),
                               ),
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top: previous == null || newDay
+                                    ? 0
+                                    : (sameRun ? AppSpacing.space1 : 10),
+                              ),
+                              child: m.senderId.isEmpty || m.senderId == myUid
+                                  ? bubble
+                                  // Someone else's message: long-press to
+                                  // report it or block them.
+                                  : GestureDetector(
+                                      onLongPress: () =>
+                                          showMessageModerationSheet(
+                                            context,
+                                            ref,
+                                            messageId: m.id,
+                                            authorUid: m.senderId,
+                                            authorName: m.senderName,
+                                          ),
+                                      child: bubble,
+                                    ),
+                            ),
+                          ],
+                        ),
                         index: index,
                       );
                     }
@@ -433,41 +480,48 @@ class _ConversationThreadScreenState
   }
 }
 
-/// The app-bar title: the other participant's avatar + name (or the group name),
-/// falling back to a neutral label on a cold deep link.
-class _ThreadTitle extends StatelessWidget {
-  const _ThreadTitle({required this.conversation, required this.myUid});
+/// The header title: the other participant's name (or the group name), falling
+/// back to a neutral label on a cold deep link.
+@visibleForTesting
+String threadTitle(AppLocalizations l10n, Conversation? convo, String? myUid) {
+  if (convo == null || myUid == null) return l10n.inboxThreadFallbackTitle;
+  final label = convo.isGroup
+      ? convo.name?.trim()
+      : convo.otherParticipant(myUid)?.displayName.trim();
+  return (label == null || label.isEmpty)
+      ? l10n.inboxThreadFallbackTitle
+      : label;
+}
 
-  final Conversation? conversation;
-  final String? myUid;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final convo = conversation;
-    if (convo == null || myUid == null) {
-      return Text(l10n.inboxThreadFallbackTitle);
-    }
-    final label = convo.isGroup
-        ? ((convo.name?.trim().isNotEmpty ?? false)
-              ? convo.name!.trim()
-              : l10n.inboxThreadFallbackTitle)
-        : ((convo.otherParticipant(myUid!)?.displayName.trim().isNotEmpty ??
-                  false)
-              ? convo.otherParticipant(myUid!)!.displayName.trim()
-              : l10n.inboxThreadFallbackTitle);
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InboxAvatarShim(conversation: convo, myUid: myUid!, size: 36),
-        const SizedBox(width: AppSpacing.space3),
-        Flexible(
-          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-      ],
-    );
+/// The header subline, from data the conversation actually carries: a group's
+/// member count, or the other teacher's preferred language in its own script.
+/// Null when there is nothing true to say.
+@visibleForTesting
+String? threadSubline(
+  AppLocalizations l10n,
+  Conversation? convo,
+  String? myUid,
+) {
+  if (convo == null || myUid == null) return null;
+  if (convo.isGroup) {
+    final count = convo.participantIds.length;
+    return count > 0 ? l10n.cmThreadMembers(count) : null;
   }
+  final language = convo.otherParticipant(myUid)?.preferredLanguage?.trim();
+  if (language == null || language.isEmpty) return null;
+  return l10n.cmThreadLanguage(_nativeLanguage(language));
+}
+
+/// A language stored as its English name ("Kannada") or code ("kn") shown in
+/// its own script (ಕನ್ನಡ); one the app does not know is shown as stored.
+String _nativeLanguage(String language) {
+  final key = language.toLowerCase();
+  for (final l in AppLocale.values) {
+    if (l.aiName.toLowerCase() == key || l.code.toLowerCase() == key) {
+      return l.nativeLabel;
+    }
+  }
+  return language;
 }
 
 /// The sign-in / awaiting surface — what the thread shows on-device (deferred).
@@ -569,14 +623,16 @@ class _SendFailedBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.space2),
-          // ≥48dp text-button retry.
-          TextButton(
-            onPressed: onRetry,
-            style: TextButton.styleFrom(
-              foregroundColor: scheme.onErrorContainer,
-              minimumSize: const Size(48, 48),
+          // ≥48dp text-button retry; a long translation wraps inside it.
+          Flexible(
+            child: TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(
+                foregroundColor: scheme.onErrorContainer,
+                minimumSize: const Size(48, 48),
+              ),
+              child: Text(l10n.actionRetry, textAlign: TextAlign.center),
             ),
-            child: Text(l10n.actionRetry),
           ),
         ],
       ),
@@ -584,9 +640,8 @@ class _SendFailedBar extends StatelessWidget {
   }
 }
 
-/// The bottom composer: a growable text field + a ≥48dp send button. The send
-/// button uses the AA-safe `primaryContainer` + `onPrimaryContainer` pairing
-/// (6.9:1) — a small saffron glyph on the `#E0924D` fill would be only 2.5:1.
+/// The bottom composer: a rounded, growable text field + a round 48dp send
+/// button — white on saffron-600, 5.4:1 ([ChatComposerRow]).
 class _Composer extends StatefulWidget {
   const _Composer({required this.controller, required this.onSend});
 
@@ -614,9 +669,6 @@ class _ComposerState extends State<_Composer> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-
     // The 1000-character server cap, matching the web app's `String.length`
     // cap so the client and the shipped web product agree (and never wrongly
     // block a normal-length Indic message). Over the cap → the send button
@@ -631,95 +683,23 @@ class _ComposerState extends State<_Composer> {
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.space4,
+          AppSpacing.space3,
           AppSpacing.space2,
-          AppSpacing.space4,
-          AppSpacing.space2,
+          AppSpacing.space3,
+          AppSpacing.space3,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (tooLong) _TooLongHint(length: length),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: widget.controller,
-                    minLines: 1,
-                    maxLines: 5,
-                    textInputAction: TextInputAction.newline,
-                    keyboardType: TextInputType.multiline,
-                    decoration: InputDecoration(
-                      hintText: l10n.inboxComposerHint,
-                      isDense: true,
-                      filled: true,
-                      fillColor: scheme.surfaceContainerHigh,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.space4,
-                        vertical: AppSpacing.space3,
-                      ),
-                      border: const OutlineInputBorder(
-                        borderRadius: AppRadius.rPill,
-                        borderSide: BorderSide.none,
-                      ),
-                      // Turn the field's own border red while over the cap, so
-                      // the block state reads even without looking at the hint.
-                      enabledBorder: tooLong
-                          ? OutlineInputBorder(
-                              borderRadius: AppRadius.rPill,
-                              borderSide: BorderSide(color: scheme.error),
-                            )
-                          : const OutlineInputBorder(
-                              borderRadius: AppRadius.rPill,
-                              borderSide: BorderSide.none,
-                            ),
-                      focusedBorder: tooLong
-                          ? OutlineInputBorder(
-                              borderRadius: AppRadius.rPill,
-                              borderSide: BorderSide(color: scheme.error),
-                            )
-                          : OutlineInputBorder(
-                              borderRadius: AppRadius.rPill,
-                              borderSide: BorderSide(color: scheme.primary),
-                            ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.space2),
-                Semantics(
-                  button: true,
-                  enabled: canSend,
-                  label: l10n.inboxComposerSend,
-                  child: SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: Ink(
-                        decoration: ShapeDecoration(
-                          color: canSend
-                              ? scheme.primaryContainer
-                              : scheme.surfaceContainerHigh,
-                          shape: const CircleBorder(),
-                        ),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: canSend ? widget.onSend : null,
-                          child: Icon(
-                            LucideIcons.send,
-                            size: AppIconSize.inline,
-                            color: canSend
-                                ? scheme.onPrimaryContainer
-                                : scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            ChatComposerRow(
+              controller: widget.controller,
+              canSend: canSend,
+              onSend: widget.onSend,
+              // Turn the field's own border red while over the cap, so the
+              // block state reads even without looking at the hint.
+              error: tooLong,
             ),
           ],
         ),

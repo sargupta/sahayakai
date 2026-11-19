@@ -6150,5 +6150,15 @@
   "cmNetTeachersYouMayKnow": "Teachers you may know",
   "@cmNetTeachersYouMayKnow": {"description": "Your network: section label over suggested teachers to connect with."},
   "cmNetYourTeachers": "Your teachers · {count}",
-  "@cmNetYourTeachers": {"description": "Your network: section label over the teachers the user is connected with, with how many.", "placeholders": {"count": {"type": "int"}}}
+  "@cmNetYourTeachers": {"description": "Your network: section label over the teachers the user is connected with, with how many.", "placeholders": {"count": {"type": "int"}}},
+  "cmChatHereToday": "{count, plural, =1{1 here today} other{{count} here today}}",
+  "@cmChatHereToday": {"description": "Staff room / group chat header subline: how many different teachers wrote a message today (counted from the loaded messages).", "placeholders": {"count": {"type": "int"}}},
+  "cmChatYou": "You",
+  "@cmChatYou": {"description": "Screen-reader name for the teacher's own chat bubble (staff room and one-to-one conversation)."},
+  "cmThreadMembers": "{count, plural, =1{1 teacher} other{{count} teachers}}",
+  "@cmThreadMembers": {"description": "Group conversation header subline: how many teachers are in the conversation.", "placeholders": {"count": {"type": "int"}}},
+  "cmThreadLanguage": "Preferred language: {language}",
+  "@cmThreadLanguage": {"description": "One-to-one conversation header subline: the other teacher's preferred language, shown in its own script.", "placeholders": {"language": {"type": "String"}}},
+  "cmThreadYouSaid": "You: {message}",
+  "@cmThreadYouSaid": {"description": "Messages list row preview when the teacher sent the last message herself.", "placeholders": {"message": {"type": "String"}}}
 }

@@ -1561,5 +1561,10 @@
   "cmNetYourGroups": "તમારાં જૂથો · {count}",
   "cmNetGroupsForYou": "તમારા માટે જૂથો",
   "cmNetTeachersYouMayKnow": "તમે ઓળખતા હો તેવા શિક્ષકો",
-  "cmNetYourTeachers": "તમારા શિક્ષકો · {count}"
+  "cmNetYourTeachers": "તમારા શિક્ષકો · {count}",
+  "cmChatHereToday": "{count, plural, =1{આજે 1 સક્રિય} other{આજે {count} સક્રિય}}",
+  "cmChatYou": "તમે",
+  "cmThreadMembers": "{count, plural, =1{1 શિક્ષક} other{{count} શિક્ષકો}}",
+  "cmThreadLanguage": "પસંદગીની ભાષા: {language}",
+  "cmThreadYouSaid": "તમે: {message}"
 }

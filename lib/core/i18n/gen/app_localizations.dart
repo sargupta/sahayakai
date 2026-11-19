@@ -9379,6 +9379,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your teachers · {count}'**
   String cmNetYourTeachers(int count);
+
+  /// Staff room / group chat header subline: how many different teachers wrote a message today (counted from the loaded messages).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 here today} other{{count} here today}}'**
+  String cmChatHereToday(int count);
+
+  /// Screen-reader name for the teacher's own chat bubble (staff room and one-to-one conversation).
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get cmChatYou;
+
+  /// Group conversation header subline: how many teachers are in the conversation.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 teacher} other{{count} teachers}}'**
+  String cmThreadMembers(int count);
+
+  /// One-to-one conversation header subline: the other teacher's preferred language, shown in its own script.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred language: {language}'**
+  String cmThreadLanguage(String language);
+
+  /// Messages list row preview when the teacher sent the last message herself.
+  ///
+  /// In en, this message translates to:
+  /// **'You: {message}'**
+  String cmThreadYouSaid(String message);
 }
 
 class _AppLocalizationsDelegate

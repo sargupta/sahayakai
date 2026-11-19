@@ -1561,5 +1561,10 @@
   "cmNetYourGroups": "మీ గ్రూపులు · {count}",
   "cmNetGroupsForYou": "మీ కోసం గ్రూపులు",
   "cmNetTeachersYouMayKnow": "మీకు తెలిసి ఉండే ఉపాధ్యాయులు",
-  "cmNetYourTeachers": "మీ ఉపాధ్యాయులు · {count}"
+  "cmNetYourTeachers": "మీ ఉపాధ్యాయులు · {count}",
+  "cmChatHereToday": "{count, plural, =1{ఈరోజు 1 మంది చురుకుగా} other{ఈరోజు {count} మంది చురుకుగా}}",
+  "cmChatYou": "మీరు",
+  "cmThreadMembers": "{count, plural, =1{1 ఉపాధ్యాయులు} other{{count} మంది ఉపాధ్యాయులు}}",
+  "cmThreadLanguage": "ఇష్టమైన భాష: {language}",
+  "cmThreadYouSaid": "మీరు: {message}"
 }

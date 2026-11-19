@@ -4,23 +4,23 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/app_card.dart';
-import '../../../../shared/widgets/map_card.dart';
 import '../../../../shared/widgets/map_icon_tile.dart';
 import '../../../inbox/presentation/inbox_time.dart';
 import '../../domain/teacher_notification.dart';
 
-/// One **Updates** row: an [AppCard] register row in the same grammar as the
-/// hub's sibling `ConversationRow` (48dp leading well, title + relative time on
-/// the baseline, a muted second line), so the third tab reads as part of the
-/// Network hub rather than as a bolted-on screen.
+/// One **Updates** row, built to sit in a [MapCard] list with hairline
+/// dividers (the view draws the card and the dividers): a 40px tinted icon
+/// tile, a bold title, a muted detail line with the relative time under it,
+/// and the row's own action — "Open" — as a small accent-tinted pill.
 ///
-/// Unread is carried by weight plus a small saffron dot, never a coloured row
-/// fill. The dot uses the saffron **text** token (`#AC4815` light /
-/// `#EB9447` dark), not `scheme.primary`: the brand fill `#E0924D` on the
-/// card's white ground is ~2.26:1, under the 3:1 floor a meaningful non-text
-/// indicator has to clear. Same reasoning, same tokens, as AppBadge's accent
-/// tone.
+/// The whole row is the one tap target (≥76dp tall) and reads as one
+/// sentence; the pill shows what the tap does rather than being a second
+/// button that does the same thing.
+///
+/// Unread is carried by weight plus a small saffron dot (and "1 unread" in
+/// the spoken label), never a coloured row fill. The dot uses the saffron
+/// **text** token, not the brand fill: `#E0924D` on the card's white ground is
+/// ~2.26:1, under the 3:1 floor a meaningful non-text indicator has to clear.
 class NotificationRow extends StatelessWidget {
   const NotificationRow({
     super.key,
@@ -39,9 +39,7 @@ class NotificationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final text = theme.textTheme;
-    final extras = AppTextExtras.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     final unread = !notification.isRead;
@@ -50,91 +48,116 @@ class NotificationRow extends StatelessWidget {
       now ?? DateTime.now(),
       l10n,
     );
+    final title = notificationTitle(notification, l10n);
+    final body = notificationBody(notification, l10n);
+    final tint = _tint(notification.kind);
 
-    return MapCard(
-      onTap: onTap,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          MapIconTile(
-            icon: _glyph(notification.kind),
-            tint: _tint(notification.kind),
-          ),
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        notificationTitle(notification, l10n),
-                        style: text.titleMedium?.copyWith(
-                          fontWeight: unread ? FontWeight.w700 : null,
-                        ),
-                      ),
+    final spoken = [
+      title,
+      body,
+      if (timestamp.isNotEmpty) timestamp,
+      if (unread) l10n.inboxUnreadLabel(1),
+    ].join(', ');
+
+    return Semantics(
+      button: true,
+      label: spoken,
+      hint: l10n.actionOpen,
+      excludeSemantics: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 76),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: AppSpacing.space3,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: tint.fill,
+                      borderRadius: AppRadius.rRow,
                     ),
-                    if (timestamp.isNotEmpty) ...[
-                      const SizedBox(width: AppSpacing.space2),
-                      Text(
-                        timestamp,
-                        style: extras.dataMedium.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.space1),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        notificationBody(notification, l10n),
-                        style: text.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
+                    child: Icon(
+                      _glyph(notification.kind),
+                      size: 18,
+                      color: tint.ink,
                     ),
-                    if (unread) ...[
-                      const SizedBox(width: AppSpacing.space2),
-                      Semantics(
-                        label: l10n.inboxUnreadLabel(1),
-                        child: Padding(
-                          // Optically centre the dot against the body line.
-                          padding: const EdgeInsets.only(
-                            top: AppSpacing.space1,
+                  ),
+                  const SizedBox(width: AppSpacing.space3),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: text.bodyLarge?.copyWith(
+                            fontWeight: unread
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            color: AppColors.textStrong,
                           ),
-                          child: SizedBox(
-                            width: 8,
-                            height: 8,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isDark
-                                    ? AppColors.dPrimaryText
-                                    : AppColors.lPrimaryText,
-                              ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          body,
+                          style: text.bodyMedium?.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        if (timestamp.isNotEmpty)
+                          Text(
+                            timestamp,
+                            style: text.bodySmall?.copyWith(
+                              color: AppColors.textMuted,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.space2),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _ActionPill(l10n.actionOpen),
+                      if (unread) ...[
+                        const SizedBox(height: AppSpacing.space2),
+                        SizedBox(
+                          width: 8,
+                          height: 8,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isDark
+                                  ? AppColors.dPrimaryText
+                                  : AppColors.lPrimaryText,
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
+  /// The kind → tile mapping the Updates rows have always used.
   static MapTint _tint(TeacherNotificationKind kind) => switch (kind) {
     TeacherNotificationKind.callCompleted ||
     TeacherNotificationKind.callFailed => MapTint.leaf,
@@ -150,6 +173,38 @@ class NotificationRow extends StatelessWidget {
     TeacherNotificationKind.examPaperQueued => LucideIcons.fileText,
     TeacherNotificationKind.followUp => LucideIcons.calendarClock,
   };
+}
+
+/// What a tap on the row does, shown as the map's small accent-tinted pill:
+/// saffron-700 on the saffron tile tint, ≥ 4.5:1.
+class _ActionPill extends StatelessWidget {
+  const _ActionPill(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.tileSaffronBg,
+        borderRadius: AppRadius.rPill,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: AppSpacing.space2,
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.saffron700,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// The row's headline. Public so the view's accessibility ordering and the

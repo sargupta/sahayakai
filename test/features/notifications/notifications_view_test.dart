@@ -10,6 +10,7 @@ import 'package:sahayakai/features/notifications/data/notifications_store.dart';
 import 'package:sahayakai/features/notifications/domain/teacher_notification.dart';
 import 'package:sahayakai/features/notifications/presentation/notifications_view.dart';
 import 'package:sahayakai/features/parent_hotline/domain/hotline_launch.dart';
+import 'package:sahayakai/shared/widgets/map_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// U-SI5 — the Network hub's **Updates** pane.
@@ -68,10 +69,15 @@ TeacherNotification _paper() => TeacherNotification(
 Future<ProviderContainer> _pumpView(
   WidgetTester tester, {
   List<TeacherNotification> seed = const [],
+  Size surface = const Size(390, 1400),
+  double textScale = 1.0,
+  Locale locale = const Locale('en'),
 }) async {
-  tester.view.physicalSize = const Size(390, 1400);
+  tester.view.physicalSize = surface;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
+  tester.platformDispatcher.textScaleFactorTestValue = textScale;
+  addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
   tester.platformDispatcher.accessibilityFeaturesTestValue =
       const FakeAccessibilityFeatures(disableAnimations: true);
   addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
@@ -117,7 +123,7 @@ Future<ProviderContainer> _pumpView(
       container: container,
       child: MaterialApp.router(
         theme: AppTheme.light(),
-        locale: const Locale('en'),
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: router,
@@ -203,6 +209,55 @@ void main() {
       );
     });
 
+    testWidgets('today and earlier are separate lists, each row with its '
+        'Open action', (tester) async {
+      await _pumpView(
+        tester,
+        seed: [_callCompleted(), _callFailed(), _paper()],
+      );
+
+      // Labels are upper-cased in Latin script (MapOverline).
+      expect(find.text(l10n.libraryDayToday.toUpperCase()), findsOneWidget);
+      expect(find.text(l10n.libraryDayEarlier.toUpperCase()), findsOneWidget);
+      expect(find.byType(MapCard), findsNWidgets(2));
+      expect(find.text(l10n.actionOpen), findsNWidgets(3));
+
+      // The paper (two days back) sits under EARLIER, after today's calls.
+      final earlierY = tester
+          .getTopLeft(find.text(l10n.libraryDayEarlier.toUpperCase()))
+          .dy;
+      expect(
+        tester
+            .getTopLeft(
+              find.text(l10n.notificationCallFailedTitle('Ravi Kumar')),
+            )
+            .dy,
+        lessThan(earlierY),
+      );
+      expect(
+        tester
+            .getTopLeft(
+              find.text(l10n.notificationExamPaperTitle('Mathematics')),
+            )
+            .dy,
+        greaterThan(earlierY),
+      );
+    });
+
+    testWidgets('a row reads as one button: title, detail, time, unread', (
+      tester,
+    ) async {
+      await _pumpView(tester, seed: [_callCompleted()]);
+      expect(
+        find.bySemanticsLabel(
+          '${l10n.notificationCallCompletedTitle('Asha Devi')}, '
+          '${l10n.notificationCallCompletedBody}, '
+          '${l10n.inboxTimeMinutes(5)}, ${l10n.inboxUnreadLabel(1)}',
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('the relative timestamp comes off the injected clock', (
       tester,
     ) async {
@@ -285,5 +340,34 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('dest-library')), findsOneWidget);
     });
+  });
+
+  group('overflow probe — 360dp × 1.3', () {
+    for (final code in ['hi', 'ta', 'ml']) {
+      testWidgets('no overflow in $code with every kind', (tester) async {
+        await _pumpView(
+          tester,
+          surface: const Size(360, 800),
+          textScale: 1.3,
+          locale: Locale(code),
+          seed: [
+            _callCompleted(),
+            _callFailed(),
+            _absence(),
+            _paper(),
+            TeacherNotification(
+              id: 'absence:c2:2026-8:s9:5',
+              kind: TeacherNotificationKind.absenceRun,
+              at: _now.subtract(const Duration(days: 3)),
+              label: 'ശ്രീലക്ഷ്മി രാധാകൃഷ്ണൻ',
+              className: 'கணிதம் வகுப்பு எட்டு — பிரிவு அ',
+              classId: 'c2',
+              count: 5,
+            ),
+          ],
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
   });
 }

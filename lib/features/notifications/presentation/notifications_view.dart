@@ -72,50 +72,108 @@ class NotificationsView extends ConsumerWidget {
       );
     }
 
-    return ListView.separated(
+    // Split by the teacher's local day: what happened today, then the rest.
+    // The store is newest-first, and each group keeps that order.
+    final clock = (now ?? DateTime.now()).toLocal();
+    final today = DateTime(clock.year, clock.month, clock.day);
+    bool isToday(TeacherNotification n) {
+      final at = n.at.toLocal();
+      return DateTime(at.year, at.month, at.day) == today;
+    }
+
+    final todays = [
+      for (final n in notifications)
+        if (isToday(n)) n,
+    ];
+    final earlier = [
+      for (final n in notifications)
+        if (!isToday(n)) n,
+    ];
+
+    return ListView(
       padding: _padding,
-      // +1 leading slot for the note (and the mark-all action when it applies).
-      itemCount: notifications.length + 1,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.space3),
-      itemBuilder: (context, index) {
-        if (index == 0) return _header(context, ref, unread: unread);
-        final notification = notifications[index - 1];
-        return NotificationRow(
-          key: ValueKey<String>('notification-${notification.id}'),
-          notification: notification,
-          now: now,
-          onTap: () {
-            ref.read(notificationsProvider.notifier).markRead(notification.id);
-            // A call row opens that exact call (its summary, or the call if
-            // it is still running); everything else opens its screen.
-            final outreach = notification.outreachId;
-            if (outreach != null && outreach.isNotEmpty) {
-              context.push(
-                Routes.parentHotline,
-                extra: HotlineLaunch(
-                  outreachId: outreach,
-                  studentName: notification.label,
-                ),
-              );
-              return;
-            }
-            context.push(_destination(notification));
-          },
-        );
-      },
+      children: [
+        _header(context, ref, unread: unread),
+        if (todays.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.space5),
+          MapOverline(l10n.libraryDayToday, color: AppColors.textEyebrow),
+          const SizedBox(height: AppSpacing.space2),
+          _group(context, ref, todays),
+        ],
+        if (earlier.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.space5),
+          MapOverline(l10n.libraryDayEarlier),
+          const SizedBox(height: AppSpacing.space2),
+          _group(context, ref, earlier),
+        ],
+      ],
     );
   }
 
+  /// One day-group: a [MapCard] list, its rows divided by hairlines.
+  Widget _group(
+    BuildContext context,
+    WidgetRef ref,
+    List<TeacherNotification> rows,
+  ) {
+    return MapCard(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (i, notification) in rows.indexed) ...[
+            if (i > 0)
+              const Divider(
+                height: 1,
+                thickness: 1,
+                indent: 14,
+                endIndent: 14,
+                color: AppColors.borderHairline,
+              ),
+            NotificationRow(
+              key: ValueKey<String>('notification-${notification.id}'),
+              notification: notification,
+              now: now,
+              onTap: () => _open(context, ref, notification),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _open(
+    BuildContext context,
+    WidgetRef ref,
+    TeacherNotification notification,
+  ) {
+    ref.read(notificationsProvider.notifier).markRead(notification.id);
+    // A call row opens that exact call (its summary, or the call if it is
+    // still running); everything else opens its screen.
+    final outreach = notification.outreachId;
+    if (outreach != null && outreach.isNotEmpty) {
+      context.push(
+        Routes.parentHotline,
+        extra: HotlineLaunch(
+          outreachId: outreach,
+          studentName: notification.label,
+        ),
+      );
+      return;
+    }
+    context.push(_destination(notification));
+  }
+
   /// The map's Updates header: where these come from, and "Mark all as
-  /// read" as a link while anything is unread.
+  /// read" as a link under it while anything is unread (stacked, so a long
+  /// translation of either never squeezes the other).
   Widget _header(BuildContext context, WidgetRef ref, {required int unread}) {
     final l10n = context.l10n;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Expanded(child: _localNote(context)),
+        SizedBox(width: double.infinity, child: _localNote(context)),
         if (unread > 0) ...[
-          const SizedBox(width: AppSpacing.space2),
           TextButton(
             onPressed: () =>
                 ref.read(notificationsProvider.notifier).markAllRead(),
@@ -141,9 +199,10 @@ class NotificationsView extends ConsumerWidget {
   Widget _localNote(BuildContext context) {
     return Text(
       context.l10n.notificationsLocalNote,
-      style: Theme.of(
-        context,
-      ).textTheme.bodyMedium?.copyWith(color: AppColors.textBody),
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        fontSize: 13,
+        color: AppColors.textMuted,
+      ),
     );
   }
 

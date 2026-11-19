@@ -323,6 +323,54 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+
+    for (final code in ['hi', 'ta', 'ml']) {
+      testWidgets('no overflow in $code with a long name and 99+ unread', (
+        tester,
+      ) async {
+        await _pump(
+          tester,
+          surface: const Size(360, 800),
+          textScale: 1.3,
+          locale: Locale(code),
+          inbox: TransportSnapshot<List<Conversation>>.ready([
+            _convo(
+              otherName: 'ശ്രീലക്ഷ്മി രാധാകൃഷ്ണൻ നായർ ടീച്ചർ',
+              preview:
+                  'நாளை ஆசிரியர் கூட்டத்திற்கு உங்கள் பாடத் திட்டத்தையும் '
+                  'கொண்டு வாருங்கள்',
+              unread: 120,
+            ),
+            _convo(id: 'u-c_u-me', otherName: 'अनीता राव', preview: ''),
+          ]),
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+  });
+
+  testWidgets('my own last message is prefixed "You:"', (tester) async {
+    await _pump(
+      tester,
+      inbox: const TransportSnapshot<List<Conversation>>.ready([
+        Conversation(
+          id: ConversationId('u-bina_u-me'),
+          type: ConversationType.direct,
+          participantIds: [_other, _me],
+          participants: {
+            _other: ParticipantSnapshot(displayName: 'Bina Devi'),
+            _me: ParticipantSnapshot(displayName: 'Me'),
+          },
+          lastMessage: 'Sending it tonight',
+          lastMessageSenderId: _me,
+          unreadCount: {_me: 0},
+        ),
+      ]),
+    );
+    expect(
+      find.text(l10n.cmThreadYouSaid('Sending it tonight')),
+      findsOneWidget,
+    );
   });
 }
 

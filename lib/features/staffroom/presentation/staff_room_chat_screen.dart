@@ -8,7 +8,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
-import '../../../shared/widgets/glass_app_bar.dart';
 import '../../inbox/data/block_c_transport.dart';
 import '../../moderation/presentation/blocked_teachers_controller.dart';
 import '../../moderation/presentation/moderation_actions.dart';
@@ -18,6 +17,7 @@ import '../data/staffroom_providers.dart';
 import '../domain/chat_message.dart';
 import '../domain/chat_quote.dart';
 import 'widgets/chat_bubble.dart';
+import 'widgets/chat_parts.dart';
 
 /// U-SI3 — the Staff Room chat (SPEC §A3.2), parameterized for the community
 /// Staff Room ([ChatRoom.community]) OR one group ([ChatRoom.group]). A reversed
@@ -113,18 +113,56 @@ class _StaffRoomChatScreenState extends ConsumerState<StaffRoomChatScreen> {
     final myUid = ref.watch(currentStaffroomUserIdProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(_appBarTitle(context))),
-      body: SafeArea(
-        child: async.when(
-          loading: () => const Padding(
-            padding: AppSpacing.pagePadding,
-            child: AppSkeleton(lines: 5),
+      body: Column(
+        children: [
+          ChatHeader(
+            title: _appBarTitle(context),
+            subline: _subline(context, async.valueOrNull, myUid),
           ),
-          error: (_, _) => _ChatError(room: _room),
-          data: (snapshot) => _body(context, snapshot, myUid),
-        ),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: async.when(
+                loading: () => const Padding(
+                  padding: AppSpacing.pagePadding,
+                  child: AppSkeleton(lines: 5),
+                ),
+                error: (_, _) => _ChatError(room: _room),
+                data: (snapshot) => _body(context, snapshot, myUid),
+              ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  /// "Teachers across Bharat" for the community room, plus "N here today" when
+  /// the loaded messages show real teachers (not AI personas) writing today.
+  String? _subline(
+    BuildContext context,
+    TransportSnapshot<List<ChatMessage>>? snapshot,
+    String? myUid,
+  ) {
+    final l10n = context.l10n;
+    final ready =
+        snapshot != null &&
+        myUid != null &&
+        !snapshot.hasError &&
+        !snapshot.isLoading &&
+        !snapshot.isEmptyByDesign;
+    final here = ready
+        ? chatAuthorsToday(
+            snapshot.data,
+            blocked: ref.watch(blockedUidsProvider),
+            now: DateTime.now(),
+          )
+        : 0;
+    final parts = [
+      if (_room.isCommunity) l10n.communityDeck,
+      if (here > 0) l10n.cmChatHereToday(here),
+    ];
+    return parts.isEmpty ? null : parts.join(' · ');
   }
 
   String _appBarTitle(BuildContext context) {
@@ -179,29 +217,64 @@ class _StaffRoomChatScreenState extends ConsumerState<StaffRoomChatScreen> {
               ? const _ChatEmpty()
               : ListView.builder(
                   reverse: true,
-                  padding: AppSpacing.pagePadding,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.space4,
+                    vertical: AppSpacing.space3,
+                  ),
                   itemCount: display.length,
                   itemBuilder: (context, index) {
-                    final message = display[display.length - 1 - index];
-                    final bubble = ChatBubble(
+                    final i = display.length - 1 - index;
+                    final message = display[i];
+                    final previous = i > 0 ? display[i - 1] : null;
+                    final day = chatDay(message.createdAt);
+                    // A new day opens with a pill — only when the timestamps
+                    // say so (an in-flight send has none).
+                    final newDay =
+                        day != null && day != chatDay(previous?.createdAt);
+                    final sameRun =
+                        previous != null &&
+                        !newDay &&
+                        previous.authorId == message.authorId &&
+                        previous.isDemoPersona == message.isDemoPersona;
+
+                    Widget bubble = ChatBubble(
                       key: ValueKey<String>('chat-${message.id}'),
                       message: message,
                       myUid: myUid,
+                      showAuthor: !sameRun,
+                      continued: sameRun,
                     );
-                    if (message.authorId.isEmpty || message.authorId == myUid) {
-                      return bubble;
+                    if (message.authorId.isNotEmpty &&
+                        message.authorId != myUid) {
+                      // Another teacher's message: long-press to report it or
+                      // block them.
+                      bubble = GestureDetector(
+                        onLongPress: () => showMessageModerationSheet(
+                          context,
+                          ref,
+                          messageId: message.id,
+                          authorUid: message.authorId,
+                          authorName: message.authorName,
+                        ),
+                        child: bubble,
+                      );
                     }
-                    // Another teacher's message: long-press to report it or
-                    // block them.
-                    return GestureDetector(
-                      onLongPress: () => showMessageModerationSheet(
-                        context,
-                        ref,
-                        messageId: message.id,
-                        authorUid: message.authorId,
-                        authorName: message.authorName,
-                      ),
-                      child: bubble,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (newDay)
+                          ChatDayPill(
+                            chatDayLabel(context, day, DateTime.now()),
+                          ),
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: previous == null || newDay
+                                ? 0
+                                : (sameRun ? AppSpacing.space1 : 10),
+                          ),
+                          child: bubble,
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -334,13 +407,16 @@ class _SendFailedBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.space2),
-          TextButton(
-            onPressed: onRetry,
-            style: TextButton.styleFrom(
-              foregroundColor: scheme.onErrorContainer,
-              minimumSize: const Size(48, 48),
+          // A long translation wraps inside the button instead of overflowing.
+          Flexible(
+            child: TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(
+                foregroundColor: scheme.onErrorContainer,
+                minimumSize: const Size(48, 48),
+              ),
+              child: Text(l10n.actionRetry, textAlign: TextAlign.center),
             ),
-            child: Text(l10n.actionRetry),
           ),
         ],
       ),
@@ -348,10 +424,9 @@ class _SendFailedBar extends StatelessWidget {
   }
 }
 
-/// The bottom composer (mirrors U-SI1): a growable text field (client-capped at
-/// 500 chars, per SPEC §A3.2) + a ≥48dp send button. The send button uses the
-/// AA-safe `primaryContainer` + `onPrimaryContainer` pairing (6.9:1) — a small
-/// saffron glyph on the `#E0924D` fill would be only 2.5:1.
+/// The bottom composer (mirrors U-SI1): a rounded, growable text field
+/// (client-capped at 500 chars, per SPEC §A3.2) + a round 48dp send button —
+/// white on saffron-600, 5.4:1 ([ChatComposerRow]).
 class _Composer extends StatefulWidget {
   const _Composer({required this.controller, required this.onSend});
 
@@ -379,73 +454,47 @@ class _ComposerState extends State<_Composer> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
     final canSend = widget.controller.text.trim().isNotEmpty;
 
     return SafeArea(
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.space4,
+          AppSpacing.space3,
           AppSpacing.space2,
-          AppSpacing.space4,
-          AppSpacing.space2,
+          AppSpacing.space3,
+          AppSpacing.space3,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: TextField(
-                controller: widget.controller,
-                minLines: 1,
-                maxLines: 5,
-                // Chat text is capped at 500 chars server-side; mirror it here so
-                // the teacher never types a message the server will reject.
-                inputFormatters: [LengthLimitingTextInputFormatter(500)],
-                textInputAction: TextInputAction.newline,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                  hintText: l10n.inboxComposerHint,
-                  isDense: true,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.space2),
-            Semantics(
-              button: true,
-              enabled: canSend,
-              label: l10n.inboxComposerSend,
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: Ink(
-                    decoration: ShapeDecoration(
-                      color: canSend
-                          ? scheme.primaryContainer
-                          : scheme.surfaceContainerHigh,
-                      shape: const CircleBorder(),
-                    ),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: canSend ? widget.onSend : null,
-                      child: Icon(
-                        LucideIcons.send,
-                        size: AppIconSize.inline,
-                        color: canSend
-                            ? scheme.onPrimaryContainer
-                            : scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        child: ChatComposerRow(
+          controller: widget.controller,
+          canSend: canSend,
+          onSend: widget.onSend,
+          // Chat text is capped at 500 chars server-side; mirror it here so
+          // the teacher never types a message the server will reject.
+          inputFormatters: [LengthLimitingTextInputFormatter(500)],
         ),
       ),
     );
   }
+}
+
+/// How many different real teachers (never an AI persona, never a blocked
+/// teacher) wrote a message on [now]'s local day, counted from the loaded
+/// messages only — the room's honest "here today".
+@visibleForTesting
+int chatAuthorsToday(
+  List<ChatMessage> messages, {
+  required Set<String> blocked,
+  required DateTime now,
+}) {
+  final local = now.toLocal();
+  final today = DateTime(local.year, local.month, local.day);
+  return <String>{
+    for (final m in messages)
+      if (!m.isDemoPersona &&
+          m.authorId.isNotEmpty &&
+          !blocked.contains(m.authorId) &&
+          chatDay(m.createdAt) == today)
+        m.authorId,
+  }.length;
 }

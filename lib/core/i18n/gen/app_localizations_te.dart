@@ -5549,4 +5549,39 @@ class AppLocalizationsTe extends AppLocalizations {
   String cmNetYourTeachers(int count) {
     return 'మీ ఉపాధ్యాయులు · $count';
   }
+
+  @override
+  String cmChatHereToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ఈరోజు $count మంది చురుకుగా',
+      one: 'ఈరోజు 1 మంది చురుకుగా',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmChatYou => 'మీరు';
+
+  @override
+  String cmThreadMembers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count మంది ఉపాధ్యాయులు',
+      one: '1 ఉపాధ్యాయులు',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmThreadLanguage(String language) {
+    return 'ఇష్టమైన భాష: $language';
+  }
+
+  @override
+  String cmThreadYouSaid(String message) {
+    return 'మీరు: $message';
+  }
 }

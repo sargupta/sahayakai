@@ -384,6 +384,106 @@ void main() {
     });
   });
 
+  testWidgets('the header names the other teacher, with a true subline', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      thread: const TransportSnapshot<List<Message>>.ready(<Message>[]),
+    );
+    // The fixture's participant carries no preferred language, so no subline
+    // is invented.
+    expect(find.text('Bina Devi'), findsOneWidget);
+    expect(find.textContaining(RegExp('Preferred language')), findsNothing);
+  });
+
+  test('threadSubline: a direct thread shows the preferred language in its '
+      'own script; a group its size; nothing when the data is absent', () {
+    const direct = Conversation(
+      id: _id,
+      type: ConversationType.direct,
+      participantIds: [_other, _me],
+      participants: {
+        _other: ParticipantSnapshot(
+          displayName: 'Bina Devi',
+          preferredLanguage: 'Kannada',
+        ),
+        _me: ParticipantSnapshot(displayName: 'Me'),
+      },
+      lastMessage: '',
+      lastMessageSenderId: _other,
+      unreadCount: {},
+    );
+    expect(threadSubline(l10n, direct, _me), l10n.cmThreadLanguage('ಕನ್ನಡ'));
+    expect(threadSubline(l10n, _convo(), _me), isNull);
+    expect(threadSubline(l10n, null, _me), isNull);
+
+    const group = Conversation(
+      id: ConversationId('g-1'),
+      type: ConversationType.group,
+      participantIds: [_other, _me, 'u-c'],
+      participants: {},
+      name: 'Class 5 maths',
+      lastMessage: '',
+      lastMessageSenderId: _other,
+      unreadCount: {},
+    );
+    expect(threadSubline(l10n, group, _me), l10n.cmThreadMembers(3));
+    expect(threadTitle(l10n, group, _me), 'Class 5 maths');
+  });
+
+  testWidgets('a run shows day pills from the timestamps, and a shared '
+      'resource is a card in the bubble', (tester) async {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    await _pump(
+      tester,
+      thread: TransportSnapshot<List<Message>>.ready([
+        _msg(
+          id: 'm1',
+          text: 'Your fractions game worked!',
+          senderId: _other,
+          createdAt: yesterday.toUtc().toIso8601String(),
+        ),
+        Message(
+          id: 'm2',
+          type: MessageType.resource,
+          text: 'Here you go.',
+          senderId: _me,
+          senderName: 'Me',
+          resource: const SharedResource(
+            id: 'r1',
+            kind: SharedResourceKind.worksheet,
+            title: 'Fractions with pictures',
+            route: '/library/r1',
+            subject: 'Maths',
+            gradeLevel: 'Class 5',
+          ),
+          createdAt: now.toUtc().toIso8601String(),
+        ),
+      ]),
+    );
+
+    expect(find.text(l10n.libraryDayYesterday), findsOneWidget);
+    expect(find.text(l10n.libraryDayToday), findsOneWidget);
+    expect(find.text('Fractions with pictures'), findsOneWidget);
+    expect(
+      find.text('${l10n.inboxResourceLabel} · Maths · Class 5'),
+      findsOneWidget,
+    );
+    expect(find.text('Here you go.'), findsOneWidget);
+    // My bubble is spoken as mine, with what was shared.
+    expect(
+      find.bySemanticsLabel(
+        RegExp(
+          '^${l10n.cmChatYou}, ${l10n.inboxResourceLabel}, '
+          'Fractions with pictures, Here you go\\.',
+        ),
+      ),
+      findsOneWidget,
+    );
+  });
+
   group('overflow probe — 360dp × 1.3, light + dark', () {
     for (final brightness in Brightness.values) {
       testWidgets('no overflow (${brightness.name}) with long bn/ta bubbles', (
@@ -412,6 +512,48 @@ void main() {
             ),
           ]),
         );
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    for (final code in ['hi', 'ta', 'ml']) {
+      testWidgets('no overflow in $code with a too-long draft and a failed '
+          'send', (tester) async {
+        await _pump(
+          tester,
+          surface: const Size(360, 800),
+          textScale: 1.3,
+          locale: Locale(code),
+          sendError: const TransportUnavailable.awaitingFirebase('sendMessage'),
+          thread: TransportSnapshot<List<Message>>.ready([
+            _msg(
+              id: 'm1',
+              text:
+                  'നാളത്തെ സ്റ്റാഫ് മീറ്റിംഗിന് നിങ്ങളുടെ പാഠ പദ്ധതിയും '
+                  'മൂല്യനിർണയ കുറിപ്പുകളും ദയവായി കൊണ്ടുവരിക.',
+              senderId: _other,
+              createdAt: DateTime.now().toUtc().toIso8601String(),
+            ),
+            _msg(
+              id: 'm2',
+              text: 'कल की बैठक में अपनी पाठ योजना और मूल्यांकन नोट्स लाइए।',
+              senderId: _me,
+              readBy: const [_other],
+              createdAt: DateTime.now().toUtc().toIso8601String(),
+            ),
+          ]),
+        );
+        // A failed send shows the retry bar…
+        await tester.enterText(find.byType(TextField), 'நன்றி');
+        await tester.pump();
+        await tester.tap(find.byIcon(LucideIcons.send));
+        await tester.pumpAndSettle();
+        // …and an over-long draft shows the honest hint beside it.
+        await tester.enterText(
+          find.byType(TextField),
+          'क' * (kInboxMessageMaxChars + 1),
+        );
+        await tester.pump();
         expect(tester.takeException(), isNull);
       });
     }
