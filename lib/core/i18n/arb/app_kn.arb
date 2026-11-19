@@ -1518,5 +1518,13 @@
   "homeEyebrowPickUp": "ನಿಲ್ಲಿಸಿದಲ್ಲಿಂದ ಮುಂದುವರಿಸಿ",
   "homeMakeNew": "ಹೊಸದನ್ನು ರಚಿಸಿ",
   "homeEyebrowStaffRoom": "ಸ್ಟಾಫ್ ರೂಮ್‌ನಿಂದ",
-  "homeStaffPostedToday": "{count, plural, =1{ಇಂದು 1 ಶಿಕ್ಷಕರು ಪೋಸ್ಟ್ ಮಾಡಿದ್ದಾರೆ} other{ಇಂದು {count} ಶಿಕ್ಷಕರು ಪೋಸ್ಟ್ ಮಾಡಿದ್ದಾರೆ}}"
+  "homeStaffPostedToday": "{count, plural, =1{ಇಂದು 1 ಶಿಕ್ಷಕರು ಪೋಸ್ಟ್ ಮಾಡಿದ್ದಾರೆ} other{ಇಂದು {count} ಶಿಕ್ಷಕರು ಪೋಸ್ಟ್ ಮಾಡಿದ್ದಾರೆ}}",
+  "cmPostKindTried": "ತರಗತಿಯಲ್ಲಿ ಪ್ರಯತ್ನಿಸಿದೆ",
+  "cmPostKindHelp": "ಸಹಾಯ ಕೇಳುತ್ತಿದ್ದಾರೆ",
+  "cmPostKindCelebrate": "ಸಂಭ್ರಮ",
+  "cmPostKindResource": "ಸಂಪನ್ಮೂಲ ಹಂಚಿಕೊಂಡಿದ್ದಾರೆ",
+  "cmPostKindTriedHint": "ತರಗತಿಯಲ್ಲಿ ಫಲ ಕೊಟ್ಟಿತು",
+  "cmPostKindHelpHint": "ಇತರ ಶಿಕ್ಷಕರನ್ನು ಕೇಳಿ",
+  "cmPostKindCelebrateHint": "ಹಂಚಿಕೊಳ್ಳುವಂಥ ಗೆಲುವು",
+  "cmPostKindResourceHint": "ಶೀಟ್, ಯೋಜನೆ ಅಥವಾ ಲಿಂಕ್"
 }

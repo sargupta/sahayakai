@@ -1518,5 +1518,13 @@
   "homeEyebrowPickUp": "விட்ட இடத்திலிருந்து தொடருங்கள்",
   "homeMakeNew": "புதிதாக ஒன்றை உருவாக்கு",
   "homeEyebrowStaffRoom": "ஆசிரியர் அறையிலிருந்து",
-  "homeStaffPostedToday": "{count, plural, =1{இன்று 1 ஆசிரியர் பதிவிட்டார்} other{இன்று {count} ஆசிரியர்கள் பதிவிட்டனர்}}"
+  "homeStaffPostedToday": "{count, plural, =1{இன்று 1 ஆசிரியர் பதிவிட்டார்} other{இன்று {count} ஆசிரியர்கள் பதிவிட்டனர்}}",
+  "cmPostKindTried": "வகுப்பில் முயன்றது",
+  "cmPostKindHelp": "உதவி கேட்கிறார்",
+  "cmPostKindCelebrate": "கொண்டாட்டம்",
+  "cmPostKindResource": "வளம் பகிர்ந்தார்",
+  "cmPostKindTriedHint": "வகுப்பில் பலன் தந்தது",
+  "cmPostKindHelpHint": "மற்ற ஆசிரியர்களிடம் கேளுங்கள்",
+  "cmPostKindCelebrateHint": "பகிரத் தக்க வெற்றி",
+  "cmPostKindResourceHint": "தாள், திட்டம் அல்லது இணைப்பு"
 }

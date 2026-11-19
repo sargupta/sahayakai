@@ -5372,4 +5372,28 @@ class AppLocalizationsTe extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cmPostKindTried => 'తరగతిలో ప్రయత్నించాను';
+
+  @override
+  String get cmPostKindHelp => 'సహాయం అడుగుతున్నారు';
+
+  @override
+  String get cmPostKindCelebrate => 'సంతోషం';
+
+  @override
+  String get cmPostKindResource => 'వనరు పంచుకున్నారు';
+
+  @override
+  String get cmPostKindTriedHint => 'తరగతిలో పనిచేసింది';
+
+  @override
+  String get cmPostKindHelpHint => 'ఇతర ఉపాధ్యాయులను అడగండి';
+
+  @override
+  String get cmPostKindCelebrateHint => 'పంచుకోదగ్గ విజయం';
+
+  @override
+  String get cmPostKindResourceHint => 'షీట్, ప్రణాళిక లేదా లింక్';
 }

@@ -16,6 +16,7 @@ import '../../vidya/presentation/vidya_cta_clearance.dart';
 import '../data/chat_stream_provider.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/chat_message.dart';
+import '../domain/chat_quote.dart';
 import 'widgets/chat_bubble.dart';
 
 /// U-SI3 — the Staff Room chat (SPEC §A3.2), parameterized for the community
@@ -47,10 +48,18 @@ import 'widgets/chat_bubble.dart';
 /// resolves to `awaitingFirebase` → the sign-in state and the composer is hidden
 /// (verified by code + test, not live).
 class StaffRoomChatScreen extends ConsumerStatefulWidget {
-  const StaffRoomChatScreen({super.key, required this.room, this.title});
+  const StaffRoomChatScreen({
+    super.key,
+    required this.room,
+    this.title,
+    this.quote,
+  });
 
   /// The community Staff Room or a group chat.
   final ChatRoom room;
+
+  /// A feed post being replied to: the composer starts with its quote.
+  final ChatQuote? quote;
 
   /// A pre-known app-bar title (a group name handed through the route `extra`)
   /// for an instant paint; null → resolved from the group read, or the default
@@ -66,6 +75,13 @@ class _StaffRoomChatScreenState extends ConsumerState<StaffRoomChatScreen> {
   final TextEditingController _composer = TextEditingController();
 
   ChatRoom get _room => widget.room;
+
+  @override
+  void initState() {
+    super.initState();
+    final quote = widget.quote;
+    if (quote != null) _composer.text = quote.asDraft();
+  }
 
   @override
   void dispose() {

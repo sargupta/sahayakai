@@ -5337,4 +5337,28 @@ class AppLocalizationsMr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cmPostKindTried => 'वर्गात करून पाहिले';
+
+  @override
+  String get cmPostKindHelp => 'मदत हवी आहे';
+
+  @override
+  String get cmPostKindCelebrate => 'आनंदाची बातमी';
+
+  @override
+  String get cmPostKindResource => 'साहित्य शेअर केले';
+
+  @override
+  String get cmPostKindTriedHint => 'वर्गात उपयोगी पडले';
+
+  @override
+  String get cmPostKindHelpHint => 'इतर शिक्षकांना विचारा';
+
+  @override
+  String get cmPostKindCelebrateHint => 'सांगण्यासारखे यश';
+
+  @override
+  String get cmPostKindResourceHint => 'शीट, योजना किंवा लिंक';
 }

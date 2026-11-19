@@ -37,6 +37,7 @@ import '../../features/settings/presentation/privacy_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/staffroom/data/chat_stream_provider.dart';
+import '../../features/staffroom/domain/chat_quote.dart';
 import '../../features/staffroom/domain/group.dart';
 import '../../features/staffroom/presentation/group_detail_screen.dart';
 import '../../features/staffroom/presentation/network_hub_screen.dart';
@@ -271,18 +272,27 @@ GoRouter appRouter(Ref ref) {
         // The global Staff Room chat (U-SI3) — the community-wide live room.
         // Pushed from the Staffroom home / Network hub Staff Room entry.
         path: Routes.staffRoomChat,
-        builder: (context, state) =>
-            const StaffRoomChatScreen(room: ChatRoom.community()),
+        builder: (context, state) => StaffRoomChatScreen(
+          room: const ChatRoom.community(),
+          quote: state.extra is ChatRouteArgs
+              ? (state.extra! as ChatRouteArgs).quote
+              : null,
+        ),
       ),
       GoRoute(
         // One group's chat (U-SI3). Group detail hands the group name through
         // `extra` so the app bar paints instantly; a cold deep link carries only
         // the `:id` and the title resolves from the group read.
         path: Routes.groupChatPattern,
-        builder: (context, state) => StaffRoomChatScreen(
-          room: ChatRoom.group(state.pathParameters['id']!),
-          title: state.extra is String ? state.extra! as String : null,
-        ),
+        builder: (context, state) {
+          final extra = state.extra;
+          final args = extra is ChatRouteArgs ? extra : null;
+          return StaffRoomChatScreen(
+            room: ChatRoom.group(state.pathParameters['id']!),
+            title: extra is String ? extra : args?.title,
+            quote: args?.quote,
+          );
+        },
       ),
       GoRoute(
         path: Routes.assessAssignment,

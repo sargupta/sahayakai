@@ -1518,5 +1518,13 @@
   "homeEyebrowPickUp": "ఆపిన చోటు నుంచి కొనసాగించండి",
   "homeMakeNew": "కొత్తది తయారు చేయండి",
   "homeEyebrowStaffRoom": "స్టాఫ్ రూమ్ నుంచి",
-  "homeStaffPostedToday": "{count, plural, =1{ఈరోజు 1 ఉపాధ్యాయులు పోస్ట్ చేశారు} other{ఈరోజు {count} మంది ఉపాధ్యాయులు పోస్ట్ చేశారు}}"
+  "homeStaffPostedToday": "{count, plural, =1{ఈరోజు 1 ఉపాధ్యాయులు పోస్ట్ చేశారు} other{ఈరోజు {count} మంది ఉపాధ్యాయులు పోస్ట్ చేశారు}}",
+  "cmPostKindTried": "తరగతిలో ప్రయత్నించాను",
+  "cmPostKindHelp": "సహాయం అడుగుతున్నారు",
+  "cmPostKindCelebrate": "సంతోషం",
+  "cmPostKindResource": "వనరు పంచుకున్నారు",
+  "cmPostKindTriedHint": "తరగతిలో పనిచేసింది",
+  "cmPostKindHelpHint": "ఇతర ఉపాధ్యాయులను అడగండి",
+  "cmPostKindCelebrateHint": "పంచుకోదగ్గ విజయం",
+  "cmPostKindResourceHint": "షీట్, ప్రణాళిక లేదా లింక్"
 }

@@ -1518,5 +1518,13 @@
   "homeEyebrowPickUp": "നിർത്തിയിടത്തുനിന്ന് തുടരുക",
   "homeMakeNew": "പുതിയതൊന്ന് ഉണ്ടാക്കുക",
   "homeEyebrowStaffRoom": "സ്റ്റാഫ് റൂമിൽ നിന്ന്",
-  "homeStaffPostedToday": "{count, plural, =1{ഇന്ന് 1 അധ്യാപകർ പോസ്റ്റ് ചെയ്തു} other{ഇന്ന് {count} അധ്യാപകർ പോസ്റ്റ് ചെയ്തു}}"
+  "homeStaffPostedToday": "{count, plural, =1{ഇന്ന് 1 അധ്യാപകർ പോസ്റ്റ് ചെയ്തു} other{ഇന്ന് {count} അധ്യാപകർ പോസ്റ്റ് ചെയ്തു}}",
+  "cmPostKindTried": "ക്ലാസിൽ പരീക്ഷിച്ചു",
+  "cmPostKindHelp": "സഹായം ചോദിക്കുന്നു",
+  "cmPostKindCelebrate": "ആഘോഷം",
+  "cmPostKindResource": "റിസോഴ്സ് പങ്കിട്ടു",
+  "cmPostKindTriedHint": "ക്ലാസിൽ ഫലിച്ചു",
+  "cmPostKindHelpHint": "മറ്റ് അധ്യാപകരോട് ചോദിക്കൂ",
+  "cmPostKindCelebrateHint": "പങ്കിടാവുന്ന വിജയം",
+  "cmPostKindResourceHint": "ഷീറ്റ്, പ്ലാൻ അല്ലെങ്കിൽ ലിങ്ക്"
 }

@@ -9121,6 +9121,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 teacher posted today} other{{count} teachers posted today}}'**
   String homeStaffPostedToday(int count);
+
+  /// Community post kind strip: a teacher tried something.
+  ///
+  /// In en, this message translates to:
+  /// **'Tried this in class'**
+  String get cmPostKindTried;
+
+  /// Community post kind strip: the teacher asks for help.
+  ///
+  /// In en, this message translates to:
+  /// **'Asking for help'**
+  String get cmPostKindHelp;
+
+  /// Community post kind strip: a win.
+  ///
+  /// In en, this message translates to:
+  /// **'Celebrating'**
+  String get cmPostKindCelebrate;
+
+  /// Community post kind strip: a worksheet, plan or link.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared a resource'**
+  String get cmPostKindResource;
+
+  /// Share with teachers: line under Tried this.
+  ///
+  /// In en, this message translates to:
+  /// **'It worked in class'**
+  String get cmPostKindTriedHint;
+
+  /// Share with teachers: line under Need help.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask other teachers'**
+  String get cmPostKindHelpHint;
+
+  /// Share with teachers: line under Celebrate.
+  ///
+  /// In en, this message translates to:
+  /// **'A win worth sharing'**
+  String get cmPostKindCelebrateHint;
+
+  /// Share with teachers: line under Resource.
+  ///
+  /// In en, this message translates to:
+  /// **'A sheet, plan or link'**
+  String get cmPostKindResourceHint;
 }
 
 class _AppLocalizationsDelegate

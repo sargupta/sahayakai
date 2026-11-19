@@ -6064,5 +6064,21 @@
   "homeEyebrowStaffRoom": "From the staff room",
   "@homeEyebrowStaffRoom": {"description": "Home: eyebrow over the community post."},
   "homeStaffPostedToday": "{count, plural, =1{1 teacher posted today} other{{count} teachers posted today}}",
-  "@homeStaffPostedToday": {"description": "Home, staff room: how many teachers posted today.", "placeholders": {"count": {"type": "int"}}}
+  "@homeStaffPostedToday": {"description": "Home, staff room: how many teachers posted today.", "placeholders": {"count": {"type": "int"}}},
+  "cmPostKindTried": "Tried this in class",
+  "@cmPostKindTried": {"description": "Community post kind strip: a teacher tried something."},
+  "cmPostKindHelp": "Asking for help",
+  "@cmPostKindHelp": {"description": "Community post kind strip: the teacher asks for help."},
+  "cmPostKindCelebrate": "Celebrating",
+  "@cmPostKindCelebrate": {"description": "Community post kind strip: a win."},
+  "cmPostKindResource": "Shared a resource",
+  "@cmPostKindResource": {"description": "Community post kind strip: a worksheet, plan or link."},
+  "cmPostKindTriedHint": "It worked in class",
+  "@cmPostKindTriedHint": {"description": "Share with teachers: line under Tried this."},
+  "cmPostKindHelpHint": "Ask other teachers",
+  "@cmPostKindHelpHint": {"description": "Share with teachers: line under Need help."},
+  "cmPostKindCelebrateHint": "A win worth sharing",
+  "@cmPostKindCelebrateHint": {"description": "Share with teachers: line under Celebrate."},
+  "cmPostKindResourceHint": "A sheet, plan or link",
+  "@cmPostKindResourceHint": {"description": "Share with teachers: line under Resource."}
 }

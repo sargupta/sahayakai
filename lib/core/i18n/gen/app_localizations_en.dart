@@ -5312,4 +5312,28 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cmPostKindTried => 'Tried this in class';
+
+  @override
+  String get cmPostKindHelp => 'Asking for help';
+
+  @override
+  String get cmPostKindCelebrate => 'Celebrating';
+
+  @override
+  String get cmPostKindResource => 'Shared a resource';
+
+  @override
+  String get cmPostKindTriedHint => 'It worked in class';
+
+  @override
+  String get cmPostKindHelpHint => 'Ask other teachers';
+
+  @override
+  String get cmPostKindCelebrateHint => 'A win worth sharing';
+
+  @override
+  String get cmPostKindResourceHint => 'A sheet, plan or link';
 }

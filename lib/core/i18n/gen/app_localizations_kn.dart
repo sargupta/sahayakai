@@ -5358,4 +5358,28 @@ class AppLocalizationsKn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cmPostKindTried => 'ತರಗತಿಯಲ್ಲಿ ಪ್ರಯತ್ನಿಸಿದೆ';
+
+  @override
+  String get cmPostKindHelp => 'ಸಹಾಯ ಕೇಳುತ್ತಿದ್ದಾರೆ';
+
+  @override
+  String get cmPostKindCelebrate => 'ಸಂಭ್ರಮ';
+
+  @override
+  String get cmPostKindResource => 'ಸಂಪನ್ಮೂಲ ಹಂಚಿಕೊಂಡಿದ್ದಾರೆ';
+
+  @override
+  String get cmPostKindTriedHint => 'ತರಗತಿಯಲ್ಲಿ ಫಲ ಕೊಟ್ಟಿತು';
+
+  @override
+  String get cmPostKindHelpHint => 'ಇತರ ಶಿಕ್ಷಕರನ್ನು ಕೇಳಿ';
+
+  @override
+  String get cmPostKindCelebrateHint => 'ಹಂಚಿಕೊಳ್ಳುವಂಥ ಗೆಲುವು';
+
+  @override
+  String get cmPostKindResourceHint => 'ಶೀಟ್, ಯೋಜನೆ ಅಥವಾ ಲಿಂಕ್';
 }

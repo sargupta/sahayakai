@@ -5415,4 +5415,28 @@ class AppLocalizationsMl extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cmPostKindTried => 'ക്ലാസിൽ പരീക്ഷിച്ചു';
+
+  @override
+  String get cmPostKindHelp => 'സഹായം ചോദിക്കുന്നു';
+
+  @override
+  String get cmPostKindCelebrate => 'ആഘോഷം';
+
+  @override
+  String get cmPostKindResource => 'റിസോഴ്സ് പങ്കിട്ടു';
+
+  @override
+  String get cmPostKindTriedHint => 'ക്ലാസിൽ ഫലിച്ചു';
+
+  @override
+  String get cmPostKindHelpHint => 'മറ്റ് അധ്യാപകരോട് ചോദിക്കൂ';
+
+  @override
+  String get cmPostKindCelebrateHint => 'പങ്കിടാവുന്ന വിജയം';
+
+  @override
+  String get cmPostKindResourceHint => 'ഷീറ്റ്, പ്ലാൻ അല്ലെങ്കിൽ ലിങ്ക്';
 }

@@ -5444,4 +5444,28 @@ class AppLocalizationsTa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cmPostKindTried => 'வகுப்பில் முயன்றது';
+
+  @override
+  String get cmPostKindHelp => 'உதவி கேட்கிறார்';
+
+  @override
+  String get cmPostKindCelebrate => 'கொண்டாட்டம்';
+
+  @override
+  String get cmPostKindResource => 'வளம் பகிர்ந்தார்';
+
+  @override
+  String get cmPostKindTriedHint => 'வகுப்பில் பலன் தந்தது';
+
+  @override
+  String get cmPostKindHelpHint => 'மற்ற ஆசிரியர்களிடம் கேளுங்கள்';
+
+  @override
+  String get cmPostKindCelebrateHint => 'பகிரத் தக்க வெற்றி';
+
+  @override
+  String get cmPostKindResourceHint => 'தாள், திட்டம் அல்லது இணைப்பு';
 }

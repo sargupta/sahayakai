@@ -1518,5 +1518,13 @@
   "homeEyebrowPickUp": "যেখানে থেমেছিলেন সেখান থেকে",
   "homeMakeNew": "নতুন কিছু তৈরি করুন",
   "homeEyebrowStaffRoom": "স্টাফ রুম থেকে",
-  "homeStaffPostedToday": "{count, plural, =1{আজ 1 জন শিক্ষক পোস্ট করেছেন} other{আজ {count} জন শিক্ষক পোস্ট করেছেন}}"
+  "homeStaffPostedToday": "{count, plural, =1{আজ 1 জন শিক্ষক পোস্ট করেছেন} other{আজ {count} জন শিক্ষক পোস্ট করেছেন}}",
+  "cmPostKindTried": "ক্লাসে চেষ্টা করেছি",
+  "cmPostKindHelp": "সাহায্য চাইছেন",
+  "cmPostKindCelebrate": "আনন্দের খবর",
+  "cmPostKindResource": "রিসোর্স শেয়ার করেছেন",
+  "cmPostKindTriedHint": "ক্লাসে কাজে লেগেছে",
+  "cmPostKindHelpHint": "অন্য শিক্ষকদের জিজ্ঞেস করুন",
+  "cmPostKindCelebrateHint": "জানানোর মতো সাফল্য",
+  "cmPostKindResourceHint": "শিট, পরিকল্পনা বা লিংক"
 }

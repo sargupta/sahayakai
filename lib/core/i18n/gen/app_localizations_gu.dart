@@ -5336,4 +5336,28 @@ class AppLocalizationsGu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cmPostKindTried => 'વર્ગમાં અજમાવ્યું';
+
+  @override
+  String get cmPostKindHelp => 'મદદ માંગે છે';
+
+  @override
+  String get cmPostKindCelebrate => 'ખુશીની વાત';
+
+  @override
+  String get cmPostKindResource => 'સામગ્રી શેર કરી';
+
+  @override
+  String get cmPostKindTriedHint => 'વર્ગમાં કામ આવ્યું';
+
+  @override
+  String get cmPostKindHelpHint => 'બીજા શિક્ષકોને પૂછો';
+
+  @override
+  String get cmPostKindCelebrateHint => 'કહેવા જેવી સફળતા';
+
+  @override
+  String get cmPostKindResourceHint => 'શીટ, યોજના કે લિંક';
 }

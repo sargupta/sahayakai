@@ -5352,4 +5352,28 @@ class AppLocalizationsBn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cmPostKindTried => 'ক্লাসে চেষ্টা করেছি';
+
+  @override
+  String get cmPostKindHelp => 'সাহায্য চাইছেন';
+
+  @override
+  String get cmPostKindCelebrate => 'আনন্দের খবর';
+
+  @override
+  String get cmPostKindResource => 'রিসোর্স শেয়ার করেছেন';
+
+  @override
+  String get cmPostKindTriedHint => 'ক্লাসে কাজে লেগেছে';
+
+  @override
+  String get cmPostKindHelpHint => 'অন্য শিক্ষকদের জিজ্ঞেস করুন';
+
+  @override
+  String get cmPostKindCelebrateHint => 'জানানোর মতো সাফল্য';
+
+  @override
+  String get cmPostKindResourceHint => 'শিট, পরিকল্পনা বা লিংক';
 }
