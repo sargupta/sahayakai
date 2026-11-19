@@ -5252,4 +5252,104 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settingsStartText => 'লেখা';
+
+  @override
+  String homeTodayClasses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি ক্লাস',
+      one: '1টি ক্লাস',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeTodayToMark(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি হাজিরা বাকি',
+      one: '1টি হাজিরা বাকি',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeTodayAllMarked => 'সব হাজিরা নেওয়া হয়েছে';
+
+  @override
+  String get homeTodayClassToMark => 'বাকি';
+
+  @override
+  String homeTodayClassAbsent(int count) {
+    return '$count জন অনুপস্থিত';
+  }
+
+  @override
+  String get homeTodayClassMarked => 'নেওয়া হয়েছে';
+
+  @override
+  String homeTodayUnmarkedOne(String name) {
+    return '$name-এর হাজিরা নেওয়া হয়নি';
+  }
+
+  @override
+  String homeTodayUnmarkedMany(int count) {
+    return '$countটি হাজিরা এখনও বাকি';
+  }
+
+  @override
+  String get homeTodayMarkNow => 'এখনই নিন';
+
+  @override
+  String get homeTodayEveryMarked => 'আজকের সব হাজিরা নেওয়া হয়েছে।';
+
+  @override
+  String get homeTodayNewBody =>
+      'আপনার ক্লাসগুলো যোগ করুন, তাহলে \'আজ\' আপনার দিনের সঙ্গে চলবে: বাকি হাজিরা, কে অনুপস্থিত ছিল, আর কাকে ফোন করতে হবে।';
+
+  @override
+  String get homeTodayAddClasses => 'আপনার ক্লাস যোগ করুন';
+
+  @override
+  String get homeEyebrowWeek => 'এই সপ্তাহ';
+
+  @override
+  String homeWeekRun(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'টানা $count দিন',
+      one: 'টানা 1 দিন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeWeekKeepGoing =>
+      'ধারা বজায় রাখতে আজ হাজিরা নিন বা কিছু তৈরি করুন।';
+
+  @override
+  String get homeWeekDoneToday => 'আজকের দিন গোনা হয়েছে। কাল দেখা হবে।';
+
+  @override
+  String get homeEyebrowPickUp => 'যেখানে থেমেছিলেন সেখান থেকে';
+
+  @override
+  String get homeMakeNew => 'নতুন কিছু তৈরি করুন';
+
+  @override
+  String get homeEyebrowStaffRoom => 'স্টাফ রুম থেকে';
+
+  @override
+  String homeStaffPostedToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'আজ $count জন শিক্ষক পোস্ট করেছেন',
+      one: 'আজ 1 জন শিক্ষক পোস্ট করেছেন',
+    );
+    return '$_temp0';
+  }
 }

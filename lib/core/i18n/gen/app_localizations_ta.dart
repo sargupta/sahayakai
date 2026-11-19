@@ -5343,4 +5343,105 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get settingsStartText => 'உரை';
+
+  @override
+  String homeTodayClasses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count வகுப்புகள்',
+      one: '1 வகுப்பு',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeTodayToMark(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count வருகைப் பதிவுகள் மீதம்',
+      one: '1 வருகைப் பதிவு மீதம்',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeTodayAllMarked => 'எல்லா வருகையும் பதிவாகிவிட்டது';
+
+  @override
+  String get homeTodayClassToMark => 'மீதம்';
+
+  @override
+  String homeTodayClassAbsent(int count) {
+    return '$count பேர் வரவில்லை';
+  }
+
+  @override
+  String get homeTodayClassMarked => 'பதிவானது';
+
+  @override
+  String homeTodayUnmarkedOne(String name) {
+    return '$name வருகை பதிவாகவில்லை';
+  }
+
+  @override
+  String homeTodayUnmarkedMany(int count) {
+    return '$count வருகைப் பதிவுகள் இன்னும் மீதம்';
+  }
+
+  @override
+  String get homeTodayMarkNow => 'இப்போது பதிவிடு';
+
+  @override
+  String get homeTodayEveryMarked => 'இன்றைய எல்லா வருகையும் பதிவாகிவிட்டது.';
+
+  @override
+  String get homeTodayNewBody =>
+      'உங்கள் வகுப்புகளைச் சேர்த்தால், \'இன்று\' உங்கள் நாளுடன் வரும்: மீதமுள்ள வருகைப் பதிவுகள், யார் வரவில்லை, யாரை அழைக்க வேண்டும்.';
+
+  @override
+  String get homeTodayAddClasses => 'உங்கள் வகுப்புகளைச் சேர்';
+
+  @override
+  String get homeEyebrowWeek => 'இந்த வாரம்';
+
+  @override
+  String homeWeekRun(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'தொடர்ந்து $count நாட்கள்',
+      one: 'தொடர்ந்து 1 நாள்',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeWeekKeepGoing =>
+      'தொடர இன்று வருகையைப் பதிவிடுங்கள் அல்லது ஏதாவது உருவாக்குங்கள்.';
+
+  @override
+  String get homeWeekDoneToday =>
+      'இன்றைய நாள் கணக்கில் சேர்ந்தது. நாளை சந்திப்போம்.';
+
+  @override
+  String get homeEyebrowPickUp => 'விட்ட இடத்திலிருந்து தொடருங்கள்';
+
+  @override
+  String get homeMakeNew => 'புதிதாக ஒன்றை உருவாக்கு';
+
+  @override
+  String get homeEyebrowStaffRoom => 'ஆசிரியர் அறையிலிருந்து';
+
+  @override
+  String homeStaffPostedToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'இன்று $count ஆசிரியர்கள் பதிவிட்டனர்',
+      one: 'இன்று 1 ஆசிரியர் பதிவிட்டார்',
+    );
+    return '$_temp0';
+  }
 }

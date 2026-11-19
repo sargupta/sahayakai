@@ -9001,6 +9001,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Text'**
   String get settingsStartText;
+
+  /// Home, Today card: how many classes the teacher has.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 class} other{{count} classes}}'**
+  String homeTodayClasses(int count);
+
+  /// Home, Today card: registers not yet saved today.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 register to mark} other{{count} registers to mark}}'**
+  String homeTodayToMark(int count);
+
+  /// Home, Today card: every register is saved today.
+  ///
+  /// In en, this message translates to:
+  /// **'All registers marked'**
+  String get homeTodayAllMarked;
+
+  /// Home, Today card: a class whose register is not saved today.
+  ///
+  /// In en, this message translates to:
+  /// **'To mark'**
+  String get homeTodayClassToMark;
+
+  /// Home, Today card: a class with absent students today.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} absent'**
+  String homeTodayClassAbsent(int count);
+
+  /// Home, Today card: a class whose register is saved, nobody absent.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked'**
+  String get homeTodayClassMarked;
+
+  /// Home, Today card: the one class still to mark. name is the class name.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s register isn\'t marked'**
+  String homeTodayUnmarkedOne(String name);
+
+  /// Home, Today card: several classes still to mark.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} registers aren\'t marked yet'**
+  String homeTodayUnmarkedMany(int count);
+
+  /// Home, Today card: opens the register to mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark now'**
+  String get homeTodayMarkNow;
+
+  /// Home, Today card: nothing left to mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Every register is marked for today.'**
+  String get homeTodayEveryMarked;
+
+  /// Home, Today card for a teacher with no classes yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your classes and Today will follow your day: registers to mark, who was absent, and who to call.'**
+  String get homeTodayNewBody;
+
+  /// Home, Today card: opens the new-class form.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your classes'**
+  String get homeTodayAddClasses;
+
+  /// Home: eyebrow over the week strip.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get homeEyebrowWeek;
+
+  /// Home, This week: the streak of days in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day in a row} other{{count} days in a row}}'**
+  String homeWeekRun(int count);
+
+  /// Home, This week: today has nothing yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a register or make something today to keep it going.'**
+  String get homeWeekKeepGoing;
+
+  /// Home, This week: the teacher already did something today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today counts. See you tomorrow.'**
+  String get homeWeekDoneToday;
+
+  /// Home: eyebrow over the newest saved work.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up where you left off'**
+  String get homeEyebrowPickUp;
+
+  /// Home, Pick up: opens every tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Make something new'**
+  String get homeMakeNew;
+
+  /// Home: eyebrow over the community post.
+  ///
+  /// In en, this message translates to:
+  /// **'From the staff room'**
+  String get homeEyebrowStaffRoom;
+
+  /// Home, staff room: how many teachers posted today.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 teacher posted today} other{{count} teachers posted today}}'**
+  String homeStaffPostedToday(int count);
 }
 
 class _AppLocalizationsDelegate

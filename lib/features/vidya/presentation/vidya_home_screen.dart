@@ -33,6 +33,7 @@ import 'vidya_controller.dart';
 import 'vidya_greeting.dart' show maybeSpeakVidyaGreeting;
 import 'vidya_presence.dart';
 import 'vidya_sheet.dart';
+import 'widgets/home_day_sections.dart';
 import 'widgets/vidya_orb.dart';
 
 /// The Home tab: voice-first, the mic is the screen (UX map H-01).
@@ -41,8 +42,10 @@ import 'widgets/vidya_orb.dart';
 /// language pill, messages, and — only while VIDYA holds a thread — clear it);
 /// "Ask for anything in the app"; three example requests that open their tool
 /// prefilled ("Say it, she routes it"); VIDYA as a big orb that carries her
-/// state; the type box; then what is waiting, the eight everyday tools and
-/// "Explore all 15 tools".
+/// state; the type box; then the teacher's day — Today (her classes and their
+/// registers), This week, what is waiting, Pick up where you left off — the
+/// eight everyday tools, "Explore all 15 tools", and From the staff room
+/// (see `widgets/home_day_sections.dart`).
 ///
 /// The big orb is VIDYA on Home, so the shell hides the docked orb on this tab.
 /// Everything "waiting" is real: ready results, unread messages and unread
@@ -55,6 +58,7 @@ class VidyaHomeScreen extends ConsumerStatefulWidget {
   final ValueChanged<int>? onOpenTab;
 
   /// The shell's tab indices Home opens.
+  static const int myWorkTab = 1;
   static const int communityTab = 2;
   static const int meTab = 3;
 
@@ -116,6 +120,16 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
     );
   }
 
+  /// Switches the shell to [tab], or pushes [route] outside the shell.
+  void _openTab(int tab, String route) {
+    final open = widget.onOpenTab;
+    if (open != null) {
+      open(tab);
+    } else {
+      context.push(route);
+    }
+  }
+
   Widget _homeScroll(BuildContext context, TeacherProfile? profile) {
     return SafeArea(
       bottom: false,
@@ -148,17 +162,29 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
               const _BigOrb(),
               const _AskBox(),
               const SizedBox(height: AppSpacing.space8),
+              const HomeTodayCard(),
+              const SizedBox(height: AppSpacing.space6),
+              const HomeWeekStrip(),
+              const SizedBox(height: AppSpacing.space6),
               _WaitingCard(onOpenTab: widget.onOpenTab),
               const SizedBox(height: AppSpacing.space6),
               if (profile != null && profile.isEmpty) ...[
                 const _CompleteProfileCard(),
                 const SizedBox(height: AppSpacing.space6),
               ],
-              _Eyebrow(context.l10n.homeYourTools),
+              HomePickUp(
+                onOpenMyWork: () =>
+                    _openTab(VidyaHomeScreen.myWorkTab, Routes.library),
+              ),
+              HomeEyebrow(context.l10n.homeYourTools),
               const SizedBox(height: AppSpacing.space3),
               const _ToolGrid(),
               const SizedBox(height: AppSpacing.space3),
               const _AllToolsLink(),
+              HomeStaffRoom(
+                onOpenCommunity: () =>
+                    _openTab(VidyaHomeScreen.communityTab, Routes.network),
+              ),
             ],
           ),
         ),
@@ -329,7 +355,7 @@ class _AskHeading extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Eyebrow(l10n.homeAskEyebrow),
+        HomeEyebrow(l10n.homeAskEyebrow),
         const SizedBox(height: AppSpacing.space1),
         Semantics(
           header: true,
@@ -350,29 +376,8 @@ class _AskHeading extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.space4),
-        _Eyebrow(l10n.homeSayEyebrow, color: AppColors.textBody),
+        HomeEyebrow(l10n.homeSayEyebrow, color: AppColors.textBody),
       ],
-    );
-  }
-}
-
-/// A tracked eyebrow: uppercase in Latin script only, never for Indic text.
-class _Eyebrow extends StatelessWidget {
-  const _Eyebrow(this.label, {this.color = AppColors.textEyebrow});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final latin = Localizations.localeOf(context).languageCode == 'en';
-    return Text(
-      latin ? label.toUpperCase() : label,
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        fontWeight: FontWeight.w700,
-        letterSpacing: latin ? 1.7 : 0,
-        color: color,
-      ),
     );
   }
 }
@@ -836,7 +841,7 @@ class _WaitingCard extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Expanded(child: _Eyebrow(l10n.homeEyebrowWaiting)),
+            Expanded(child: HomeEyebrow(l10n.homeEyebrowWaiting)),
             if (rows.isNotEmpty)
               Text(
                 l10n.homeWaitingCount(rows.length),

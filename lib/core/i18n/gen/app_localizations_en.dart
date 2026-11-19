@@ -5212,4 +5212,104 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsStartText => 'Text';
+
+  @override
+  String homeTodayClasses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count classes',
+      one: '1 class',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeTodayToMark(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count registers to mark',
+      one: '1 register to mark',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeTodayAllMarked => 'All registers marked';
+
+  @override
+  String get homeTodayClassToMark => 'To mark';
+
+  @override
+  String homeTodayClassAbsent(int count) {
+    return '$count absent';
+  }
+
+  @override
+  String get homeTodayClassMarked => 'Marked';
+
+  @override
+  String homeTodayUnmarkedOne(String name) {
+    return '$name\'s register isn\'t marked';
+  }
+
+  @override
+  String homeTodayUnmarkedMany(int count) {
+    return '$count registers aren\'t marked yet';
+  }
+
+  @override
+  String get homeTodayMarkNow => 'Mark now';
+
+  @override
+  String get homeTodayEveryMarked => 'Every register is marked for today.';
+
+  @override
+  String get homeTodayNewBody =>
+      'Add your classes and Today will follow your day: registers to mark, who was absent, and who to call.';
+
+  @override
+  String get homeTodayAddClasses => 'Add your classes';
+
+  @override
+  String get homeEyebrowWeek => 'This week';
+
+  @override
+  String homeWeekRun(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days in a row',
+      one: '1 day in a row',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeWeekKeepGoing =>
+      'Mark a register or make something today to keep it going.';
+
+  @override
+  String get homeWeekDoneToday => 'Today counts. See you tomorrow.';
+
+  @override
+  String get homeEyebrowPickUp => 'Pick up where you left off';
+
+  @override
+  String get homeMakeNew => 'Make something new';
+
+  @override
+  String get homeEyebrowStaffRoom => 'From the staff room';
+
+  @override
+  String homeStaffPostedToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count teachers posted today',
+      one: '1 teacher posted today',
+    );
+    return '$_temp0';
+  }
 }

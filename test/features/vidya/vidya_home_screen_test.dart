@@ -376,8 +376,9 @@ void main() {
       final field = find.byKey(const ValueKey('home-ask-field'));
       await tester.ensureVisible(field);
       await tester.enterText(field, 'make a quiz on plants');
-      await tester.tap(find.byKey(const ValueKey('home-ask-send')));
+      // Focus scrolls the box into view; tap once the page is still.
       await tester.pumpAndSettle();
+      await _tapVisible(tester, find.byKey(const ValueKey('home-ask-send')));
 
       expect(fake.sentTexts, ['make a quiz on plants']);
     });
