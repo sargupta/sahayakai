@@ -283,22 +283,34 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
             child: Row(
               children: [
                 _LikeButton(liked: _isLiked, count: _likeCount, onTap: _toggle),
+                // Reply and Share shrink and wrap their words before the row
+                // overflows (a long Tamil "Help out" at large text).
                 if (post.groupId.isNotEmpty)
-                  _ReplyButton(
-                    key: ValueKey('post-reply-${post.id}'),
-                    helpOut: post.postType == PostType.askHelp,
-                    onTap: _reply,
+                  Flexible(
+                    child: _ReplyButton(
+                      key: ValueKey('post-reply-${post.id}'),
+                      helpOut: post.postType == PostType.askHelp,
+                      onTap: _reply,
+                    ),
                   ),
-                const Spacer(),
-                TextButton.icon(
-                  key: ValueKey('post-share-${post.id}'),
-                  onPressed: _share,
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(44, 44),
-                    foregroundColor: AppColors.textBody,
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton.icon(
+                      key: ValueKey('post-share-${post.id}'),
+                      onPressed: _share,
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(44, 44),
+                        foregroundColor: AppColors.textBody,
+                      ),
+                      icon: const Icon(
+                        LucideIcons.share2,
+                        size: AppIconSize.small,
+                      ),
+                      label: Text(l10n.actionShare),
+                    ),
                   ),
-                  icon: const Icon(LucideIcons.share2, size: AppIconSize.small),
-                  label: Text(l10n.actionShare),
                 ),
               ],
             ),
@@ -569,12 +581,14 @@ class _ReplyButton extends StatelessWidget {
                 children: [
                   Icon(LucideIcons.cornerUpLeft, size: 16, color: ink),
                   const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: text.labelLarge?.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: ink,
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: text.labelLarge?.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: ink,
+                      ),
                     ),
                   ),
                 ],
