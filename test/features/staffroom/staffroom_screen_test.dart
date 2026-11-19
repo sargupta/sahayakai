@@ -426,7 +426,7 @@ void main() {
             text: 'Rain gauge worked!',
             authorId: 'a3',
             authorName: 'Ravi Teja',
-            createdAt: today(9),
+            createdAt: today(10),
           ),
         ]),
       );
@@ -442,9 +442,9 @@ void main() {
         extraOverrides: [nowProvider.overrideWithValue(() => now)],
       );
       final l10n = _en();
-      expect(find.text(l10n.cmFeedTalkingToday(3)), findsOneWidget);
+      expect(find.text(l10n.cmFeedTalkingToday(2)), findsOneWidget);
       expect(
-        find.textContaining('and 1 more teacher are in the chat today'),
+        find.text('Ravi and Gurpreet are in the chat today'),
         findsOneWidget,
       );
       expect(find.text(l10n.cmFeedJoinChat), findsOneWidget);

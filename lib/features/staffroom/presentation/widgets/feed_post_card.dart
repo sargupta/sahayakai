@@ -525,10 +525,13 @@ class _KindStrip extends StatelessWidget {
             if (group.isNotEmpty) ...[
               const SizedBox(width: 8),
               Flexible(
-                child: Text(
-                  group,
-                  textAlign: TextAlign.end,
-                  style: style?.copyWith(fontWeight: FontWeight.w600),
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Text(
+                    group,
+                    textAlign: TextAlign.end,
+                    style: style?.copyWith(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ],

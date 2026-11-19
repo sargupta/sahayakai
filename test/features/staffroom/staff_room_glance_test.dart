@@ -25,6 +25,21 @@ void main() {
     expect(glance.latest?.id, '2');
   });
 
+  test('an AI teacher can be the latest message but is never counted', () {
+    final glance = glanceAtStaffRoom([
+      const ChatMessage(
+        id: 'ai',
+        text: 'Namaste',
+        authorId: 'persona',
+        authorName: 'Gurpreet Singh',
+        isDemoPersona: true,
+      ),
+      _m('1', 'asha', DateTime(2026, 11, 19, 9)),
+    ], now);
+    expect(glance.latest?.id, 'ai');
+    expect(glance.talkersToday.map((m) => m.authorId), ['asha']);
+  });
+
   test('yesterday only: nobody talking today, the latest still shows', () {
     final glance = glanceAtStaffRoom([
       _m('1', 'old', DateTime(2026, 11, 18, 20)),
