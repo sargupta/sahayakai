@@ -22,24 +22,24 @@ const FEATURE_META: Record<string, { icon: React.ElementType; label: string; hre
     'worksheet':         { icon: PencilRuler,     label: 'Worksheets',         href: '/worksheet-wizard' },
     'rubric':            { icon: ClipboardCheck,  label: 'Rubrics',            href: '/rubric-generator' },
     'instant-answer':    { icon: Sparkles,        label: 'Instant Answers',    href: '/' },
-    'teacher-training':  { icon: GraduationCap,   label: 'Teacher Training',   href: '/teacher-training' },
+    'teacher-training':  { icon: GraduationCap,   label: 'AI Coach',           href: '/teacher-training' },
     'virtual-field-trip':{ icon: Globe2,          label: 'Virtual Field Trips', href: '/virtual-field-trip' },
     'visual-aid':        { icon: Images,          label: 'Visual Aids',        href: '/visual-aid-designer' },
-    'avatar':            { icon: User,            label: 'AI Avatars',         href: '/avatar-generator' },
+    'avatar':            { icon: User,            label: 'AI Avatars',         href: '/my-profile' },
     'parent-message':    { icon: MessageCircle,   label: 'Parent Messages',    href: '/messages' },
     'voice-to-text':     { icon: Mic,             label: 'Voice to Text',      href: '/' },
 };
 
 function getBarColor(pct: number): string {
-    if (pct >= 90) return 'bg-red-500';
-    if (pct >= 70) return 'bg-amber-500';
-    return 'bg-emerald-500';
+    if (pct >= 90) return 'bg-destructive';
+    if (pct >= 70) return 'bg-warning';
+    return 'bg-success';
 }
 
 function getBarBg(pct: number): string {
-    if (pct >= 90) return 'bg-red-100 dark:bg-red-950';
-    if (pct >= 70) return 'bg-amber-100 dark:bg-amber-950';
-    return 'bg-emerald-100 dark:bg-emerald-950';
+    if (pct >= 90) return 'bg-destructive/15';
+    if (pct >= 70) return 'bg-warning/15';
+    return 'bg-success/15';
 }
 
 export default function UsagePage() {
@@ -97,7 +97,7 @@ export default function UsagePage() {
                 <Badge
                     variant="outline"
                     className={isPro
-                        ? 'bg-amber-100 text-amber-700 border-amber-200'
+                        ? 'bg-tint-warning text-warning border-warning/40'
                         : 'bg-muted text-muted-foreground border-border'
                     }
                 >
@@ -117,7 +117,7 @@ export default function UsagePage() {
                             <div className="flex items-center justify-between">
                                 <Link
                                     href={meta?.href ?? '#'}
-                                    className="flex items-center gap-2.5 text-sm font-medium hover:underline"
+                                    className="flex items-center gap-2 text-sm font-medium hover:underline"
                                 >
                                     <div className="p-1.5 rounded-lg bg-muted/50">
                                         <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -136,9 +136,9 @@ export default function UsagePage() {
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 {remaining <= 0
-                                    ? <span className="text-red-600 font-medium">{t("Limit reached, resets {date}").replace("{date}", resetLabel)}</span>
+                                    ? <span className="text-destructive font-medium">{t("Limit reached, resets {date}").replace("{date}", resetLabel)}</span>
                                     : remaining <= 2
-                                        ? <span className="text-amber-600">{t("{count} remaining").replace("{count}", String(remaining))}</span>
+                                        ? <span className="text-warning">{t("{count} remaining").replace("{count}", String(remaining))}</span>
                                         : t("{count} remaining").replace("{count}", String(remaining))
                                 }
                             </p>
@@ -152,15 +152,15 @@ export default function UsagePage() {
                 <Card>
                     <CardContent className="py-4">
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{t("Unlimited on your plan")}</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {unlimited.map((f) => {
                                 const meta = FEATURE_META[f.key];
                                 const Icon = meta?.icon ?? Sparkles;
                                 return (
-                                    <div key={f.key} className="flex items-center gap-2.5 text-sm">
+                                    <div key={f.key} className="flex items-center gap-2 text-sm">
                                         <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
                                         <span className="truncate">{meta?.label ? t(meta.label) : f.key}</span>
-                                        <Infinity className="h-3.5 w-3.5 ml-auto text-emerald-500 shrink-0" />
+                                        <Infinity className="h-3.5 w-3.5 ml-auto text-success shrink-0" />
                                     </div>
                                 );
                             })}
@@ -171,7 +171,7 @@ export default function UsagePage() {
 
             {/* Upgrade CTA */}
             {!isPro && (
-                <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/50">
+                <Card className="border-primary/30 bg-tint-accent-soft">
                     <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-5">
                         <div>
                             <p className="text-sm font-semibold">{t("Need more?")}</p>
@@ -179,7 +179,7 @@ export default function UsagePage() {
                                 {t("Higher limits, better AI, export, parent messaging")}
                             </p>
                         </div>
-                        <Button asChild size="sm" className="bg-amber-600 hover:bg-amber-700 shrink-0">
+                        <Button asChild size="sm" className="shrink-0">
                             <Link href="/pricing">
                                 {t("View Plans")} <ArrowRight className="h-4 w-4 ml-1" />
                             </Link>

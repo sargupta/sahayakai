@@ -66,6 +66,21 @@ export function toVobizNumber(phone: string): string {
     return digits.length === 10 ? `91${digits}` : digits;
 }
 
+/**
+ * Server-side destination allowlist (`CALL_ALLOWED_DESTINATIONS`, comma-separated).
+ *
+ * For test and staging stacks: when set, a call may ONLY go to a listed number,
+ * compared in the exact form the carrier receives. Unset = no restriction
+ * (production). It is checked on the FINAL destination, after any test override,
+ * so a missing override can never fall back to a real parent's number.
+ */
+export function isDestinationAllowed(phone: string, env: NodeJS.ProcessEnv = process.env): boolean {
+    const raw = env.CALL_ALLOWED_DESTINATIONS?.trim();
+    if (!raw) return true;
+    const allowed = new Set(raw.split(',').map((n) => toVobizNumber(n)).filter(Boolean));
+    return allowed.has(toVobizNumber(phone));
+}
+
 export interface PlaceCallOptions {
     to: string;
     answerUrl: string;
@@ -73,6 +88,11 @@ export interface PlaceCallOptions {
     ringUrl?: string;
     /** Seconds to ring before abandoning. Mirrors the Twilio path's 30s. */
     ringTimeout?: number;
+    /**
+     * Vobiz `time_limit`: the longest the call may last once answered (seconds). Vobiz's own
+     * default is 14400 (4 h). Sent only when given, so the existing call paths are unchanged.
+     */
+    timeLimit?: number;
 }
 
 /** Categories the caller maps onto user-facing errors. Mirrors `twilio-errors`. */
@@ -197,6 +217,8 @@ export interface VobizDetailedFailure {
     category: VobizDetailedFailureCategory;
     /** Provider HTTP status, when there was a response at all. */
     status?: number;
+    /** On a 429: the provider's Retry-After, in seconds, when it sent one. */
+    retryAfterSeconds?: number;
 }
 
 export type VobizDetailedResult =
@@ -264,6 +286,7 @@ export async function placeVobizCallDetailed(
                     hangup_url: options.hangupUrl,
                     ...(options.ringUrl ? { ring_url: options.ringUrl } : {}),
                     ring_timeout: options.ringTimeout ?? 30,
+                    ...(options.timeLimit ? { time_limit: options.timeLimit } : {}),
                 }),
                 signal: controller.signal,
             });
@@ -284,7 +307,10 @@ export async function placeVobizCallDetailed(
             }
             return { ok: true, handle: { requestUuid } };
         }
-        if (status === 429) return { ok: false, failure: { category: 'rate_limited', status } };
+        if (status === 429) {
+            const ra = Number(res.headers?.get?.('retry-after') ?? NaN);
+            return { ok: false, failure: { category: 'rate_limited', status, ...(Number.isInteger(ra) && ra > 0 && ra <= 86_400 ? { retryAfterSeconds: ra } : {}) } };
+        }
         if (status >= 400 && status <= 499) {
             // A DND refusal is recognised even under 403, which some carriers use for it.
             if (DND_BODY.test(await bodyText(res))) return { ok: false, failure: { category: 'dnd_blocked', status } };

@@ -135,14 +135,14 @@ export function CampaignActions({
                             <div className="space-y-3 type-body text-muted-foreground">
                                 <p>{t("When you approve:")}</p>
                                 <ol className="list-decimal space-y-2 pl-5">
-                                    <li>{t("The message is turned into audio in each family language, and each recording is checked by listening back to it.")}</li>
+                                    <li>{t("The message is turned into audio in each parent's language, and each recording is checked by listening back to it.")}</li>
                                     <li>
                                         {school.mode === "practice"
                                             ? t("Calls go out in Practice mode only. No real phone rings; the results are simulated and appear in the call log.")
                                             : school.mode === "test" && school.testPhoneLast4
                                               ? <>
-                                                    {fmt(t("Calls go out in Test mode: every call rings only the phone ending {last4}, never a family."), { last4: school.testPhoneLast4 })}{" "}
-                                                    {t("The phone rings once for each language, not once for every family.")}
+                                                    {fmt(t("Calls go out in Test mode: every call rings only the phone ending {last4}, never a parent."), { last4: school.testPhoneLast4 })}{" "}
+                                                    {t("The phone rings once for each language, not once for every parent.")}
                                                 </>
                                               : fmt(t("Calls go out in {mode} mode."), { mode: modeLabel(t, school.mode) })}
                                     </li>
@@ -154,11 +154,11 @@ export function CampaignActions({
                                                   end: hourLabel(w.endHour),
                                               })}
                                     </li>
-                                    <li>{t("Families without consent, families who asked to stop calls, and other blocked families are skipped.")}</li>
+                                    <li>{t("Parents without consent, parents who asked to stop calls, and other blocked parents are skipped.")}</li>
                                 </ol>
                                 {reachable !== null && audience && (
                                     <p className="font-medium text-foreground">
-                                        {fmt(t("{reachable} of {total} families can be called"), { reachable, total: audience.guardians })}
+                                        {fmt(t("{reachable} of {total} parents can be called"), { reachable, total: audience.guardians })}
                                     </p>
                                 )}
                             </div>

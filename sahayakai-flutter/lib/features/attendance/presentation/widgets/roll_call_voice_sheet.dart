@@ -46,8 +46,8 @@ class _RollCallVoiceSheetState extends ConsumerState<RollCallVoiceSheet> {
   _Phase _phase = _Phase.starting;
 
   static final BorderRadius _sheetRadius = BorderRadius.only(
-    topLeft: AppRadius.rHero.topLeft,
-    topRight: AppRadius.rHero.topRight,
+    topLeft: AppRadius.rSheet.topLeft,
+    topRight: AppRadius.rSheet.topRight,
   );
 
   @override
@@ -119,15 +119,16 @@ class _RollCallVoiceSheetState extends ConsumerState<RollCallVoiceSheet> {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: _sheetRadius,
-        boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
+        boxShadow: AppShadows.e4,
       ),
       child: GlassSurface(
         borderRadius: _sheetRadius,
+        // A sheet is solid `surface-card` (design system v2 `Sheet`).
+        fill: AppColors.surfaceCard,
         padding: EdgeInsets.zero,
         child: SafeArea(
           top: false,

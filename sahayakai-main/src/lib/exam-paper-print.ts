@@ -21,13 +21,16 @@ function escapeHtml(value: unknown): string {
 }
 
 function formatHeader(content: any, subtitle?: string): string {
-  let html = `<div style="text-align:center;font-size:1.3em;font-weight:bold;">${escapeHtml(content.board)}</div>`;
-  html += `<div style="text-align:center;font-size:1.1em;font-weight:bold;margin-bottom:16px;">${escapeHtml(content.gradeLevel)} ${escapeHtml(content.subject)}</div>`;
+  let html = `<div class="masthead-board">${escapeHtml(content.board)}</div>`;
+  html += `<div class="masthead-title">${escapeHtml(content.gradeLevel)} ${escapeHtml(content.subject)}</div>`;
   if (subtitle) {
-    html += `<div style="text-align:center;font-size:1.05em;font-weight:bold;margin-bottom:16px;">${escapeHtml(subtitle)}</div>`;
+    html += `<div class="masthead-subtitle">${escapeHtml(subtitle)}</div>`;
   }
   return html;
 }
+
+/** Strip the model's own option label(s) — same rule as the on-screen paper (exam-paper-document.tsx). */
+const stripOptionLabel = (opt: string) => opt.replace(/^(?:\s*(?:\([a-dA-D]\)|[a-dA-D][.)]))+\s*/, "");
 
 // Only called from buildExamPaperBodyHtml, which already requires content.sections
 // (it iterates them above), so no sections-guard is needed here.
@@ -97,12 +100,17 @@ export function buildExamPaperBodyHtml(content: any, t: Translate, subtitle?: st
       sectionsHtml += `<div class="question"><p><strong>${t("Q")}${escapeHtml(number)}.</strong> ${escapeHtml(q.text || '')} <span class="marks">[${escapeHtml(q.marks)}${t("m")}]</span></p>`;
       if (q.options && Array.isArray(q.options) && q.options.length) {
         sectionsHtml += '<div class="options">';
-        q.options.forEach((opt: string) => {
-          // Options already carry their own (a)/(b)/(c)/(d) prefix
-          // (see exam-paper-generator.ts schema + fixtures).
-          sectionsHtml += `<p>${escapeHtml(opt)}</p>`;
+        q.options.forEach((opt: string, oi: number) => {
+          // Options usually carry their own prefix, but the model writes it
+          // as "(a)", "a)" or "a." (sometimes doubled) — print one canonical
+          // "(a)", as the on-screen paper does.
+          const label = `(${String.fromCharCode(97 + oi)})`;
+          sectionsHtml += `<p>${label} ${escapeHtml(stripOptionLabel(String(opt)))}</p>`;
         });
         sectionsHtml += '</div>';
+      }
+      if (q.internalChoice) {
+        sectionsHtml += `<p class="or">${t("OR")}</p><p>${escapeHtml(q.internalChoice)}</p>`;
       }
       sectionsHtml += '</div>';
     });
@@ -131,18 +139,24 @@ export function wrapExamPaperDoc(title: string, bodyHtml: string): string {
 <meta charset="UTF-8">
 <title>${escapeHtml(title)}</title>
 <style>
-  @media print { @page { margin: 15mm; } body { max-width: none; margin: 0; padding: 0; } }
-  body { font-family: Arial, sans-serif; color: #000; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 24px; }
-  h3 { margin: 1em 0 0.3em; }
+  @media print { @page { size: A4; margin: 16mm 15mm; } body { max-width: none; margin: 0; padding: 0; } }
+  body { font-family: Georgia, "Iowan Old Style", "Times New Roman", "Noto Serif", "Noto Sans Devanagari", serif; font-size: 11.5pt; color: #111; line-height: 1.55; max-width: 780px; margin: 0 auto; padding: 32px 24px; }
+  .masthead-board { text-align: center; font-size: 0.85em; font-weight: bold; letter-spacing: 0.22em; text-transform: uppercase; }
+  .masthead-title { text-align: center; font-size: 1.45em; font-weight: bold; margin: 4px 0 10px; }
+  .masthead-subtitle { text-align: center; font-style: italic; margin-bottom: 10px; }
+  h3 { margin: 1.2em 0 0.3em; font-size: 0.8em; letter-spacing: 0.16em; text-transform: uppercase; }
   ol { margin: 0 0 1em; padding-left: 1.5em; }
-  .meta { display: flex; justify-content: space-between; margin: 8px 0 16px; font-weight: bold; }
+  .meta { display: flex; justify-content: space-between; margin: 12px 0 16px; padding: 6px 0; border-top: 3px double #555; border-bottom: 3px double #555; font-weight: bold; }
   .exam-set + .exam-set { page-break-before: always; }
   .section-first { page-break-before: always; }
-  .section-heading { text-align: center; font-weight: bold; margin: 1.4em 0 0.2em; }
-  .section-marks { text-align: center; font-weight: normal; margin: 0 0 0.4em; }
+  .section-heading { text-align: center; font-weight: bold; font-size: 1.1em; letter-spacing: 0.18em; text-transform: uppercase; margin: 1.4em 0 0.2em; }
+  .section-marks { text-align: center; font-weight: normal; font-style: italic; margin: 0 0 0.4em; }
   .section-instructions { text-align: center; font-style: italic; margin: 0 0 0.8em; }
-  .question { page-break-inside: avoid; margin-bottom: 0.5em; }
-  .options { margin-left: 24px; }
+  .question { page-break-inside: avoid; margin-bottom: 0.7em; }
+  .question p { margin: 0.2em 0; }
+  .marks { float: right; font-weight: bold; margin-left: 12px; }
+  .or { text-align: center; font-weight: bold; letter-spacing: 0.2em; }
+  .options { margin-left: 24px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
   .answer-key, .marking-scheme { page-break-before: always; }
 </style>
 </head>

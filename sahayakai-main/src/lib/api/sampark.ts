@@ -11,8 +11,7 @@
  * header, so `fetchAudioBlob` fetches the clip with the Bearer token and the
  * console plays it from an object URL (see components/sampark/use-authed-audio).
  */
-import { auth } from '@/lib/firebase';
-import { apiFetch, ApiError } from '@/lib/api/client';
+import { apiFetch, ApiError, authHeaderFor } from '@/lib/api/client';
 import type {
     BlockReason,
     Campaign,
@@ -24,6 +23,8 @@ import type {
     ConsentStatus,
     GuardianPreferences,
     ImportRun,
+    IntegrationApiKey,
+    IntegrationScope,
     ParentLanguage,
     PhoneClass,
     PurposeId,
@@ -188,6 +189,24 @@ export function setMode(orgId: string, mode: SamparkMode): Promise<SamparkSchool
     return apiFetch<SamparkSchoolView>(orgPath(orgId, '/mode'), { method: 'PUT', body: { mode } });
 }
 
+export interface ProviderChoiceState {
+    choice: 'elevenlabs' | 'vobiz' | null;
+    options: { id: 'elevenlabs' | 'vobiz'; available: boolean }[];
+    /** false: this deployment has no calling provider to choose (Riya off); skip the chooser. */
+    required?: boolean;
+}
+
+/** GET /api/sampark/provider — this session's calling-provider choice and what the deployment offers. */
+export function getProviderChoice(opts: Opts = {}): Promise<ProviderChoiceState> {
+    return apiFetch<ProviderChoiceState>(`${BASE}/provider`, { signal: opts.signal });
+}
+
+/** POST /api/sampark/provider — choose the provider for this session (server-side cookie). */
+export function chooseProvider(provider: 'elevenlabs' | 'vobiz'): Promise<{ choice: 'elevenlabs' | 'vobiz' }> {
+    return apiFetch<{ choice: 'elevenlabs' | 'vobiz' }>(`${BASE}/provider`, { method: 'POST', body: { provider } });
+}
+
+
 export type SetPauseInput =
     | { paused: true; reason: string; scope: SchoolPause['scope'] }
     | { paused: false };
@@ -306,6 +325,30 @@ export async function listTeacherCalls(orgId: string, query: { limit?: number } 
     return res.calls;
 }
 
+// ── Integrations (MCP API keys) ─────────────────────────────────────────────
+
+export interface CreateApiKeyInput {
+    label: string;
+    scopes: IntegrationScope[];
+}
+
+/** GET /api/sampark/[orgId]/api-keys — never carries a key itself. */
+export async function listApiKeys(orgId: string, opts: Opts = {}): Promise<IntegrationApiKey[]> {
+    const res = await apiFetch<{ keys: IntegrationApiKey[] }>(orgPath(orgId, '/api-keys'), { signal: opts.signal });
+    return res.keys;
+}
+
+/** POST /api/sampark/[orgId]/api-keys — `apiKey` is the full key, returned this once only. */
+export function createApiKey(orgId: string, input: CreateApiKeyInput): Promise<{ key: IntegrationApiKey; apiKey: string }> {
+    return apiFetch<{ key: IntegrationApiKey; apiKey: string }>(orgPath(orgId, '/api-keys'), { method: 'POST', body: input });
+}
+
+/** POST /api/sampark/[orgId]/api-keys/[keyId]/revoke */
+export async function revokeApiKey(orgId: string, keyId: string): Promise<IntegrationApiKey> {
+    const res = await apiFetch<{ key: IntegrationApiKey }>(orgPath(orgId, `/api-keys/${encodeURIComponent(keyId)}/revoke`), { method: 'POST' });
+    return res.key;
+}
+
 // ── Audio ────────────────────────────────────────────────────────────────────
 
 /** Path of a rendered clip. Needs the Bearer header — use `fetchAudioBlob`, not `<audio src>`. */
@@ -315,11 +358,11 @@ export function audioUrl(orgId: string, key: string): string {
 
 /** GET /api/sampark/[orgId]/audio/[key] with the signed-in user's token, as a Blob (audio/wav). */
 export async function fetchAudioBlob(orgId: string, key: string, opts: Opts = {}): Promise<Blob> {
-    const headers: Record<string, string> = {};
-    const user = auth.currentUser;
-    if (user) headers.Authorization = `Bearer ${await user.getIdToken()}`;
+    const url = audioUrl(orgId, key);
+    // Same auth rule as apiFetch (including the development dev-cookie case).
+    const headers = await authHeaderFor(url);
     // ?format=pcm: the stored clip is telephony μ-law, which not every browser decodes.
-    const res = await fetch(`${audioUrl(orgId, key)}?format=pcm`, { headers, signal: opts.signal });
+    const res = await fetch(`${url}?format=pcm`, { headers, signal: opts.signal });
     if (!res.ok) {
         const data = await res.json().catch(() => undefined);
         const message =

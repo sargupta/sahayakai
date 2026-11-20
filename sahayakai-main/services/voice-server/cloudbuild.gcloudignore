@@ -1,0 +1,38 @@
+# What `gcloud builds submit` uploads for services/voice-server/cloudbuild.yaml,
+# submitted from the MONOREPO ROOT with --ignore-file pointing here.
+#
+# An allowlist: everything is excluded except the voice server itself and the
+# web-app and agents files its contract tests read, so those tests run in the
+# Cloud Build test step instead of skipping. The Docker build context is still
+# sahayakai-main/services/voice-server only.
+/*
+!/sahayakai-main/
+/sahayakai-main/*
+!/sahayakai-main/services/
+/sahayakai-main/services/*
+!/sahayakai-main/services/voice-server/
+!/sahayakai-main/src/
+/sahayakai-main/src/*
+!/sahayakai-main/src/__tests__/
+/sahayakai-main/src/__tests__/*
+!/sahayakai-main/src/__tests__/lib/
+/sahayakai-main/src/__tests__/lib/*
+!/sahayakai-main/src/__tests__/lib/call-suppression.test.ts
+!/sahayakai-main/src/locales/
+/sahayakai-main/src/locales/*
+!/sahayakai-main/src/locales/call-scripts/
+!/sahayakai-agents/
+/sahayakai-agents/*
+!/sahayakai-agents/tests/
+/sahayakai-agents/tests/*
+!/sahayakai-agents/tests/unit/
+/sahayakai-agents/tests/unit/*
+!/sahayakai-agents/tests/unit/test_telephony_opt_out_persistence.py
+
+# Never local state, secrets or caches from the service directory.
+/sahayakai-main/services/voice-server/data/
+/sahayakai-main/services/voice-server/.env
+/sahayakai-main/services/voice-server/*.env.local
+**/__pycache__/
+**/.venv/
+**/.pytest_cache/

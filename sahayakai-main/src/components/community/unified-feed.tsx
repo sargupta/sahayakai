@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import FeedPost from "./feed-post";
+import { SampleConversations } from "./sample-conversations";
 import { ChatPreviewBanner } from "./chat-preview-banner";
 import { ContextualConnect } from "./contextual-connect";
 import { FeedSkeleton } from "./feed-skeleton";
@@ -25,6 +26,8 @@ interface UnifiedFeedProps {
   onLoadMore?: () => void | Promise<void>;
   hasMore?: boolean;
   likedPostIds: Set<string>;
+  /** Replaces the default "Nothing here yet" block (e.g. for a filtered view). */
+  emptyState?: React.ReactNode;
 }
 
 function getConnectionStatus(
@@ -49,6 +52,7 @@ export function UnifiedFeed({
   onLoadMore,
   hasMore,
   likedPostIds,
+  emptyState,
 }: UnifiedFeedProps) {
   const { t } = useLanguage();
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(
@@ -58,7 +62,7 @@ export function UnifiedFeed({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl">
+      <div>
         <FeedSkeleton count={4} />
       </div>
     );
@@ -74,16 +78,9 @@ export function UnifiedFeed({
   );
 
   if (visibleItems.length === 0) {
-    return (
-      <div className="mx-auto max-w-2xl py-10 px-6 text-center rounded-2xl border border-dashed border-border bg-background/50">
-        <p className="text-sm font-medium text-foreground">{t("Nothing here yet")}</p>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          {t("Posts from teachers in your groups and the daily SahayakAI education briefing will appear here.")}
-          <br className="hidden sm:inline" />
-          {t("Share your first post above to start the conversation.")}
-        </p>
-      </div>
-    );
+    if (emptyState) return <>{emptyState}</>;
+    // An empty feed shows labelled example conversations rather than a blank box.
+    return <SampleConversations />;
   }
 
   const handleDismissSuggestion = (uid: string) => {
@@ -101,7 +98,7 @@ export function UnifiedFeed({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="space-y-4">
       {visibleItems.map((item) => {
         switch (item.type) {
           case "group_post": {
@@ -212,11 +209,12 @@ export function UnifiedFeed({
         <div className="flex justify-center py-4">
           <Button
             variant="outline"
+            className="rounded-pill"
             onClick={handleLoadMore}
             disabled={loadingMore}
           >
-            {loadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Load more
+            {loadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+            {t("Load more")}
           </Button>
         </div>
       )}

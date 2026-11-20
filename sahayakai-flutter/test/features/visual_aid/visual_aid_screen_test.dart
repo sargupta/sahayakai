@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'visual_aid_fixtures.dart';
 
 /// Screen-layer gates: the one validation rule the endpoint depends on (a prompt
@@ -31,7 +32,7 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -254,7 +255,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets(
           'form renders at 360dp, textScale $scale, ${brightness.name}',
@@ -269,10 +270,10 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('What should the drawing show?'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
-            expect(find.text('Subject'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(findFieldLabel('What should the drawing show?'), findsOneWidget);
+            expect(findFieldLabel('Grade level'), findsOneWidget);
+            expect(findFieldLabel('Subject'), findsOneWidget);
+            expect(findFieldLabel('Language'), findsOneWidget);
           },
         );
       }

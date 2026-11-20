@@ -24,6 +24,7 @@ import type {
 } from '@/types/attendance';
 import type { Language, GradeLevel, Subject } from '@/types';
 import { hasAdvancedPlan } from '@/lib/plan-utils';
+import { isValidE164 } from '@/lib/twilio-validate';
 
 // ── Plan guard ────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ const VALIDATION_PATTERNS: RegExp[] = [
     /^Too many attendance entries/,
     /^Unknown student in attendance records/,
     /^Invalid attendance status/,
+    /^Student has no valid parent phone on record$/,
 ];
 
 export function attendanceErrorStatus(err: unknown): { message: string; status: number } {
@@ -617,7 +619,8 @@ export async function saveOutreachRecord(uid: string, data: {  // premium gate e
     className: string;
     studentId: string;
     studentName: string;
-    parentPhone: string;
+    /** Ignored. The destination always comes from the student record (see below). */
+    parentPhone?: string;
     parentLanguage: Language;
     reason: OutreachReason;
     teacherNote?: string;
@@ -642,6 +645,17 @@ export async function saveOutreachRecord(uid: string, data: {  // premium gate e
         .collection('students').doc(data.studentId).get();
     if (!studentDoc.exists) throw new Error('Student not found in this class');
 
+    // The parent's phone comes from the student record the teacher maintains,
+    // NEVER from the request. This writer used to store `data.parentPhone`
+    // verbatim, and /api/attendance/call dials whatever the outreach doc holds,
+    // so any gold/premium teacher could make the platform ring an arbitrary
+    // number. Same rule as F9-001 in /api/attendance/outreach.
+    const storedPhone: unknown = studentDoc.data()?.parentPhone;
+    const parentPhone = typeof storedPhone === 'string' ? storedPhone : '';
+    if (data.deliveryMethod === 'twilio_call' && !isValidE164(parentPhone)) {
+        throw new Error('Student has no valid parent phone on record');
+    }
+
     const now = new Date().toISOString();
     const ref = db.collection('parent_outreach').doc();
 
@@ -652,7 +666,7 @@ export async function saveOutreachRecord(uid: string, data: {  // premium gate e
         className: data.className,
         studentId: data.studentId,
         studentName: data.studentName,
-        parentPhone: data.parentPhone,
+        parentPhone, // server-trusted, from classes/{classId}/students/{studentId}
         parentLanguage: data.parentLanguage,
         reason: data.reason,
         generatedMessage: data.generatedMessage,

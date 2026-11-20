@@ -10,7 +10,6 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
-import '../../vidya/presentation/vidya_sheet.dart';
 import '../data/block_c_transport.dart';
 import '../data/inbox_transport.dart';
 import '../data/messages_stream_provider.dart';
@@ -254,7 +253,6 @@ class _ConversationThreadScreenState
     return Scaffold(
       appBar: GlassAppBar(
         title: _ThreadTitle(conversation: widget.conversation, myUid: myUid),
-        actions: const [VidyaAppBarAction()],
       ),
       body: SafeArea(
         child: async.when(
@@ -510,7 +508,7 @@ class _SendFailedBar extends StatelessWidget {
 
 /// The bottom composer: a growable text field + a ≥48dp send button. The send
 /// button uses the AA-safe `primaryContainer` + `onPrimaryContainer` pairing
-/// (6.9:1) — a small saffron glyph on the `#E0924D` fill would be only 2.5:1.
+/// (5.55:1) — a small white glyph on the saffron-500 fill would be 3.77:1.
 class _Composer extends StatefulWidget {
   const _Composer({required this.controller, required this.onSend});
 

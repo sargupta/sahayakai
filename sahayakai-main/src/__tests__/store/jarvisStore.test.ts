@@ -180,3 +180,50 @@ describe('jarvisStore — state-pollution scenario regression', () => {
         expect(useJarvisStore.getState().chatHistory.length).toBe(2);
     });
 });
+
+// ── Memory isolation (2026-10) ────────────────────────────────────────────
+// The persisted VIDYA memory lives in this browser's localStorage. On a
+// shared school device, teacher B signing in must never inherit teacher A's
+// chat history, profile memory or form drafts.
+describe('jarvisStore — bindOwner (per-teacher memory isolation)', () => {
+    const seedTeacherA = () => {
+        useJarvisStore.setState({ ownerUid: 'teacher-A' });
+        useJarvisStore.getState().addMessage('user', 'Class 7A has 3 absentees today');
+        useJarvisStore.getState().updateTeacherProfile({ preferredGrade: 'Class 7', schoolContext: 'ZP School, Wai' });
+        useJarvisStore.getState().saveFormSnapshot('lesson-plan', { topic: 'Fractions' });
+    };
+
+    it('wipes chat, profile memory and drafts when a different teacher signs in', () => {
+        seedTeacherA();
+
+        useJarvisStore.getState().bindOwner('teacher-B');
+
+        const s = useJarvisStore.getState();
+        expect(s.ownerUid).toBe('teacher-B');
+        expect(s.chatHistory).toEqual([]);
+        expect(s.teacherProfile.schoolContext).toBeNull();
+        expect(s.teacherProfile.preferredGrade).toBeNull();
+        expect(s.formSnapshots).toEqual({});
+    });
+
+    it('wipes on sign-out too', () => {
+        seedTeacherA();
+        useJarvisStore.getState().bindOwner(null);
+        expect(useJarvisStore.getState().chatHistory).toEqual([]);
+        expect(useJarvisStore.getState().teacherProfile.schoolContext).toBeNull();
+    });
+
+    it('keeps the same teacher\'s memory across reloads (same uid is a no-op)', () => {
+        seedTeacherA();
+        useJarvisStore.getState().bindOwner('teacher-A');
+        expect(useJarvisStore.getState().chatHistory.length).toBeGreaterThan(0);
+        expect(useJarvisStore.getState().teacherProfile.schoolContext).toBe('ZP School, Wai');
+    });
+
+    it('treats legacy memory with no recorded owner as not belonging to anyone', () => {
+        useJarvisStore.setState({ ownerUid: undefined as unknown as null });
+        useJarvisStore.getState().addMessage('user', 'left over from an earlier session');
+        useJarvisStore.getState().bindOwner('teacher-B');
+        expect(useJarvisStore.getState().chatHistory).toEqual([]);
+    });
+});

@@ -116,9 +116,7 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
     final extras = AppTextExtras.of(context);
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const saffronText = AppColors.lPrimaryText;
     final post = widget.post;
 
     final (icon: typeIcon, label: typeLabel) = _postType(l10n, post.postType);
@@ -157,8 +155,8 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                         Icon(
                           typeIcon,
                           size: AppIconSize.inline,
-                          // saffron-TEXT token (AA on the white card), never the
-                          // #E0924D fill routed as an icon.
+                          // saffron-TEXT token (AA on the card), never the
+                          // saffron-500 fill routed as an icon.
                           color: saffronText,
                         ),
                         const SizedBox(width: AppSpacing.space1),
@@ -281,9 +279,7 @@ class _LikeButton extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final extras = AppTextExtras.of(context);
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const saffronText = AppColors.lPrimaryText;
 
     final heart = Container(
       width: _disc,

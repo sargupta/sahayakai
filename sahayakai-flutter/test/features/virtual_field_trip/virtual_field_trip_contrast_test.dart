@@ -49,12 +49,6 @@ void main() {
           greaterThanOrEqualTo(4.5),
         );
       });
-      test('dark: onSurface on surfaceContainerHigh (>=4.5)', () {
-        expect(
-          _ratio(AppColors.dForeground, AppColors.dSurfaceContainerHigh),
-          greaterThanOrEqualTo(4.5),
-        );
-      });
     },
   );
 
@@ -65,16 +59,10 @@ void main() {
         greaterThanOrEqualTo(4.5),
         reason: 'the reflection label + prompt must be full ink on the inset',
       );
-      // The exact trap the hard rule guards against: the MUTED role on this same
-      // inset fill is BELOW the floor, which is why the inset uses full ink.
+      // Pre-v2 the MUTED role was below the floor on this inset, which is why
+      // the inset uses full ink; v2's body ink clears it too.
       expect(
         _ratio(AppColors.lMutedForeground, AppColors.lSurfaceContainerLow),
-        lessThan(4.5),
-      );
-    });
-    test('dark: onSurface on surfaceContainerLow (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dSurfaceContainerLow),
         greaterThanOrEqualTo(4.5),
       );
     });
@@ -90,12 +78,6 @@ void main() {
           reason: 'muted section labels must clear AA on the white card fill',
         );
       });
-      test('dark: onSurfaceVariant on the dark card surface (>=4.5)', () {
-        expect(
-          _ratio(AppColors.dMutedForeground, AppColors.dCard),
-          greaterThanOrEqualTo(4.5),
-        );
-      });
     },
   );
 
@@ -103,12 +85,6 @@ void main() {
     test('light: onPrimaryContainer on primaryContainer (>=4.5)', () {
       expect(
         _ratio(AppColors.lOnPrimaryContainer, AppColors.lPrimaryContainer),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-    test('dark: onPrimaryContainer on primaryContainer (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dOnPrimaryContainer, AppColors.dPrimaryContainer),
         greaterThanOrEqualTo(4.5),
       );
     });

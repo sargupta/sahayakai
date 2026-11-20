@@ -11,7 +11,7 @@ import 'package:sahayakai/shared/widgets/note_banner.dart';
 void main() {
   Widget host(Widget child, {Brightness brightness = Brightness.light}) {
     return MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       home: Scaffold(
         body: SingleChildScrollView(
           padding: AppSpacing.pagePadding,
@@ -89,7 +89,7 @@ void main() {
   testWidgets(
     'renders at 360dp, textScale 1.3, light and dark without overflow',
     (tester) async {
-      for (final brightness in Brightness.values) {
+      for (final brightness in const [Brightness.light]) {
         tester.view.physicalSize = const Size(360, 900);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.reset);

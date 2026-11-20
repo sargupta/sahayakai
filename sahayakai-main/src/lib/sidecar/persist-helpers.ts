@@ -7,7 +7,7 @@
  *
  * The Genkit flows write the JSON output to Firebase Storage at
  * `users/{uid}/{collection}/{ts}_{slug}.json` and a content-doc to
- * the unified `users/{uid}/contents/{contentId}` Firestore subcollection
+ * the unified `users/{uid}/content/{contentId}` Firestore subcollection
  * via `dbAdapter.saveContent`. Before Phase K only `avatar-generator`
  * mirrored this in its dispatcher; the other 9 flows silently dropped
  * the artefact on canary/full so the teacher's library never saw it.
@@ -16,10 +16,18 @@
  * not propagate. The user has already received the response — we don't
  * want a transient backend outage to convert a successful generation
  * into a 500.
+ *
+ * Artifact boundary: these helpers run only AFTER the sidecar returned a
+ * validated output, so a successful write is the moment a real Library
+ * artifact exists — hence `status: 'ready'`. The doc id is the caller's
+ * stable `contentId` when supplied (see `@/lib/content-id`), so a sidecar
+ * persist and a racing Genkit persist of the same generation land on one
+ * row instead of two.
  */
 import 'server-only';
 import type { BaseContent, ContentType, GradeLevel, Language, Subject } from '@/types/index';
 import { logger } from '@/lib/logger';
+import { resolveContentId } from '@/lib/content-id';
 
 export interface PersistJSONInput<T> {
     /** Authenticated user ID. The artefact is filed under this user's library. */
@@ -57,6 +65,8 @@ export interface PersistJSONInput<T> {
      * straight from `data`. Default false → all other types keep the blob.
      */
     skipStorageBlob?: boolean;
+    /** Stable artifact id minted per generation; a fresh UUID when absent/invalid. */
+    contentId?: string;
 }
 
 export interface PersistJSONResult {
@@ -94,12 +104,11 @@ export async function persistSidecarJSON<T>(
     input: PersistJSONInput<T>,
 ): Promise<PersistJSONResult | null> {
     try {
-        const { v4: uuidv4 } = await import('uuid');
         const { dbAdapter } = await import('@/lib/db/adapter');
         const { Timestamp } = await import('firebase-admin/firestore');
 
         const now = new Date();
-        const contentId = uuidv4();
+        const contentId = resolveContentId(input.contentId);
 
         let storagePath: string | undefined;
         if (!input.skipStorageBlob) {
@@ -128,6 +137,7 @@ export async function persistSidecarJSON<T>(
             ...(storagePath ? { storagePath } : {}),
             isPublic: false,
             isDraft: false,
+            status: 'ready',
             createdAt: Timestamp.fromDate(now),
             updatedAt: Timestamp.fromDate(now),
             data: input.output,
@@ -181,6 +191,8 @@ export interface PersistImageInput {
      * `discussionSpark`.
      */
     extraData?: Record<string, unknown>;
+    /** Stable artifact id minted per generation; a fresh UUID when absent/invalid. */
+    contentId?: string;
 }
 
 /**
@@ -188,7 +200,7 @@ export interface PersistImageInput {
  *
  * Strips the `data:image/<subtype>;base64,` prefix, writes raw bytes
  * to `users/{uid}/{collection}/{ts}_{slug}.png`, and a content doc to
- * `users/{uid}/contents/{contentId}` via `dbAdapter.saveContent`.
+ * `users/{uid}/content/{contentId}` via `dbAdapter.saveContent`.
  *
  * Returns `{ contentId, storagePath }` on success, `null` on any
  * failure (logged at WARN level). Fail-soft — see file header.
@@ -197,14 +209,13 @@ export async function persistSidecarImage(
     input: PersistImageInput,
 ): Promise<PersistJSONResult | null> {
     try {
-        const { v4: uuidv4 } = await import('uuid');
         const { getStorageInstance } = await import('@/lib/firebase-admin');
         const { dbAdapter } = await import('@/lib/db/adapter');
         const { Timestamp } = await import('firebase-admin/firestore');
 
         const now = new Date();
         const timestamp = formatTimestamp(now);
-        const contentId = uuidv4();
+        const contentId = resolveContentId(input.contentId);
         const slug = slugify(input.title);
         const fileName = `${timestamp}_${slug}.png`;
         const storagePath = `users/${input.uid}/${input.collection}/${fileName}`;
@@ -241,6 +252,7 @@ export async function persistSidecarImage(
             storagePath,
             isPublic: false,
             isDraft: false,
+            status: 'ready',
             createdAt: Timestamp.fromDate(now),
             updatedAt: Timestamp.fromDate(now),
             data: dataPayload,

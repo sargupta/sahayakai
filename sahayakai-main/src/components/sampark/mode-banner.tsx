@@ -52,7 +52,7 @@ export function ModeBanner({
                         <>
                             {" "}
                             {mode === "test"
-                                ? t("This is a demo school: its families' numbers are test numbers and are never called. Only the test phone rings.")
+                                ? t("This is a demo school: its parents' numbers are test numbers and are never called. Only the test phone rings.")
                                 : t("This is a demo school: its phone numbers are test numbers and can never be called.")}
                         </>
                     )}

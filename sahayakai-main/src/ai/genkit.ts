@@ -1,8 +1,10 @@
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import { vertexAI } from '@genkit-ai/vertexai';
+import { vertexAI as vertexAIGlobal } from '@genkit-ai/google-genai';
 import { getSecret } from '@/lib/secrets';
 import { logger } from '@/lib/logger';
+import { parseModelRemap, remapModelName } from './model-remap';
 
 // Protection against placeholder keys in process.env
 const isPlaceholder = (val: string | undefined) => !val || val.startsWith('secrets/');
@@ -23,14 +25,59 @@ export const DEFAULT_MODEL = 'vertexai/gemini-2.5-flash';
 const activeModel = process.env.GENKIT_DEFAULT_MODEL || DEFAULT_MODEL;
 export const usingVertex = activeModel.startsWith('vertexai/');
 
+// A `demo-` project id is the Firestore emulator's offline project (the local Sampark/Riya
+// launcher sets GCLOUD_PROJECT=demo-sahayakai). It never exists on Google Cloud, so Vertex
+// answered 403 and VIDYA and every AI tool failed locally; keep Vertex on the real project.
+// VERTEX_AI_PROJECT (local env file) points Vertex at a project of your own without touching
+// GCLOUD_PROJECT, which the Firestore emulator and the Admin SDK still need.
+const configuredProject = process.env.GCLOUD_PROJECT?.trim();
+export const vertexProject = process.env.VERTEX_AI_PROJECT?.trim()
+  || (configuredProject && !configuredProject.startsWith('demo-') ? configuredProject : 'sahayakai-b4248');
+export const vertexLocation = process.env.VERTEX_AI_LOCATION?.trim() || 'us-central1';
+
+// The "global" Vertex location is served only by the plugin in @genkit-ai/google-genai (the
+// older @genkit-ai/vertexai plugin throws on it at first use). Some projects serve the current
+// Gemini models in "global" only, so that location switches the plugin; every other location —
+// production included — keeps the plugin it has always used. Both register `vertexai/<model>`.
+export const usingGlobalVertex = vertexLocation === 'global';
+
 export const ai = genkit({
   plugins: [
-    vertexAI({ projectId: process.env.GCLOUD_PROJECT || 'sahayakai-b4248', location: 'us-central1' }),
+    usingGlobalVertex
+      ? vertexAIGlobal({ projectId: vertexProject, location: 'global' })
+      : vertexAI({ projectId: vertexProject, location: vertexLocation }),
     googleAI(), // still serves googleai/* models (images, 2.5-pro) via the per-call key pool
   ],
   model: activeModel,
   // promptDir: 'src/ai/prompts',  // TODO: Enable after migrating flows from inline definePrompt() to ai.prompt()
 });
+
+// 1b. Model remap (GENKIT_MODEL_REMAP): see src/ai/model-remap.ts. Unset — production —
+// the map is empty and nothing below runs.
+const modelRemap = parseModelRemap(process.env.GENKIT_MODEL_REMAP);
+if (modelRemap.size > 0) {
+  const withModel = <T,>(opts: T): T =>
+    opts && typeof opts === 'object' && 'model' in (opts as object)
+      ? { ...opts, model: remapModelName((opts as { model?: unknown }).model, modelRemap) }
+      : opts;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Genkit's overloads are not expressible here
+  const g = ai as any;
+  for (const method of ['generate', 'generateStream'] as const) {
+    const original = g[method].bind(ai);
+    g[method] = (opts: unknown, ...rest: unknown[]) => original(withModel(opts), ...rest);
+  }
+  const definePrompt = g.definePrompt.bind(ai);
+  g.definePrompt = (config: unknown, ...rest: unknown[]) => {
+    const prompt = definePrompt(withModel(config), ...rest);
+    // A prompt is callable with per-call options that may name a model too (quota fallbacks).
+    const wrapped = (input: unknown, opts?: unknown) => prompt(input, withModel(opts));
+    Object.assign(wrapped, prompt);
+    if (typeof prompt.stream === 'function') wrapped.stream = (input: unknown, opts?: unknown) => prompt.stream(input, withModel(opts));
+    if (typeof prompt.render === 'function') wrapped.render = (input: unknown, opts?: unknown) => prompt.render(input, withModel(opts));
+    return wrapped;
+  };
+  logger.info('Model remap active', 'AI', { entries: modelRemap.size });
+}
 
 // 2. Telemetry (lazy init — imported by dev.ts and first API call)
 let telemetryInitialized = false;

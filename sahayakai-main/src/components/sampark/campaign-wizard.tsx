@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSamparkHref } from "@/components/shell/product-paths";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { SectionCard } from "@/components/layout";
@@ -96,7 +97,8 @@ export function CampaignWizard() {
     const f = useSamparkFormat();
     const { orgId, school } = useSamparkSchool();
     const summary = useCampaignSummary();
-    const base = `/sampark/${encodeURIComponent(orgId)}`;
+    const samparkHref = useSamparkHref();
+    const base = samparkHref(`/${encodeURIComponent(orgId)}`);
 
     const purposes = useMemo(() => availablePurposes(), []);
     const [step, setStep] = useState<Step>(0);
@@ -244,7 +246,7 @@ export function CampaignWizard() {
             )}
 
             {step === 1 && (
-                <SectionCard title={t("Who should be called?")} description={t("Each family is called once, even if they have more than one child in the chosen classes.")}>
+                <SectionCard title={t("Who should be called?")} description={t("Each parent is called once, even if they have more than one child in the chosen classes.")}>
                     <div className="flex flex-wrap gap-2">
                         <ChoiceChip selected={wholeSchool} onClick={() => setWholeSchool(true)}>{t("Whole school")}</ChoiceChip>
                         <ChoiceChip selected={!wholeSchool} onClick={() => setWholeSchool(false)}>{t("Choose classes")}</ChoiceChip>
@@ -382,7 +384,7 @@ export function CampaignWizard() {
                                 <Label htmlFor="campaign-venue">{t("Venue")}</Label>
                                 {noVenues ? (
                                     <p className="type-body text-muted-foreground">
-                                        {t("Add a venue with its name in all four languages before inviting families.")}{" "}
+                                        {t("Add a venue with its name in all four languages before inviting parents.")}{" "}
                                         <Link href={`${base}/settings`} className="text-primary underline underline-offset-4">{t("Go to settings")}</Link>
                                     </p>
                                 ) : (

@@ -319,9 +319,7 @@ class _DeliveryTick extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final saffronText = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const saffronText = AppColors.lPrimaryText;
 
     late final IconData icon;
     late final Color color;

@@ -22,6 +22,7 @@ RULES:
 - IDENTITY: You ARE {teacher_name}. NEVER say AI, bot, assistant, model, machine.
 - EASE INTO PROBLEMS — never dump bad news in first sentence. Ask about child first, then share concern.
 - ANSWER DIRECT QUESTIONS HONESTLY — if parent asks "problem kya hai?" or "score kitna aaya?" more than once, you MUST give the specific honest answer (the actual score, the actual incident), then soften with reassurance. Dodging repeatedly destroys trust.
+- FUTURE CALLS: NEVER say whether the school will or will not call again (never "ab phone nahi karenge"). If the parent asks, say the class teacher will decide ("iska faisla class teacher karenge").
 
 APPROACH BY SITUATION TYPE:
 
@@ -190,3 +191,58 @@ CALL_GREETINGS: dict[str, dict[str, str]] = {
 def get_greetings(lang_code: str) -> dict[str, str]:
     """Get fallback greeting for a language. Only used when no generatedMessage."""
     return CALL_GREETINGS.get(lang_code, CALL_GREETINGS["en-IN"])
+
+
+# ── Request-to-talk system instruction ──
+# Every call whose reason is not positive_feedback (founder decision, 23 Oct
+# 2026: a concern call is a request to talk and never states the concern).
+#
+# The template has NO slot for the reason, the subject, the teacher's message,
+# marks, performance context or parent history. Its only inputs are the names
+# the caller needs to say who is calling, the call language, and two fixed
+# sentences from call_lines.json — so the model cannot leak a concern it was
+# never given. Not the teacher: the opening says "your child's class teacher
+# would like to speak with you", so the speaker calls on the teacher's behalf.
+REQUEST_TO_TALK_SYSTEM_PROMPT = """You are calling a parent from {school} on behalf of {student}'s class teacher{teacher_part}. The class teacher would like to speak with the parent this week. Your ONLY job on this call is to find a good time for that conversation.
+
+You do NOT know why the class teacher wants to talk. Nobody has told you. Never guess, hint at or imply a reason.
+
+RULES:
+- Speak {language} ONLY, in its own script. ONE sentence, at most 15 words. This is a phone call.
+- Never use colons, bullets, lists or asterisks. Spoken language only.
+- Be warm, polite and brief.
+- You are not the class teacher. Never say that you are.
+- If the parent asks why the teacher wants to talk, or what it is about, say exactly: "{explain_in_person}"
+- If the parent guesses a reason, whatever it is, do not confirm it and do not deny it. Say exactly: "{explain_in_person}"
+- Never say whether the matter is good or bad, serious or small, urgent or not.
+- If now is not a good time, ask when this week would suit them.
+- When the parent gives a time, repeat it back in one short sentence and say the class teacher will call then.
+- If the parent asks who is calling, say you are calling from {school} for {student}'s class teacher.
+- If the parent says they do not want calls from the school, do not argue and do not promise anything; thank them and say goodbye.
+- Never say whether the school will or will not call again. If the parent asks, say the class teacher will decide.
+- NEVER ask "how can I help". You called them.
+
+Your opening was:
+{greeting}
+
+ONE sentence. Be warm."""
+
+
+def build_request_to_talk_instruction(
+    *,
+    student_name: str,
+    teacher_name: str,
+    school_name: str,
+    language: str,
+    greeting: str,
+    explain_in_person: str,
+) -> str:
+    """System instruction for a request-to-talk call. Takes names, never the call record."""
+    return REQUEST_TO_TALK_SYSTEM_PROMPT.format(
+        school=school_name or "the school",
+        student=student_name or "your child",
+        teacher_part=f", {teacher_name}" if teacher_name else "",
+        language=language,
+        greeting=greeting,
+        explain_in_person=explain_in_person,
+    )

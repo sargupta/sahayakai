@@ -166,7 +166,6 @@ class _ProfileSummaryCard extends StatelessWidget {
     final language = profile.preferredLanguage;
 
     return AppCard(
-      accentBar: true,
       onTap: () => context.push(Routes.profile),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,9 +247,7 @@ class _InitialAvatar extends StatelessWidget {
     final initial = (trimmed != null && trimmed.isNotEmpty)
         ? String.fromCharCode(trimmed.runes.first).toUpperCase()
         : null;
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const saffronText = AppColors.lPrimaryTextOnTint;
 
     return Container(
       width: AppIconSize.wellBox,
@@ -426,9 +423,10 @@ class _UsageRow extends StatelessWidget {
 /// [FractionallySizedBox] fill, tokens only.
 ///
 /// AA (WCAG 1.4.11, computed vs the ACTUAL fill): the fill is the saffron-text
-/// token — `#AC4815` light / `#EB9447` dark — NOT the `#E0924D` brand FILL,
-/// which is only ~2:1 on the track. Saffron-text on `surfaceContainerHigh` is
-/// 4.7:1 (light) / 5.6:1 (dark), clearing the 3:1 non-text floor; and the
+/// token — saffron-600 `#A5551D` light / `#EB9447` dark — NOT the saffron-500
+/// brand FILL, which is only 2.9:1 on the track. Saffron-text on
+/// `surfaceContainerHigh` is 4.12:1 (light) / 5.6:1 (dark), clearing the 3:1
+/// non-text floor; and the
 /// `used / limit` number carries the value non-colour too. Static (no sweep),
 /// so it is reduce-motion safe by construction.
 class _UsageMeter extends StatelessWidget {
@@ -440,9 +438,7 @@ class _UsageMeter extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final fill = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const fill = AppColors.lPrimaryText;
 
     return SizedBox(
       height: AppSpacing.space2,
@@ -465,7 +461,7 @@ class _UsageMeter extends StatelessWidget {
               FractionallySizedBox(
                 alignment: AlignmentDirectional.centerStart,
                 widthFactor: fraction.clamp(0.0, 1.0),
-                child: ColoredBox(color: fill),
+                child: const ColoredBox(color: fill),
               ),
             ],
           ),
@@ -626,7 +622,6 @@ class _SignedOutCard extends StatelessWidget {
     final l10n = context.l10n;
 
     return AppCard(
-      accentBar: true,
       child: EmptyView(
         icon: LucideIcons.logIn,
         title: l10n.profileSignedOutTitle,

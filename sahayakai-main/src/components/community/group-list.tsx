@@ -18,6 +18,10 @@ function truncateName(name: string): string {
   return words.length > 2 ? words.slice(0, 2).join(" ") : name;
 }
 
+const CHIP =
+  "focus-ring shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-pill text-xs font-semibold border transition-colors duration-micro";
+
+/** Feed filter: one chip per group the teacher belongs to (filters the feed, doesn't open the group). */
 export default function GroupList({
   groups,
   selectedGroupId,
@@ -30,16 +34,18 @@ export default function GroupList({
     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
       {/* All chip */}
       <button
+        type="button"
         onClick={() => onSelectGroup(null)}
+        aria-pressed={selectedGroupId === null}
         className={cn(
-          "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all",
+          CHIP,
           selectedGroupId === null
-            ? "bg-primary text-primary-foreground border-transparent shadow-soft"
-            : "bg-card border-border text-foreground hover:border-primary/30"
+            ? "bg-foreground text-background border-transparent"
+            : "bg-card border-border text-foreground hover:border-primary/40"
         )}
       >
-        <LayoutGrid className="h-3.5 w-3.5" />
-        All
+        <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
+        {t("All")}
       </button>
 
       {/* Group chips */}
@@ -50,21 +56,22 @@ export default function GroupList({
         return (
           <button
             key={group.id}
+            type="button"
             onClick={() => onSelectGroup(group.id)}
+            aria-pressed={isSelected}
+            title={group.name}
             className={cn(
-              "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all",
+              CHIP,
               isSelected
-                ? "text-white border-transparent shadow-soft"
-                : "bg-card border-border text-foreground hover:border-primary/30"
+                ? "bg-foreground text-background border-transparent"
+                : "bg-card border-border text-foreground hover:border-primary/40"
             )}
-            style={isSelected ? { background: gradient } : undefined}
           >
-            {!isSelected && (
-              <span
-                className="h-1 w-1 rounded-full shrink-0"
-                style={{ background: gradient }}
-              />
-            )}
+            <span
+              className="h-2 w-2 rounded-pill shrink-0"
+              style={{ background: gradient }}
+              aria-hidden="true"
+            />
             {truncateName(group.name)}
           </button>
         );
@@ -73,10 +80,11 @@ export default function GroupList({
       {/* Explore chip — visible when there are groups to discover */}
       {hasDiscoverableGroups && onExploreGroups && (
         <button
+          type="button"
           onClick={onExploreGroups}
-          className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border border-dashed border-primary/40 text-primary hover:bg-primary/5 transition-all"
+          className={cn(CHIP, "border-dashed border-primary/40 text-primary hover:bg-tint-accent-soft")}
         >
-          <Compass className="h-3.5 w-3.5" />
+          <Compass className="h-3.5 w-3.5" aria-hidden="true" />
           {t("Explore")}
         </button>
       )}

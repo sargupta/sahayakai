@@ -19,6 +19,12 @@
  *  (d) Phase 2a: the Vobiz carrier module is imported only by the carrier factory
  *      (and tests) — not even the dispatcher, which receives carriers through
  *      `carrierFor`, so the factory's mode/flag/test-phone checks cannot be skipped.
+ *  (e) Riya over Vobiz (2026-11-09): a Riya conversation call is not a notice and never goes
+ *      through the notice dispatcher; like the ElevenLabs Riya call it is placed by
+ *      `startRiyaCall` (src/server/sampark/conversation.ts), after every Riya gate. Its dialler,
+ *      src/lib/sampark/conversation/vobiz-provider.ts, is the ONE other module that may name a
+ *      raw Vobiz dialler, and its `startVobizRiyaCall` may be named only by conversation.ts
+ *      (and tests) — so no route, webhook or worker can ring a phone around Riya's gates.
  *
  * The scanner is exercised against planted violations first, so the gate is
  * proven to fail when broken, not just to pass on today's tree.
@@ -36,6 +42,8 @@ const DIALER_FILES = new Set([
 const CARRIER_MODULE = /^src\/lib\/sampark\/dispatch\/[^/]+-carrier(?:\/index)?$/;
 const VOBIZ_CARRIER = 'src/lib/sampark/dispatch/vobiz-carrier';
 const CARRIER_FACTORY = 'src/server/sampark/carrier.ts';
+const RIYA_VOBIZ_DIALER = 'src/lib/sampark/conversation/vobiz-provider.ts';
+const RIYA_START_PATH = 'src/server/sampark/conversation.ts';
 const SAMPARK_TREES = [
     'src/lib/sampark/',
     'src/server/sampark/',
@@ -98,8 +106,12 @@ function violations(files: { rel: string; code: string }[]): string[] {
         }
         // Any dialler of the Vobiz client: placeVobizCall, placeVobizCallDetailed, and whatever comes next.
         const dialler = /\bplaceVobizCall\w*/.exec(clean);
-        if (inSampark && rel !== `${VOBIZ_CARRIER}.ts` && dialler) {
+        if (inSampark && rel !== `${VOBIZ_CARRIER}.ts` && rel !== RIYA_VOBIZ_DIALER && dialler) {
             found.push(`${rel} names ${dialler[0]}`);
+        }
+        // (e) The Riya Vobiz dialler is started only from Riya's one start path.
+        if (rel !== RIYA_VOBIZ_DIALER && rel !== RIYA_START_PATH && /\bstartVobizRiyaCall\b/.test(clean)) {
+            found.push(`${rel} names startVobizRiyaCall outside startRiyaCall`);
         }
     }
     return found;
@@ -156,6 +168,18 @@ describe('class gate 2 — the scanner catches every shape of violation', () => 
         expect(planted('src/lib/sampark/dispatch/vobiz-carrier.ts', direct)).toEqual([]);
         // Outside the Sampark trees (the teacher parent-call path) it is not this gate's business.
         expect(planted('src/app/api/attendance/call/route.ts', direct)).toEqual([]);
+    });
+
+    it('(e) the Riya Vobiz dialler may dial, and only startRiyaCall may start it', () => {
+        const dial = "import { placeVobizCallDetailed } from '@/lib/vobiz/client'; await placeVobizCallDetailed(cfg, opts);";
+        expect(planted('src/lib/sampark/conversation/vobiz-provider.ts', dial)).toEqual([]);
+        const start = 'await startVobizRiyaCall(cfg, input);';
+        expect(planted('src/server/sampark/conversation.ts', start)).toEqual([]);
+        expect(planted('src/server/sampark/vobiz-riya.ts', start)).toEqual(['src/server/sampark/vobiz-riya.ts names startVobizRiyaCall outside startRiyaCall']);
+        expect(planted('src/app/api/webhooks/vobiz-riya/answer/route.ts', start)).toHaveLength(1);
+        expect(planted('src/server/sampark/callbacks.ts', start)).toHaveLength(1);
+        // Naming the raw dialler is still refused everywhere else, the Riya start path included.
+        expect(planted('src/server/sampark/conversation.ts', dial)).toEqual(['src/server/sampark/conversation.ts names placeVobizCallDetailed']);
     });
 
     it('flags the detailed dialler (hardening H7) the same way', () => {

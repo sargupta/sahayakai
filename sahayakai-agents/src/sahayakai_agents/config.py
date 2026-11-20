@@ -20,10 +20,21 @@ import os
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Environment = Literal["development", "staging", "production"]
+
+# Settings compared EXACTLY against what a caller sends (a token's `aud`, a
+# URL). Values come from Secret Manager, where a version added with
+# `echo value | gcloud secrets versions add` silently ends in "\n". On
+# 2026-06-06 that happened to SAHAYAKAI_AGENTS_AUDIENCE: every ID token was then
+# refused as "wrong audience", so all shadow and canary dispatch from the web
+# app failed with 401 for five months. Any setting whose alias ends with one of
+# these suffixes is stripped of surrounding whitespace at construction.
+# Deliberately NOT applied to SecretStr fields: the HMAC signing key must stay
+# byte-identical to the caller's copy.
+_EXACT_MATCH_ALIAS_SUFFIXES = ("_AUDIENCE", "_URL")
 
 
 # Stand-in for an API key when running on Vertex AI (ADC auth, no key).
@@ -114,6 +125,17 @@ class Settings(BaseSettings):
 
     # --- Telemetry ---
     otel_service_name: str = Field(default="sahayakai-agents", alias="OTEL_SERVICE_NAME")
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _strip_exact_match_whitespace(cls, value: object, info: ValidationInfo) -> object:
+        """Strip whitespace from audience/URL settings (see _EXACT_MATCH_ALIAS_SUFFIXES)."""
+        if not isinstance(value, str) or info.field_name is None:
+            return value
+        alias = (cls.model_fields[info.field_name].alias or "").upper()
+        if alias.endswith(_EXACT_MATCH_ALIAS_SUFFIXES):
+            return value.strip()
+        return value
 
     @property
     def is_production(self) -> bool:

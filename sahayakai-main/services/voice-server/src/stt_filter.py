@@ -23,24 +23,11 @@ from loguru import logger
 from pipecat.frames.frames import Frame, TranscriptionFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
-# ── Filter thresholds ──
-
-MIN_CHARS = 2              # Below this = noise artifact
-MAX_REPEAT_RATIO = 0.7     # If >70% of chars are the same char, likely noise
-
-# Gibberish: only punctuation/numbers/whitespace, or single repeated char
-_GIBBERISH_RE = re.compile(r'^[\s\d\W]+$|^(.)\1{2,}$')
-
-# Common STT noise artifacts in Indian languages (Sarvam-specific)
-# These are fragments that STT produces from background noise/echo
-_NOISE_ARTIFACTS = {
-    # Hindi noise fragments
-    "हां", "ह", "अ", "उ", "ओ", "आ", "ए",
-    # English noise fragments
-    "uh", "um", "ah", "oh", "hmm", "hm",
-    # Common echo artifacts (STT hearing its own TTS output)
-    "thank", "thanks", "okay",
-}
+# ── Filter thresholds and noise rules: src/stt_noise.py (pure, shared with
+# the stop listener, which must not let a hum cancel a held "don't call me") ──
+from src.stt_noise import GIBBERISH_RE as _GIBBERISH_RE  # noqa: E402,F401
+from src.stt_noise import MAX_REPEAT_RATIO, MIN_CHARS, drop_reason  # noqa: E402,F401
+from src.stt_noise import NOISE_ARTIFACTS as _NOISE_ARTIFACTS  # noqa: E402,F401
 
 # Rapid-fire threshold: if N transcriptions arrive within T seconds,
 # likely picking up background conversation (not parent)
@@ -114,31 +101,11 @@ class STTConfidenceFilter(FrameProcessor):
                     f"transcriptions in {RAPID_FIRE_WINDOW}s"
                 )
 
-        # ── Layer 1: Length check ──
-        if len(text) < self._min_chars:
-            self._on_filtered(text, "too short")
+        # ── Layers 1-4: length, gibberish, known noise artifacts, repeat ratio ──
+        reason = drop_reason(text, self._min_chars)
+        if reason is not None:
+            self._on_filtered(text, reason)
             return
-
-        # ── Layer 2: Gibberish regex ──
-        if _GIBBERISH_RE.match(text):
-            self._on_filtered(text, "gibberish")
-            return
-
-        # ── Layer 3: Known noise artifacts ──
-        if text.lower() in _NOISE_ARTIFACTS:
-            self._on_filtered(text, "noise artifact")
-            return
-
-        # ── Layer 4: Repeat ratio (e.g., "aaahhhh", "ummmmm") ──
-        if len(text) >= 3:
-            from collections import Counter
-            char_counts = Counter(text.lower().replace(" ", ""))
-            if char_counts:
-                most_common_count = char_counts.most_common(1)[0][1]
-                total = sum(char_counts.values())
-                if most_common_count / total > MAX_REPEAT_RATIO:
-                    self._on_filtered(text, "repetitive")
-                    return
 
         # ── Passed all filters ──
         self._consecutive_filtered = 0

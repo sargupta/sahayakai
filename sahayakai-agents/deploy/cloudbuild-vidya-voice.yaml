@@ -1,0 +1,101 @@
+# cloudbuild-vidya-voice.yaml — the PRODUCTION hands-free VIDYA voice service.
+#
+# Its own Cloud Run service, `sahayakai-vidya-voice` (Mumbai, close to teachers). The browser opens
+# the Live VIDYA media socket (/v1/vidya-voice/stream) here directly, so it cannot sit behind Cloud
+# Run IAM: every socket presents a short-lived, single-use token minted by the web app's
+# /api/vidya-voice/start-session and verified with the request-signing key before accept(). It also
+# carries its own limits (one session per uid, 6 opens per uid per hour, idle and wall-clock
+# cut-offs). Nothing else from the agents service is public here: the ungated /start-session POST
+# is never mounted (main.py, SAHAYAKAI_PUBLIC_VIDYA_VOICE).
+#
+# Model: Gemini Live on Vertex AI with the runtime service account (no API key, so the AI Studio
+# prepaid credit does not apply).
+#
+# NEVER deploy this over `sahayakai-telephony` (the live parent-call engine) or `sahayakai-agents`.
+#
+# Submit (from the repo root):
+#   gcloud builds submit sahayakai-agents --project=sahayakai-b4248 \
+#     --config=sahayakai-agents/deploy/cloudbuild-vidya-voice.yaml \
+#     --substitutions=SHORT_SHA=$(git rev-parse --short HEAD)
+# Then point the web app at it: VIDYA_VOICE_STREAM_BASE_URL in sahayakai-main/cloudbuild.yaml.
+#
+# The signing key MUST be the one the production web service mints tokens with
+# (SAHAYAKAI_REQUEST_SIGNING_KEY), or every socket is refused.
+substitutions:
+  _SERVICE: sahayakai-vidya-voice
+  _REGION: asia-south1
+  _REPO: sahayakai
+  # Images live in the existing Artifact Registry repo (asia-southeast1); the service runs in Mumbai.
+  _AR_REGION: asia-southeast1
+  _SIGNING_KEY_SECRET: SAHAYAKAI_REQUEST_SIGNING_KEY
+  # One warm instance: the first tap of the day does not wait for a Python + ADK cold start.
+  _MIN_INSTANCES: '1'
+  _MAX_INSTANCES: '4'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+steps:
+  - id: refuse-wrong-service
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        case "${_SERVICE}" in
+          sahayakai-telephony|sahayakai-agents|sahayakai-agents-staging|sahayakai-riya-bridge)
+            echo "refusing: ${_SERVICE} is another service; the VIDYA voice service has its own"; exit 1 ;;
+        esac
+
+  - id: test
+    name: python:3.12-slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        pip install --quiet --upgrade pip
+        pip install --quiet '.[dev]'
+        pytest tests/unit -q -k "vidya_voice or telephony_only" --deselect tests/unit/test_action_flow_ts_parity.py
+    waitFor: [refuse-wrong-service]
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=${_AR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - .
+    waitFor: [test]
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, '${_AR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA']
+    waitFor: [build]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_AR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --project=${PROJECT_ID}
+      - --service-account=sahayakai-agents-runtime@${PROJECT_ID}.iam.gserviceaccount.com
+      # The browser opens the socket without Google auth; the token is verified in the handler.
+      - --allow-unauthenticated
+      - --execution-environment=gen2
+      - --cpu=2
+      - --memory=1Gi
+      # Live audio is CPU-bound per socket; few sockets per instance keeps every voice smooth.
+      - --concurrency=4
+      - --timeout=900
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --cpu-boost
+      - --set-secrets=SAHAYAKAI_REQUEST_SIGNING_KEY=${_SIGNING_KEY_SECRET}:latest
+      - --set-env-vars=SAHAYAKAI_TELEPHONY_ONLY=1,SAHAYAKAI_PUBLIC_VIDYA_VOICE=1,SAHAYAKAI_AGENTS_ENV=production,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_REGION=${_REGION},SAHAYAKAI_PROMPTS_DIR=/srv/prompts,SAHAYAKAI_REQUIRE_APP_CHECK=false
+      - --quiet
+    waitFor: [push]

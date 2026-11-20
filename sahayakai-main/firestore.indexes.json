@@ -625,6 +625,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "sampark_conversation_calls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "phoneHash",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

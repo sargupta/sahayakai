@@ -297,6 +297,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 429 });
         }
         console.error('[TTS] Server Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        // Never return provider/SDK error text to the client (internal detail leak).
+        return NextResponse.json({ error: 'Text-to-speech failed. Please try again.' }, { status: 500 });
     }
 }

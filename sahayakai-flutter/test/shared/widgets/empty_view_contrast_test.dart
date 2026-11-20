@@ -36,7 +36,7 @@ double _ratio(Color a, Color b) {
 void main() {
   Widget host(Widget child, {required Brightness brightness}) {
     return MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       home: Scaffold(
         body: SingleChildScrollView(
           padding: AppSpacing.pagePadding,
@@ -46,7 +46,7 @@ void main() {
     );
   }
 
-  for (final brightness in Brightness.values) {
+  for (final brightness in const [Brightness.light]) {
     testWidgets(
       'EmptyView.message clears AA on the scaffold ground (${brightness.name})',
       (tester) async {
@@ -75,11 +75,17 @@ void main() {
         );
         // It IS the full-ink role now (the fix), aligned with the sibling panels.
         expect(messageColor, scheme.onSurface);
-        // The muted role it replaced fails on the LIGHT ground (~4.36:1) — the
-        // exact blocker. (In dark the lighter muted grey happens to clear AA on
-        // the near-black ground, so the trap is asserted for light only.)
+        // In light the page ground is the v2 screen wash (the scaffold is
+        // transparent over it), so the body must clear AA on every wash stop
+        // too, not just the solid fallback colour.
         if (brightness == Brightness.light) {
-          expect(_ratio(scheme.onSurfaceVariant, ground), lessThan(4.5));
+          for (final stop in AppGradients.washScreen.colors) {
+            expect(
+              _ratio(messageColor, stop),
+              greaterThanOrEqualTo(4.5),
+              reason: 'EmptyView body on wash stop $stop',
+            );
+          }
         }
       },
     );

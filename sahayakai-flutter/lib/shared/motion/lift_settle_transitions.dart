@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../widgets/screen_wash.dart';
 
 /// Lift-&-Settle page transition (PREMIUM_DESIGN_SPEC.md §4). The incoming page
 /// slides in from +0.06x, fades, and settles from scale 0.985→1 on the
@@ -9,6 +10,10 @@ import '../../core/theme/app_theme.dart';
 /// Honours reduce-motion (`MediaQuery.disableAnimations`) by cross-fading only
 /// — the final composed frame, no travel. Animates only opacity / transform, so
 /// nothing reflows mid-push.
+///
+/// Every page also gets its v2 ground here ([ScreenWash]): the light scaffold
+/// is transparent, so the page carries its own opaque wash through the
+/// transition.
 class LiftSettleTransitionsBuilder extends PageTransitionsBuilder {
   const LiftSettleTransitionsBuilder();
 
@@ -18,8 +23,9 @@ class LiftSettleTransitionsBuilder extends PageTransitionsBuilder {
     BuildContext context,
     Animation<double> animation,
     Animation<double> secondaryAnimation,
-    Widget child,
+    Widget page,
   ) {
+    final child = ScreenWash(child: page);
     final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     if (reduce) {
       return FadeTransition(opacity: animation, child: child);

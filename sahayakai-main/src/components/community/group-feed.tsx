@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +22,13 @@ interface GroupFeedProps {
   onBack: () => void;
   isMember?: boolean;
   onJoinGroup?: (groupId: string) => Promise<void>;
+  /** Post to scroll to and highlight once loaded (deep link from the homepage Messages panel). */
+  focusPostId?: string | null;
 }
 
 const PAGE_SIZE = 20;
 
-export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup }: GroupFeedProps) {
+export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup, focusPostId }: GroupFeedProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -46,6 +48,24 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
 
   const gradientColor = getGroupColor(group.name);
+
+  // Deep link: once the posts are in, bring the linked post into view and
+  // mark it briefly. If it is older than the first page it is simply not
+  // highlighted — the group still opens.
+  const focusedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusPostId || loading || focusedRef.current === focusPostId) return;
+    if (!posts.some((p) => p.id === focusPostId)) return;
+    focusedRef.current = focusPostId;
+    const el = document.querySelector<HTMLElement>(`[data-post-id="${CSS.escape(focusPostId)}"]`);
+    if (!el) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    el.setAttribute("data-focused", "true");
+    // Not cleared on re-render (a like re-runs this effect); removing the
+    // attribute from a detached node is harmless.
+    window.setTimeout(() => el.removeAttribute("data-focused"), 2600);
+  }, [focusPostId, loading, posts]);
 
   // ── Initial fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -309,8 +329,12 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
       ) : (
         <div className="flex flex-col gap-3">
           {posts.map((post) => (
-            <FeedPost
+            <div
               key={post.id}
+              data-post-id={post.id}
+              className="rounded-surface-md transition-shadow duration-medium data-[focused=true]:ring-2 data-[focused=true]:ring-primary data-[focused=true]:ring-offset-2 data-[focused=true]:ring-offset-background"
+            >
+            <FeedPost
               post={post}
               groupName={group.name}
               connectionStatus={
@@ -322,6 +346,7 @@ export default function GroupFeed({ group, onBack, isMember = true, onJoinGroup 
               onConnect={handleConnect}
               isLiked={likedPostIds.has(post.id)}
             />
+            </div>
           ))}
 
           {hasMore && (

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -237,7 +236,6 @@ class _VirtualFieldTripScreenState
   Widget _topicField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.virtualFieldTripTopicLabel,
-      leadingIcon: LucideIcons.globe,
       // Voice-first: dictate the field-trip topic instead of typing it.
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
@@ -262,7 +260,6 @@ class _VirtualFieldTripScreenState
     return LabeledField(
       label: l10n.virtualFieldTripGradeLabel,
       optionalLabel: l10n.virtualFieldTripOptional,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -282,7 +279,6 @@ class _VirtualFieldTripScreenState
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

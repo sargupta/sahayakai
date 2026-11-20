@@ -200,7 +200,6 @@ class _AddStudentScreenState extends ConsumerState<AddStudentScreen> {
           children: [
             LabeledField(
               label: l10n.attendanceStudentNameLabel,
-              leadingIcon: LucideIcons.user,
               child: TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
@@ -213,7 +212,6 @@ class _AddStudentScreenState extends ConsumerState<AddStudentScreen> {
             LabeledField(
               label: l10n.attendanceRollNumberLabel,
               hint: l10n.attendanceRollNumberHint,
-              leadingIcon: LucideIcons.hash,
               child: TextFormField(
                 controller: _rollController,
                 keyboardType: TextInputType.number,
@@ -228,7 +226,6 @@ class _AddStudentScreenState extends ConsumerState<AddStudentScreen> {
             LabeledField(
               label: l10n.attendanceParentPhoneLabel,
               hint: l10n.attendanceParentPhoneHint,
-              leadingIcon: LucideIcons.phone,
               child: TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
@@ -243,7 +240,6 @@ class _AddStudentScreenState extends ConsumerState<AddStudentScreen> {
             const SizedBox(height: AppSpacing.space6),
             LabeledField(
               label: l10n.attendanceParentLanguageLabel,
-              leadingIcon: LucideIcons.languages,
               child: DropdownButtonFormField<AppLocale>(
                 initialValue: _language,
                 isExpanded: true,

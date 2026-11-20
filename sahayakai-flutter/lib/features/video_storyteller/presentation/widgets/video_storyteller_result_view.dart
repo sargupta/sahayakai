@@ -150,10 +150,7 @@ class _CategorySectionState extends State<_CategorySection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        SectionLabel(
-          _categoryLabel(widget.section.category, l10n),
-          icon: _categoryIcon(widget.section.category),
-        ),
+        SectionLabel(_categoryLabel(widget.section.category, l10n)),
         for (var i = 0; i < videos.length; i++) ...[
           const SizedBox(height: AppSpacing.space4),
           VideoCard(video: videos[i], onOpen: () => widget.onOpen(videos[i])),
@@ -180,22 +177,6 @@ class _CategorySectionState extends State<_CategorySection> {
         ],
       ],
     );
-  }
-}
-
-/// The fixed glyph per bucket, mirroring the web category header icons.
-IconData _categoryIcon(VideoCategory category) {
-  switch (category) {
-    case VideoCategory.topRecommended:
-      return LucideIcons.star;
-    case VideoCategory.storytelling:
-      return LucideIcons.bookOpen;
-    case VideoCategory.pedagogy:
-      return LucideIcons.graduationCap;
-    case VideoCategory.govtUpdates:
-      return LucideIcons.bell;
-    case VideoCategory.courses:
-      return LucideIcons.school;
   }
 }
 
