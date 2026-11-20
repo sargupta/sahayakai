@@ -65,7 +65,7 @@ import type { CallLogEntry, RecentCall } from '@/types/sampark';
 import { ADMIN, ORG } from './_helpers';
 
 const OTHER_ORG = 'other-school';
-const PLANTED_PHONES = ['+919876500720', '+918765400111', '+917654300222', '+916543200333'];
+const PLANTED_PHONES = ['+919800000720', '+919800000111', '+919800000222', '+919800000333'];
 const PLANTED_TEXT = ['Namaste, Ravi has been absent since Monday', 'Mrs Rao spoke to', 'CA_secret_sid', 'teacher private note'];
 
 let seq = 0;
@@ -181,7 +181,7 @@ describe('scoping and filtering', () => {
         expect(toTeacherCallEntry('x', { deliveryMethod: 'twilio_call', createdAt: 'not a date' })).toBeNull();
         expect(toTeacherCallEntry('x', { deliveryMethod: 'twilio_call', createdAt: '2026-10-05T05:30:00Z', reason: 'debt', callStatus: 'weird', parentPhone: 12345, className: 7, callDurationSeconds: -3 }))
             .toEqual({ id: 'x', source: 'teacher', createdAt: '2026-10-05T05:30:00.000Z', phoneLast4: '', className: null, reason: 'other', outcome: 'unknown', durationSeconds: null });
-        expect(phoneLast4('+91 98765-00720')).toBe('0720');
+        expect(phoneLast4('+91 98000-00720')).toBe('0720');
         expect(phoneLast4('12')).toBe('');
     });
 });

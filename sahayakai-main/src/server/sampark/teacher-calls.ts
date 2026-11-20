@@ -48,6 +48,10 @@ export interface TeacherCallsDeps {
     getDb: () => Promise<TeacherCallsDb>;
 }
 
+/** Named literally for the Sampark database gate (this reads app data: the teacher path's records); checked here. */
+const _OUTREACH: typeof OUTREACH_COLLECTION = 'parent_outreach';
+void _OUTREACH;
+
 const defaultDeps: TeacherCallsDeps = { getDb: async () => (await getDb()) as unknown as TeacherCallsDb };
 
 const REASONS: readonly TeacherCallReason[] = ['consecutive_absences', 'poor_performance', 'behavioral_concern', 'positive_feedback'];
@@ -98,7 +102,7 @@ export async function listTeacherCalls(orgId: string, query: TeacherCallQuery, d
 
     const snaps = await Promise.all(
         chunks.map((chunk) =>
-            db.collection(OUTREACH_COLLECTION).where('teacherUid', 'in', chunk).orderBy('createdAt', 'desc').limit(query.limit).get(),
+            db.collection('parent_outreach').where('teacherUid', 'in', chunk).orderBy('createdAt', 'desc').limit(query.limit).get(),
         ),
     );
     const allowed = new Set(uids);
