@@ -23,7 +23,33 @@ export interface McpPrincipal {
 
 /** Minimal Firestore surface used here (keeps auth unit-testable). */
 export interface McpAuthDb {
-    collection(name: string): { doc(id: string): { get(): Promise<{ exists: boolean; data(): unknown }> } };
+    collection(name: string): {
+        doc(id: string): {
+            get(): Promise<{ exists: boolean; data(): unknown }>;
+            update?(data: Record<string, unknown>): Promise<unknown>;
+        };
+    };
+}
+
+/** `lastUsedAt` is written at most this often per key, so a busy key does not write on every request. */
+export const LAST_USED_WRITE_INTERVAL_MS = 60_000;
+const MAX_TRACKED_KEYS = 10_000;
+/** keyId → when this instance last claimed a lastUsedAt write. Claimed synchronously, so concurrent requests write once. */
+const lastUsedClaims = new Map<string, number>();
+
+/** Test hook: forget this instance's throttle state. */
+export function resetLastUsedThrottleForTests(): void {
+    lastUsedClaims.clear();
+}
+
+function claimLastUsedWrite(keyId: string, stored: string | undefined, nowMs: number): boolean {
+    const storedMs = stored ? Date.parse(stored) : NaN;
+    if (Number.isFinite(storedMs) && nowMs - storedMs < LAST_USED_WRITE_INTERVAL_MS) return false;
+    const claimed = lastUsedClaims.get(keyId);
+    if (claimed !== undefined && nowMs - claimed < LAST_USED_WRITE_INTERVAL_MS) return false;
+    if (lastUsedClaims.size >= MAX_TRACKED_KEYS) lastUsedClaims.clear();
+    lastUsedClaims.set(keyId, nowMs);
+    return true;
 }
 
 /**
@@ -73,7 +99,7 @@ export function localDevKeyPrincipal(presented: string): McpPrincipal | null {
 export async function authenticateMcpRequest(
     headers: Headers,
     scope: McpScope,
-    deps: { getDb: () => Promise<McpAuthDb> },
+    deps: { getDb: () => Promise<McpAuthDb>; now?: () => Date },
 ): Promise<McpPrincipal> {
     const pepper = getKeyPepper();
     if (!pepper) {
@@ -120,6 +146,18 @@ export async function authenticateMcpRequest(
             'authorization',
             `This API key is not enabled for the "${scope}" capability. Ask your Sahayak administrator to grant it.`,
         );
+    }
+
+    // Best effort: a failed write never fails the request. Only lastUsedAt is
+    // written (a merge), so it can never undo a concurrent revoke.
+    const now = deps.now?.() ?? new Date();
+    const keyRef = db.collection(MCP_API_KEYS_COLLECTION).doc(parsed.keyId);
+    if (keyRef.update && claimLastUsedWrite(parsed.keyId, record.lastUsedAt, now.getTime())) {
+        try {
+            await keyRef.update({ lastUsedAt: now.toISOString() });
+        } catch {
+            lastUsedClaims.delete(parsed.keyId);
+        }
     }
     return { keyId: parsed.keyId, orgId: record.orgId, scopes };
 }
