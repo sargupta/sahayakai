@@ -159,7 +159,7 @@ describe('gate: list_parent_contacts never returns a full phone number', () => {
         expect(phoneLike.map((k) => k.split('.').pop())).toEqual(['parent_phone_last4']);
     });
 
-    const PLANTED = ['+919876543210', '09812345678', '+91 98123 40000', '+14155550123'];
+    const PLANTED = ['+919876543210', '09812345678', '+91 98000 00400', '+14155550123'];
     const digitsOf = (p: string) => p.replace(/\D/g, '');
 
     it('with phones planted in every student field, no response byte carries 5+ consecutive digits of any of them', async () => {

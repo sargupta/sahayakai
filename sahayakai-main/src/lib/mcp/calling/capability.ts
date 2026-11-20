@@ -24,7 +24,7 @@ export const INITIATE_PARENT_CALL_DESCRIPTION =
     'Places a real phone call from Sahayak to a student\'s parent, exactly like the "Contact" button in the Sahayak ' +
     'attendance app: Sahayak writes a short message for the given reason (absences, academic concern, behaviour, or ' +
     'good news) in the parent\'s language and its voice assistant calls the parent number stored on the student ' +
-    'record. You cannot supply a phone number. Allowed only 09:00–21:00 IST and at most once per student every 5 ' +
+    'record. You cannot supply a phone number. Allowed only 10:00–19:00 IST and at most once per student every 5 ' +
     'minutes. Get class_id and student_id from list_parent_contacts. Takes about 10–30 seconds.';
 
 export function callingCapability(deps: CallingServiceDeps): McpCapabilityDefinition {

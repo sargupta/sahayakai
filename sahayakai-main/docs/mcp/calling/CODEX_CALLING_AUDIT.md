@@ -31,7 +31,7 @@ All paths are relative to `sahayakai-main/`. Audited at commit `1798329e` (branc
 
 **`src/app/api/attendance/call/route.ts`** (`POST`)
 - `x-user-id` is required (401). `{outreachId, parentLanguage}` are required (400).
-- **Quiet hours:** `checkCallingWindow()` (`src/lib/calling-hours.ts`, 09:00–21:00 IST) returns 409 `OUTSIDE_CALLING_HOURS` with `nextAllowedAt`. This is enforced before any provider is used.
+- **Quiet hours:** `checkCallingWindow()` (`src/lib/calling-hours.ts`, 10:00–19:00 IST) returns 409 `OUTSIDE_CALLING_HOURS` with `nextAllowedAt`. This is enforced before any provider is used.
 - **Provider switch** on `VOICE_PROVIDER` (default `twilio`):
   - `exotel`: `forwardToExotel` sends POST `VOICE_EXOTEL_CALL_URL` with `x-user-id`. The voicebot re-checks ownership.
   - `vobiz`: `forwardToVobiz`, which calls `resolveOutreachTarget`, then `placeVobizCall` (`src/lib/vobiz/client.ts`) with tokens from `mintVobizToken` (`src/lib/vobiz/tokens.ts`). The destination can be overridden by `VOBIZ_TEST_OVERRIDE_NUMBER`.
