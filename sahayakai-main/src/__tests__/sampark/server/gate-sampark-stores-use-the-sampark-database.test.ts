@@ -33,6 +33,7 @@ const APP_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 /** Modules that read the APP's own collections from the default database, not Sampark data. */
 const APP_DATA_READERS: Record<string, { reason: string; collections: string[] }> = {
     'src/server/sampark/auth.ts': { reason: 'organizations and members: who is a school admin or teacher', collections: ['organizations', 'members', 'users'] },
+    'src/server/sampark/api-keys.ts': { reason: "mcp_api_keys: a school's MCP API keys, kept in the default database beside the /api/mcp auth that reads them (src/lib/mcp/auth.ts)", collections: ['mcp_api_keys'] },
     'src/server/sampark/calendar.ts': { reason: 'users: staff display names on the school calendar', collections: ['users'] },
 };
 
