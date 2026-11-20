@@ -29,7 +29,7 @@ const KEY_RE = /^sk_sahayak_([0-9a-f]{16})_([A-Za-z0-9_-]{43})$/;
 export const MCP_API_KEYS_COLLECTION = 'mcp_api_keys';
 
 /** Capabilities a key can be granted. One entry per public MCP server. */
-export const MCP_SCOPES = ['lesson-planner', 'exam-paper', 'quiz'] as const;
+export const MCP_SCOPES = ['lesson-planner', 'exam-paper', 'quiz', 'calling'] as const;
 export type McpScope = (typeof MCP_SCOPES)[number];
 
 export interface McpApiKeyRecord {

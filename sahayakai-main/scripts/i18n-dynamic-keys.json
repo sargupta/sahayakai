@@ -16,6 +16,8 @@
     "vocab-subjects": { "file": "src/types/index.ts", "name": "SUBJECTS", "note": "subject names stored on profiles, classes, resources and AI requests" },
     "vocab-boards": { "file": "src/types/index.ts", "name": "EDUCATION_BOARDS" },
     "vocab-languages": { "file": "src/types/index.ts", "name": "LANGUAGES" },
+    "mcp-calling-reasons-label": { "file": "src/features/mcp-demo/calling/mcp-calling-view.tsx", "name": "REASONS", "props": ["labelKey"] },
+    "mcp-calling-reasons-description": { "file": "src/features/mcp-demo/calling/mcp-calling-view.tsx", "name": "REASONS", "props": ["descriptionKey"] },
     "mcp-lesson-phases": { "file": "src/lib/mcp/lesson-planner/schema.ts", "name": "LESSON_PHASES", "note": "the 5E phases the Lesson Planner MCP returns" },
 
     "school-pricing-savings": { "file": "src/lib/school-pricing.ts", "name": "SAVINGS_CAPABILITIES", "props": ["name"] },
@@ -112,6 +114,7 @@
     "runtime-raw-venue-id": { "runtime": "a demo venue id missing from DEMO_VENUES, shown as its id as a last resort" }
   },
   "sites": {
+    "src/features/mcp-demo/calling/mcp-calling-view.tsx": { "s.parent_language": ["vocab-languages"], "callResult.parent_language": ["vocab-languages"], "r.labelKey": ["mcp-calling-reasons-label"], "r.descriptionKey": ["mcp-calling-reasons-description"], "REASONS.find((r) => r.value === reason)!.labelKey": ["mcp-calling-reasons-label"] },
     "src/features/mcp-demo/lesson-planner/mcp-lesson-plan-display.tsx": { "plan.subject": ["vocab-subjects"], "plan.language": ["vocab-languages"], "a.phase": ["mcp-lesson-phases"] },
     "src/features/mcp-demo/lesson-planner/mcp-lesson-planner-view.tsx": { "l": ["vocab-languages"] },
     "src/lib/attendance/call-refusal-messages.ts": { "label": ["attendance-call-refusal-labels"] },
