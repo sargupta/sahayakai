@@ -37,7 +37,7 @@ export const SAHAYAK_ROUTE_SEGMENTS = [
     // src/app
     'admin', 'api-docs', 'api-playground', 'assess-assignment', 'assessment-scanner', 'attendance',
     'community', 'community-library', 'content-creator', 'exam-paper', 'impact-dashboard',
-    'instant-answer', 'labs', 'lesson-plan', 'messages', 'my-library', 'my-profile', 'notifications',
+    'instant-answer', 'labs', 'lesson-plan', 'mcp-demo', 'messages', 'my-library', 'my-profile', 'notifications',
     'onboarding', 'organization', 'pricing', 'privacy-for-teachers', 'profile', 'quiz-generator',
     'review-panel', 'rubric-generator', 'settings', 'submit-content', 'teacher-training', 'try-call',
     'usage', 'video-storyteller', 'virtual-field-trip', 'visual-aid-designer', 'worksheet-wizard',
