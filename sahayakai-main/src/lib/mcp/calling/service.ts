@@ -135,7 +135,7 @@ function routeError(step: 'message' | 'outreach' | 'call', status: number, body:
     if (status === 409 && body.code === 'OUTSIDE_CALLING_HOURS') {
         const next = body.nextAllowedAt ? Date.parse(body.nextAllowedAt) : NaN;
         const wait = Number.isFinite(next) ? Math.max(60, Math.round((next - Date.now()) / 1000)) : undefined;
-        return new McpCapabilityError('outside_allowed_hours', 'Parents can only be called between 09:00 and 21:00 IST.', wait);
+        return new McpCapabilityError('outside_allowed_hours', 'Parents can only be called between 10:00 and 19:00 IST.', wait);
     }
     if (status === 429) {
         const wait = Number(body.retryAfterSeconds) || undefined;

@@ -130,7 +130,7 @@ node node_modules/eslint/bin/eslint.js src/lib/mcp src/app/api/mcp
 
 ## 17. Safe live-test procedure
 1. Leave `TWILIO_*` / `VOBIZ_*` unset (as in the current `.env.local`). Every call then stops at 503, which becomes `not_configured`, and **nothing can dial**.
-2. To hear a real call, set `TWILIO_TEST_OVERRIDE_NUMBER` (or `VOBIZ_TEST_OVERRIDE_NUMBER`) to **your own** phone first, then the provider credentials. Use only 09:00–21:00 IST.
+2. To hear a real call, set `TWILIO_TEST_OVERRIDE_NUMBER` (or `VOBIZ_TEST_OVERRIDE_NUMBER`) to **your own** phone first, then the provider credentials. Use only 10:00–19:00 IST.
 3. You need an org key with scope `calling`:
    ```bash
    npx tsx scripts/mcp/create-api-key.ts --org <orgId> --scope calling --label "calling test"
@@ -160,7 +160,7 @@ These were run on 2026-10-07 against the local `next dev` server on port 3000, u
    node --max-old-space-size=3072 node_modules/next/dist/bin/next build
    ```
    Stop `next dev` first, because both share `.next`.
-2. **End-to-end call on real data.** Pick a real org and class, ensure the class teacher is in `organizations/{orgId}/members`, and issue a `calling` key with `scripts/mcp/create-api-key.ts --apply` (with approval). Set it as `MCP_CALLING_DEMO_API_KEY`. Set `TWILIO_TEST_OVERRIDE_NUMBER` to your own phone and add the Twilio credentials. Then use `/mcp-demo/calling` between 09:00 and 21:00 IST.
+2. **End-to-end call on real data.** Pick a real org and class, ensure the class teacher is in `organizations/{orgId}/members`, and issue a `calling` key with `scripts/mcp/create-api-key.ts --apply` (with approval). Set it as `MCP_CALLING_DEMO_API_KEY`. Set `TWILIO_TEST_OVERRIDE_NUMBER` to your own phone and add the Twilio credentials. Then use `/mcp-demo/calling` between 10:00 and 19:00 IST.
 3. **Side-by-side screenshot.** Left: `/attendance/<classId>` with the Contact modal. Right: `/mcp-demo/calling` with the Contact dialog. Use the same class and student.
 4. **Optional review step.** The MCP tool writes the message and dials in one call; the app shows a "review" step first. Adding a read-only `preview_parent_message` tool would make the two flows identical.
 5. **Optional call-status tool.** Add one backed by `/api/attendance/call-summary`, keyed by an opaque reference rather than the Firestore id.
