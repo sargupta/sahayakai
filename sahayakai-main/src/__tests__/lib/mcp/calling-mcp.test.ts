@@ -56,7 +56,13 @@ function docRef(path: string): any {
         collection: (c: string) => query(`${path}/${c}`),
     };
 }
-const fakeDb = { collection: (c: string) => query(c), doc: (p: string) => docRef(p) };
+const fakeDb = {
+    collection: (c: string) => query(c),
+    doc: (p: string) => docRef(p),
+    // The call route's one-dial claim and status writes run in a transaction; this fake applies them in order.
+    runTransaction: async (fn: (tx: any) => Promise<any>) =>
+        fn({ get: (ref: any) => ref.get(), update: (ref: any, data: any) => ref.update(data), set: (ref: any, data: any) => ref.set(data) }),
+};
 jest.mock('@/lib/firebase-admin', () => ({ getDb: async () => fakeDb }));
 jest.mock('@/lib/db/adapter', () => ({ dbAdapter: { getUser: async (uid: string) => store.get(`users/${uid}`) ?? null } }));
 
@@ -67,9 +73,10 @@ const mockPlanFeatures: string[] = [];
 jest.mock('@/lib/plan-guard', () => ({ withPlanCheck: (feature: string) => (h: any) => (req: any) => { mockPlanFeatures.push(feature); return h(req); } }));
 const mockWindow = { allowed: true };
 jest.mock('@/lib/calling-hours', () => ({
+    ...jest.requireActual('@/lib/calling-hours'),
     checkCallingWindow: () => (mockWindow.allowed
         ? { allowed: true, istHour: 11, istTime: '11:00', reason: '', nextAllowedAt: null }
-        : { allowed: false, istHour: 23, istTime: '23:00', reason: 'Calls to parents are only placed between 9 AM and 9 PM IST.', nextAllowedAt: new Date(Date.now() + 3600_000) }),
+        : { allowed: false, istHour: 23, istTime: '23:00', reason: 'Calls to parents are only placed between 10:00 and 19:00 IST.', nextAllowedAt: new Date(Date.now() + 3600_000) }),
 }));
 jest.mock('@/lib/voice-pipeline/health', () => ({ getEffectiveMode: async () => 'batch' }));
 // The existing routes answer with NextResponse.json(); in this jsdom-flavoured Jest setup NextResponse
