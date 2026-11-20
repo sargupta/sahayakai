@@ -18,6 +18,7 @@ import {
     ROUTINE_START_HOUR_OPTIONS,
 } from '@/lib/sampark/policy/routine-hours';
 import { effectiveRoutineWindow, samparkWindowVerdict } from '@/lib/sampark/policy/window';
+import { CALL_END_HOUR as DEMO_END_HOUR, CALL_START_HOUR as DEMO_START_HOUR } from '@/lib/sampark/demo/rules';
 import { SAMPLE_SCHOOL } from '@/lib/sampark/scripts/samples';
 import { CallingWindowSchema } from '@/server/sampark/school';
 
@@ -32,6 +33,10 @@ describe('gate: one routine calling band, 10:00 to 19:00 IST', () => {
     it('pins the decision', () => {
         expect(ROUTINE_START_FLOOR_HOUR).toBe(10);
         expect(ROUTINE_END_CEILING_HOUR).toBe(19);
+    });
+
+    it('the demo console schedules callbacks inside the same band', () => {
+        expect([DEMO_START_HOUR, DEMO_END_HOUR]).toEqual([ROUTINE_START_FLOOR_HOUR, ROUTINE_END_CEILING_HOUR]);
     });
 
     it('the school API accepts exactly the hours the settings pickers offer', () => {

@@ -88,9 +88,7 @@ Future<FakeStaffroomTransport> _pump(
           currentStaffroomUserIdProvider.overrideWithValue(myUid),
       ],
       child: MaterialApp(
-        theme: brightness == Brightness.dark
-            ? AppTheme.dark()
-            : AppTheme.light(),
+        theme: AppTheme.light(),
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -380,7 +378,7 @@ void main() {
   });
 
   group('overflow probe — 360dp × 1.3, light + dark', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets('no overflow (${brightness.name}) with bn/ta + persona', (
         tester,
       ) async {

@@ -45,6 +45,25 @@ class VobizDomain(StrEnum):
     STATUS = "vobiz-status"
 
 
+#: Lifetime of a STREAM token as minted by the web answer webhook. MUST equal
+#: VOBIZ_TOKEN_TTL_SECONDS in sahayakai-main/src/lib/vobiz/tokens.ts (pinned by
+#: tests/unit/test_telephony_admit_latency.py). The stream token is minted the
+#: moment the parent answers, so `exp - STREAM_TOKEN_TTL_SECONDS` is the answer
+#: time, which is what makes the answer-to-socket latency measurable here.
+STREAM_TOKEN_TTL_SECONDS = 300
+
+
+def token_minted_at(token: str | None) -> int | None:
+    """Unix time a STREAM token was minted, from its expiry. None if unparseable."""
+    parts = (token or "").split(".")
+    if len(parts) != 3:  # noqa: PLR2004 — the token format has exactly three segments
+        return None
+    try:
+        return int(parts[1]) - STREAM_TOKEN_TTL_SECONDS
+    except ValueError:
+        return None
+
+
 def vobiz_token_message(domain: VobizDomain, outreach_id: str, exp: int) -> str:
     """The exact bytes signed. Must match `vobizTokenMessage` in the web runtime."""
     return f"{domain.value}.{outreach_id}.{exp}"

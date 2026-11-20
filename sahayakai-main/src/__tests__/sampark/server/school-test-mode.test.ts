@@ -26,7 +26,7 @@ import { ADMIN, MON_11_IST, ORG, recordingRepo, setPhoneEnv, testClock } from '.
 
 const MOBILE_E164 = '+919876543210';
 const MOBILE_DIGITS = '9876543210';
-const OTHER_E164 = '+917000011223';
+const OTHER_E164 = '+919800000500';
 
 /** Everything liveDialBlocker() needs for a deployment that can place real calls. */
 const LIVE_ENV: Record<string, string> = {
@@ -173,10 +173,10 @@ describe('test phone (PUT school { testPhone })', () => {
         expect(same.testPhoneEnc).toBe(encBefore); // unchanged ciphertext, no churn
 
         const changed = await updateSchool(env.ctx, ORG, ADMIN, { testPhone: OTHER_E164 });
-        expect(changed).toMatchObject({ mode: 'practice', testPhoneLast4: '1223', testPhoneHash: hashPhone(OTHER_E164) });
+        expect(changed).toMatchObject({ mode: 'practice', testPhoneLast4: '0500', testPhoneHash: hashPhone(OTHER_E164) });
         expect(decryptPhone(changed.testPhoneEnc!)).toBe(OTHER_E164);
         expect(modeAudits(env).at(-1)).toMatchObject({ detail: { from: 'test', to: 'practice', reason: 'test_phone_changed' } });
-        expect(JSON.stringify(audits(env))).not.toMatch(/9876543210|7000011223/);
+        expect(JSON.stringify(audits(env))).not.toMatch(/9876543210|9800000500/);
     });
 });
 

@@ -485,4 +485,13 @@ export class FirestoreSamparkRepo implements SamparkRepo {
     async appendAudit(orgId: string, entry: AuditEntry): Promise<void> {
         await this.schoolRef(orgId).collection('sampark_audit').add(clean(entry));
     }
+
+    async listAuditFor(orgId: string, target: string, limit: number): Promise<AuditEntry[]> {
+        // Equality on one field only (automatic index); sorted here — a record's trail is short.
+        const snap = await this.schoolRef(orgId).collection('sampark_audit').where('target', '==', target).limit(200).get();
+        return snap.docs
+            .map((d) => d.data() as AuditEntry)
+            .sort((a, b) => b.at.localeCompare(a.at))
+            .slice(0, limit);
+    }
 }

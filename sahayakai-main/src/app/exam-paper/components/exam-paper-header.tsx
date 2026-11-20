@@ -1,22 +1,23 @@
 /**
- * @fileOverview Page title + subtitle for the exam-paper generator. Dumb.
+ * @fileOverview Page header for the exam-paper generator — the shared tool
+ * header (icon tile, eyebrow, title, purpose). Dumb.
  */
 "use client";
 
+import type { ReactNode } from "react";
 import { FileText } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { GeneratorHeader } from "@/features/generator";
 
-export function ExamPaperHeader() {
+export function ExamPaperHeader({ actions }: { actions?: ReactNode }) {
   const { t } = useLanguage();
   return (
-    <div className="space-y-1">
-      <h1 className="text-2xl font-headline tracking-tight flex items-center gap-2">
-        <FileText className="w-6 h-6 text-primary" />
-        {t("Board Exam Paper Generator")}
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        {t("Generate board-pattern question papers with answer keys")}
-      </p>
-    </div>
+    <GeneratorHeader
+      icon={FileText}
+      eyebrow={t("Make")}
+      title={t("Board Exam Paper Generator")}
+      description={t("Generate board-pattern question papers with answer keys")}
+      actions={actions}
+    />
   );
 }

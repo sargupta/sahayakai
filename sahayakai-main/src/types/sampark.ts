@@ -153,6 +153,18 @@ export interface SamparkSchool {
     manualHolidays?: string[];
     /** Holidays from the last CRM import. `holidays` is always the sorted union of both lists. */
     crmHolidays?: string[];
+    /**
+     * Local emulator only: arms the one authorised after-hours Riya test (see
+     * `localAfterHoursTestOverride` in server/sampark/conversation.ts). Written only by
+     * `seed-emulator.ts --arm-after-hours-test`; ignored everywhere else.
+     */
+    localAfterHoursTest?: { armedAt: string; until: string } | null;
+    /**
+     * Which backend runs Riya's real (Test-mode) calls: the hosted ElevenLabs agent (default) or
+     * SahayakAI's own Vobiz + Gemini Live bridge. Same console, gates, records and callbacks either way;
+     * missing = 'elevenlabs'. Practice mode is always simulated.
+     */
+    conversationProvider?: 'elevenlabs' | 'vobiz' | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -291,7 +303,11 @@ export interface Suppression {
      * 'carrier_invalid_number': the carrier reported the number unallocated, invalid or changed
      * (H7); written with scope 'all' so no purpose dials it until the office corrects it.
      */
-    source: 'keypad' | 'keypad_unconfirmed' | 'office' | 'crm' | 'carrier_invalid_number';
+    /**
+     * 'conversation_request': the listener asked the Riya conversation agent to stop calling
+     * (data collection or a phrase match); scope 'routine', pending office verification like a keypad 9.
+     */
+    source: 'keypad' | 'keypad_unconfirmed' | 'office' | 'crm' | 'carrier_invalid_number' | 'conversation_request';
     /** Office must confirm with the family within two school days (plan §5.1). */
     officeVerification: 'pending' | 'confirmed' | 'reversed';
     createdAt: string;

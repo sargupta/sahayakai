@@ -185,7 +185,6 @@ class _NumberMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final base = Theme.of(context).textTheme.bodyMedium!;
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 20),
@@ -195,7 +194,7 @@ class _NumberMarker extends StatelessWidget {
         style: base.copyWith(
           height: 1.7,
           fontWeight: FontWeight.w700,
-          color: scheme.primary,
+          color: AppColors.textLink,
         ),
         textHeightBehavior: const TextHeightBehavior(
           applyHeightToFirstAscent: true,

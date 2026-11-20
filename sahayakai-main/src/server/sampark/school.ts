@@ -45,7 +45,7 @@ import { PARENT_LANGUAGES, type ParentLanguage, type SamparkCall, type SamparkMo
 export type { SamparkSchoolView };
 import { badRequest, conflict, schoolNotEnabled } from '@/server/sampark/errors';
 import type { SamparkCtx } from '@/server/sampark/http';
-import { LIVE_MODE_NOT_AVAILABLE, liveDialBlocker, TEST_PHONE_MISSING } from '@/server/sampark/carrier';
+import { LIVE_MODE_NOT_AVAILABLE, TEST_PHONE_MISSING, testModeBlocker } from '@/server/sampark/carrier';
 import { hangupRingingCalls } from '@/server/sampark/hangup';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 import { ROUTINE_END_CEILING_HOUR, ROUTINE_START_FLOOR_HOUR } from '@/lib/sampark/policy/routine-hours';
@@ -58,7 +58,7 @@ export const TEST_PHONE_INVALID = 'TEST_PHONE_INVALID';
 
 export function schoolView(school: SamparkSchool, env: NodeJS.ProcessEnv = process.env): SamparkSchoolView {
     const { testPhoneEnc: _enc, testPhoneHash: _hash, testPhoneLast4, ...rest } = school;
-    const blocker = liveDialBlocker(env);
+    const blocker = testModeBlocker(env);
     return {
         ...rest,
         // Always present, so the console's pause banner never has to guess.
@@ -162,6 +162,26 @@ export type UpdateSchoolInput = z.infer<typeof UpdateSchoolSchema>;
 export const EnableSchoolSchema = z.object({ displayName: z.string().trim().min(1).max(120), spokenName: spokenRecord.optional() }).strict();
 
 export const ModeSchema = z.object({ mode: z.enum(['practice', 'test', 'live']) }).strict();
+
+/** Settings → Calling provider: which backend runs Riya's real (Test-mode) calls. */
+export const ConversationProviderSchema = z.object({ provider: z.enum(['elevenlabs', 'vobiz']) }).strict();
+
+/**
+ * Choose the backend for Riya's real calls. Admin-only (route guard); audited; asking for the
+ * current one changes nothing. It never bypasses anything: whichever provider is chosen, every
+ * call still goes through the same gates, test-phone rule, caps and records, and a provider that
+ * is not configured is reported as a blocker at preview time (riyaAvailability), never dialled.
+ */
+export async function setConversationProvider(ctx: SamparkCtx, orgId: string, uid: string, provider: 'elevenlabs' | 'vobiz'): Promise<SamparkSchool> {
+    const school = await getSchoolOrThrow(ctx, orgId);
+    const current = school.conversationProvider === 'vobiz' ? 'vobiz' : 'elevenlabs';
+    if (current === provider) return school;
+    const now = ctx.clock.now().toISOString();
+    const next: SamparkSchool = { ...school, conversationProvider: provider, updatedAt: now };
+    await ctx.repo.upsertSchool(next);
+    await ctx.repo.appendAudit(orgId, { at: now, actor: uid, action: 'school.conversation_provider', target: `school/${orgId}`, detail: { from: current, to: provider } });
+    return next;
+}
 
 /** PUT pause: pausing needs a reason (staff-only text, never spoken); scope defaults to 'all'. */
 export const PauseSchema = z
@@ -328,7 +348,7 @@ export async function setSchoolMode(ctx: SamparkCtx, orgId: string, uid: string,
     const school = await getSchoolOrThrow(ctx, orgId);
     if (mode === 'live') throw conflict(LIVE_MODE_NOT_AVAILABLE, 'Live mode (calling families) is not available in this release');
     if (mode === 'test') {
-        const blocker = liveDialBlocker();
+        const blocker = testModeBlocker();
         if (blocker) throw conflict(blocker, BLOCKER_MESSAGE[blocker]);
         if (!hasTestPhone(school)) throw conflict(TEST_PHONE_MISSING, 'Save a test phone before switching to Test mode');
     }

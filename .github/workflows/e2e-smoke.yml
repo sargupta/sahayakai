@@ -15,12 +15,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Class gate: any job that installs Playwright must pin its runner image.
+  # Runs on every PR, so a new Playwright job on `ubuntu-latest` fails here
+  # before it can break on the next runner upgrade.
+  runner-pins:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout workflows
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Check Playwright jobs pin their runner
+        run: python3 .github/scripts/check_playwright_runners.py
+
   smoke:
-    # Pinned, never ubuntu-latest: Playwright supports only the OS images it
-    # was released for. On 2026-10-22 ubuntu-latest moved to 26.04 and
-    # `playwright install --with-deps` refused it, failing every PR before a
-    # test ran. Move this pin when Playwright supports the newer image
-    # (gate: src/__tests__/scripts/workflow-playwright-runner-pinned.test.ts).
+    # Pinned, not ubuntu-latest: GitHub moved ubuntu-latest to 26.04 on
+    # 24 Oct 2026 and Playwright has no chromium build for it yet. Move to a
+    # newer image only once `playwright install` supports it.
     runs-on: ubuntu-24.04
 
     defaults:
@@ -48,7 +60,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -57,11 +69,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # `--with-deps` runs `apt-get update`, which fails the whole step if ANY
+      # source the runner image ships is unreachable. On 2026-10-23
+      # packages.microsoft.com answered 403 ("no longer signed") and E2E Smoke
+      # failed before a test ran. Playwright needs only Ubuntu's own archive, so
+      # drop the image's third-party sources first
+      # (gate: src/__tests__/scripts/ci-build-heap-parity.test.ts).
+      - name: Drop the runner image's third-party apt sources
+        run: sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft-prod.sources
+
       - name: Install Playwright browser (chromium only)
         run: npx playwright install --with-deps chromium
 
       - name: Build
         run: npm run build
+        env:
+          # Same heap as the production image (sahayakai-main/Dockerfile).
+          # Gate: src/__tests__/scripts/workflow-build-heap.test.ts.
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Run @smoke suite
         # Playwright's webServer block boots `next start` on :3000 and waits
@@ -71,7 +96,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-smoke-report
           path: sahayakai-main/qa/results/playwright-report/

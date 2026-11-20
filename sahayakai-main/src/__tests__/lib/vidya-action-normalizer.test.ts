@@ -9,6 +9,7 @@ import {
     normaliseVidyaLanguage,
     normaliseVidyaGradeLevel,
     vidyaDeepLinkKey,
+    vidyaFlowTargetUrl,
 } from '@/lib/vidya-action-normalizer';
 
 describe('normaliseVidyaLanguage', () => {
@@ -139,4 +140,29 @@ describe('vidyaDeepLinkKey', () => {
         expect(vidyaDeepLinkKey(reader({}), NAMES)).not.toBeNull();
         expect(typeof vidyaDeepLinkKey(reader({}), NAMES)).toBe('string');
     });
+});
+
+describe("vidyaFlowTargetUrl — only the action's own facts reach the form", () => {
+  const STALE = "zaroor aapko lesson plan section mein le ja rahi hun remember the commits made by";
+
+  it("live voice (no fallback): an open_* call without a topic opens an empty form", () => {
+    expect(vidyaFlowTargetUrl("rubric-generator", {}, null)).toBe("/rubric-generator?");
+    for (const flow of ["quiz-generator", "worksheet-wizard", "rubric-generator", "exam-paper"]) {
+      expect(vidyaFlowTargetUrl(flow, { gradeLevel: "Class 7" }, null)).not.toContain("topic=");
+    }
+  });
+
+  it("text path: falls back to the teacher's previous message only when the action has nothing", () => {
+    expect(vidyaFlowTargetUrl("quiz-generator", {}, ` ${STALE} `)).toContain(`topic=${encodeURIComponent(STALE).replace(/%20/g, "+")}`);
+    expect(vidyaFlowTargetUrl("quiz-generator", { topic: "Photosynthesis" }, STALE)).toBe("/quiz-generator?topic=Photosynthesis");
+    expect(vidyaFlowTargetUrl("instant-answer", { question: "Why is the sky blue?" }, STALE)).not.toContain("topic=");
+  });
+
+  it("normalises the language to ISO-2 and keeps the other fields", () => {
+    const url = vidyaFlowTargetUrl("lesson-plan", { topic: "Fractions", language: "Kannada", gradeLevel: "Class 5", subject: "Mathematics" }, null);
+    const q = new URLSearchParams(url.split("?")[1]);
+    expect(q.get("language")).toBe("kn");
+    expect(q.get("gradeLevel")).toBe("Class 5");
+    expect(q.get("subject")).toBe("Mathematics");
+  });
 });

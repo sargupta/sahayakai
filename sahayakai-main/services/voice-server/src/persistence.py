@@ -41,7 +41,7 @@ async def sync_transcript(
         if resp.status_code == 200:
             logger.debug(f"Transcript synced: turn {turn_count}")
         else:
-            logger.error(f"Transcript sync failed: {resp.status_code} {resp.text[:200]}")
+            logger.error(f"Transcript sync failed: {resp.status_code} ({len(resp.text)} byte body)")
 
     except Exception as e:
         logger.error(f"Transcript sync error: {e}")

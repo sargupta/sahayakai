@@ -107,6 +107,49 @@ function filterUserUpdate(data: Partial<UserProfile>): Partial<UserProfile> {
     return out as Partial<UserProfile>;
 }
 
+/**
+ * A `generating` row older than this is treated as a failed generation that
+ * never reached its `error` write (process killed mid-flight) and hidden.
+ */
+export const STALE_GENERATING_MS = 15 * 60 * 1000;
+
+function toMillis(value: unknown): number | null {
+    if (!value) return null;
+    const v = value as { toMillis?: () => number; toDate?: () => Date; seconds?: number; _seconds?: number };
+    if (typeof v.toMillis === 'function') return v.toMillis();
+    if (typeof v.toDate === 'function') return v.toDate().getTime();
+    if (typeof v.seconds === 'number') return v.seconds * 1000;
+    if (typeof v._seconds === 'number') return v._seconds * 1000;
+    if (value instanceof Date) return value.getTime();
+    return null;
+}
+
+/**
+ * Whether a content row belongs in the teacher's My Library listing.
+ *
+ * - `ready` / no status (every legacy row): listed.
+ * - `generating`: listed — the 202 STILL_GENERATING path tells the teacher
+ *   to "check My Library in a minute", so an in-flight artifact must stay
+ *   visible (the card shows a Generating badge) — unless it is stale.
+ * - `error`: never listed; a failed generation is not an artifact. The row
+ *   is kept (not deleted) for support/debugging.
+ * - `hiddenFromLibrary`: never listed (migration reclassification; reversible).
+ */
+export function isListableContent(
+    item: Pick<BaseContent, 'status' | 'updatedAt' | 'createdAt' | 'hiddenFromLibrary'>,
+    now: number = Date.now(),
+): boolean {
+    // Reclassified by the library migration (auto-saved conversation, not an
+    // artifact). The row is kept; it is just not listed.
+    if (item.hiddenFromLibrary) return false;
+    if (item.status === 'error') return false;
+    if (item.status === 'generating') {
+        const since = toMillis(item.updatedAt) ?? toMillis(item.createdAt);
+        return since === null || now - since < STALE_GENERATING_MS;
+    }
+    return true;
+}
+
 export const dbAdapter = {
     // --- User Profile Operations ---
 
@@ -271,9 +314,12 @@ export const dbAdapter = {
 
         // Filter out soft-deleted items client-side — backward compatible with
         // older documents that predate the deletedAt field (they're treated as active).
+        // Status filtering follows the same client-side, backward-compatible
+        // pattern (see isListableContent).
         const items = pageDocs
             .map(doc => doc.data() as BaseContent)
-            .filter(item => !item.deletedAt);
+            .filter(item => !item.deletedAt)
+            .filter(item => isListableContent(item));
 
         const nextCursor = hasMore ? pageDocs[pageDocs.length - 1].id : undefined;
         return { items, nextCursor };

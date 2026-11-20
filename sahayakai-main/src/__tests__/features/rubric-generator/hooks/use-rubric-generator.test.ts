@@ -109,7 +109,7 @@ describe('useRubricGenerator — VIDYA deep link', () => {
         );
     });
 
-    it('auto-submits a ?topic= deep link', async () => {
+    it('pre-fills a ?topic= deep link but waits for the Generate button (never auto-submits)', async () => {
         mockSearchParams({ topic: 'Write a formal letter to the editor about plastic waste' });
 
         renderHook(() => useRubricGenerator());
@@ -119,10 +119,7 @@ describe('useRubricGenerator — VIDYA deep link', () => {
             jest.advanceTimersByTime(300);
         });
 
-        expect(generate).toHaveBeenCalledTimes(1);
-        expect(generate.mock.calls[0][0]).toMatchObject({
-            assignmentDescription: 'Write a formal letter to the editor about plastic waste',
-        });
+        expect(generate).not.toHaveBeenCalled();
     });
 
     it('normalises gradeLevel and language arriving in display form', () => {
@@ -290,7 +287,7 @@ describe('useRubricGenerator — a second deep link, same mount', () => {
         return result;
     }
 
-    it('honours the whole second param set, and generates from it', async () => {
+    it('honours the whole second param set (pre-fill only, no generation)', async () => {
         const result = await thenAsksFor({
             topic: 'Build a working model of the solar system and present it',
             subject: 'Science',
@@ -302,12 +299,7 @@ describe('useRubricGenerator — a second deep link, same mount', () => {
         );
         expect(result.current.form.getValues('subject')).toBe('Science');
         expect(result.current.form.getValues('gradeLevel')).toBe('Class 8');
-        expect(generate).toHaveBeenCalledTimes(2);
-        expect(generate.mock.calls[1][0]).toMatchObject({
-            assignmentDescription: 'Build a working model of the solar system and present it',
-            subject: 'Science',
-            gradeLevel: 'Class 8',
-        });
+        expect(generate).not.toHaveBeenCalled();
     });
 
     // Class gate: one row per param the effect reads.
@@ -367,6 +359,6 @@ describe('useRubricGenerator — a second deep link, same mount', () => {
         expect(result.current.form.getValues('assignmentDescription')).toBe(
             'Write a formal letter to the editor about plastic waste, 150 words',
         );
-        expect(generate).toHaveBeenCalledTimes(1);
+        expect(generate).not.toHaveBeenCalled();
     });
 });

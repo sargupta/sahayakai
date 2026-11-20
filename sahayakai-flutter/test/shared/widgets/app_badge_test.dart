@@ -49,8 +49,8 @@ Color _over(Color fg, Color bg) {
 Color _accentLabelColor(WidgetTester tester, String label) =>
     tester.widget<Text>(find.text(label)).style!.color!;
 
-Widget _host(Brightness brightness, Widget child) => MaterialApp(
-  theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+Widget _host(Widget child) => MaterialApp(
+  theme: AppTheme.light(),
   home: Scaffold(body: Center(child: child)),
 );
 
@@ -58,9 +58,7 @@ void main() {
   group('accent label routes through the saffron-TEXT token (not the fill)', () {
     testWidgets('light uses saffron-700 #AC4815', (tester) async {
       await tester.pumpWidget(
-        _host(
-          Brightness.light,
-          const AppBadge(
+        _host(const AppBadge(
             icon: LucideIcons.graduationCap,
             label: 'Class 6',
             tone: AppBadgeTone.accent,
@@ -69,34 +67,17 @@ void main() {
       );
 
       final color = _accentLabelColor(tester, 'Class 6');
-      expect(color, AppColors.lPrimaryText); // #AC4815, NOT #E0924D
+      expect(color, AppColors.lPrimaryTextOnTint); // saffron-700, NOT saffron-500
       expect(color, isNot(AppColors.brandSaffron));
-    });
-
-    testWidgets('dark uses the dark saffron text token #EB9447', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _host(
-          Brightness.dark,
-          const AppBadge(
-            icon: LucideIcons.graduationCap,
-            label: 'Class 6',
-            tone: AppBadgeTone.accent,
-          ),
-        ),
-      );
-
-      expect(_accentLabelColor(tester, 'Class 6'), AppColors.dPrimaryText);
     });
 
     testWidgets('the ordinal count badge (accent) uses the same token', (
       tester,
     ) async {
       await tester.pumpWidget(
-        _host(Brightness.light, const AppBadge.count('3')),
+        _host(const AppBadge.count('3')),
       );
-      expect(_accentLabelColor(tester, '3'), AppColors.lPrimaryText);
+      expect(_accentLabelColor(tester, '3'), AppColors.lPrimaryTextOnTint);
     });
 
     testWidgets(
@@ -106,9 +87,7 @@ void main() {
         // (~5.15:1 on the tint), NOT `scheme.primary` (#E0924D = ~2.26:1) — so
         // glyph and label read as one accent unit.
         await tester.pumpWidget(
-          _host(
-            Brightness.light,
-            const AppBadge(
+          _host(const AppBadge(
               icon: LucideIcons.graduationCap,
               label: 'Class 6',
               tone: AppBadgeTone.accent,
@@ -118,37 +97,16 @@ void main() {
         final icon = tester.widget<Icon>(
           find.byIcon(LucideIcons.graduationCap),
         );
-        expect(icon.color, AppColors.lPrimaryText);
+        expect(icon.color, AppColors.lPrimaryTextOnTint);
         expect(icon.color, isNot(AppColors.brandSaffron)); // never #E0924D
       },
     );
-
-    testWidgets('the accent GLYPH uses the dark saffron-text token in dark', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _host(
-          Brightness.dark,
-          const AppBadge(
-            icon: LucideIcons.graduationCap,
-            label: 'Class 6',
-            tone: AppBadgeTone.accent,
-          ),
-        ),
-      );
-      expect(
-        tester.widget<Icon>(find.byIcon(LucideIcons.graduationCap)).color,
-        AppColors.dPrimaryText,
-      );
-    });
 
     testWidgets('the neutral tone is untouched (regular = onSurface ink)', (
       tester,
     ) async {
       await tester.pumpWidget(
-        _host(
-          Brightness.light,
-          const AppBadge(label: 'Science'), // neutral, regular
+        _host(const AppBadge(label: 'Science'), // neutral, regular
         ),
       );
       // The fix is scoped to accent; neutral content text stays full ink.
@@ -157,31 +115,20 @@ void main() {
   });
 
   group('accent label clears WCAG AA (>=4.5) on the primary@0.12 tint', () {
-    test('light: #AC4815 on the tint over a white card', () {
+    test('light: saffron-700 on the tint over a white card', () {
       final tint = _over(
         AppColors.lPrimary.withValues(alpha: 0.12),
         AppColors.lCard,
       );
       expect(
-        _ratio(AppColors.lPrimaryText, tint),
+        _ratio(AppColors.lPrimaryTextOnTint, tint),
         greaterThanOrEqualTo(4.5),
         reason: 'saffron-700 label must meet AA on the accent tint',
       );
-      // The OLD label (#E0924D as text) is a documented fail on the same tint.
-      expect(_ratio(AppColors.brandSaffron, tint), lessThan(3.0));
+      // saffron-500 as text is a documented AA fail on the same tint (3.23:1).
+      expect(_ratio(AppColors.brandSaffron, tint), lessThan(4.5));
     });
 
-    test('dark: #EB9447 on the tint over a dark card', () {
-      final tint = _over(
-        AppColors.dPrimary.withValues(alpha: 0.12),
-        AppColors.dCard,
-      );
-      expect(
-        _ratio(AppColors.dPrimaryText, tint),
-        greaterThanOrEqualTo(4.5),
-        reason: 'dark saffron label must meet AA on the accent tint',
-      );
-    });
   });
 
   // The small NEUTRAL tone used to mute its label to onSurfaceVariant, which is
@@ -196,9 +143,7 @@ void main() {
         tester,
       ) async {
         await tester.pumpWidget(
-          _host(
-            Brightness.light,
-            const AppBadge(label: 'Kannada', size: AppBadgeSize.small),
+          _host(const AppBadge(label: 'Kannada', size: AppBadgeSize.small),
           ),
         );
 
@@ -208,28 +153,11 @@ void main() {
           _ratio(color, AppColors.lSurfaceContainerHigh),
           greaterThanOrEqualTo(4.5),
         );
-        // The OLD muted label (onSurfaceVariant) is a documented fail on the fill.
-        expect(
-          _ratio(AppColors.lMutedForeground, AppColors.lSurfaceContainerHigh),
-          lessThan(4.5),
-        );
+        // Pre-v2 the muted slate label was a documented fail (3.86:1) on this
+        // fill. v2's body ink clears it, but the badge keeps full ink: the
+        // assertion above is the contract, the palette is not.
       });
 
-      testWidgets('dark: full-ink onSurface clears AA', (tester) async {
-        await tester.pumpWidget(
-          _host(
-            Brightness.dark,
-            const AppBadge(label: 'Kannada', size: AppBadgeSize.small),
-          ),
-        );
-
-        final color = _accentLabelColor(tester, 'Kannada');
-        expect(color, AppColors.dForeground);
-        expect(
-          _ratio(color, AppColors.dSurfaceContainerHigh),
-          greaterThanOrEqualTo(4.5),
-        );
-      });
     },
   );
 }

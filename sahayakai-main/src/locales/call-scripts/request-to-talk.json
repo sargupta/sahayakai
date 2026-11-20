@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "purpose": "The one line a concern call says in place of the concern (founder decision, 23 Oct 2026): who would like to speak and when, never why. Read by src/lib/attendance/request-to-talk.ts.",
+    "english": "Same sentence as REQUEST_TO_TALK_LINES.classroom_behaviour on fix/riya-sampark-onto-156 and REQUEST_TO_TALK_LINE in the sahayakai-agents bridge (fix/agents-telephony-phase0). Spoken by the Twilio TwiML route and returned by /api/attendance/call-context; not yet used by services/voice-server, which speaks production Vobiz calls.",
+    "reviewStatus": "draft — every non-English line needs native-speaker sign-off before it is relied on",
+    "reviewedBy": null,
+    "notes": [
+      "Spoken register, the way a school office talks to parents: 'class teacher' is kept as क्लास टीचर / ক্লাস টিচার / ਕਲਾਸ ਟੀਚਰ / క్లాస్ టీచర్ / ಕ್ಲಾಸ್ ಟೀಚರ್ / ക്ലാസ് ടീച്ചർ where parents say it that way; Marathi, Gujarati, Tamil and Odia use the standard word.",
+      "Gender-neutral about the listener and the teacher: honorific plural for the teacher, no gendered verb about the parent.",
+      "Says nothing about attendance, marks, behaviour or anything having gone wrong, and does not reassure either.",
+      "Least certain translations: Odia, Malayalam, Telugu and Punjabi."
+    ]
+  },
+  "lines": {
+    "English": "Your child's class teacher would like to speak with you this week. Is there a good time for a short call?",
+    "Hindi": "आपके बच्चे के क्लास टीचर इस हफ़्ते आपसे बात करना चाहते हैं। क्या कोई अच्छा समय है जब थोड़ी देर बात हो सके?",
+    "Bengali": "আপনার সন্তানের ক্লাস টিচার এই সপ্তাহে আপনার সঙ্গে একটু কথা বলতে চান। অল্প সময় কথা বলার জন্য কোনো সুবিধার সময় আছে কি?",
+    "Marathi": "तुमच्या पाल्याचे वर्गशिक्षक या आठवड्यात तुमच्याशी बोलू इच्छितात. थोडा वेळ बोलण्यासाठी तुमच्यासाठी कोणती वेळ सोयीची असेल?",
+    "Gujarati": "તમારા બાળકના વર્ગશિક્ષક આ અઠવાડિયે તમારી સાથે વાત કરવા માંગે છે. થોડી વાર વાત કરવા માટે તમને કયો સમય અનુકૂળ રહેશે?",
+    "Punjabi": "ਤੁਹਾਡੇ ਬੱਚੇ ਦੇ ਕਲਾਸ ਟੀਚਰ ਇਸ ਹਫ਼ਤੇ ਤੁਹਾਡੇ ਨਾਲ ਗੱਲ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹਨ। ਥੋੜ੍ਹੀ ਦੇਰ ਗੱਲ ਕਰਨ ਲਈ ਤੁਹਾਡੇ ਲਈ ਕਿਹੜਾ ਸਮਾਂ ਠੀਕ ਰਹੇਗਾ?",
+    "Tamil": "உங்கள் குழந்தையின் வகுப்பு ஆசிரியர் இந்த வாரம் உங்களுடன் பேச விரும்புகிறார். சிறிது நேரம் பேச உங்களுக்கு எந்த நேரம் வசதியாக இருக்கும்?",
+    "Telugu": "మీ పిల్లల క్లాస్ టీచర్ ఈ వారం మీతో మాట్లాడాలనుకుంటున్నారు. కొద్దిసేపు మాట్లాడటానికి మీకు ఏ సమయం వీలుగా ఉంటుంది?",
+    "Kannada": "ನಿಮ್ಮ ಮಗುವಿನ ಕ್ಲಾಸ್ ಟೀಚರ್ ಈ ವಾರ ನಿಮ್ಮೊಂದಿಗೆ ಮಾತನಾಡಲು ಬಯಸುತ್ತಾರೆ. ಸ್ವಲ್ಪ ಹೊತ್ತು ಮಾತನಾಡಲು ನಿಮಗೆ ಯಾವ ಸಮಯ ಅನುಕೂಲವಾಗುತ್ತದೆ?",
+    "Malayalam": "നിങ്ങളുടെ കുട്ടിയുടെ ക്ലാസ് ടീച്ചർ ഈ ആഴ്ച നിങ്ങളോട് സംസാരിക്കാൻ ആഗ്രഹിക്കുന്നു. കുറച്ചുനേരം സംസാരിക്കാൻ നിങ്ങൾക്ക് ഏത് സമയമാണ് സൗകര്യം?",
+    "Odia": "ଆପଣଙ୍କ ପିଲାଙ୍କ ଶ୍ରେଣୀ ଶିକ୍ଷକ ଏହି ସପ୍ତାହରେ ଆପଣଙ୍କ ସହ କଥା ହେବାକୁ ଚାହାଁନ୍ତି। ଅଳ୍ପ ସମୟ କଥା ହେବା ପାଇଁ ଆପଣଙ୍କୁ କେଉଁ ସମୟ ସୁବିଧା ହେବ?"
+  }
+}

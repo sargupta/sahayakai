@@ -15,7 +15,7 @@
  */
 
 import { getApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { type Firestore, getFirestore } from 'firebase-admin/firestore';
 
 import { initializeFirebase } from '@/lib/firebase-admin';
 import { type AudioStore, type Clock, type SamparkRepo, type SpeechSynthesizer, type SpeechVerifier, systemClock } from '@/lib/sampark/ports';
@@ -40,6 +40,19 @@ export function assertSamparkEnvironmentSafe(env: Env = process.env): void {
             `(FIRESTORE_EMULATOR_HOST) or the named database '${SAMPARK_NONPROD_DATABASE}' ` +
             '(SAMPARK_FIRESTORE_DATABASE). Refusing to touch the production database.',
     );
+}
+
+/**
+ * The Sampark database, after the environment check: the emulator, the named non-production
+ * database, or production's default. Every Sampark store opens Firestore this way, so Sampark
+ * data never lands in the production default database from a staging or developer process
+ * (gate-sampark-stores-use-the-sampark-database).
+ */
+export async function samparkFirestore(env: Env = process.env): Promise<Firestore> {
+    assertSamparkEnvironmentSafe(env);
+    await initializeFirebase();
+    const databaseId = env.SAMPARK_FIRESTORE_DATABASE?.trim();
+    return databaseId ? getFirestore(getApp(), databaseId) : getFirestore(getApp());
 }
 
 let repoOverride: SamparkRepo | null = null;
@@ -141,9 +154,9 @@ export async function getSpeechDeps(): Promise<SpeechDeps> {
     if (speechOverride) return speechOverride;
     if (!speechPromise) {
         speechPromise = (async () => {
-            const [{ createGoogleSynthesizer, createChirpVerifier }, { createLocalAudioStore }, recognizers] = await Promise.all([
+            const [{ createGoogleSynthesizer, createChirpVerifier }, { createAudioStoreFromEnv }, recognizers] = await Promise.all([
                 import('@/lib/sampark/speech/google-speech'),
-                import('@/lib/sampark/speech/local-audio-store'),
+                import('@/lib/sampark/speech/gcs-audio-store'),
                 import('@/lib/sampark/speech/secondary-recognizers'),
             ]);
             const verifier = createChirpVerifier();
@@ -152,7 +165,8 @@ export async function getSpeechDeps(): Promise<SpeechDeps> {
             return {
                 synth: createGoogleSynthesizer(),
                 verifier,
-                store: createLocalAudioStore(process.env.SAMPARK_AUDIO_DIR ?? '.sampark-audio'),
+                // Cloud Storage when SAMPARK_AUDIO_BUCKET is set, else the local directory.
+                store: await createAudioStoreFromEnv(),
                 voiceCheck: {
                     primary: { name: 'google-chirp2', verifier },
                     secondaryFor: (language: ParentLanguage) => (recognizers.secondaryRecognizerFor(language) === 'sarvam' ? sarvam : chirp3),
@@ -182,8 +196,8 @@ let storePromise: Promise<AudioStore> | null = null;
 export async function getAudioStore(): Promise<AudioStore> {
     if (speechOverride) return speechOverride.store;
     if (!storePromise) {
-        storePromise = import('@/lib/sampark/speech/local-audio-store')
-            .then(({ createLocalAudioStore }) => createLocalAudioStore(process.env.SAMPARK_AUDIO_DIR ?? '.sampark-audio'))
+        storePromise = import('@/lib/sampark/speech/gcs-audio-store')
+            .then(({ createAudioStoreFromEnv }) => createAudioStoreFromEnv())
             .catch((err) => {
                 storePromise = null;
                 throw err;

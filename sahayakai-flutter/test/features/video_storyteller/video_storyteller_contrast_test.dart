@@ -47,21 +47,15 @@ void main() {
         greaterThanOrEqualTo(4.5),
         reason: 'muted meta must clear AA on the white card fill',
       );
-      // The exact trap the rule guards against: the same role on a
-      // surfaceContainer tint is BELOW the floor, so the meta must stay on the
-      // white card surface, never a tint.
+      // Pre-v2 the slate muted role fell below the floor on a surfaceContainer
+      // tint; v2's body ink (ink-600) clears it there too, so the meta holds
+      // AA on either fill.
       expect(
         _ratio(AppColors.lMutedForeground, AppColors.lMuted),
-        lessThan(4.5),
-      );
-    });
-
-    test('dark: onSurfaceVariant on the dark card surface (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dMutedForeground, AppColors.dCard),
         greaterThanOrEqualTo(4.5),
       );
     });
+
   });
 
   group('thumbnail fallback label clears AA on the surfaceContainer fill', () {
@@ -74,11 +68,5 @@ void main() {
       );
     });
 
-    test('dark: onSurface ink on surfaceContainer', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dMuted),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
   });
 }

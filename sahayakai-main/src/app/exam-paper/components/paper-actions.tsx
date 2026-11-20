@@ -1,6 +1,6 @@
 /**
- * @fileOverview Action bar under a generated paper: Save to Library (with
- * saving/saved states), the "Create question sets" (multi-set PDF) action, and the
+ * @fileOverview Save to Library (with saving/saved states) and the "Create
+ * question sets" (multi-set PDF) action, for the paper toolbar; plus the
  * share-to-community CTA. Dumb — save handler + state + paper passed in.
  */
 "use client";
@@ -23,25 +23,22 @@ export function PaperActions({ saving, saved, onSave, paper }: PaperActionsProps
   const { t } = useLanguage();
   return (
     <>
-      <div className="flex gap-3">
-        <Button
-          onClick={onSave}
-          disabled={saving || saved}
-          variant={saved ? "outline" : "default"}
-          className="flex-1"
-        >
-          {saving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : saved ? (
-            <CheckCircle2 className="w-4 h-4 mr-2 text-success" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          {saved ? t("Saved to Library") : t("Save to Library")}
-        </Button>
-        <QuestionSetsDialog paper={paper} />
-      </div>
-      <ShareToCommunityCTA contentType="exam-paper" className="mt-3" />
+      <QuestionSetsDialog paper={paper} />
+      <Button onClick={onSave} disabled={saving || saved} variant={saved ? "outline" : "secondary"} size="sm" className="gap-2">
+        {saving ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        ) : saved ? (
+          <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
+        ) : (
+          <Save className="h-4 w-4" aria-hidden="true" />
+        )}
+        {saved ? t("Saved to Library") : t("Save to Library")}
+      </Button>
     </>
   );
+}
+
+/** The community CTA sits under the outline, away from the paper's own actions. */
+export function PaperShareCta() {
+  return <ShareToCommunityCTA contentType="exam-paper" />;
 }

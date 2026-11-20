@@ -1,0 +1,51 @@
+{
+  "_comment": "Example roster for the Sargvision sample class, with made-up numbers (98000 001xx) that must never be dialled. The real team roster lives in sargvision-roster.local.json, which git ignores; the launcher's real-call mode refuses to start without it.",
+  "orgId": "sargvision-local",
+  "contacts": [
+    {
+      "id": "sv-abhishek",
+      "name": "Abhishek",
+      "phone": "+919800000101"
+    },
+    {
+      "id": "sv-nischay",
+      "name": "Nischay",
+      "phone": "+919800000102"
+    },
+    {
+      "id": "sv-nandini",
+      "name": "Nandini",
+      "phone": "+919800000103"
+    },
+    {
+      "id": "sv-shivadeth",
+      "name": "Shivadeth",
+      "phone": "+919800000104"
+    },
+    {
+      "id": "sv-varunesh",
+      "name": "Varunesh",
+      "phone": "+919800000105"
+    },
+    {
+      "id": "sv-yash",
+      "name": "Yash",
+      "phone": "+919800000106"
+    },
+    {
+      "id": "sv-sachitt",
+      "name": "Sachitt",
+      "phone": "+919800000107"
+    },
+    {
+      "id": "sv-shree",
+      "name": "Shree",
+      "phone": "+919800000108"
+    },
+    {
+      "id": "sv-alyssa",
+      "name": "Alyssa",
+      "phone": "+919800000109"
+    }
+  ]
+}

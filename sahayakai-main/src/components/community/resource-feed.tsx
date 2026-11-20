@@ -48,13 +48,13 @@ const TYPE_CONFIG: Record<string, {
   border: string; bg: string; text: string; label: string; route: string;
 }> = {
   'lesson-plan':        { border: 'border-t-primary/60',  bg: 'bg-primary/8',  text: 'text-primary',    label: 'Lesson Plan',  route: 'lesson-planner' },
-  'quiz':               { border: 'border-t-blue-400',    bg: 'bg-blue-50',    text: 'text-blue-600',    label: 'Quiz',         route: 'quiz-generator' },
-  'worksheet':          { border: 'border-t-emerald-400', bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Worksheet',    route: 'worksheet-wizard' },
-  'rubric':             { border: 'border-t-violet-400',  bg: 'bg-violet-50',  text: 'text-violet-600',  label: 'Rubric',       route: 'rubric-generator' },
-  'image':              { border: 'border-t-pink-400',    bg: 'bg-pink-50',    text: 'text-pink-600',    label: 'Visual Aid',   route: 'visual-aid-designer' },
-  'visual-aid':         { border: 'border-t-pink-400',    bg: 'bg-pink-50',    text: 'text-pink-600',    label: 'Visual Aid',   route: 'visual-aid-designer' },
-  'virtual-field-trip': { border: 'border-t-teal-400',   bg: 'bg-teal-50',    text: 'text-teal-600',    label: 'Field Trip',   route: 'virtual-field-trip' },
-  'teacher-training':   { border: 'border-t-amber-400',  bg: 'bg-amber-50',   text: 'text-amber-600',   label: 'Training',     route: 'teacher-training' },
+  'quiz':               { border: 'border-t-info/60',     bg: 'bg-tint-info',    text: 'text-info',        label: 'Quiz',         route: 'quiz-generator' },
+  'worksheet':          { border: 'border-t-success/60',  bg: 'bg-tint-success', text: 'text-success',     label: 'Worksheet',    route: 'worksheet-wizard' },
+  'rubric':             { border: 'border-t-ink-500/50',  bg: 'bg-muted',        text: 'text-foreground',  label: 'Rubric',       route: 'rubric-generator' },
+  'image':              { border: 'border-t-chart-5/60',  bg: 'bg-chart-5/10',   text: 'text-chart-5',     label: 'Visual Aid',   route: 'visual-aid-designer' },
+  'visual-aid':         { border: 'border-t-chart-5/60',  bg: 'bg-chart-5/10',   text: 'text-chart-5',    label: 'Visual Aid',   route: 'visual-aid-designer' },
+  'virtual-field-trip': { border: 'border-t-leaf-300',    bg: 'bg-leaf-100/50',  text: 'text-leaf-700',    label: 'Field Trip',   route: 'virtual-field-trip' },
+  'teacher-training':   { border: 'border-t-warning/60',  bg: 'bg-tint-warning', text: 'text-warning',     label: 'AI Coach',     route: 'teacher-training' },
 };
 
 const cfg = (type: string) =>
@@ -221,7 +221,7 @@ const ResourceCard = ({
 
             <div className="flex items-center gap-1.5">
               <Avatar className={cn('h-5 w-5 ring-1 ring-white shadow-sm shrink-0')}>
-                <AvatarFallback className={cn('text-[9px] font-bold', c.bg, c.text)}>
+                <AvatarFallback className={cn('text-xs font-bold', c.bg, c.text)}>
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -255,16 +255,16 @@ const ResourceCard = ({
         ) : (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {resource.gradeLevel && (
-              <Badge className="text-[10px] px-2 py-0.5 bg-muted text-muted-foreground font-semibold border-0 rounded-full">
+              <Badge className="text-xs px-2 py-0.5 bg-muted text-muted-foreground font-semibold border-0 rounded-full">
                 {resource.gradeLevel ? t(resource.gradeLevel) : resource.gradeLevel}
               </Badge>
             )}
             {resource.subject && (
-              <Badge className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 font-semibold border-0 rounded-full">
+              <Badge className="text-xs px-2 py-0.5 bg-tint-info text-info font-semibold border-0 rounded-full">
                 {resource.subject ? t(resource.subject) : resource.subject}
               </Badge>
             )}
-            <Badge className={cn('text-[10px] px-2 py-0.5 font-semibold border-0 rounded-full', c.bg, c.text)}>
+            <Badge className={cn('text-xs px-2 py-0.5 font-semibold border-0 rounded-full', c.bg, c.text)}>
               {c.label}
             </Badge>
           </div>
@@ -275,7 +275,7 @@ const ResourceCard = ({
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="bg-card border-border text-muted-foreground text-[10px] font-bold px-1.5 py-0 rounded-md shrink-0"
+            className="bg-card border-border text-muted-foreground text-xs font-bold px-1.5 py-0 rounded-md shrink-0"
           >
             {LANG_SHORT[resource.language] ?? resource.language?.toUpperCase() ?? 'EN'}
           </Badge>
@@ -285,12 +285,12 @@ const ResourceCard = ({
             className={cn(
               'flex items-center gap-1 text-xs font-bold transition-all duration-200 rounded-lg px-1.5 py-0.5',
               isLiked
-                ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                : 'text-muted-foreground/70 hover:text-red-400 hover:bg-red-50',
+                ? 'text-destructive bg-tint-danger hover:bg-destructive/15'
+                : 'text-muted-foreground/70 hover:text-destructive hover:bg-tint-danger',
             )}
             aria-label={isLiked ? 'Unlike this resource' : 'Like this resource'}
           >
-            <Heart className={cn('h-3 w-3 transition-all', isLiked && 'fill-red-500')} />
+            <Heart className={cn('h-3 w-3 transition-all', isLiked && 'fill-destructive')} />
             <span>{resource.likes}</span>
           </button>
         </div>
@@ -301,7 +301,7 @@ const ResourceCard = ({
             size="sm"
             disabled={isSaved}
             className={cn(
-              'h-7 px-2 text-[11px] font-semibold rounded-lg gap-1 transition-all',
+              'h-7 px-2 text-xs font-semibold rounded-lg gap-1 transition-all',
               isSaved
                 ? 'text-primary bg-primary/10 cursor-default'
                 : 'text-muted-foreground hover:text-primary hover:bg-primary/5',
@@ -314,7 +314,7 @@ const ResourceCard = ({
 
           <Button
             size="sm"
-            className="h-7 px-2.5 text-[11px] font-bold rounded-lg gap-1 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-none"
+            className="h-7 px-2.5 text-xs font-bold rounded-lg gap-1 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-none"
             onClick={handleUseThis}
           >
             Use
@@ -595,7 +595,7 @@ export function ResourceFeed() {
             className={cn(
               "absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all",
               isListening
-                ? "bg-red-100 text-red-500 animate-pulse"
+                ? "bg-tint-danger text-destructive animate-pulse"
                 : "text-muted-foreground/60 hover:text-primary hover:bg-primary/8"
             )}
             title={isListening ? "Stop listening" : "Search by voice"}

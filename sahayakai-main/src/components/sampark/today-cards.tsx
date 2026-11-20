@@ -81,9 +81,9 @@ export interface NextStep {
 export function nextSteps(t: Translate, o: SamparkOverview, base: string): NextStep[] {
     const steps: NextStep[] = [];
     if (!o.school.crm) {
-        steps.push({ key: "connect", text: t("Connect your school records so Sampark knows your classes and families."), href: `${base}/settings`, action: t("Connect records") });
+        steps.push({ key: "connect", text: t("Connect your school records so Sampark knows your classes and parents."), href: `${base}/settings`, action: t("Connect records") });
     } else if (!o.lastImport) {
-        steps.push({ key: "import", text: t("Import your school data. Nothing can be sent until families are imported."), href: `${base}/settings`, action: t("Import now") });
+        steps.push({ key: "import", text: t("Import your school data. Nothing can be sent until parents are imported."), href: `${base}/settings`, action: t("Import now") });
     } else if (o.lastImport.status === "failed") {
         steps.push({ key: "import-failed", text: t("The last import failed. Check the rejected rows and import again."), href: `${base}/settings`, action: t("See import") });
     }
@@ -91,16 +91,16 @@ export function nextSteps(t: Translate, o: SamparkOverview, base: string): NextS
     if (o.guardians.total > 0 && noConsent > 0) {
         steps.push({
             key: "consent",
-            text: fmt(t("{count} families have no consent recorded for recorded notices. They will not be called."), { count: noConsent }),
+            text: fmt(t("{count} parents have no consent recorded for recorded notices. They will not be called."), { count: noConsent }),
             href: `${base}/families`,
-            action: t("Review families"),
+            action: t("Review parents"),
         });
     }
     const unknownLang = o.guardians.byLanguage.unknown ?? 0;
     if (unknownLang > 0) {
         steps.push({
             key: "language",
-            text: fmt(t("{count} families have no language recorded."), { count: unknownLang }),
+            text: fmt(t("{count} parents have no language recorded."), { count: unknownLang }),
             href: `${base}/families?language=unknown`,
             action: t("Record languages"),
         });
@@ -125,7 +125,7 @@ export function LiveCampaignCard({ overview, base, className }: { overview: Samp
             >
                 <Megaphone aria-hidden="true" className="h-6 w-6 text-primary" />
                 <p className="type-body-lg text-foreground">
-                    {t("No campaign is running. Invite families to a PTM or an event, or send an emergency closure.")}
+                    {t("No campaign is running. Invite parents to a PTM or an event, or send an emergency closure.")}
                 </p>
                 <Button asChild className="min-h-11 self-start">
                     <Link href={`${base}/campaigns/new`}>
@@ -172,7 +172,7 @@ export function LiveCampaignCard({ overview, base, className }: { overview: Samp
                 {c.counts.guardians > 0 && (
                     <p className="type-body text-foreground">
                         <Emphasised
-                            template={fmt(t("{called} of {total} families called"), { total: f.number(outcome.callable) })}
+                            template={fmt(t("{called} of {total} parents called"), { total: f.number(outcome.callable) })}
                             name="called"
                             value={f.number(outcome.called)}
                             className="font-headline text-4xl font-bold leading-normal text-foreground"
@@ -312,9 +312,9 @@ export function TodayKpis({ overview }: { overview: SamparkOverview }) {
 
     return (
         // Real calls to families only (H9): rehearsals are counted apart and never as families reached.
-        <section aria-label={t("Calls to families today")} className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section aria-label={t("Calls to parents today")} className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiTile
-                label={t("Calls to families today")}
+                label={t("Calls to parents today")}
                 value={f.number(o.today.calls)}
                 sub={fmt(t("{count} in the last 7 days"), { count: f.number(week((d) => d.calls)) })}
                 trend={trend((d) => d.calls)}
@@ -340,7 +340,7 @@ export function TodayKpis({ overview }: { overview: SamparkOverview }) {
             <KpiTile
                 label={t("Asked to stop calls")}
                 value={f.number(o.today.optOuts)}
-                sub={fmt(t("{count} families have stopped calls in all"), { count: f.number(o.guardians.askedToStop) })}
+                sub={fmt(t("{count} parents have stopped calls in all"), { count: f.number(o.guardians.askedToStop) })}
                 emphasis={o.today.optOuts > 0 ? "warning" : "default"}
                 trend={trend((d) => d.optOuts)}
             />
@@ -354,7 +354,7 @@ function activityTitles(t: Translate, mode: SamparkMode) {
     switch (mode) {
         case "test": return { hours: t("Test calls by hour"), feed: t("Latest test calls"), pill: t("Test calls") };
         case "practice": return { hours: t("Practice calls by hour"), feed: t("Latest practice calls"), pill: t("Practice calls") };
-        default: return { hours: t("Calls to families by hour"), feed: t("Latest calls to families"), pill: null };
+        default: return { hours: t("Calls to parents by hour"), feed: t("Latest calls to parents"), pill: null };
     }
 }
 
@@ -368,7 +368,7 @@ export function RehearsalActivityNote({ mode }: { mode: SamparkMode }) {
             <Icon aria-hidden="true" className="mt-1 h-4 w-4 shrink-0 text-info" />
             <span className="min-w-0">
                 <span className="block font-semibold">{mode === "test" ? t("Test: rang only your test phone") : t("Practice: simulated, no phone rang")}</span>
-                <span className="block">{t("Rehearsal calls never reach a family, so they are not counted as families reached.")}</span>
+                <span className="block">{t("Rehearsal calls never reach a parent, so they are not counted as parents reached.")}</span>
             </span>
         </p>
     );
@@ -488,7 +488,7 @@ export function LanguagesCard({ overview, className }: { overview: SamparkOvervi
             </ul>
             {top && g.total > 0 && (g.byLanguage[top] ?? 0) > 0 && (
                 <p className="border-t border-border pt-3 text-xs leading-normal text-muted-foreground">
-                    {fmt(t("{percent} of families are called in {language}"), { percent: f.percent(g.byLanguage[top] ?? 0, g.total), language: languageName(t, top) })}
+                    {fmt(t("{percent} of parents are called in {language}"), { percent: f.percent(g.byLanguage[top] ?? 0, g.total), language: languageName(t, top) })}
                 </p>
             )}
         </SectionCard>
@@ -567,14 +567,14 @@ export function FamiliesCard({ overview, steps, className }: { overview: Sampark
     const known = g.total - (g.byLanguage.unknown ?? 0);
     const attention = steps.filter((s) => s.key === "consent" || s.key === "language");
     const stats: { label: string; value: string }[] = [
-        { label: t("Families"), value: f.number(g.total) },
+        { label: t("Parents"), value: f.number(g.total) },
         { label: t("Language known"), value: g.total > 0 ? f.percent(known, g.total) : "—" },
         { label: t("Asked to stop calls"), value: f.number(g.askedToStop) },
         { label: t("Numbers to fix"), value: f.number(overview.numbersFlagged) },
     ];
 
     return (
-        <SectionCard title={t("Families")} icon={Users} className={className}>
+        <SectionCard title={t("Parents")} icon={Users} className={className}>
             <div className="flex items-center gap-4">
                 <div
                     role="img"
@@ -589,7 +589,7 @@ export function FamiliesCard({ overview, steps, className }: { overview: Sampark
                 <div className="min-w-0">
                     <p className="type-body font-semibold text-foreground">{t("Consent for recorded notices")}</p>
                     <p className="type-body text-muted-foreground">
-                        {fmt(t("{count} of {total} families"), { count: f.number(g.withNoticesConsent), total: f.number(g.total) })}
+                        {fmt(t("{count} of {total} parents"), { count: f.number(g.withNoticesConsent), total: f.number(g.total) })}
                     </p>
                 </div>
             </div>
@@ -646,7 +646,7 @@ export function RehearsalsCard({ overview, className }: { overview: SamparkOverv
         <SectionCard
             title={t("Rehearsals today")}
             icon={FlaskConical}
-            description={t("Rehearsal calls never reach a family, so they are not counted as families reached.")}
+            description={t("Rehearsal calls never reach a parent, so they are not counted as parents reached.")}
             className={className}
         >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

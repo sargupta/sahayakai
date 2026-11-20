@@ -1,4 +1,25 @@
-# Cloud Run service declaration — sahayakai-telephony.
+# Cloud Run service declaration — sahayakai-telephony-agents (NOT DEPLOYED).
+#
+# WHY THIS IS NOT CALLED sahayakai-telephony
+#
+# This file used to declare `metadata.name: sahayakai-telephony`, the SAME name
+# as the LIVE parent-call service. That service runs a different engine: the
+# Pipecat app in sahayakai-main/services/voice-server, deployed from
+# sahayakai-main/services/voice-server/cloudbuild.yaml. Applying this file
+# under the old name would have silently replaced production with an engine
+# that has never taken a real call, and taken 100% of traffic at once (a
+# `services replace` has no --no-traffic). The live service still carries env
+# left over from this file (SAHAYAKAI_TELEPHONY_ONLY, SAHAYAKAI_PROMPTS_DIR,
+# SAHAYAKAI_AGENTS_ENV), which is how close that came.
+#
+# Renamed 2026-11-16 so each Cloud Run service has exactly one source. The
+# class gate sahayakai-main/src/__tests__/scripts/one-deploy-source-per-service.test.ts
+# fails if two deploy definitions target sahayakai-telephony, or if any
+# targets it without --no-traffic. If this engine ever replaces the Pipecat
+# one, do it by moving traffic between services on purpose, not by reusing
+# the name.
+#
+# WHAT IT IS
 #
 # The SAME image as sahayakai-agents, deployed with SAHAYAKAI_TELEPHONY_ONLY=1
 # so it registers only the token-gated media socket and the health probes.
@@ -12,16 +33,18 @@
 # granting allUsers there, which would expose every agent endpoint too. This
 # service takes the allUsers grant instead, and has almost no surface to expose.
 #
-# Apply via:
+# Apply via (creates a NEW service; production is untouched):
 #   gcloud run services replace deploy/telephony-service.yaml \
 #     --region=asia-southeast1 --project=sahayakai-b4248
 # then grant public invocation (the whole point of the split):
-#   gcloud run services add-iam-policy-binding sahayakai-telephony \
+#   gcloud run services add-iam-policy-binding sahayakai-telephony-agents \
 #     --member=allUsers --role=roles/run.invoker --region=asia-southeast1
+# Pointing the web app at it means setting VOBIZ_STREAM_BASE_URL to this
+# service's URL, which is a production cut-over in its own right.
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: sahayakai-telephony
+  name: sahayakai-telephony-agents
   annotations:
     run.googleapis.com/ingress: all
 spec:

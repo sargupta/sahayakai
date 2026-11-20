@@ -45,8 +45,9 @@ export async function POST(req: NextRequest) {
             const snap = await tx.get(ref);
             if (!snap.exists) return;
             const current = snap.data()?.status as string | undefined;
-            // Never let a late 'ringing' overwrite a terminal state.
-            if (current && TERMINAL.has(current) && !TERMINAL.has(callStatus)) return;
+            // The FIRST terminal status wins: a late 'ringing' or a second terminal
+            // status (a 'canceled' after 'completed') never rewrites the outcome.
+            if (current && TERMINAL.has(current)) return;
             tx.update(ref, {
                 status: callStatus,
                 callDurationSec: params['CallDuration'] ? Number(params['CallDuration']) : null,

@@ -15,6 +15,7 @@ import 'package:sahayakai/features/assess_assignment/presentation/widgets/assess
 import 'package:sahayakai/shared/media/image_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'assess_assignment_fixtures.dart';
 
 /// Screen-layer gates: the required-image validation the endpoint depends on,
@@ -36,7 +37,7 @@ Widget _host({
       ...overrides,
     ],
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -202,7 +203,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Hidden by default (full mode).
-      expect(find.text('Corrected transcript'), findsNothing);
+      expect(findFieldLabel('Corrected transcript'), findsNothing);
 
       final scoreChip = find.widgetWithText(ChoiceChip, 'Score a transcript');
       await tester.ensureVisible(scoreChip);
@@ -210,19 +211,19 @@ void main() {
       await tester.pumpAndSettle();
 
       // Now revealed.
-      expect(find.text('Corrected transcript'), findsOneWidget);
+      expect(findFieldLabel('Corrected transcript'), findsOneWidget);
 
       // Switching back to Read only hides it again.
       final readChip = find.widgetWithText(ChoiceChip, 'Read only');
       await tester.ensureVisible(readChip);
       await tester.tap(readChip);
       await tester.pumpAndSettle();
-      expect(find.text('Corrected transcript'), findsNothing);
+      expect(findFieldLabel('Corrected transcript'), findsNothing);
     });
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets(
           'form renders at 360dp, textScale $scale, ${brightness.name}',
@@ -237,7 +238,7 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Student work photo'), findsOneWidget);
+            expect(findFieldLabel('Student work photo'), findsOneWidget);
             expect(find.text('Take photo'), findsOneWidget);
             expect(find.text('Assess'), findsOneWidget);
           },

@@ -173,6 +173,21 @@ export const PURPOSE_CATALOGUE: Readonly<Record<PurposeId, PurposeSpec>> = Objec
     Object.fromEntries(SPECS.map((s) => [s.id, Object.freeze(s)])) as Record<PurposeId, PurposeSpec>,
 );
 
+/**
+ * Concern purposes: the call asks the parent to talk to the school and never states the
+ * concern (plan §2A; founder decision of 23 Oct 2026). What the staff member selected (subjects,
+ * observations) stays on the school's record for the teacher; it is never spoken and never sent
+ * to a calling provider (gate-request-to-talk-never-states-the-concern).
+ */
+export const REQUEST_TO_TALK_PURPOSES: ReadonlySet<PurposeId> = new Set<PurposeId>(['attendance_talk', 'academic_talk', 'conduct_talk']);
+
+/**
+ * Same-day unexplained absence (A2): staff are paged before the parent is called, and only a
+ * confirmed read-back stops the page (plan §3, "paging comes first"). No pager exists yet, so no
+ * real phone may ring for these purposes; Practice (simulated) calls stay available.
+ */
+export const PAGE_FIRST_PURPOSES: ReadonlySet<PurposeId> = new Set<PurposeId>(['absence_today']);
+
 export function purposeSpec(id: PurposeId): PurposeSpec {
     const spec = PURPOSE_CATALOGUE[id];
     if (!spec) throw new Error(`Unknown Sampark purpose: ${id}`);

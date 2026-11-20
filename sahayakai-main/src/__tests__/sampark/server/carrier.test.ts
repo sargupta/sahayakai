@@ -15,7 +15,7 @@
 
 import { encryptPhone, hashPhone } from '@/lib/sampark/phone';
 import type { SamparkGuardian, SamparkSchool } from '@/types/sampark';
-import { carrierFor, carrierKindFor, carrierKindForDryRun, LIVE_MODE_NOT_AVAILABLE, TEST_PHONE_MISSING } from '@/server/sampark/carrier';
+import { carrierFor, carrierKindFor, carrierKindForDryRun, liveDialBlocker, LIVE_MODE_NOT_AVAILABLE, TEST_PHONE_MISSING, testModeBlocker } from '@/server/sampark/carrier';
 import { destinationFor } from '@/server/sampark/jobs';
 
 import { ORG, setPhoneEnv } from './_helpers';
@@ -164,5 +164,40 @@ describe('destinationFor', () => {
 
     it('live: refused — no parent is dialled on a real carrier in phase 2a', async () => {
         await expect(destinationFor(school('live'), guardian)).rejects.toThrow(/^LIVE_MODE_NOT_AVAILABLE/);
+    });
+});
+
+describe('testModeBlocker — Test mode opens for Riya without Vobiz, notice calls stay refused', () => {
+    const riyaEnv = (over: Record<string, string | undefined> = {}): NodeJS.ProcessEnv => ({
+        SAMPARK_LIVE_DIAL_ENABLED: 'true',
+        SAMPARK_ELEVENLABS_ENABLED: 'true',
+        ELEVENLABS_API_KEY: 'sk_test_not_a_real_key_0123456789',
+        ELEVENLABS_AGENT_ID: 'agent_1111cloneclonecloneclone111',
+        ELEVENLABS_AGENT_PHONE_NUMBER_ID: 'phnum_3333numbernumbernumber333',
+        ELEVENLABS_SOURCE_AGENT_ID: 'agent_0000sourcesourcesourcesource00',
+        SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: '+919800000001',
+        ...over,
+    } as NodeJS.ProcessEnv);
+
+    it('a complete Riya config lifts the Vobiz blockers for the mode switch only', () => {
+        expect(liveDialBlocker(riyaEnv())).toBe('PUBLIC_BASE_URL_MISSING');
+        expect(testModeBlocker(riyaEnv())).toBeNull();
+    });
+
+    it('any missing Riya piece keeps the original blocker', () => {
+        for (const missing of ['SAMPARK_ELEVENLABS_ENABLED', 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_PHONE_NUMBER_ID', 'SAMPARK_RIYA_TEST_ALLOWED_NUMBERS']) {
+            expect(testModeBlocker(riyaEnv({ [missing]: undefined }))).toBe('PUBLIC_BASE_URL_MISSING');
+        }
+        expect(testModeBlocker(riyaEnv({ SAMPARK_LIVE_DIAL_ENABLED: undefined }))).toBe('LIVE_DIAL_DISABLED');
+    });
+
+    it('a notice call in Test mode is still refused without the Vobiz carrier', () => {
+        const env = riyaEnv();
+        Object.assign(process.env, env);
+        try {
+            expect(() => carrierKindFor(school('test', { testPhoneEnc: encryptPhone('+919800000001'), testPhoneHash: hashPhone('+919800000001') }))).toThrow(/public https address/);
+        } finally {
+            for (const k of Object.keys(env)) delete process.env[k];
+        }
     });
 });

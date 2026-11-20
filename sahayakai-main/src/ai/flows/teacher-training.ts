@@ -7,6 +7,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { resolveContentId } from '@/lib/content-id';
 import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +23,7 @@ export const TeacherTrainingInputSchema = z.object({
   // Middleware always injects x-user-id from the Firebase ID token,
   // so this is required at the schema level — matches the Py sidecar.
   userId: z.string().describe('The ID of the user for whom the advice is being generated.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
 });
 export type TeacherTrainingInput = z.infer<typeof TeacherTrainingInputSchema>;
 
@@ -155,7 +157,7 @@ const teacherTrainingFlow = ai.defineFlow(
         try {
           const now = new Date();
           const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-          const contentId = uuidv4();
+          const contentId = resolveContentId(input.contentId);
           const fileName = `${timestamp}-${contentId}.json`;
           const filePath = `users/${input.userId}/teacher-training/${fileName}`;
 

@@ -34,9 +34,9 @@ it.each(browserFiles.map((f) => [f.slice(ROOT.length + 1), f]))('%s holds no MCP
 
 const serverClients = files(join(ROOT, 'src/lib/mcp-demo'));
 
-it('covers every demo (lesson planner, exam paper, quiz)', () => {
+it('covers every demo (lesson planner, exam paper, quiz, calling)', () => {
     const names = serverClients.map((f) => basename(f));
-    expect(names).toEqual(expect.arrayContaining(['lesson-planner-client.ts', 'exam-paper-client.ts', 'quiz-client.ts']));
+    expect(names).toEqual(expect.arrayContaining(['lesson-planner-client.ts', 'exam-paper-client.ts', 'quiz-client.ts', 'calling-client.ts']));
 });
 
 it.each(serverClients.map((f) => [f.slice(ROOT.length + 1), f]))('%s (server-side MCP client) is marked server-only', (_rel, file) => {

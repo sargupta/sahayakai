@@ -15,7 +15,8 @@ import {
 } from "@/lib/api/attendance";
 import type { ClassRecord, Student, StudentAttendanceSummary, OutreachReason } from "@/types/attendance";
 import { AttendanceGrid } from "@/components/attendance/attendance-grid";
-import { StudentManager } from "@/components/attendance/student-manager";
+import { StudentManager, MAX_STUDENTS_PER_CLASS } from "@/components/attendance/student-manager";
+import { useVidyaCapability, useVidyaScreenContext } from "@/hooks/use-vidya-app-context";
 import { AttendanceCalendar } from "@/components/attendance/attendance-calendar";
 import { ContactParentModal } from "@/components/attendance/contact-parent-modal";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +31,11 @@ import { BackButton } from "@/components/ui/back-button";
 
 function todayStr() {
     return format(new Date(), 'yyyy-MM-dd');
+}
+
+type ClassTab = "today" | "students" | "reports";
+function isClassTab(value: unknown): value is ClassTab {
+    return value === "today" || value === "students" || value === "reports";
 }
 
 function ClassDetailContent() {
@@ -105,6 +111,35 @@ function ClassDetailContent() {
     useEffect(() => {
         loadAll();
     }, [loadAll]);
+
+    // Controlled tab so VIDYA can switch it; same default as before.
+    const [activeTab, setActiveTab] = useState<ClassTab>("today");
+    // Set by VIDYA "open Add Student"; StudentManager clears it once handled.
+    const [pendingAddStudent, setPendingAddStudent] = useState(false);
+
+    // VIDYA: what this class page shows (no student ids, no parent contacts)
+    // and the real actions it offers. Student-level attendance state is
+    // published by AttendanceGrid itself.
+    useVidyaScreenContext("attendance.class", cls ? {
+        className: cls.name,
+        gradeLevel: cls.gradeLevel ?? null,
+        subject: cls.subject ?? null,
+        section: cls.section ?? null,
+        studentCount: students.length,
+        activeTab,
+    } : null);
+    useVidyaCapability("class.show_tab", ({ tab }) => {
+        if (!isClassTab(tab)) throw new Error("unknown_tab");
+        setActiveTab(tab);
+    }, { enabled: !!cls });
+    const rosterFull = students.length >= MAX_STUDENTS_PER_CLASS;
+    useVidyaCapability("students.open_add", () => {
+        setActiveTab("students");
+        setPendingAddStudent(true);
+    }, {
+        enabled: !!cls && !rosterFull,
+        reason: rosterFull ? `${MAX_STUDENTS_PER_CLASS}-student limit reached` : undefined,
+    });
 
     if (loading) {
         return (
@@ -285,7 +320,7 @@ function ClassDetailContent() {
             )}
 
             {/* Tabs */}
-            <Tabs defaultValue="today">
+            <Tabs value={activeTab} onValueChange={(v) => { if (isClassTab(v)) setActiveTab(v); }}>
                 <TabsList className="w-full grid grid-cols-3 h-10 bg-muted/50 rounded-xl">
                     <TabsTrigger value="today" className="gap-1.5 text-xs font-semibold rounded-lg">
                         <ClipboardList className="h-3.5 w-3.5" />
@@ -319,6 +354,8 @@ function ClassDetailContent() {
                         classId={classId}
                         students={students}
                         onRefresh={loadAll}
+                        autoOpenAdd={pendingAddStudent}
+                        onAutoOpenHandled={() => setPendingAddStudent(false)}
                     />
 
                     {/* Contact parent buttons for each student */}

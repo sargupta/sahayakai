@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/i18n/l10n_ext.dart';
 import '../../core/theme/app_theme.dart';
-import '../../features/vidya/presentation/vidya_sheet.dart';
 import 'glass_app_bar.dart';
 import 'primary_button.dart';
 import 'secondary_button.dart';
@@ -11,9 +10,9 @@ import 'secondary_button.dart';
 /// 640dp (so it never stretches edge-to-edge on tablets) + an optional sticky
 /// Generate button above the gesture inset. See ARCHITECTURE §9.1.
 ///
-/// The app bar carries the VIDYA co-teacher action by default ([vidyaAction]),
-/// so VIDYA is reachable from every tool screen ("on every page", U-V7) without
-/// leaving the task; pass `vidyaAction: false` to opt a scaffold out.
+/// VIDYA is reachable from every tool screen through the orb the overlay parks
+/// above every route (design system v2: one orb per screen), so the app bar
+/// carries no second VIDYA entry.
 ///
 /// A tool that can hand its in-flight generation to VIDYA passes [onMinimise]
 /// (and, to abandon it, [onStop]): while it is busy the sticky action becomes
@@ -29,7 +28,6 @@ class ToolScaffold extends StatelessWidget {
     this.onSubmit,
     this.submitLabel,
     this.isBusy = false,
-    this.vidyaAction = true,
     this.onMinimise,
     this.onStop,
   });
@@ -40,9 +38,6 @@ class ToolScaffold extends StatelessWidget {
   final VoidCallback? onSubmit;
   final String? submitLabel;
   final bool isBusy;
-
-  /// Whether the app bar shows the VIDYA co-teacher action (default true).
-  final bool vidyaAction;
 
   /// Hands the running generation to VIDYA and leaves the screen (v3 06). When
   /// non-null, the busy state shows a *Minimise to orb* action instead of a
@@ -74,7 +69,6 @@ class ToolScaffold extends StatelessWidget {
       resizeToAvoidBottomInset: true,
       appBar: GlassAppBar(
         title: Text(title),
-        actions: [if (vidyaAction) const VidyaAppBarAction()],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

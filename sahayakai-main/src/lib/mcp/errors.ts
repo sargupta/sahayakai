@@ -19,6 +19,8 @@ export type McpErrorCategory =
     | 'generation_failed'   // the model could not produce a usable result (retry / simplify)
     | 'capability_disabled' // Sahayak has switched this capability off (kill switch)
     | 'not_configured'      // server-side MCP configuration missing
+    | 'not_found'           // the addressed record does not exist (or is not visible to this key)
+    | 'outside_allowed_hours' // the action is only allowed at certain times (e.g. parent calls 09:00-21:00 IST)
     | 'internal';           // anything else (details logged, never returned)
 
 /** Whether the same call may succeed if the agent simply retries later. */
@@ -33,6 +35,8 @@ const RETRYABLE: Record<McpErrorCategory, boolean> = {
     generation_failed: true,
     capability_disabled: false,
     not_configured: false,
+    not_found: false,
+    outside_allowed_hours: true,
     internal: true,
 };
 
