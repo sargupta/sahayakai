@@ -15,6 +15,9 @@
  * calling hours reads, so the teacher path and every other caller cannot drift
  * apart (gate: calling-hours-single-source-gate.test.ts).
  *
+ * The full pre-dial check (opt-outs, the 30-day cap, these hours) is
+ * src/lib/contact-policy; this module stays for the hours alone.
+ *
  * This must be enforced on the SERVER. Hiding the button is a courtesy; the
  * guarantee is that the route will not dial. Anything that can reach the call
  * route — a retry, a scheduled job, a direct POST — has to pass through here.

@@ -23,6 +23,14 @@ export const CALL_REFUSAL_LABELS: Readonly<Record<string, string>> = {
     PARENT_OPTED_OUT:
         'This parent asked not to be called again, so we have not placed the call. ' +
         'Please reach them another way, such as a WhatsApp message or a note home.',
+    // The shared contact check (src/lib/contact-policy). Each reuses wording already translated in
+    // every locale: an opt-out reads like PARENT_OPTED_OUT, the 30-day cap uses Sampark's own line
+    // (4 routine calls in 30 days), and a check that could not run reads like SUPPRESSION_CHECK_FAILED.
+    OPTED_OUT:
+        'This parent asked not to be called again, so we have not placed the call. ' +
+        'Please reach them another way, such as a WhatsApp message or a note home.',
+    FREQUENCY_CAP: 'Already called four times in the last 30 days',
+    CONTACT_POLICY_UNAVAILABLE: "We could not check this parent's call preferences just now. Please try again in a minute.",
     SUPPRESSION_CHECK_FAILED: "We could not check this parent's call preferences just now. Please try again in a minute.",
     PHONE_MISMATCH: "The parent's phone on this outreach no longer matches the student record. Start a new outreach.",
     INTERNAL: 'Something went wrong',

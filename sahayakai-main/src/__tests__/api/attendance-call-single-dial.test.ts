@@ -13,6 +13,13 @@ const PHONE = '+919800000150';
 let store: Store;
 const jsonSpy = jest.spyOn(NextResponse, 'json');
 
+// The shared contact check (src/lib/contact-policy) runs on its own clock and store; its behaviour on
+// every provider is gated in src/__tests__/contact-policy/gate-contact-policy-behaviour.test.ts. Here
+// it always clears, so this file keeps testing what it is about.
+jest.mock('@/lib/contact-policy/teacher', () => ({
+    clearTeacherCall: async () => ({ ok: true, orgId: null, clearance: { orgId: null, phoneHash: 'h', kind: 'routine', at: new Date() } }),
+    recordTeacherContact: async () => undefined,
+}));
 jest.mock('@/lib/firebase-admin', () => ({ getDb: async () => (global as any).__fakeDb }));
 let windowOpen = true;
 jest.mock('@/lib/calling-hours', () => ({

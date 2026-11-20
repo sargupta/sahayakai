@@ -36,6 +36,8 @@ const PROVIDER_MARKERS = [
 const ALLOWLIST: Record<string, string> = {
     'lib/vobiz/client.ts':
         'Provider client implementation; callers are gated, not the client.',
+    'lib/exotel/config.ts':
+        'Reads whether VOICE_EXOTEL_CALL_URL is set, for the call route\'s refusal step. Configuration only; dials nothing.',
     'app/api/demo-call/route.ts':
         'Public "Hear the Call" lead magnet: dials the visitor\'s OWN number with a fixed ' +
         'script behind Turnstile + rate gates. No parent record or teacher involved.',
@@ -116,6 +118,13 @@ const PHONE = '+919800000102';
 let store: Store;
 const jsonSpy = jest.spyOn(NextResponse, 'json');
 
+// The shared contact check (src/lib/contact-policy) runs on its own clock and store; its behaviour on
+// every provider is gated in src/__tests__/contact-policy/gate-contact-policy-behaviour.test.ts. Here
+// it always clears, so this file keeps testing what it is about.
+jest.mock('@/lib/contact-policy/teacher', () => ({
+    clearTeacherCall: async () => ({ ok: true, orgId: null, clearance: { orgId: null, phoneHash: 'h', kind: 'routine', at: new Date() } }),
+    recordTeacherContact: async () => undefined,
+}));
 jest.mock('@/lib/firebase-admin', () => ({ getDb: async () => (global as any).__fakeDb }));
 jest.mock('@/lib/calling-hours', () => ({
     checkCallingWindow: () => ({ allowed: true, istHour: 12, istTime: '12:00 IST', reason: '', nextAllowedAt: null }),

@@ -21,6 +21,7 @@
  * carrier for that intent in that tick.
  */
 
+import type { ContactRecord } from '@/lib/contact-policy';
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import type { AuditEntry, CallListFilter, ClaimResult, SamparkRepo } from '@/lib/sampark/ports';
 import type { VoiceProbeRecord } from '@/lib/sampark/speech/probe';
@@ -121,6 +122,7 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
     const clips = new OrgTable<RenderedClip>();
     const locks = new Map<string, { holder: string; expiresAtMs: number }>();
     const burned = new Set<string>();
+    const contacts = new Map<string, ContactRecord>();
     const voiceProbes = new Map<string, VoiceProbeRecord>();
     const audit = new Map<string, AuditEntry[]>();
 
@@ -328,6 +330,17 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
                 // A simulated (Practice) call rang nobody, so it never counts towards a frequency cap (H1).
                 .filter((c) => c.phoneHash === phoneHash && c.carrier !== 'simulated' && ms(c.createdAt) >= sinceMs)
                 .filter((c) => !excludeEmergency || !isEmergencyPurpose(c)).length;
+        },
+
+        // ── Shared contact ledger ───────────────────────────────────────────
+        async countContactsToPhoneSince(phoneHash, since, kind) {
+            const sinceMs = since.getTime();
+            return [...contacts.values()].filter((c) => c.phoneHash === phoneHash && c.kind === kind && ms(c.at) >= sinceMs).length;
+        },
+        async recordContact(entry) {
+            if (contacts.has(entry.id)) return false;
+            contacts.set(entry.id, clone(entry));
+            return true;
         },
 
         // ── Rendered audio metadata ─────────────────────────────────────────
