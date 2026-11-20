@@ -7,6 +7,7 @@
  *   2026-10-08 is a Thursday, 10-10 a Saturday, 10-11 a Sunday, 10-12 a Monday.
  */
 
+import { createMemoryConversationRepo } from '@/lib/sampark/conversation/repo';
 import { emptyCounts } from '@/lib/sampark/dispatch/counts';
 import type { DispatchDeps, DispatchOptions } from '@/lib/sampark/dispatch/dispatcher';
 import type { Carrier, Clock, PlaceCallRequest, PlaceCallResult, SamparkRepo } from '@/lib/sampark/ports';
@@ -238,6 +239,7 @@ export function deps(repo: SamparkRepo, clock: Clock, carrier: Carrier, override
         // Mirrors src/server/sampark/jobs.ts: the test phone in test mode, the guardian otherwise.
         destinationFor: async (s, g) => (s.mode === 'test' ? { e164: TEST_PHONE, kind: 'test_phone' } : { e164: guardianPhone(g), kind: 'guardian' }),
         audioSecondsFor: async () => 40,
+        conversationCalls: createMemoryConversationRepo(),
         ...overrides,
     };
 }

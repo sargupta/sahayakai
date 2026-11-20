@@ -216,7 +216,8 @@ describe('every Sampark refusal code has words in every locale', () => {
         const offenders: string[] = [];
         const scan = (dir: string) => {
             for (const e of fs.readdirSync(path.join(SRC, dir), { withFileTypes: true })) {
-                const rel = path.join(dir, e.name);
+                // Forward slashes on every OS, so the allow-list matches on Windows too.
+                const rel = path.join(dir, e.name).split(path.sep).join('/');
                 if (e.isDirectory()) scan(rel);
                 else if (/\.tsx?$/.test(e.name) && !allowed.has(rel)) {
                     const src = fs.readFileSync(path.join(SRC, rel), 'utf8');

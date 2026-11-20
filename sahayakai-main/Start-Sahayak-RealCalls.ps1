@@ -5,7 +5,7 @@
 #   - a webhook gateway (:3010 app webhooks only, :8092 bridge stream only) — the tunnels reach
 #     ONLY these paths, never the dev server or its development login
 #   - two cloudflared quick tunnels (https) for Vobiz callbacks and the media stream
-# Real calls: only the 9 Sargvision roster numbers (scripts/sampark/sargvision-roster.json, consent
+# Real calls: only the 9 Sargvision roster numbers (scripts/sampark/sargvision-roster.local.json, git-ignored, consent
 # recorded); up to 5 calls per contact per day; class-wide batch calls on (rolling: 3 at once, a new
 # call every 60 s, confirmation required). Secrets are read from files and never printed.
 #
@@ -17,13 +17,20 @@ $State = Join-Path $env:TEMP 'riya-local'
 New-Item -ItemType Directory -Force -Path $State | Out-Null
 $ExtraPids = Join-Path $State 'realcall-pids.json'
 $Node = (Get-Command node -ErrorAction SilentlyContinue).Source; if (-not $Node) { $Node = 'E:\NodeJS\node.exe' }
-$Cloudflared = 'C:\Users\Bhagya\.9router\bin\cloudflared.exe'
-$Python = Join-Path $PSScriptRoot '..\sahayakai-agents\.venv\Scripts\python.exe'
+# Every machine-specific path can be set from the shell; the defaults are the original operator's machine.
+#   SAMPARK_CLOUDFLARED     cloudflared.exe (else: cloudflared on PATH, else the original path)
+#   SAMPARK_AGENTS_PYTHON   the sahayakai-agents venv's python.exe
+#   VOBIZ_CRED_FILE         VOBIZ_AUTH_ID / VOBIZ_AUTH_TOKEN
+#   ELEVENLABS_CRED_FILE    "api key", "agent id", "phone number id"
+$Cloudflared = if ($env:SAMPARK_CLOUDFLARED) { $env:SAMPARK_CLOUDFLARED }
+    elseif (Get-Command cloudflared -ErrorAction SilentlyContinue) { (Get-Command cloudflared).Source }
+    else { 'C:\Users\Bhagya\.9router\bin\cloudflared.exe' }
+$Python = if ($env:SAMPARK_AGENTS_PYTHON) { $env:SAMPARK_AGENTS_PYTHON } else { Join-Path $PSScriptRoot '..\sahayakai-agents\.venv\Scripts\python.exe' }
 # A worktree has no venv of its own: use the main checkout's (same pinned requirements). The bridge
 # still runs THIS checkout's code (run_local_voice.py puts its own src/ first on sys.path).
 if (-not (Test-Path $Python)) { $Python = 'E:\sargvision\sahayakai\sahayakai-agents\.venv\Scripts\python.exe' }
 $VobizCred = if ($env:VOBIZ_CRED_FILE) { $env:VOBIZ_CRED_FILE } else { 'E:\sargvision\VOBIZCRED.txt' }
-$ElCred = 'E:\sargvision\Sampark_details.txt'
+$ElCred = if ($env:ELEVENLABS_CRED_FILE) { $env:ELEVENLABS_CRED_FILE } else { 'E:\sargvision\Sampark_details.txt' }
 $AllContacts = 'sv-abhishek,sv-nischay,sv-nandini,sv-shivadeth,sv-varunesh,sv-yash,sv-sachitt,sv-shree,sv-alyssa'
 
 function Step($s) { Write-Host "`n== $s" -ForegroundColor Cyan }

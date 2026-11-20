@@ -596,6 +596,21 @@ describe('Test mode — ElevenLabs (mocked network)', () => {
         expect((await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps))).call.state).toBe('initiated');
     });
 
+    it('class gate (audit gap 4): an old UNKNOWN keeps blocking however many calls came after it', async () => {
+        const fetchImpl = jest.fn(async () => { throw Object.assign(new Error('aborted'), { name: 'AbortError' }); });
+        const s = await setup({ mode: 'test', fetchImpl });
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        expect(call.state).toBe('unknown');
+        // 150 newer, finished calls to other families push it far past any "latest N" page.
+        for (let i = 1; i <= 150; i++) {
+            const at = new Date(Date.parse(call.createdAt) + i * 1000).toISOString();
+            await s.calls.createCallIfAbsent({ ...call, id: `later-${i}`, guardianId: 'g2', studentId: 's2', factsHash: `other-${i}`, state: 'completed', createdAt: at, updatedAt: at, endedAt: at });
+        }
+        expect((await s.calls.listCalls(ORG, 100)).some((c) => c.id === call.id)).toBe(false);
+        expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps)))).toBe('UNRESOLVED_PREVIOUS_CALL');
+        expect(fetchImpl).toHaveBeenCalledTimes(1);
+    });
+
     it('a 429 is a refusal (nothing rang): the call fails and the slot is freed', async () => {
         const fetchImpl = jest.fn(async () => new Response('{}', { status: 429 }));
         const s = await setup({ mode: 'test', fetchImpl });

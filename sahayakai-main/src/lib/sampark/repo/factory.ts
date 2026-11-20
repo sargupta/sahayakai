@@ -84,6 +84,11 @@ export function setSamparkRepoForTests(repo: SamparkRepo | null): void {
     repoPromise = null;
 }
 
+/** The repo a test injected, or null (always null in production). Lets sibling factories stay in memory too. */
+export function samparkRepoOverrideForTests(): SamparkRepo | null {
+    return repoOverride;
+}
+
 // ── Clock ───────────────────────────────────────────────────────────────────
 
 let clockOverride: Clock | null = null;

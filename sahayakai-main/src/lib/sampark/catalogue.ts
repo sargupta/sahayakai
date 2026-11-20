@@ -194,6 +194,14 @@ export function purposeSpec(id: PurposeId): PurposeSpec {
     return spec;
 }
 
+/**
+ * Whether a purpose is exempt from the frequency cap. An unknown id is NOT an emergency, so a call
+ * under it still counts towards the cap (fail closed).
+ */
+export function isEmergencyPurposeId(id: PurposeId): boolean {
+    return (PURPOSE_CATALOGUE as Partial<Record<string, PurposeSpec>>)[id]?.emergency ?? false;
+}
+
 /** Purposes with reviewed templates that a campaign may use today. */
 export function availablePurposes(): PurposeSpec[] {
     return SPECS.filter((s) => s.status === 'available');

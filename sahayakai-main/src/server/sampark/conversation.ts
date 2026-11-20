@@ -61,9 +61,11 @@ import {
 } from '@/lib/sampark/conversation/types';
 import { readVobizRiyaConfig, startVobizRiyaCall, VOBIZ_RIYA_AGENT_ID, type VobizRiyaConfig } from '@/lib/sampark/conversation/vobiz-provider';
 import { MAX_WEBHOOK_BYTES, parseRiyaWebhook, verifyElevenLabsSignature, type RiyaWebhookEvent } from '@/lib/sampark/conversation/webhook';
+import { forwardResponse, forwardWebhook, isAthithiEvent, productContextOf, readForwardConfig } from '@/lib/sampark/conversation/forward';
 import { hashId } from '@/lib/sampark/intents';
 import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
+import { countRoutineCallsToPhone } from '@/lib/sampark/policy/recent-calls';
 import { SAMPARK_NONPROD_DATABASE } from '@/lib/sampark/repo/factory';
 import { SARGVISION_ORG_ID } from '@/lib/sampark/sargvision';
 import { sargvisionLocalEmulator, sargvisionRosterEnvironment } from '@/server/sampark/sargvision-environment';
@@ -646,8 +648,7 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
     // (test calls are recorded against the test phone, so they never add to it).
     const recentCallsToPhone = spec.emergency
         ? 0
-        : (await deps.repo.countCallsToPhoneSince(orgId, guardian.phoneHash, since, true)) +
-          (await deps.calls.countRealCallsToPhoneSince(orgId, guardian.phoneHash, since));
+        : await countRoutineCallsToPhone({ notice: deps.repo, conversation: deps.calls }, orgId, guardian.phoneHash, since);
 
     const verdict = evaluateGate({
         school,
@@ -851,10 +852,12 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
     const factsHash = factsHashOf(input.purpose, preview.variables);
 
     // 9a. An unresolved earlier attempt at the same announcement to the same family blocks this one.
-    const recent = await deps.calls.listCalls(orgId, 100);
-    const unresolved = recent.find((c) =>
-        c.guardianId === guardian.id && c.studentId === student.id && c.factsHash === factsHash &&
+    // Read by family and announcement, not from the latest page of the school's calls: an old
+    // unknown outcome must keep blocking however many calls the school has placed since.
+    const unresolved = (await deps.calls.listCallsForAnnouncement(orgId, guardian.id, factsHash)).find((c) =>
+        c.studentId === student.id &&
         (!isTerminalConversationState(c.state) || (c.state === 'unknown' && !c.reviewedAt)));
+    const recent = await deps.calls.listCalls(orgId, 100);
     if (unresolved) throw conflict('UNRESOLVED_PREVIOUS_CALL', 'An earlier call to this family about the same thing has no confirmed outcome yet; check it before calling again');
 
     // 9b. Test mode: a small daily cap on calls to the test phone.
@@ -1266,7 +1269,7 @@ async function settle(deps: RiyaDeps, call: ConversationCall): Promise<void> {
 
 export interface WebhookOutcome {
     status: 200 | 400 | 401 | 404 | 413 | 503;
-    body: { ok: boolean; error?: string };
+    body: { ok: boolean; error?: string; forwarded?: boolean };
 }
 
 /**
@@ -1289,6 +1292,23 @@ export async function handleRiyaWebhook(deps: RiyaDeps, rawBody: string, signatu
 
     const cfg = readElevenLabsConfig(env);
     if (!cfg.ok) return { status: 503, body: { ok: false, error: 'unconfigured' } };
+
+    // The unified agent's one webhook carries Athithi Vani's hotel calls too: pass those on,
+    // unchanged and still signed, instead of dropping them as "not ours" (lib/.../forward.ts).
+    const forward = readForwardConfig(env);
+    if (forward) {
+        const productContext = productContextOf(rawBody);
+        const athithi = isAthithiEvent({ productContext, agentId: event.agentId, ourAgentId: cfg.config.agentId }, forward);
+        if (athithi) {
+            const outcome = await forwardWebhook(forward, rawBody, signatureHeader ?? '', { fetchImpl: deps.http?.fetchImpl });
+            const fields = { kind: event.kind, productContext, httpStatus: outcome.httpStatus };
+            if (outcome.delivered) logger.info('Riya webhook forwarded to Athithi Vani', LOG, fields);
+            else if (outcome.permanent) logger.error('Athithi Vani refused a forwarded webhook', undefined, LOG, fields);
+            else logger.warn('Athithi Vani webhook forward failed; ElevenLabs will retry', LOG, { ...fields, reason: outcome.reason });
+            return forwardResponse(outcome);
+        }
+    }
+
     if (event.agentId !== cfg.config.agentId) {
         // Not our agent (another agent on the same workspace webhook): accept so it is not retried, change nothing.
         logger.info('Riya webhook for another agent ignored', LOG, {});

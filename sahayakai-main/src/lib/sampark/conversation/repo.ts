@@ -11,6 +11,8 @@
  * different school's call.
  */
 
+import { isEmergencyPurposeId } from '@/lib/sampark/catalogue';
+
 import type { ConversationCall } from './types';
 
 export interface ConversationLink {
@@ -31,8 +33,18 @@ export interface ConversationCallRepo {
     /** Create-only. False if the conversation id is already linked (to anything). */
     linkConversation(conversationId: string, link: ConversationLink): Promise<boolean>;
     getLink(conversationId: string): Promise<ConversationLink | null>;
-    /** Calls to this phone hash created at or after `since` that could have rung a phone (not simulated). */
-    countRealCallsToPhoneSince(orgId: string, phoneHash: string, since: Date): Promise<number>;
+    /**
+     * Calls to this phone hash created at or after `since` that could have rung a phone (not simulated).
+     * With `excludeEmergency`, calls under an emergency purpose are left out — the frequency cap's rule,
+     * the same as SamparkRepo.countCallsToPhoneSince.
+     */
+    countRealCallsToPhoneSince(orgId: string, phoneHash: string, since: Date, excludeEmergency: boolean): Promise<number>;
+    /**
+     * Every call to this family about this announcement (guardian + facts hash), any age, newest first.
+     * The "unresolved earlier attempt" check reads this, so an old unknown outcome is never missed
+     * behind a page of newer calls.
+     */
+    listCallsForAnnouncement(orgId: string, guardianId: string, factsHash: string): Promise<ConversationCall[]>;
     /** Calls created at or after `since` in this school with this provider. */
     countCallsSince(orgId: string, since: Date, provider: ConversationCall['provider']): Promise<number>;
 }
@@ -90,9 +102,16 @@ export function createMemoryConversationRepo(): ConversationCallRepo & { calls: 
             const l = links.get(conversationId);
             return l ? { ...l } : null;
         },
-        async countRealCallsToPhoneSince(orgId, phoneHash, since) {
+        async countRealCallsToPhoneSince(orgId, phoneHash, since, excludeEmergency) {
             const s = since.toISOString();
-            return [...calls.values()].filter((c) => c.orgId === orgId && c.phoneHash === phoneHash && c.createdAt >= s && c.provider !== 'simulated').length;
+            return [...calls.values()].filter((c) => c.orgId === orgId && c.phoneHash === phoneHash && c.createdAt >= s && c.provider !== 'simulated')
+                .filter((c) => !excludeEmergency || !isEmergencyPurposeId(c.purpose)).length;
+        },
+        async listCallsForAnnouncement(orgId, guardianId, factsHash) {
+            return [...calls.values()]
+                .filter((c) => c.orgId === orgId && c.guardianId === guardianId && c.factsHash === factsHash)
+                .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
+                .map(copy);
         },
         async countCallsSince(orgId, since, provider) {
             const s = since.toISOString();

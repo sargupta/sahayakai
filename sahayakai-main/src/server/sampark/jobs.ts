@@ -26,6 +26,8 @@ import os from 'node:os';
 
 import { recomputeCampaignCounts, runDispatchTick, type DialDestination, type DispatchReport } from '@/lib/sampark/dispatch/dispatcher';
 import { materialiseCampaignIntents } from '@/lib/sampark/audience';
+import { conversationCallsOf } from '@/lib/sampark/conversation/factory';
+import type { ConversationCallRepo } from '@/lib/sampark/conversation/repo';
 import { languageInfo } from '@/lib/sampark/languages';
 import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
 import type { AudioStore, Clock, SamparkRepo } from '@/lib/sampark/ports';
@@ -46,6 +48,8 @@ export const DISPATCH_OPTIONS = { maxDialsPerSchoolPerTick: 25, maxInFlightPerSc
 export interface JobDeps {
     repo: SamparkRepo;
     clock: Clock;
+    /** Riya calls for the frequency cap; resolved from the app when absent (conversationCallsOf). */
+    conversationCalls?: ConversationCallRepo;
 }
 
 function holderId(kind: string): string {
@@ -162,7 +166,12 @@ async function renderOne(deps: JobDeps & { speech: SpeechDeps }, school: Sampark
         return;
     }
 
-    const materialised = await materialiseCampaignIntents({ repo, clock }, current, school, carrierKindFor(school));
+    const materialised = await materialiseCampaignIntents(
+        { repo, clock, conversationCalls: await conversationCallsOf(deps) },
+        current,
+        school,
+        carrierKindFor(school),
+    );
     const counts = await recomputeCampaignCounts(repo, school.orgId, campaign.id);
     await repo.updateCampaign(school.orgId, campaign.id, { status: 'scheduled', counts, clipKeys, updatedAt: clock.now().toISOString() });
     await repo.appendAudit(school.orgId, {
@@ -267,6 +276,7 @@ export async function dispatchJob(deps: JobDeps): Promise<DispatchReport> {
             carrierFor,
             destinationFor,
             audioSecondsFor: makeAudioSecondsFor(deps.repo),
+            conversationCalls: await conversationCallsOf(deps),
         },
         DISPATCH_OPTIONS,
     );

@@ -79,6 +79,7 @@ import { applyCallEvent, isTerminal } from '@/lib/sampark/dispatch/state';
 import { callIdFor } from '@/lib/sampark/intents';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
+import { countRoutineCallsToPhone, type RoutineCallCounters } from '@/lib/sampark/policy/recent-calls';
 import { addDays, isDateString, istInstant } from '@/lib/sampark/policy/ist';
 import { EMERGENCY_START_HOUR } from '@/lib/sampark/policy/window';
 import type { Carrier, Clock, SamparkRepo } from '@/lib/sampark/ports';
@@ -125,6 +126,11 @@ export interface DispatchDeps {
     destinationFor(school: SamparkSchool, guardian: SamparkGuardian): Promise<DialDestination>;
     /** Seconds of message+menu audio for this intent's language/variant (from rendered clips); null if unknown. */
     audioSecondsFor(school: SamparkSchool, intent: Intent, variant: 'default' | 'today' | 'tomorrow'): Promise<number | null>;
+    /**
+     * Riya conversation calls, so the frequency cap counts them too (policy/recent-calls.ts).
+     * Required: a dispatcher wired without it would let notices exceed the cap on top of Riya calls.
+     */
+    conversationCalls: RoutineCallCounters['conversation'];
 }
 
 export interface DialDestination {
@@ -470,8 +476,12 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
         ? 0
         : Math.max(
               0,
-              (await deps.repo.countCallsToPhoneSince(orgId, guardian.phoneHash, new Date(now.getTime() - FREQUENCY_WINDOW_MS), true)) -
-                  ownAttemptsInCount,
+              (await countRoutineCallsToPhone(
+                  { notice: deps.repo, conversation: deps.conversationCalls },
+                  orgId,
+                  guardian.phoneHash,
+                  new Date(now.getTime() - FREQUENCY_WINDOW_MS),
+              )) - ownAttemptsInCount,
           );
 
     const verdict = evaluateGate({

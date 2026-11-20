@@ -272,7 +272,8 @@ describe("public VIDYA voice orb is gated on its server route being live", () =>
         }
         if (!/\.(ts|tsx)$/.test(name) || /\.test\.(ts|tsx)$/.test(name)) continue;
         const src = readFileSync(p, "utf8");
-        const rel = path.relative(SRC, p);
+        // Forward slashes on every OS, so the allowed path matches on Windows too.
+        const rel = path.relative(SRC, p).split(path.sep).join("/");
         const mountsOrb = /<LandingVoiceOrb\b/.test(src);
         const opensPublic = /scope:\s*["']public["']/.test(src) && rel !== "lib/vidya-live/live-session.ts";
         if (opensPublic && rel !== "components/landing/landing-voice-orb.tsx") {

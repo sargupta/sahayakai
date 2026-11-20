@@ -58,7 +58,8 @@ function scripts(): Array<{ file: string; text: string }> {
     return out
         .split('\0')
         .filter((f) => SCRIPT.test(f))
-        .map((file) => ({ file, text: readFileSync(path.join(APP_ROOT, file), 'utf8') }));
+        // LF on every OS: a Windows checkout has CRLF, and the checks below look for '\n'.
+        .map((file) => ({ file, text: readFileSync(path.join(APP_ROOT, file), 'utf8').replace(/\r\n/g, '\n') }));
 }
 
 /** Every reason a script breaks the rule; empty when it complies. */

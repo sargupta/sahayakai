@@ -30,7 +30,13 @@ import { getOverview } from '@/server/sampark/overview';
 import { enableSchool } from '@/server/sampark/school';
 import { PARENT_LANGUAGES, type Campaign, type CarrierKind, type CallDestination, type SamparkGuardian } from '@/types/sampark';
 
+import { setConversationRepoForTests } from '@/lib/sampark/conversation/factory';
+import { createMemoryConversationRepo } from '@/lib/sampark/conversation/repo';
 import { ADMIN, CRM_SCHOOL, crmConsent, crmGuardian, crmStudent, fakeSpeech, MON_08_IST, MON_11_IST, ORG, setPhoneEnv, testClock } from './_helpers';
+
+// The jobs and the campaign preview also count Riya calls (frequency cap): keep them in memory.
+beforeEach(() => setConversationRepoForTests(createMemoryConversationRepo()));
+afterEach(() => setConversationRepoForTests(null));
 
 beforeAll(setPhoneEnv);
 

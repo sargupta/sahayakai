@@ -222,19 +222,82 @@ export function parseRiyaWebhook(rawBody: string): RiyaWebhookEvent | null {
 }
 
 /**
- * English phrases that mean "stop calling me". Used only when the agent has no
- * `stop_requested` data-collection field; a match never suppresses directly — it
- * marks the call for the office, exactly as an unconfirmed keypad 9 does.
+ * Phrases that mean "stop calling me", in every language a family may answer in. Used only
+ * when the agent has no `stop_requested` data-collection field; a match never suppresses
+ * directly — it marks the call for the office, exactly as an unconfirmed keypad 9 does.
+ *
+ * Riya speaks English, but parents answer in the language they think in, and the recogniser
+ * writes what it hears in either the native script or Latin letters. So each of Hindi,
+ * Bengali and Nepali is matched in both. Text is folded first (foldForStopMatch): NFC,
+ * nukta and zero-width joiners removed, lower case, single spaces — so फ़ोन and फोन, or
+ * बंद and बन्द, are one word. JavaScript's \b is ASCII-only, so the Indic patterns use
+ * plain substrings that are specific enough on their own.
+ *
+ * Patterns are written in folded form (no nukta: সরি not সরিয়ে). Deliberately NOT matched:
+ * "phone mat kaato" (don't hang up), "call na kar paya" (couldn't call), Hindi "कल नगर…"
+ * (tomorrow, city …). Each pattern has a positive and a near-miss case in
+ * src/__tests__/sampark/conversation/riya-stop-phrases.test.ts.
  */
-const STOP_PHRASES = [
-    /\bstop (calling|these calls|this call|the calls)\b/i,
-    /\bdon'?t call (me|us|again|this number)\b/i,
-    /\bdo not call (me|us|again|this number)\b/i,
-    /\bnever call\b/i,
-    /\bremove (my|this) number\b/i,
-    /\bunsubscribe\b/i,
-];
+export const STOP_PHRASES: Readonly<Record<'English' | 'Hindi' | 'Bengali' | 'Nepali', readonly RegExp[]>> = {
+    English: [
+        /\bstop (calling|these calls|this call|the calls)\b/,
+        /\bdon'?t call (me|us|again|this number)\b/,
+        /\bdo not call (me|us|again|this number)\b/,
+        /\bnever call\b/,
+        /\bremove (my|this) number\b/,
+        /\bunsubscribe\b/,
+    ],
+    Hindi: [
+        // फोन/कॉल मत करो · मत करें · मत कीजिए · मत करना (also "दोबारा/बार बार फोन मत करो")
+        /(फोन|कॉल|काल) मत (कर|की)/,
+        /(फोन|कॉल|काल) (न|ना) (करें|करो|कीजिए|करना|करिए)/,
+        // फोन करना बंद करो / करें / कीजिए
+        /(फोन|कॉल|काल) करना (बंद|बन्द)/,
+        // मेरा नंबर हटाओ / हटा दो / हटा दीजिए
+        /(मेरा|ये|यह) (नंबर|नम्बर) हटा/,
+        /\b(phone|fone|call|kol) (mat|na) (karo|karna|kijiye|kijie|kariye|karie|karein|karen|kare)\b/,
+        /\b(phone|fone|call) karna band\b/,
+        /\b(mera|ye|yeh) number hata(o|do|dein|de|iye|ie)?\b/,
+    ],
+    Bengali: [
+        // ফোন/কল করবেন না · করো না · কোরো না (also "আর ফোন করবেন না")
+        /(ফোন|কল) (করবেন|করো|কোরো) না/,
+        // ফোন করা বন্ধ করুন
+        /(ফোন|কল) করা বন্ধ/,
+        // আমার নম্বর মুছে দিন / বাদ দিন / সরিয়ে দিন
+        /(আমার|এই) (নম্বর|নাম্বার) (মুছে|বাদ|সরি)/,
+        /\b(phone|fon|call|kol) (korben|koro) na\b/,
+        /\b(phone|fon|call) kora bondho\b/,
+    ],
+    Nepali: [
+        // फोन/कल नगर्नुहोस् · नगर्नु · नगर्नूस् (also "फेरि फोन नगर्नुहोस्"); never bare नगर (city)
+        /(फोन|कल) नगर्न/,
+        // फोन गर्न बन्द गर्नुहोस्
+        /(फोन|कल) गर्न (बन्द|बंद)/,
+        // मेरो नम्बर हटाउनुहोस्
+        /(मेरो|यो) (नम्बर|नंबर) हटा/,
+        /\b(phone|fon|call) nagar(nu|nuhos|nuhosh|nus|noos)\b/,
+        /\b(phone|fon|call) garna banda\b/,
+    ],
+};
+
+const ALL_STOP_PHRASES: readonly RegExp[] = Object.values(STOP_PHRASES).flat();
+
+/** Folds a transcript turn so script and spelling variants match one pattern. Exported for tests. */
+export function foldForStopMatch(text: string): string {
+    return text
+        .normalize('NFC')
+        .replace(/[\u093C\u09BC\u200C\u200D]/g, '') // Devanagari and Bengali nukta, ZWNJ, ZWJ
+        .replace(/[\u2018\u2019]/g, "'")
+        .toLowerCase()
+        .replace(/[\s\u0964\u0965.,!?;:]+/g, ' ') // whitespace, danda, punctuation
+        .trim();
+}
 
 export function transcriptRequestsStop(transcript: readonly ConversationTranscriptTurn[]): boolean {
-    return transcript.some((t) => t.role === 'user' && STOP_PHRASES.some((re) => re.test(t.message)));
+    return transcript.some((t) => {
+        if (t.role !== 'user') return false;
+        const text = foldForStopMatch(t.message);
+        return ALL_STOP_PHRASES.some((re) => re.test(text));
+    });
 }

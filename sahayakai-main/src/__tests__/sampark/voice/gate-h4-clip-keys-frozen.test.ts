@@ -44,8 +44,14 @@ import { makeAudioSecondsFor, renderJob } from '@/server/sampark/jobs';
 import { enableSchool } from '@/server/sampark/school';
 import { handleSamparkAnswer, handleSamparkGather } from '@/server/sampark/voice';
 
+import { setConversationRepoForTests } from '@/lib/sampark/conversation/factory';
+import { createMemoryConversationRepo } from '@/lib/sampark/conversation/repo';
 import { ADMIN, CRM_SCHOOL, crmGuardian, crmStudent, fakeSpeech, MON_11_IST, setPhoneEnv, testClock as serverClock } from '../server/_helpers';
 import { CALL_ID, ORG, gatherAction, playUrls, setVoiceEnv, testIntent, tokenOf, world, type World } from './_fixtures';
+
+// The jobs and the campaign preview also count Riya calls (frequency cap): keep them in memory.
+beforeEach(() => setConversationRepoForTests(createMemoryConversationRepo()));
+afterEach(() => setConversationRepoForTests(null));
 
 beforeAll(setPhoneEnv);
 beforeEach(() => setVoiceEnv());

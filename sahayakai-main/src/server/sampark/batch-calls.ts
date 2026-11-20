@@ -1054,7 +1054,9 @@ async function dialPass(deps: BatchDeps, start: BatchCampaign, env: Env): Promis
         // Never twice about the same announcement: a family already reached (by any campaign or an
         // individual call) is skipped.
         const factsHash = factsHashOf(c.purpose, p.variables);
-        const already = recent.find((x) => x.guardianId === next.guardianId && x.studentId === next.studentId && x.factsHash === factsHash && x.state === 'completed' && !next.callIds.includes(x.id));
+        // Read by family and announcement (any age), not from the latest page of the school's calls.
+        const already = (await deps.calls.listCallsForAnnouncement(orgId, next.guardianId, factsHash))
+            .find((x) => x.studentId === next.studentId && x.state === 'completed' && !next.callIds.includes(x.id));
         if (already) {
             c = (await updateRecipient(deps, orgId, c.id, next.id, (r) => (r.status !== 'pending' ? null : { ...r, status: 'skipped', lastError: { code: 'ALREADY_CALLED', message: 'This family was already called about this announcement' }, updatedAt: at }))) ?? c;
             continue;

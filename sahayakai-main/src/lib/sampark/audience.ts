@@ -47,6 +47,7 @@ import { recomputeCampaignCounts } from '@/lib/sampark/dispatch/counts';
 import { campaignDedupeKey, intentIdFor } from '@/lib/sampark/intents';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
 import { resolveLanguage } from '@/lib/sampark/policy/language';
+import { countRoutineCallsToPhone, NO_CONVERSATION_CALLS, type RoutineCallCounters } from '@/lib/sampark/policy/recent-calls';
 import type { Clock, SamparkRepo } from '@/lib/sampark/ports';
 import type {
     BlockReason,
@@ -144,7 +145,12 @@ export function bundleAudience(
  *  and create intents (status 'approved' or 'blocked') with repo.createIntentIfAbsent. In Test mode only one family per
  *  language is approved (see TEST MODE above). Idempotent. */
 export async function materialiseCampaignIntents(
-    deps: { repo: SamparkRepo; clock: Clock },
+    deps: {
+        repo: SamparkRepo;
+        clock: Clock;
+        /** Riya conversation calls, counted towards the frequency cap with notices (policy/recent-calls.ts). Production always passes it (gate-cross-channel-frequency-cap). */
+        conversationCalls?: RoutineCallCounters['conversation'];
+    },
     campaign: Campaign,
     school: SamparkSchool,
     carrierKind: CarrierKind,
@@ -205,7 +211,12 @@ export async function materialiseCampaignIntents(
 
         let recent = recentByPhone.get(guardian.phoneHash);
         if (recent === undefined) {
-            recent = await repo.countCallsToPhoneSince(orgId, guardian.phoneHash, since, true);
+            recent = await countRoutineCallsToPhone(
+                { notice: repo, conversation: deps.conversationCalls ?? NO_CONVERSATION_CALLS },
+                orgId,
+                guardian.phoneHash,
+                since,
+            );
             recentByPhone.set(guardian.phoneHash, recent);
         }
         const prefs = preferences.get(guardianId) ?? null;

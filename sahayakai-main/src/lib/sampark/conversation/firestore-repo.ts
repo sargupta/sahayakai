@@ -8,6 +8,8 @@
 
 import type { Firestore } from 'firebase-admin/firestore';
 
+import { isEmergencyPurposeId } from '@/lib/sampark/catalogue';
+
 import type { ConversationCallRepo, ConversationLink } from './repo';
 import type { ConversationCall } from './types';
 
@@ -91,14 +93,29 @@ export class FirestoreConversationRepo implements ConversationCallRepo {
         return snap.exists ? (snap.data() as ConversationLink) : null;
     }
 
-    async countRealCallsToPhoneSince(orgId: string, phoneHash: string, since: Date): Promise<number> {
+    async countRealCallsToPhoneSince(orgId: string, phoneHash: string, since: Date, excludeEmergency: boolean): Promise<number> {
         const snap = await this.db.collection('sampark_schools').doc(orgId).collection('sampark_conversation_calls')
             .where('phoneHash', '==', phoneHash)
             .where('createdAt', '>=', since.toISOString())
-            .select('provider')
+            .select('provider', 'purpose')
             .get();
         // Filtered here, not in the query: an inequality on `provider` would need its own index.
-        return snap.docs.filter((d) => d.get('provider') !== 'simulated').length;
+        return snap.docs.filter((d) => {
+            if (d.get('provider') === 'simulated') return false;
+            return !excludeEmergency || !isEmergencyPurposeId(d.get('purpose') as ConversationCall['purpose']);
+        }).length;
+    }
+
+    async listCallsForAnnouncement(orgId: string, guardianId: string, factsHash: string): Promise<ConversationCall[]> {
+        // Two equality filters and no order: Firestore serves this by merging its automatic
+        // single-field indexes, so no composite index is needed. Sorted here.
+        const snap = await this.db.collection('sampark_schools').doc(orgId).collection('sampark_conversation_calls')
+            .where('guardianId', '==', guardianId)
+            .where('factsHash', '==', factsHash)
+            .get();
+        return snap.docs
+            .map((d) => d.data() as ConversationCall)
+            .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
     }
 
     async countCallsSince(orgId: string, since: Date, provider: ConversationCall['provider']): Promise<number> {

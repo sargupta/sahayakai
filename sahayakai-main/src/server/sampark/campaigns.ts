@@ -28,8 +28,9 @@ import { z } from 'zod';
 
 import { logger } from '@/lib/logger';
 import { bundleAudience } from '@/lib/sampark/audience';
-import { isDialable, PURPOSE_CATALOGUE, purposeSpec } from '@/lib/sampark/catalogue';
+import { isDialable, isEmergencyPurposeId, PURPOSE_CATALOGUE, purposeSpec } from '@/lib/sampark/catalogue';
 import { chooseClosureVariant, closureExpiry, istDateString } from '@/lib/sampark/closure';
+import { conversationCallsOf } from '@/lib/sampark/conversation/factory';
 import { emptyCounts } from '@/lib/sampark/dispatch/counts';
 import { languageInfo } from '@/lib/sampark/languages';
 import { evaluateGate } from '@/lib/sampark/policy/gate';
@@ -257,9 +258,10 @@ export async function summariseAudience(ctx: SamparkCtx, school: SamparkSchool, 
     const spec = purposeSpec(campaign.purpose);
     const carrierKind = carrierKindForDryRun(school);
 
-    const [suppressions, recentCalls] = await Promise.all([
+    const [suppressions, recentCalls, recentConversations] = await Promise.all([
         ctx.repo.listSuppressions(school.orgId),
         ctx.repo.listCalls(school.orgId, { limit: 5000 }),
+        conversationCallsOf(ctx).then((calls) => calls.listCalls(school.orgId, 5000)),
     ]);
     const suppressionByHash = new Map(suppressions.map((s) => [s.phoneHash, s]));
     const since = now.getTime() - THIRTY_DAYS_MS;
@@ -270,6 +272,13 @@ export async function summariseAudience(ctx: SamparkCtx, school: SamparkSchool, 
         // The cap's own rule (H1, B6): only real calls to a guardian count. A Practice call rang
         // nobody, and a Test call rang the school's own phone.
         if (c.carrier === 'simulated' || (c.destination ?? 'guardian') !== 'guardian') continue;
+        recentByHash.set(c.phoneHash, (recentByHash.get(c.phoneHash) ?? 0) + 1);
+    }
+    // Riya calls count too (policy/recent-calls.ts), by the same rule.
+    for (const c of recentConversations) {
+        if (new Date(c.createdAt).getTime() < since) continue;
+        if (isEmergencyPurposeId(c.purpose)) continue;
+        if (c.provider === 'simulated' || c.destination !== 'guardian') continue;
         recentByHash.set(c.phoneHash, (recentByHash.get(c.phoneHash) ?? 0) + 1);
     }
 

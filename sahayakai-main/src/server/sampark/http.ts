@@ -17,6 +17,7 @@ import { NextResponse } from 'next/server';
 import { z, type ZodTypeAny } from 'zod';
 
 import { logger } from '@/lib/logger';
+import type { ConversationCallRepo } from '@/lib/sampark/conversation/repo';
 import type { Clock, SamparkRepo } from '@/lib/sampark/ports';
 import { getSamparkClock, getSamparkRepo } from '@/lib/sampark/repo/factory';
 import { requireOrgAdmin } from '@/server/sampark/auth';
@@ -25,6 +26,11 @@ import { SamparkServiceError } from '@/server/sampark/errors';
 export interface SamparkCtx {
     repo: SamparkRepo;
     clock: Clock;
+    /**
+     * Riya conversation calls, counted with notices towards the frequency cap. Optional: when absent,
+     * conversationCallsOf() resolves the app's repo, so no request pays for it unless it needs it.
+     */
+    conversationCalls?: ConversationCallRepo;
 }
 
 export async function samparkContext(): Promise<SamparkCtx> {

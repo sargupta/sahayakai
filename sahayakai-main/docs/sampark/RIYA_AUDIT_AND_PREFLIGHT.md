@@ -81,13 +81,13 @@ Each requirement is listed with where it is enforced (server side) and which tes
 | Rollback | Riya flag off → every Riya route and the webhook return 404; notice path untouched | `riya-routes` | OK |
 | Existing Vobiz and teacher calling unchanged | No diff in `src/app/api/attendance/**`, `src/lib/vobiz/**`, `src/lib/sidecar/**`, `src/components/attendance/**`, `src/lib/sampark/dispatch/**`, `src/server/sampark/carrier.ts`, `src/app/api/webhooks/sampark-voice/**`, `src/middleware.ts` | 20 regression suites: 551 passing, 16 skipped | OK |
 
-**Remaining gaps (documented, not fixed: they matter only for parents, and Live is refused):**
+**Remaining gaps.** These were listed as open after the audit. Status as of 17 Nov 2026, branch `fix/riya-known-gaps`:
 
-1. The notice dispatcher's frequency cap does not count Riya calls. The Riya path does count notice calls.
-2. Phrase-based stop detection is English-only.
-3. Transcript expiry has no scheduled sweep.
-4. An "unknown" older than the latest 100 calls no longer blocks a repeat.
-5. The absence workflow needs the agent change (proposal §3) and the plan's paging rule. It stays off.
+1. **Closed.** The frequency cap now counts both channels everywhere it is computed: notice dispatch, campaign materialisation, the campaign preview and the Riya path. They all go through `src/lib/sampark/policy/recent-calls.ts`. Emergency, Practice and test-phone calls never count, on either side. This changes how the Riya path counts: an earlier Riya `emergency_closure` call no longer counts against a routine Riya call, which matches the notice rule. Class gate: `src/__tests__/sampark/engine/gate-cross-channel-frequency-cap.test.ts`. It checks the behaviour, and it fails if any new code counts calls to a phone from the notice store alone, or wires materialisation without the conversation repo.
+2. **Closed.** Phrase-based stop detection now covers English, Hindi, Bengali and Nepali, in native script and in Latin letters. Text is folded first (nukta, zero-width joiners, danda and punctuation are removed). A match still only marks the call for office confirmation. Class gate: `src/__tests__/sampark/conversation/riya-stop-phrases.test.ts`. Every pattern needs a positive example, every parent language must be covered in both scripts, and near-misses ("phone mat kaato", "call later", Hindi "कल नगर…") must not match. **The Hindi, Bengali and Nepali phrases need a native speaker's review.**
+3. **Closed** (before this pass). An hourly retention sweep, `runScheduledTranscriptPurge`, runs in the dispatch job.
+4. **Closed.** The "unresolved earlier attempt" check now reads by family and announcement (`listCallsForAnnouncement`: guardian + facts hash, any age) instead of the latest 100 calls. The batch path's "already called about this announcement" check had the same limit (latest 300 calls) and was fixed the same way. Firestore serves the query from its automatic single-field indexes, so no composite index is needed. Class gate: "an old UNKNOWN keeps blocking however many calls came after it" in `riya-service.test.ts`.
+5. **Open, by decision.** The absence workflow needs the agent change (proposal §3) and the plan's paging rule (A2: key 2 or no answer pages the class teacher and the principal). Both are product and safety decisions, not code. It stays off.
 
 ## 4. Files changed in the audit commit
 
