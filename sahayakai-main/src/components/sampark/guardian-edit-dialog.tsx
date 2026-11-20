@@ -91,7 +91,7 @@ export function GuardianEditDialog({
                     <div className="flex items-start gap-2 rounded-surface-md border border-info/30 bg-info/10 p-3">
                         <Info aria-hidden="true" className="mt-1 h-4 w-4 shrink-0 text-info" />
                         <p className="type-body text-foreground">
-                            {t("Record consent only after the family has told the school. Never assume it. Your change is saved as recorded by the school office.")}
+                            {t("Record consent only after the parent has told the school. Never assume it. Your change is saved as recorded by the school office.")}
                         </p>
                     </div>
 

@@ -9,7 +9,7 @@
  * refuses it.
  *
  * WHAT THIS GATE CATCHES
- * Not "21:00 is blocked" — the class is: the window is evaluated in IST no
+ * Not "19:00 is blocked" — the class is: the window is evaluated in IST no
  * matter where the server, teacher or scheduler sits, the boundaries are exact,
  * and a refusal always says when calling reopens. A future timezone shortcut —
  * reading the server clock, hard-coding +5:30, using local Date arithmetic —
@@ -30,12 +30,13 @@ function istInstant(hour: number, minute = 0, day = 15): Date {
 
 describe('calling window (class gate)', () => {
     it('allows calls through the working day', () => {
-        for (const h of [10, 13, 17, 18]) {
+        for (const h of [10, 11, 13, 17, 18]) {
             expect(checkCallingWindow(istInstant(h, 30)).allowed).toBe(true);
         }
     });
 
-    it('refuses calls at night and early morning', () => {
+    it('refuses calls in the evening, at night and early morning', () => {
+        // 09:xx and 19:xx–20:xx were callable under the old 09:00–21:00 window.
         for (const h of [19, 20, 21, 22, 23, 0, 1, 3, 6, 8, 9]) {
             const v = checkCallingWindow(istInstant(h, 30));
             expect(v.allowed).toBe(false);
@@ -43,7 +44,7 @@ describe('calling window (class gate)', () => {
         }
     });
 
-    it('has exact boundaries — 10:00 open, 19:00 shut (routine band, decision 2)', () => {
+    it('has exact boundaries — 10:00 open, 19:00 shut', () => {
         expect([CALLING_WINDOW_START_HOUR, CALLING_WINDOW_END_HOUR]).toEqual([10, 19]);
         // The two minutes that decide whether a family's evening is interrupted.
         expect(checkCallingWindow(istInstant(CALLING_WINDOW_START_HOUR, 0)).allowed).toBe(true);
@@ -94,6 +95,12 @@ describe('calling window (class gate)', () => {
     it('reopens at 10:00 IST, not merely "some time later"', () => {
         const v = checkCallingWindow(istInstant(23, 10));
         expect(formatIST(v.nextAllowedAt!)).toBe('10:00 IST');
+    });
+
+    it('states the routine band in the refusal a teacher reads', () => {
+        const v = checkCallingWindow(istInstant(19, 30));
+        expect(v.reason).toContain('between 10:00 and 19:00 IST');
+        expect(v.reason).toContain('reopens at 10:00 IST');
     });
 
     it('offers no reopening time when calling is already allowed', () => {

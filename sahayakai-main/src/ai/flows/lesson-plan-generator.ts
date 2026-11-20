@@ -7,6 +7,7 @@
  */
 
 import { ai, runResiliently } from '@/ai/genkit';
+import { resolveContentId } from '@/lib/content-id';
 import { z } from 'genkit';
 import { getIndianContextPrompt } from '@/lib/indian-context';
 import { renderRegionalContextBlock, getRegionalAnchors } from '@/lib/regional-examples';
@@ -22,6 +23,14 @@ import { UsageTracker } from '@/lib/usage-tracker';
 import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
 import { getGradeBand, getPedagogyFrameworkBlock, getBandDisplayLabel } from '@/lib/grade-bands';
 
+/**
+ * Callers with no teacher account (public MCP servers, server scripts) use this
+ * id. They are never rate-limited, profiled, persisted or metered as a teacher.
+ */
+const HEADLESS_CALLER_ID = 'anonymous_user';
+const isTeacherCaller = (userId: string | null | undefined): userId is string =>
+  Boolean(userId) && userId !== HEADLESS_CALLER_ID;
+
 export const LessonPlanInputSchema = z.object({
   topic: z.string().max(1000).describe('The topic for which to generate a lesson plan.'),
   language: z.string().max(50).optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
@@ -32,6 +41,7 @@ export const LessonPlanInputSchema = z.object({
   // Middleware always injects x-user-id from the Firebase ID token,
   // so this is required at the schema level — matches the Py sidecar.
   userId: z.string().describe('The ID of the user for whom the lesson plan is being generated.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
   useRuralContext: z.boolean().optional().describe('Use Indian rural context with local examples (farming, monsoon, Indian festivals, etc.). Defaults to true.'),
   ncertChapter: z.object({
@@ -117,6 +127,9 @@ export type LessonPlanOutput = z.infer<typeof LessonPlanOutputSchema>;
  * Audits materials list against activities to ensure consistency.
  * Returns merged materials list that includes items mentioned in activities.
  */
+/** Upper bound for the optional materials audit; on expiry the plan keeps its own materials list. */
+export const MATERIALS_AUDIT_BUDGET_MS = 12_000;
+
 async function auditMaterials(output: LessonPlanOutput, language?: string): Promise<string[]> {
   try {
     const activitiesText = output.activities
@@ -436,12 +449,12 @@ const lessonPlanFlow = ai.defineFlow(
 
             // Still persist to this user's personal library
             const userId = input.userId;
-            if (userId) {
+            if (isTeacherCaller(userId)) {
               try {
                 const storage = await getStorageInstance();
                 const now = new Date();
                 const timestamp = format(now, 'yyyyMMdd_HHmmss');
-                const contentId = crypto.randomUUID();
+                const contentId = resolveContentId(input.contentId);
                 const safeTitle = (cached.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
                 const fileName = `${timestamp}_${safeTitle}.json`;
                 const filePath = `users/${userId}/lesson-plans/${fileName}`;
@@ -501,7 +514,7 @@ const lessonPlanFlow = ai.defineFlow(
           }, 'lessonPlan.generate');
         });
 
-        if (normalizedInput.userId && usage) {
+        if (isTeacherCaller(normalizedInput.userId) && usage) {
           UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.5-flash');
         }
         genTimer.stop();
@@ -544,8 +557,19 @@ const lessonPlanFlow = ai.defineFlow(
         });
 
         // BUG FIX #2: Audit materials consistency
-        try {
-          const auditedMaterials = await auditMaterials(output, normalizedInput.language);
+        // LESSON_PLAN_MATERIALS_AUDIT=off (the local demo launcher sets it): skip this optional
+        // second model call. Locally it ran for up to ~2 min AFTER the 12 s cut-off, and a burst of
+        // plans left many of them running, which exhausted the model quota for every other tool.
+        if (process.env.LESSON_PLAN_MATERIALS_AUDIT !== 'off') try {
+          // Time-boxed: the audit is an optional second model call. When it stalls (seen
+          // locally: >40 s with no answer) it must not push the whole request past the
+          // route's 60 s budget and throw away a plan that was already generated.
+          const { withTimeout } = await import('@/lib/sidecar/with-timeout');
+          const auditedMaterials = await withTimeout(
+            auditMaterials(output, normalizedInput.language),
+            MATERIALS_AUDIT_BUDGET_MS,
+            'lesson-plan materials audit',
+          );
           if (auditedMaterials.length > output.materials.length) {
             StructuredLogger.info('Materials audit detected missing items', {
               service: 'lesson-plan-flow',
@@ -575,14 +599,14 @@ const lessonPlanFlow = ai.defineFlow(
         }
 
         const userId = input.userId;
-        if (userId) {
+        if (isTeacherCaller(userId)) {
           try {
             await Sentry.startSpan({ name: 'Persistence Phase', op: 'db.save' }, async () => {
               const persistTimer = logger.startTimer(`Persisting Lesson Plan`, 'STORAGE', { userId });
               const storage = await getStorageInstance();
               const now = new Date();
               const timestamp = format(now, 'yyyyMMdd_HHmmss');
-              const contentId = crypto.randomUUID();
+              const contentId = resolveContentId(input.contentId);
               const safeTitle = (output.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
               const fileName = `${timestamp}_${safeTitle}.json`;
               const filePath = `users/${userId}/lesson-plans/${fileName}`;

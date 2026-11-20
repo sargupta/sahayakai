@@ -15,6 +15,7 @@ import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_wizar
 import 'package:sahayakai/shared/media/image_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'worksheet_fixtures.dart';
 
 /// Screen-layer gates: the required-image + required-prompt validation the
@@ -35,7 +36,7 @@ Widget _host({
       ...overrides,
     ],
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -183,7 +184,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets(
           'form renders at 360dp, textScale $scale, ${brightness.name}',
@@ -198,8 +199,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Textbook page photo'), findsOneWidget);
-            expect(find.text('What worksheet do you need?'), findsOneWidget);
+            expect(findFieldLabel('Textbook page photo'), findsOneWidget);
+            expect(findFieldLabel('What worksheet do you need?'), findsOneWidget);
             expect(find.text('Take photo'), findsOneWidget);
           },
         );

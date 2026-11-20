@@ -18,8 +18,16 @@ output/
 # cannot work. See commits 1054ff1f3 and a2462fee2 — this is the third
 # time this pattern has regressed via a sync-from-main merge. DO NOT
 # replace these two lines with `scripts/`.
-scripts/*
-!scripts/api-test/
+# Anchored with a leading slash: an unanchored `scripts/*` also matched
+# src/lib/sampark/scripts/ and broke `gcloud builds submit` of this folder.
+/scripts/*
+!/scripts/api-test/
 # Per-agent worktrees and tooling — never deploy
 .claude/
 keynote-mcp/
+
+# Never upload local env files to the Cloud Build source bucket.
+.env
+.env.*
+*.local
+!.env.example

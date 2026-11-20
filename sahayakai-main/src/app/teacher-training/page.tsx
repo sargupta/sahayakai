@@ -5,7 +5,6 @@ import { Suspense, useRef } from "react";
 
 import type { TeacherTrainingOutput } from "@/ai/flows/teacher-training";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,8 +32,11 @@ import { Save, History, MessageCircleQuestion } from "lucide-react";
 // Mounting both here created the "two voice surfaces" UX bug.
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
+import { useVidyaCapability, useVidyaScreenContext } from "@/hooks/use-vidya-app-context";
 import { useNetworkAware } from "@/hooks/use-network-aware";
 import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
+import { cn } from "@/lib/utils";
+import { GeneratorHeader, GeneratorProgress, GeneratorSection, GeneratorSubmitBar, GENERATOR_SUBMIT_CLASS } from "@/features/generator";
 
 
 const formSchema = z.object({
@@ -104,6 +106,9 @@ const PRO_TIP_KEYS = [
 
 function TeacherTrainingContent() {
   const [advice, setAdvice] = useState<TeacherTrainingOutput | null>(null);
+  // Library id of the shown advice (minted per generation / restored id);
+  // both Save buttons upsert it, so one generation = one Library row.
+  const [adviceContentId, setAdviceContentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [savingToLib, setSavingToLib] = useState(false);
   const [savedToLib, setSavedToLib] = useState(false);
@@ -191,7 +196,10 @@ function TeacherTrainingContent() {
             if (content.topic) form.setValue("question", content.topic);
             if (content.language) form.setValue("language", content.language);
             if (content.subject) form.setValue("subject", content.subject);
-            if (content.data) setAdvice(content.data as TeacherTrainingOutput);
+            if (content.data) {
+              setAdvice(content.data as TeacherTrainingOutput);
+              setAdviceContentId(id);
+            }
           }
         } catch (err) {
           console.error("Failed to load saved teacher training:", err);
@@ -231,6 +239,7 @@ function TeacherTrainingContent() {
     if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setAdvice(null);
+    setAdviceContentId(null);
     try {
       const token = await auth.currentUser?.getIdToken();
       const headers: Record<string, string> = {
@@ -251,10 +260,12 @@ function TeacherTrainingContent() {
         ? values.subject
         : undefined;
 
+      const submitContentId = crypto.randomUUID();
       const res = await fetch("/api/ai/teacher-training", {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
+          contentId: submitContentId,
           question: values.question,
           language: submittedLanguage,
           subject: submittedSubject,
@@ -272,6 +283,7 @@ function TeacherTrainingContent() {
 
       const result = await res.json();
       setAdvice(result);
+      setAdviceContentId(submitContentId);
       clearFormSnapshot("teacher-training");
       // UX audit #13: persist last question so a returning teacher can
       // pick up where they left off. Stored client-side only — no PII
@@ -325,11 +337,14 @@ function TeacherTrainingContent() {
     setSavingToLib(true);
     try {
       const title = form.getValues("question").slice(0, 80);
+      // Same id the generation was filed under → updates that row, never a
+      // second copy (this button and the display's Save share it).
       const result = await saveToLibrary(
         auth.currentUser.uid,
         "teacher-training",
         title,
         advice,
+        adviceContentId,
       );
       if (result.success) {
         setSavedToLib(true);
@@ -348,160 +363,182 @@ function TeacherTrainingContent() {
     }
   };
 
+  // VIDYA: what the teacher asked and the coaching on screen, so she can talk it
+  // through ("explain the second strategy", "how would that work in Class 3?").
+  // Only what the teacher already sees; strings are bounded by the contract.
+  useVidyaScreenContext("teacher-training", {
+    generatorTool: "teacher-training",
+    generationStatus: isLoading ? "generating" : advice ? "done" : "idle",
+    hasResult: advice !== null,
+    savedToLibrary: savedToLib,
+    currentQuestion: (watchedQuestion || "").trim() || null,
+    adviceStrategies: advice ? advice.advice.map((a) => a.strategy) : [],
+    advicePedagogies: advice ? advice.advice.map((a) => a.pedagogy) : [],
+  });
+  // The same handlers the buttons use; both create or update a My Library row,
+  // so VIDYA asks the teacher to confirm before running them.
+  useVidyaCapability("teacher-training.ask", ({ question }) => {
+    const q = (question || form.getValues("question") || "").trim();
+    if (!q) return;
+    form.setValue("question", q, { shouldValidate: true });
+    void form.handleSubmit(onSubmit)();
+  }, { enabled: !isLoading });
+  useVidyaCapability("teacher-training.save", handleSaveToLibrary, {
+    enabled: advice !== null && !savedToLib && !savingToLib,
+  });
+
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
-        {/* Clean Top Bar */}
+    <div className="container-wide space-y-8 py-6 md:py-10">
+      <GeneratorHeader
+        icon={GraduationCap}
+        eyebrow={t("Class")}
+        title={t("AI Coach")}
+        description={
+          <>
+            <span>{descriptionLines[0]}</span>{" "}
+            <span className="hidden sm:inline">{descriptionLines[1]}</span>
+          </>
+        }
+      />
+
+      <section className="overflow-hidden rounded-card border border-border bg-card shadow-card">
         <div className="card-accent-bar" />
-
-        <CardHeader className="text-center pb-3 sm:pb-6 pt-4 sm:pt-6">
-          {/* Compact mobile header — icon hidden on mobile to save vertical
-              space; on desktop kept for visual anchor (UX audit #14). */}
-          <div className="hidden sm:flex justify-center items-center mb-3">
-            <div className="p-3 rounded-full bg-primary/10 text-primary">
-              <GraduationCap className="w-8 h-8" />
-            </div>
-          </div>
-          <CardTitle className="font-headline tracking-tight text-xl sm:text-3xl">{t("AI Coach")}</CardTitle>
-          <CardDescription>
-            <p>{descriptionLines[0]}</p>
-            <p className="hidden sm:block">{descriptionLines[1]}</p>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <div className="p-4 sm:p-6 md:p-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
 
-                {/* LEFT COLUMN: Main Content (7 cols) */}
-                <div className="lg:col-span-7 space-y-6">
+                {/* ── The question ───────────────────────────────────── */}
+                <div className="space-y-6 xl:col-span-7">
                   {/* UX audit #13: previous question affordance — appears
                       only if a question was asked in the last 7 days. */}
                   {lastQuestion && (
                     <button
                       type="button"
                       onClick={handleResumeLast}
-                      className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
+                      className="focus-ring flex w-full items-start gap-3 rounded-row border border-primary/20 bg-tint-accent-soft p-4 text-left transition-colors duration-micro ease-out-quart hover:border-primary/40"
                     >
-                      <History className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <History className="mt-0.5 h-4 w-4 shrink-0 text-saffron-600" aria-hidden="true" />
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-primary uppercase tracking-wide">{t("Continue your last question")}</p>
-                        <p className="text-sm text-foreground line-clamp-1">{lastQuestion}</p>
+                        <p className="type-eyebrow text-saffron-700 indic-text">{t("Continue your last question")}</p>
+                        <p className="mt-1 line-clamp-1 text-sm text-foreground">{lastQuestion}</p>
                       </div>
                     </button>
                   )}
+
+                  <GeneratorSection step={1} title={t("Your Question or Challenge")}>
+                    <FormField
+                      control={form.control}
+                      name="question"
+                      render={({ field }) => {
+                        const charCount = (field.value || "").length;
+                        const minChars = 10;
+                        const isValid = charCount >= minChars;
+                        return (
+                          <FormItem>
+                            <FormLabel className="sr-only">{t("Your Question or Challenge")}</FormLabel>
+                            <FormControl>
+                              {/* Mic anchored INSIDE the textarea wrapper at top-right
+                                  — fixes UX audit bug #4 (orphaned position).
+                                  Appends transcript to whatever the teacher already typed. */}
+                              <div className="relative">
+                                <Textarea
+                                  placeholder={t("Type your question or challenge here…")}
+                                  {...field}
+                                  className="min-h-36 resize-none rounded-field bg-muted/30 pr-12 text-lg leading-relaxed"
+                                />
+                                <div className="absolute right-2 top-2">
+                                  <InlineMicButton
+                                    onTranscript={(text, isFinal) => {
+                                      if (!isFinal) return;
+                                      const current = field.value || "";
+                                      field.onChange(current ? `${current} ${text}` : text);
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </FormControl>
+                            {/* Live character counter — UX audit #11.
+                                Teacher knows the 10-char minimum before submit. */}
+                            <div className="mt-1 flex items-center justify-between">
+                              <FormMessage />
+                              <span className={`ml-auto text-xs font-medium tabular-nums ${isValid ? "text-success" : "text-muted-foreground"}`}>
+                                {charCount} / {minChars} {isValid ? "✓" : t("min")}
+                              </span>
+                            </div>
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  </GeneratorSection>
+
+                  <GeneratorSection step={2} title={t("Quick Ideas")}>
+                    <div className="space-y-4">
+                      {/* UX audit #3: personalised Quick Ideas — appears only
+                          when teacherProfile has grade + subject. Templates use
+                          the teacher's actual context so suggestions feel relevant
+                          ("for my Class 7 Math students" vs generic "students").
+                          Static <ExamplePrompts> still renders below as fallback +
+                          cross-context inspiration. */}
+                      {teacherProfile.preferredGrade && teacherProfile.preferredSubject && (
+                        <div className="space-y-2">
+                          <p className="flex items-center gap-2 text-sm font-medium text-foreground indic-text">
+                            {t("For your")} {t(teacherProfile.preferredGrade)} {t(teacherProfile.preferredSubject)} {t("students")}
+                            <span className="rounded-pill bg-tint-accent-soft px-2 py-0.5 text-xs font-semibold text-saffron-700">
+                              {t("Personalised")}
+                            </span>
+                          </p>
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            {[
+                              `${t("How do I keep")} ${t(teacherProfile.preferredGrade)} ${t(teacherProfile.preferredSubject)} ${t("students focused for the full period?")}`,
+                              `${t("Best way to introduce a new")} ${t(teacherProfile.preferredSubject)} ${t("chapter to")} ${t(teacherProfile.preferredGrade)}?`,
+                              `${t("How do I assess")} ${t(teacherProfile.preferredGrade)} ${t(teacherProfile.preferredSubject)} ${t("understanding without a formal test?")}`,
+                              `${t("Common")} ${t(teacherProfile.preferredSubject)} ${t("misconceptions in")} ${t(teacherProfile.preferredGrade)} ${t("and how to fix them?")}`,
+                            ].map((prompt, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => handlePromptClick(prompt)}
+                                className="focus-ring rounded-row border border-primary/20 bg-tint-accent-soft p-3 text-left text-sm transition-colors duration-micro ease-out-quart hover:border-primary/40"
+                              >
+                                {prompt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="teacher-training" />
+                    </div>
+                  </GeneratorSection>
 
                   {/* UX audit #4: example Q&A card — shows first-time visitors
                       what kind of advice to expect. Builds trust without
                       demanding upfront commitment. */}
                   {!advice && !isLoading && (
-                    <details className="rounded-xl border border-border/60 bg-muted/20 group">
-                      <summary className="flex items-center gap-2 p-3 cursor-pointer text-sm font-semibold text-foreground list-none">
-                        <MessageCircleQuestion className="w-4 h-4 text-primary" />
+                    <details className="group rounded-row border border-border bg-muted/30">
+                      <summary className="flex cursor-pointer list-none items-center gap-2 p-4 text-sm font-semibold text-foreground">
+                        <MessageCircleQuestion className="h-4 w-4 text-saffron-600" aria-hidden="true" />
                         {t("See an example answer")}
-                        <span className="ml-auto text-xs text-muted-foreground group-open:hidden">{t("Tap to expand")}</span>
+                        <span className="ml-auto text-xs font-normal text-muted-foreground group-open:hidden">{t("Tap to expand")}</span>
                       </summary>
-                      <div className="px-4 pb-4 space-y-2 text-sm">
+                      <div className="space-y-2 px-4 pb-4 text-sm">
                         <p className="font-medium text-foreground">
                           {t("Q: How do I keep Class 5 students engaged during a 45-minute lesson?")}
                         </p>
-                        <p className="text-muted-foreground italic">
+                        <p className="italic text-muted-foreground">
                           {t("VIDYA: Break the lesson into three 15-minute chunks…")}
-                          <span className="ml-1 inline-block px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide">
+                          <span className="ml-1 inline-block rounded-pill bg-tint-accent-soft px-2 py-0.5 text-xs font-semibold not-italic text-saffron-700">
                             {t("Pedagogy: Spaced repetition")}
                           </span>
                         </p>
                       </div>
                     </details>
                   )}
-
-                  <FormField
-                    control={form.control}
-                    name="question"
-                    render={({ field }) => {
-                      const charCount = (field.value || "").length;
-                      const minChars = 10;
-                      const isValid = charCount >= minChars;
-                      return (
-                        <FormItem>
-                          <FormLabel className="font-headline text-lg">{t("Your Question or Challenge")}</FormLabel>
-                          <FormControl>
-                            {/* Mic anchored INSIDE the textarea wrapper at top-right
-                                — fixes UX audit bug #4 (orphaned position).
-                                Appends transcript to whatever the teacher already typed. */}
-                            <div className="relative">
-                              <Textarea
-                                placeholder={t("Type your question or challenge here…")}
-                                {...field}
-                                className="bg-muted/20 min-h-[120px] resize-none text-lg pr-12"
-                              />
-                              <div className="absolute top-2 right-2">
-                                <InlineMicButton
-                                  onTranscript={(text, isFinal) => {
-                                    if (!isFinal) return;
-                                    const current = field.value || "";
-                                    field.onChange(current ? `${current} ${text}` : text);
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </FormControl>
-                          {/* Live character counter — UX audit #11.
-                              Teacher knows the 10-char minimum before submit. */}
-                          <div className="flex items-center justify-between mt-1">
-                            <FormMessage />
-                            <span className={`text-xs font-medium ml-auto ${isValid ? "text-green-600" : "text-muted-foreground"}`}>
-                              {charCount} / {minChars} {isValid ? "✓" : t("min")}
-                            </span>
-                          </div>
-                        </FormItem>
-                      );
-                    }}
-                  />
-
-                  {/* UX audit #3: personalised Quick Ideas — appears only
-                      when teacherProfile has grade + subject. Templates use
-                      the teacher's actual context so suggestions feel relevant
-                      ("for my Class 7 Math students" vs generic "students").
-                      Static <ExamplePrompts> still renders below as fallback +
-                      cross-context inspiration. */}
-                  {teacherProfile.preferredGrade && teacherProfile.preferredSubject && (
-                    <div className="space-y-2">
-                      <FormLabel className="font-headline flex items-center gap-2">
-                        {t("For your")} {t(teacherProfile.preferredGrade)} {t(teacherProfile.preferredSubject)} {t("students")}
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wide">
-                          {t("Personalised")}
-                        </span>
-                      </FormLabel>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {[
-                          `${t("How do I keep")} ${t(teacherProfile.preferredGrade)} ${t(teacherProfile.preferredSubject)} ${t("students focused for the full period?")}`,
-                          `${t("Best way to introduce a new")} ${t(teacherProfile.preferredSubject)} ${t("chapter to")} ${t(teacherProfile.preferredGrade)}?`,
-                          `${t("How do I assess")} ${t(teacherProfile.preferredGrade)} ${t(teacherProfile.preferredSubject)} ${t("understanding without a formal test?")}`,
-                          `${t("Common")} ${t(teacherProfile.preferredSubject)} ${t("misconceptions in")} ${t(teacherProfile.preferredGrade)} ${t("and how to fix them?")}`,
-                        ].map((prompt, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => handlePromptClick(prompt)}
-                            className="text-left text-sm p-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
-                          >
-                            {prompt}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <FormLabel className="font-headline">{t("Quick Ideas")}</FormLabel>
-                    <ExamplePrompts onPromptClick={handlePromptClick} selectedLanguage={selectedLanguage} page="teacher-training" />
-                  </div>
                 </div>
 
-                {/* RIGHT COLUMN: Settings Sidebar (5 cols) */}
-                <div className="lg:col-span-5 space-y-5 border border-border rounded-2xl p-4 md:p-5 bg-card shadow-soft h-fit">
-                  <h3 className="font-headline text-base font-bold text-primary uppercase tracking-wide">{t("Settings")}</h3>
+                {/* ── Settings ───────────────────────────────────────── */}
+                <aside className="h-fit space-y-6 rounded-panel border border-border bg-muted/30 p-4 sm:p-6 xl:sticky xl:top-24 xl:col-span-5">
+                  <h2 className="font-headline text-lg font-semibold text-foreground indic-text">{t("Settings")}</h2>
 
                   {/* UX audit #1: removed "Subject" dropdown — pedagogy advice
                       doesn't change by subject. "General" was always the default
@@ -513,7 +550,7 @@ function TeacherTrainingContent() {
                     name="language"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-semibold text-muted-foreground">{t("Response language")}</FormLabel>
+                        <FormLabel className="text-sm font-medium text-foreground">{t("Response language")}</FormLabel>
                         <FormControl>
                           <LanguageSelector
                             onValueChange={field.onChange}
@@ -525,83 +562,75 @@ function TeacherTrainingContent() {
                     )}
                   />
 
-                  <div className="bg-primary/5 p-4 rounded-r-lg border-l-2 border-primary/40">
+                  <div className="rounded-row border border-border bg-card p-4">
                     <div className="flex items-start gap-3">
                       {/* Bug #1: replaced malformed inline SVG with lucide
                           Lightbulb (was throwing a console SVG path error
                           on every page load). */}
-                      <Lightbulb className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-saffron-600" aria-hidden="true" />
                       <div>
-                        <p className="font-semibold text-foreground text-sm mb-1">{t("Pro Tip")}</p>
-                        <p className="text-sm text-muted-foreground">{t(proTipKey)}</p>
+                        <p className="mb-1 text-sm font-semibold text-foreground">{t("Pro Tip")}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{t(proTipKey)}</p>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <Button type="submit" disabled={isLoading || !canUseAI} className="w-full text-lg py-6 shadow-lg shadow-primary/20 transition-all gap-2">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    {t("Getting Advice...")}
-                  </>
-                ) : (
-                  <>
-                    <GraduationCap className="h-5 w-5" />
-                    {t("Get Advice")}
-                  </>
-                )}
-              </Button>
-              {aiUnavailableReason && (
-                <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
-              )}
+                  <GeneratorSubmitBar hint={aiUnavailableReason} className="md:block md:border-t-0 md:pt-0">
+                    <Button type="submit" disabled={isLoading || !canUseAI} aria-busy={isLoading} className={cn(GENERATOR_SUBMIT_CLASS, "gap-2 md:w-full md:min-w-0")}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          {t("Getting Advice...")}
+                        </>
+                      ) : (
+                        <>
+                          <GraduationCap className="h-5 w-5" />
+                          {t("Get Advice")}
+                        </>
+                      )}
+                    </Button>
+                  </GeneratorSubmitBar>
+                </aside>
+              </div>
             </form>
           </Form>
-        </CardContent>
+        </div>
+      </section>
+
+      <div aria-live="polite" aria-busy={isLoading} className="space-y-6">
+        {isLoading && <GeneratorProgress messages={[t("Thinking of some helpful advice...")]} />}
+
+        {advice && (
+          <>
+            <div className="flex items-center gap-3">
+              <span className="type-eyebrow text-saffron-700 indic-text">{t("Result")}</span>
+              <hr className="flex-1 border-border" />
+            </div>
+            <TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} contentId={adviceContentId} />
+            {/* UX audit #7: save advice to library so the teacher can find it
+                again later (separate from sharing publicly to community). */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSaveToLibrary}
+                disabled={savingToLib || savedToLib}
+                className="gap-2"
+              >
+                {savedToLib ? (
+                  <><Save className="h-4 w-4 text-success" />{t("Saved to library")}</>
+                ) : savingToLib ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" />{t("Saving…")}</>
+                ) : (
+                  <><Save className="h-4 w-4" />{t("Save to library")}</>
+                )}
+              </Button>
+              <ShareToCommunityCTA contentType="teacher-training" />
+            </div>
+          </>
+        )}
       </div>
-
-      {isLoading && (
-        <Card className="mt-8 w-full max-w-4xl bg-muted/20 border-border shadow-xl animate-fade-in-up">
-          <CardContent className="p-6 flex flex-col items-center justify-center">
-            <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">{t("Thinking of some helpful advice...")}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {advice && (
-        <>
-        <div className="my-8 flex items-center gap-3">
-          <hr className="flex-1 border-border/40" />
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">{t("Result")}</span>
-          <hr className="flex-1 border-border/40" />
-        </div>
-        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} /></div>
-        {/* UX audit #7: save advice to library so the teacher can find it
-            again later (separate from sharing publicly to community). */}
-        <div className="flex flex-wrap gap-2 mt-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleSaveToLibrary}
-            disabled={savingToLib || savedToLib}
-            className="gap-2"
-          >
-            {savedToLib ? (
-              <><Save className="h-4 w-4 text-green-600" />{t("Saved to library")}</>
-            ) : savingToLib ? (
-              <><Loader2 className="h-4 w-4 animate-spin" />{t("Saving…")}</>
-            ) : (
-              <><Save className="h-4 w-4" />{t("Save to library")}</>
-            )}
-          </Button>
-          <ShareToCommunityCTA contentType="teacher-training" />
-        </div>
-        </>
-      )}
-
     </div>
   );
 }

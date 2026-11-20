@@ -1,5 +1,18 @@
+/**
+ * Generations per teacher per window (browser AND server). 15 unless a local demo raises it with
+ * NEXT_PUBLIC_SAHAYAK_RATE_LIMIT_PER_WINDOW (development only — a live demo clicks through many
+ * on-screen templates in a few minutes, and even instant cached answers counted towards it).
+ */
+export function maxRequestsPerWindow(env: Record<string, string | undefined> = {
+    NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_SAHAYAK_RATE_LIMIT_PER_WINDOW: process.env.NEXT_PUBLIC_SAHAYAK_RATE_LIMIT_PER_WINDOW,
+}): number {
+    const n = Number(env.NEXT_PUBLIC_SAHAYAK_RATE_LIMIT_PER_WINDOW);
+    return env.NODE_ENV === 'development' && Number.isInteger(n) && n > 0 ? n : 15;
+}
+
 export const SAFETY_CONFIG = {
-    MAX_REQUESTS_PER_WINDOW: 15,
+    MAX_REQUESTS_PER_WINDOW: maxRequestsPerWindow(),
     WINDOW_MS: 10 * 60 * 1000, // 10 Minutes
     COOLDOWN_STORAGE_KEY: 'sahayak_rate_limit'
 };

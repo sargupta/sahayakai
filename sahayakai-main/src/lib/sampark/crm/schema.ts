@@ -29,6 +29,20 @@ const isoDateTime = z.string().datetime({ offset: true });
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
 const languageCode = z.enum(['en', 'hi', 'bn', 'ne']);
 
+/**
+ * An ERP id that becomes a Firestore document id. Real admission numbers such as
+ * `ADM/2023/001` contain "/", which Firestore reads as a path: the record was
+ * written as a nested document no listing ever returned (or the write threw
+ * mid-import, leaving earlier batches applied). Such rows are rejected instead.
+ */
+export const crmDocId = z
+    .string()
+    .min(1)
+    .max(128)
+    .refine((v) => !v.includes('/') && v !== '.' && v !== '..' && !/^__.*__$/.test(v), {
+        message: 'id must not contain "/" and must not be "." , ".." or "__…__"',
+    });
+
 export const CrmConsentSchema = z.object({
     status: z.enum(['granted', 'denied', 'unknown']),
     recordedAt: isoDateTime.nullable(),
@@ -50,7 +64,7 @@ export const CrmSchoolSchema = z.object({
 export type CrmSchool = z.infer<typeof CrmSchoolSchema>;
 
 export const CrmStudentSchema = z.object({
-    id: z.string().min(1),
+    id: crmDocId,
     deleted: z.boolean().optional(),
     admissionNo: z.string(),
     apaarId: z.string().nullable(),
@@ -73,7 +87,7 @@ export const CrmStudentSchema = z.object({
     sensitiveFlags: z.array(z.enum(['domestic_issue', 'severe_illness', 'counsellor_referral', 'custody_restriction', 'safeguarding_open'])),
     status: z.enum(['active', 'left']),
     guardians: z.array(z.object({
-        guardianId: z.string().min(1),
+        guardianId: crmDocId,
         isPrimary: z.boolean(),
         /** False for e.g. a step-parent who is on file but is not this child's guardian of record. */
         isGuardianOfRecord: z.boolean(),
@@ -83,7 +97,7 @@ export const CrmStudentSchema = z.object({
 export type CrmStudent = z.infer<typeof CrmStudentSchema>;
 
 export const CrmGuardianSchema = z.object({
-    id: z.string().min(1),
+    id: crmDocId,
     deleted: z.boolean().optional(),
     fullName: z.string().min(1),
     relation: z.enum(['mother', 'father', 'guardian', 'other']),

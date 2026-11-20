@@ -36,13 +36,23 @@ jobs:
       FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SA_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: sahayakai-main/package-lock.json
       - name: Install dependencies
         run: npm ci
+      # The app's default provider has been Vertex AI since b058ca65 (2026-07-22),
+      # and several flows and evaluators pin `vertexai/gemini-2.5-flash`. Vertex
+      # authenticates with Application Default Credentials, not the API key, so
+      # without this step every live eval failed with VertexAI.GoogleAuthError
+      # (gate: src/__tests__/scripts/eval-workflow-vertex-auth.test.ts). Same
+      # credentials and action as the Cloud Run deploy workflow.
+      - name: Authenticate to Google Cloud (ADC for Vertex AI)
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
       - name: Validate dataset structure (no API spend)
         run: npx tsx --tsconfig scripts/eval/tsconfig.json scripts/eval/run-evals.mts --all --dry
       - name: Require eval API key
@@ -52,10 +62,18 @@ jobs:
             echo "::error::Add a Gemini API key as the GENKIT_EVAL_API_KEY secret (repo Settings -> Secrets). This gate is blocking by design: AI output quality is the product."
             exit 1
           fi
+      # The app runs Gemini through Vertex AI (src/ai/genkit.ts: usingVertex), which authenticates
+      # with Application Default Credentials, not the API key above. Without this step every live
+      # eval failed with VertexAI.GoogleAuthError, on main every week since 2026-10-12
+      # (gate: src/__tests__/scripts/workflow-evals-authenticate.test.ts).
+      - name: Authenticate to Google Cloud (Vertex AI for the live evals)
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
       - name: Run live evals (blocking)
         run: npx tsx --tsconfig scripts/eval/tsconfig.json scripts/eval/run-evals.mts --all
       - name: Upload eval report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: eval-report

@@ -6,6 +6,7 @@
  *          derive from the authenticated uid server-side).
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { isSafeHttpsUrl } from '@/lib/security/safe-links';
 import { z } from 'zod';
 import { createGroupPost, getGroupPosts } from '@/server/groups';
 import { errorResponse } from '@/server/api-response';
@@ -48,7 +49,7 @@ const CreateSchema = z.object({
     postType: z.enum(['share', 'ask_help', 'celebrate', 'resource']),
     attachments: z.array(z.object({
         type: z.string().max(64),
-        url: z.string().max(2048).optional(),
+        url: z.string().max(2048).refine(isSafeHttpsUrl, 'url must be an https:// link').optional(),
         title: z.string().max(512).optional(),
         resourceId: z.string().max(128).optional(),
     }).passthrough()).max(5).optional(),

@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -85,6 +85,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          # Same heap as the production image (sahayakai-main/Dockerfile).
+          # Gate: src/__tests__/scripts/workflow-build-heap.test.ts.
+          NODE_OPTIONS: --max-old-space-size=4096
           # Stub env vars so next build doesn't fail on missing secrets
           GOOGLE_GENAI_API_KEY: stub
           GOOGLE_CLOUD_PROJECT: stub
@@ -106,7 +109,7 @@ jobs:
 
       - name: Upload coverage
         if: matrix.node-version == 20 && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: sahayakai-main/coverage/

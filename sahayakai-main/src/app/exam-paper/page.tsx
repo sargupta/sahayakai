@@ -43,16 +43,17 @@ function ExamPaperPageInner() {
   // error), plus a way back to generating a fresh one.
   if (vm.viewingSaved) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <ExamPaperHeader />
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link href="/exam-paper">
-              <Plus className="w-4 h-4 mr-1.5" />
-              {t("Create a new paper")}
-            </Link>
-          </Button>
-        </div>
+      <div className="container-default py-6 md:py-10 space-y-8">
+        <ExamPaperHeader
+          actions={
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              <Link href="/exam-paper">
+                <Plus className="w-4 h-4 mr-1.5" />
+                {t("Create a new paper")}
+              </Link>
+            </Button>
+          }
+        />
         {vm.hydrating && <ExamPaperSkeleton />}
         {vm.paper && !vm.hydrating && <ExamPaperPreview {...vm} />}
         {!vm.paper && !vm.hydrating && vm.inProgress && <ExamPaperInProgress message={vm.inProgress} />}
@@ -62,7 +63,7 @@ function ExamPaperPageInner() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+    <div className="container-default py-6 md:py-10 space-y-8">
       <ExamPaperHeader />
       <ExamPaperForm {...vm} />
       {vm.generating && <ExamPaperSkeleton />}

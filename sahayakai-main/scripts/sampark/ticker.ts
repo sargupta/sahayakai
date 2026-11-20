@@ -7,7 +7,8 @@
  *   CRON_SECRET=… npx tsx scripts/sampark/ticker.ts --once          # one render + one dispatch
  *   SAMPARK_BASE_URL=http://localhost:3001 …                        # another port
  *
- * Each tick POSTs /api/jobs/sampark-render, then /api/jobs/sampark-dispatch,
+ * Each tick POSTs /api/jobs/sampark-render, /api/jobs/sampark-dispatch, then
+ * /api/jobs/sampark-google-calendar (channel renewal + fallback sync),
  * with `Authorization: Bearer $CRON_SECRET`, and prints both reports. A failed
  * request is reported and the loop carries on (the jobs are idempotent).
  * Refuses a non-local base URL: this is a development tool.
@@ -50,6 +51,7 @@ async function call(path: string): Promise<void> {
 async function tick(): Promise<void> {
     await call('/api/jobs/sampark-render');
     await call('/api/jobs/sampark-dispatch');
+    await call('/api/jobs/sampark-google-calendar');
 }
 
 async function main(): Promise<void> {

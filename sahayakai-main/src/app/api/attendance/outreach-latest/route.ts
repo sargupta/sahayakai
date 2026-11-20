@@ -20,6 +20,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
+import { reconcileCallStatus } from '@/lib/attendance/reconcile-call-status';
 
 // 24h lookback — older outreaches are considered "past" and shouldn't auto-resume.
 const LOOKBACK_MS = 24 * 60 * 60 * 1000;
@@ -54,7 +55,9 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
             outreachId:          doc.id,
-            callStatus:          data.callStatus ?? null,
+            // Reconciled, never raw (CLAUDE.md law 1): a stale "initiated" or an
+            // engine failure reads as failed rather than "Calling…" forever.
+            callStatus:          reconcileCallStatus(data),
             callDurationSeconds: data.callDurationSeconds ?? null,
             answeredBy:          data.answeredBy ?? null,
             turnCount:           data.turnCount ?? 0,

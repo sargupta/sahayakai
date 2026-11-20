@@ -3,6 +3,8 @@ import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
 import type { OutreachReason, CallStatus, PerformanceContext } from '@/types/attendance';
 import type { Language, Subject } from '@/types';
+import { refuseIfParentOptedOut } from '@/lib/call-suppression';
+import { checkCallingWindow, outsideCallingHoursBody } from '@/lib/calling-hours';
 import { hasAdvancedPlan } from '@/lib/plan-utils';
 
 // Per-(teacher,student) dedup window — protects against accidental floods
@@ -14,13 +16,13 @@ const DEDUP_WINDOW_MS = 5 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
     const userId = req.headers.get('x-user-id');
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHENTICATED' }, { status: 401 });
 
     // Plan check
     const profile = await dbAdapter.getUser(userId);
-    if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!profile) return NextResponse.json({ error: 'User not found', code: 'USER_NOT_FOUND' }, { status: 404 });
     if (!hasAdvancedPlan(profile.planType)) {
-        return NextResponse.json({ error: 'PREMIUM_REQUIRED' }, { status: 403 });
+        return NextResponse.json({ error: 'PREMIUM_REQUIRED', code: 'PREMIUM_REQUIRED' }, { status: 403 });
     }
 
     try {
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
         };
 
         if (!data.classId || !data.studentId) {
-            return NextResponse.json({ error: 'Missing classId or studentId' }, { status: 400 });
+            return NextResponse.json({ error: 'Missing classId or studentId', code: 'INVALID_REQUEST' }, { status: 400 });
         }
 
         const db = await getDb();
@@ -61,17 +63,17 @@ export async function POST(req: NextRequest) {
         // (or, with caller-supplied phone, ANY number at all).
         const classDoc = await db.collection('classes').doc(data.classId).get();
         if (!classDoc.exists) {
-            return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Class not found', code: 'CLASS_NOT_FOUND' }, { status: 404 });
         }
         if (classDoc.data()!.teacherUid !== userId) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            return NextResponse.json({ error: 'Forbidden', code: 'CLASS_NOT_OWNED' }, { status: 403 });
         }
 
         const studentRef = db.collection('classes').doc(data.classId)
             .collection('students').doc(data.studentId);
         const studentDoc = await studentRef.get();
         if (!studentDoc.exists) {
-            return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Student not found', code: 'STUDENT_NOT_FOUND' }, { status: 404 });
         }
         const student = studentDoc.data()!;
 
@@ -81,7 +83,35 @@ export async function POST(req: NextRequest) {
         // student record (which was set/edited under the teacher's own auth).
         const parentPhone: string | undefined = student.parentPhone;
         if (!parentPhone) {
-            return NextResponse.json({ error: 'Student has no parent phone on record' }, { status: 422 });
+            return NextResponse.json({ error: 'Student has no parent phone on record', code: 'NO_PARENT_PHONE' }, { status: 422 });
+        }
+
+        // A call outreach is refused here, BEFORE a doc exists, when the call
+        // route would refuse it anyway. Otherwise the doc is written as
+        // 'initiated', the call is refused, and the record reads as a call in
+        // progress while holding the dedup window. Same 409 body as the call
+        // route. WhatsApp copies are not calls and are never refused for hours.
+        if (data.deliveryMethod === 'twilio_call') {
+            const window = checkCallingWindow();
+            if (!window.allowed) {
+                return NextResponse.json(outsideCallingHoursBody(window), { status: 409 });
+            }
+        }
+
+        // A parent who told us on a call not to phone them again is not called
+        // again, however many new outreach docs the teacher creates. Refused
+        // here (before a doc exists) AND in /api/attendance/call.
+        if (data.deliveryMethod === 'twilio_call') {
+            const suppressed = await refuseIfParentOptedOut(db, parentPhone);
+            if (suppressed) return suppressed;
+        }
+
+        // A parent who told us on a call not to phone them again is not called
+        // again, however many new outreach docs the teacher creates. Refused
+        // here (before a doc exists) AND in /api/attendance/call.
+        if (data.deliveryMethod === 'twilio_call') {
+            const suppressed = await refuseIfParentOptedOut(db, parentPhone);
+            if (suppressed) return suppressed;
         }
 
         // ── F9-003 fix: per-(teacher, student) dedup window ───────────────
@@ -117,7 +147,7 @@ export async function POST(req: NextRequest) {
             const elapsed = Date.now() - lastMs;
             const retryAfterSeconds = Math.max(1, Math.ceil((DEDUP_WINDOW_MS - elapsed) / 1000));
             const resp = NextResponse.json(
-                { error: 'Recent outreach already exists for this student', retryAfterSeconds },
+                { error: 'Recent outreach already exists for this student', code: 'RECENT_OUTREACH_EXISTS', retryAfterSeconds },
                 { status: 429 },
             );
             resp.headers.set('Retry-After', String(retryAfterSeconds));
@@ -160,6 +190,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ outreachId: ref.id });
     } catch (error: any) {
         console.error('[attendance/outreach] Error:', error);
-        return NextResponse.json({ error: error.message ?? 'Internal error' }, { status: 500 });
+        // The error itself goes to the log only: its message can carry internals.
+        return NextResponse.json({ error: 'Internal error', code: 'INTERNAL' }, { status: 500 });
     }
 }

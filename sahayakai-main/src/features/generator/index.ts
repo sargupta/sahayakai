@@ -4,7 +4,13 @@
 export { useGenerator } from "./hooks/use-generator";
 export type { UseGeneratorConfig, UseGeneratorReturn } from "./hooks/use-generator";
 
-export { GeneratorPage, GeneratorSubmitBar } from "./components/generator-page";
+export {
+    GeneratorPage,
+    GeneratorSubmitBar,
+    GeneratorHeader,
+    GeneratorSection,
+    GENERATOR_SUBMIT_CLASS,
+} from "./components/generator-page";
 export type { GeneratorPageProps, GeneratorLimitState } from "./components/generator-page";
 
 export { GeneratorProgress } from "./components/generator-progress";

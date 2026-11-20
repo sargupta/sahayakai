@@ -6,12 +6,14 @@
  * attendance from abroad, a cron firing in UTC, and a retry scheduled hours
  * later must all agree, and the only clock a family cares about is their own.
  *
- * The window is 10:00–19:00 IST, the routine band every parent call shares
- * (decision 2 of the Sampark + MCP integration brief, 23 Oct 2026: a Sampark
- * campaign, a teacher in the app and an API call all use it). The numbers come
- * from src/lib/sampark/policy/routine-hours.ts, the single source, so this
- * window and Sampark's cannot drift apart. Outside it, no call is placed — not
- * delayed, not queued for "soon", refused with the time it would next be allowed.
+ * The window is the routine calling band, 10:00–19:00 IST (founder decision,
+ * 23 Oct 2026). Outside it, no call is placed — not delayed, not queued for
+ * "soon", refused with the time it would next be allowed.
+ *
+ * The hours are NOT defined here. They live in one module,
+ * `lib/sampark/policy/routine-hours.ts`, which every surface that knows the
+ * calling hours reads, so the teacher path and every other caller cannot drift
+ * apart (gate: calling-hours-single-source-gate.test.ts).
  *
  * The full pre-dial check (opt-outs, the 30-day cap, these hours) is
  * src/lib/contact-policy; this module stays for the hours alone.
@@ -27,6 +29,11 @@ import { ROUTINE_END_CEILING_HOUR, ROUTINE_START_FLOOR_HOUR } from '@/lib/sampar
 export const CALLING_WINDOW_START_HOUR = ROUTINE_START_FLOOR_HOUR;
 /** First hour at which calling is NO LONGER allowed (IST, exclusive). */
 export const CALLING_WINDOW_END_HOUR = ROUTINE_END_CEILING_HOUR;
+
+/** `10` -> `"10:00"`; also keeps a single-digit hour readable (`"09:00"`). */
+function hourLabel(hour: number): string {
+    return `${String(hour).padStart(2, '0')}:00`;
+}
 
 const IST_TIME_ZONE = 'Asia/Kolkata';
 
@@ -87,6 +94,26 @@ function nextWindowOpening(from: Date): Date {
     return from;
 }
 
+/** The code every route returns when it will not place a parent call now. */
+export const OUTSIDE_CALLING_HOURS_CODE = 'OUTSIDE_CALLING_HOURS';
+
+/**
+ * The 409 body for a call refused by the calling window. One shape for every
+ * route that refuses on hours (the call route and the outreach route), so the
+ * modal reads one contract.
+ */
+export function outsideCallingHoursBody(verdict: CallingWindowVerdict): {
+    error: string;
+    code: typeof OUTSIDE_CALLING_HOURS_CODE;
+    nextAllowedAt: string | null;
+} {
+    return {
+        error: verdict.reason,
+        code: OUTSIDE_CALLING_HOURS_CODE,
+        nextAllowedAt: verdict.nextAllowedAt?.toISOString() ?? null,
+    };
+}
+
 /**
  * Is it acceptable to phone a parent right now?
  *
@@ -107,9 +134,9 @@ export function checkCallingWindow(at: Date = new Date()): CallingWindowVerdict 
         istHour: hour,
         istTime: formatIST(at),
         reason:
-            `Calls to parents are only placed between ${CALLING_WINDOW_START_HOUR}:00 and ` +
-            `${CALLING_WINDOW_END_HOUR}:00 IST. It is ${formatIST(at)} now, so this call was not placed. ` +
-            `Calling reopens at ${CALLING_WINDOW_START_HOUR}:00 IST.`,
+            `Calls to parents are only placed between ${hourLabel(CALLING_WINDOW_START_HOUR)} and ` +
+            `${hourLabel(CALLING_WINDOW_END_HOUR)} IST. It is ${formatIST(at)} now, so this call was not placed. ` +
+            `Calling reopens at ${hourLabel(CALLING_WINDOW_START_HOUR)} IST.`,
         nextAllowedAt,
     };
 }

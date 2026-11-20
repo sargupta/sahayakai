@@ -169,3 +169,20 @@ describe('openPrintBlob', () => {
     expect(() => openPrintBlob('<html></html>', 'file')).not.toThrow();
   });
 });
+
+describe('option labels', () => {
+  test('prints one canonical (a)/(b) label whatever the model wrote', () => {
+    const html = buildExamPaperBodyHtml(
+      {
+        ...fullContent,
+        sections: [{ ...fullContent.sections[0], questions: [{ number: 1, text: 'q', marks: 1, options: ['a) a) x', 'b. y', '(c) z', 'w'] }] }],
+      },
+      t,
+    );
+    expect(html).toContain('<p>(a) x</p>');
+    expect(html).toContain('<p>(b) y</p>');
+    expect(html).toContain('<p>(c) z</p>');
+    expect(html).toContain('<p>(d) w</p>');
+    expect(html).not.toMatch(/\(a\) a\)/);
+  });
+});

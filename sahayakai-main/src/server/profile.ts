@@ -16,6 +16,12 @@ import { validateAdmin, isAdmin } from "@/lib/auth-utils";
 import { headers } from "next/headers";
 import { requireAuth } from "@/lib/auth-helpers";
 import {
+    ONBOARDING_FINISHED_PHASE,
+    ONBOARDING_PHASES,
+    normalizeOnboardingPhase,
+    type OnboardingPhase,
+} from "@/lib/onboarding-phase";
+import {
     computeProfileCompletion,
     PROFILE_COMPLETE_THRESHOLD,
     hasValue,
@@ -266,7 +272,7 @@ const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
 
     // 4. Onboarding state machine
     'onboardingPhase',
-    'onboardingCompleted', // server-set when phase=completed AND score≥80
+    'onboardingCompleted', // server-set when phase=done AND score≥80
     'onboardingCompletedAt',
     'onboardingComplete', // F11-2: reconcile with adapter allowlist
     'pincode', // optional location hint, added in onboarding-hardening
@@ -297,17 +303,22 @@ const PROFILE_WRITABLE_FIELDS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * F11-3: Phases beyond `language-picked` require that prerequisites are
+ * F11-3: Phases beyond `setup` require that prerequisites are
  * already persisted on the user document. Without this check, a hostile
  * client could POST `{ onboardingPhase: 'exploring' }` and skip the
  * profile-setup screen entirely (then the AI flows fall back to bogus
  * defaults because state/subjects/grades are missing).
  *
+ * Phase values are the canonical union in src/lib/onboarding-phase.ts;
+ * anything else is rejected, and legacy aliases ('completed',
+ * 'language-picked') are normalised before this check runs.
+ *
  * Rules:
- *  - `language-picked` (Step 0 done): no prerequisites.
+ *  - `setup` (Step 0 done): no prerequisites.
  *  - `first-generation` (Step 1 done): requires state, schoolName,
  *     subjects.length > 0, gradeLevels.length > 0.
- *  - `exploring` / `completed` (Step 2 done): same as first-generation.
+ *  - `exploring` / `completing` / `done` (Step 2 done and later): same as
+ *     first-generation.
  *
  * `district` is intentionally NOT in the prerequisite list — the UI's
  * Step 1 captures state, schoolName, subjects, grades but does not require
@@ -328,10 +339,11 @@ const FULL_PROFILE_PREREQUISITES = [
     'preferredLanguage',
 ] as const;
 
-const ONBOARDING_PHASE_PREREQUISITES: Record<string, readonly string[]> = {
+const ONBOARDING_PHASE_PREREQUISITES: Partial<Record<OnboardingPhase, readonly string[]>> = {
     'first-generation': FULL_PROFILE_PREREQUISITES,
     'exploring': FULL_PROFILE_PREREQUISITES,
-    'completed': FULL_PROFILE_PREREQUISITES,
+    'completing': FULL_PROFILE_PREREQUISITES,
+    'done': FULL_PROFILE_PREREQUISITES,
 };
 
 export async function updateProfileAction(_userId: string, data: any) {
@@ -384,14 +396,29 @@ export async function updateProfileAction(_userId: string, data: any) {
         }
     }
 
+    // Only canonical phases may be stored: a value the readers don't
+    // recognise traps the teacher in new-user mode (2026-10 bug: 'completed').
+    // Legacy aliases from stale cached clients are normalised, not rejected.
+    if ('onboardingPhase' in sanitized) {
+        const phase = normalizeOnboardingPhase(sanitized.onboardingPhase);
+        if (!phase) {
+            throw new Error(
+                `Invalid onboardingPhase '${String(sanitized.onboardingPhase).slice(0, 40)}' — expected one of: ${ONBOARDING_PHASES.join(', ')}`
+            );
+        }
+        sanitized.onboardingPhase = phase;
+    }
+
     // F11-3: Block onboardingPhase escalation when prerequisites aren't met.
     // Onboarding-phase is in the writable allowlist so legitimate flow can
     // advance it — but writing `exploring` (or `first-generation`, etc.)
     // directly without ever capturing state/subjects/grades was a bypass
     // exploited by malformed clients (and possibly hostile ones).
     const mergedProfile: Record<string, any> = { ...(existingProfile ?? {}), ...sanitized };
-    if (sanitized.onboardingPhase && ONBOARDING_PHASE_PREREQUISITES[sanitized.onboardingPhase]) {
-        const required = ONBOARDING_PHASE_PREREQUISITES[sanitized.onboardingPhase];
+    const required = sanitized.onboardingPhase
+        ? ONBOARDING_PHASE_PREREQUISITES[sanitized.onboardingPhase as OnboardingPhase]
+        : undefined;
+    if (required) {
         // Build the effective state = existing profile MERGED with the
         // incoming patch. This way a single PATCH that includes both
         // prerequisites and phase is accepted (the legitimate onboarding
@@ -415,10 +442,10 @@ export async function updateProfileAction(_userId: string, data: any) {
     const completionScore = computeProfileCompletion(mergedProfile);
     sanitized.profileCompletionLevel = completionScore;
 
-    // When the client advances onboardingPhase to `completed` AND the merged
+    // When the client finishes onboarding (phase `done`) AND the merged
     // profile is ≥ threshold, stamp the completion timestamp + flag.
     if (
-        sanitized.onboardingPhase === 'completed' &&
+        sanitized.onboardingPhase === ONBOARDING_FINISHED_PHASE &&
         completionScore >= PROFILE_COMPLETE_THRESHOLD
     ) {
         sanitized.onboardingCompleted = true;

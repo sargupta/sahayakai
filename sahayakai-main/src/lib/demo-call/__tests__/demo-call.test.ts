@@ -61,7 +61,7 @@ describe('hashIdentifier', () => {
     });
 
     it('differs across inputs', () => {
-        expect(hashIdentifier('+919812345678')).not.toBe(hashIdentifier('+919812345679'));
+        expect(hashIdentifier('+919812345678')).not.toBe(hashIdentifier('+919800000079'));
     });
 });
 

@@ -216,7 +216,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: AppSpacing.space6),
           Section(
             title: l10n.profileSectionAbout,
-            icon: LucideIcons.user,
             child: AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,7 +253,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: AppSpacing.space6),
           Section(
             title: l10n.profileSectionTeaching,
-            icon: LucideIcons.graduationCap,
             child: AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -276,7 +274,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: AppSpacing.space6),
           Section(
             title: l10n.profileSectionLocation,
-            icon: LucideIcons.mapPin,
             child: AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -317,7 +314,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: AppSpacing.space6),
           Section(
             title: l10n.profileSectionContact,
-            icon: LucideIcons.phone,
             child: AppCard(
               child: LabeledField(
                 label: l10n.profilePhoneLabel,
@@ -719,7 +715,6 @@ class _ReadyStep extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.space6),
         AppCard(
-          accentBar: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,

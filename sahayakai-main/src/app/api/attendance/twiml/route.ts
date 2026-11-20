@@ -6,7 +6,7 @@ import { validateTwilioSignature, validateTwilioSignaturePost } from '@/lib/twil
 import { generateAgentReply } from '@/ai/flows/parent-call-agent';
 import { dispatchParentCallReply } from '@/lib/sidecar/dispatch';
 import { getVoicePipelineConfig } from '@/lib/voice-pipeline/config';
-import { resolveSpokenMessage } from '@/lib/voice-pipeline/spoken-script';
+import { parentCallContent, twilioSpokenLanguage } from '@/lib/attendance/request-to-talk';
 import type { TranscriptTurn } from '@/types/attendance';
 import type { Language } from '@/types';
 import { LANGUAGE_TO_ISO } from '@/types/index';
@@ -74,11 +74,13 @@ export async function GET(req: NextRequest) {
         if (!doc.exists) return new NextResponse(hangupXml(), { headers: XML_HEADERS });
 
         const data = doc.data()!;
-        // Speak the phone-call rendition, never the written letter. Legacy
-        // docs without spokenScript get the salutation/sign-off stripped so
-        // TTS does not read "Dear …" / "Sincerely, <name>" aloud.
-        const message: string = resolveSpokenMessage(data);
         const language = data.parentLanguage as Language;
+        // What the parent hears comes from parentCallContent, never from the
+        // record directly. A concern call is a request to talk (founder
+        // decision, 23 Oct 2026): it speaks the fixed request-to-talk line and
+        // nothing of the concern. A good-news call speaks the phone-call
+        // rendition of the teacher's message, never the written letter.
+        const message: string = parentCallContent(data, twilioSpokenLanguage(language)).spokenMessage;
 
         if (!message) return new NextResponse(hangupXml(), { headers: XML_HEADERS });
 
@@ -297,14 +299,11 @@ export async function POST(req: NextRequest) {
         await appendTurnAtomically(outreachRef, callSidForTurns, newTurnCount, 'parent', parentTurn);
         transcript.push(parentTurn);
 
-        // Build a terse score summary so the AI agent can quote scores if the
-        // parent asks about marks. Only populated when performanceContext was
-        // captured at outreach-creation time by the Contact-Parent modal.
-        const pc = data.performanceContext as { subjectBreakdown?: { subject: string; name: string; marksObtained: number; maxMarks: number; percentage: number }[]; latestPercentage?: number; isAtRisk?: boolean } | undefined;
-        const performanceSummary = pc?.subjectBreakdown?.length
-            ? pc.subjectBreakdown.slice(0, 3).map(a => `${a.subject}: ${a.marksObtained}/${a.maxMarks}`).join(', ')
-                + (typeof pc.latestPercentage === 'number' ? ` · overall ${Math.round(pc.latestPercentage)}%` : '')
-            : undefined;
+        // What the agent may know and say. On a request-to-talk call it gets
+        // no subject, no marks and no write-up of the concern, only the fixed
+        // line and a neutral purpose; on a good-news call, the teacher's
+        // message and (to quote only if asked) at most three subjects' marks.
+        const content = parentCallContent(data, twilioSpokenLanguage(language));
 
         // Reuse the CallSid we already resolved for dedup (F8-04). It is
         // stable for the lifetime of one call, which makes it the right
@@ -324,9 +323,9 @@ export async function POST(req: NextRequest) {
             callSid,
             studentName: data.studentName,
             className: data.className,
-            subject: data.subject ?? '',
-            reason: data.reason,
-            teacherMessage: data.generatedMessage,
+            subject: content.subject,
+            reason: content.reason,
+            teacherMessage: content.teacherMessage,
             teacherName: data.teacherName,
             schoolName: data.schoolName,
             // Parent-call schema now requires 2-letter ISO; `language` is the
@@ -335,7 +334,11 @@ export async function POST(req: NextRequest) {
             transcript: transcript.map(t => ({ role: t.role, text: t.text })),
             parentSpeech,
             turnNumber: newTurnCount,
-            performanceSummary,
+            performanceSummary: content.performanceSummary,
+            // Selects the request-to-talk SYSTEM rules in the agent prompt. The
+            // neutral `reason` text above is data inside a <user_input> fence,
+            // which the prompt tells the model to ignore as instructions.
+            requestToTalk: content.requestToTalk,
         });
 
         const agentReply = agentResult.reply + (agentResult.followUpQuestion ? ` ${agentResult.followUpQuestion}` : '');

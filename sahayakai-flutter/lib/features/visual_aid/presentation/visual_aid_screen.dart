@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -227,7 +226,6 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
   Widget _promptField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.visualAidPromptLabel,
-      leadingIcon: LucideIcons.image,
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
         onResult: (text) => _promptController.text = text,
@@ -254,7 +252,6 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
     return LabeledField(
       label: l10n.visualAidGradeLabel,
       optionalLabel: l10n.visualAidOptional,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -275,7 +272,6 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
     return LabeledField(
       label: l10n.visualAidSubjectLabel,
       optionalLabel: l10n.visualAidOptional,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -295,7 +291,6 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

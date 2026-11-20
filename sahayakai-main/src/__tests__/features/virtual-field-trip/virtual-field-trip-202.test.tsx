@@ -34,6 +34,8 @@ jest.mock('@/lib/firebase', () => ({
 
 jest.mock('next/navigation', () => ({
     useSearchParams: () => ({ get: (key: string) => searchParamsGet(key) }),
+    // useGenerator publishes VIDYA screen context keyed by the route.
+    usePathname: () => '/virtual-field-trip',
 }));
 
 jest.mock('@/hooks/use-toast', () => ({
@@ -109,7 +111,7 @@ async function generate() {
 
 /** The trip is on screen only if a stop rendered — that is what `stops.map` draws. */
 function tripIsRendered() {
-    return screen.queryByText(/Teesta River, Jalpaiguri/i) !== null;
+    return screen.queryAllByText(/Teesta River, Jalpaiguri/i).length > 0;
 }
 
 describe('Virtual Field Trip — a 2xx is not a promise of a trip', () => {
@@ -165,7 +167,7 @@ describe('Virtual Field Trip — a 2xx is not a promise of a trip', () => {
         answerWith(TRIP, 200);
         await generate();
 
-        expect(await screen.findByText(/Teesta River, Jalpaiguri/i)).toBeInTheDocument();
+        expect((await screen.findAllByText(/Teesta River, Jalpaiguri/i)).length).toBeGreaterThan(0);
     });
 });
 
@@ -191,6 +193,6 @@ describe('Virtual Field Trip — restoring a saved trip from ?id', () => {
 
         render(<VirtualFieldTripPage />);
 
-        expect(await screen.findByText(/Teesta River, Jalpaiguri/i)).toBeInTheDocument();
+        expect((await screen.findAllByText(/Teesta River, Jalpaiguri/i)).length).toBeGreaterThan(0);
     });
 });

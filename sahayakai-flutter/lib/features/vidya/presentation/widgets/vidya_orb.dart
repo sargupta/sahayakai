@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/press_scale.dart';
 
@@ -40,6 +41,7 @@ class VidyaOrb extends StatefulWidget {
     this.onTap,
     this.semanticLabel,
     this.semanticHint,
+    this.glyph = false,
   });
 
   final VidyaOrbVisual state;
@@ -60,6 +62,13 @@ class VidyaOrb extends StatefulWidget {
 
   /// Announced as the hint — the current state's spoken label.
   final String? semanticHint;
+
+  /// Draws the small affordance glyph (mic, spark). Off by default: design
+  /// system v2 draws VIDYA as a bare sphere whose colour is its state ("The
+  /// orb carries no glyph"; "a sphere is VIDYA, a mic glyph is a control —
+  /// never both"). Words beside it and its accessible name say what a tap
+  /// does.
+  final bool glyph;
 
   /// Fixed clear space around the sphere for the listening ripple / drag halo /
   /// ready badge, so the painted box is always [size] + 2·[_halo] regardless of
@@ -184,7 +193,6 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
     final highlight = Color.lerp(base, Colors.white, 0.62)!;
     final lifted = widget.state == VidyaOrbVisual.dragging;
     final diameter = widget.size * (lifted ? 1.14 : 1.0);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: diameter,
@@ -200,7 +208,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
         boxShadow: [
           // Ambient drop so the orb reads as floating above the page.
           BoxShadow(
-            color: scheme.shadow.withValues(alpha: isDark ? 0.5 : 0.16),
+            color: scheme.shadow.withValues(alpha: 0.16),
             offset: const Offset(0, 8),
             blurRadius: 18,
             spreadRadius: -4,
@@ -215,7 +223,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
         ],
       ),
       alignment: Alignment.center,
-      child: _glyph(scheme, diameter),
+      child: widget.glyph ? _glyph(scheme, diameter) : null,
     );
   }
 
@@ -274,10 +282,11 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
       top: VidyaOrb._halo - 2,
       right: VidyaOrb._halo - 2,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+        // A 22px pill, so "9+" at the 12px floor still fits.
+        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
         padding: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: AppRadius.rPill,
           color: scheme.secondary,
           border: Border.all(color: scheme.surface, width: 2),
         ),
@@ -285,8 +294,8 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 10,
+            fontFamily: kUiFamily,
+            fontSize: 12,
             height: 1.0,
             fontWeight: FontWeight.w700,
             color: scheme.onSecondary,

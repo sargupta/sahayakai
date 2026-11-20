@@ -4,7 +4,9 @@
 (plus the constants module + Pass-1/Pass-2 inner schemas declared inline
 in `assessment-scanner.ts`).
 
-Phase-2 scope: up to 3 pages per scan, six subject families
+Phase-2 scope: up to ASSESSMENT_DEMO_PAGE_CAP (10) pages per scan on the
+website; the TS dispatcher sends this sidecar scans of at most 3 pages
+(ASSESSMENT_SIDECAR_MAX_PAGES), six subject families
 (Mathematics, Science, EVS, Social Science / History / Geography /
 Civics, Hindi, English) plus an "Other" generic fallback.
 """
@@ -18,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 # Constants -- port of assessment-scanner-constants.ts
 # ---------------------------------------------------------------------------
 
-ASSESSMENT_DEMO_PAGE_CAP = 3
+ASSESSMENT_DEMO_PAGE_CAP = 10  # mirrors the TS constant (raised 3 -> 10)
 PHASE_1_PAGE_CAP = ASSESSMENT_DEMO_PAGE_CAP  # back-compat alias (deprecated)
 ASSESSMENT_MAX_PAGES = 15
 

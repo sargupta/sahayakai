@@ -42,7 +42,10 @@ export interface ResultShellMeta {
 
 export type ResultShellSize = "compact" | "default";
 export type ResultShellVariant = "solid" | "glass";
-export type ResultShellActionsLayout = "inline" | "stacked";
+export type ResultShellActionsLayout = "auto" | "inline" | "stacked";
+
+/** More buttons than this beside the title starve it and wrap into a jumble: stack them. */
+export const INLINE_ACTIONS_MAX = 3;
 
 export interface ResultShellProps {
     /** Stable DOM id used by exportElementToPdf (e.g. "lesson-plan-pdf"). */
@@ -81,7 +84,9 @@ export interface ResultShellProps {
     variant?: ResultShellVariant;
     /**
      * How the action buttons sit relative to the title block.
-     * - `inline` (default): actions float top-right, beside the title on ≥640px.
+     * - `auto` (default): `inline` for up to INLINE_ACTIONS_MAX buttons, otherwise
+     *   `stacked` (founder report 2026-11-17: a generated quiz's 7 buttons were cluttered).
+     * - `inline`: actions float top-right, beside the title on ≥640px.
      *   Best for 1–3 actions.
      * - `stacked`: title/meta span the full width and the actions drop onto their
      *   own full-width row beneath. Use when there are enough actions to starve
@@ -123,13 +128,16 @@ export function ResultShell({
     extraActions,
     size = "default",
     variant = "solid",
-    actionsLayout = "inline",
+    actionsLayout = "auto",
     children,
     footer,
     className,
     contentClassName,
 }: ResultShellProps) {
-    const stacked = actionsLayout === "stacked";
+    const actionCount = (actions?.length ?? 0) + (extraActions ? 1 : 0);
+    const stacked =
+        actionsLayout === "stacked" ||
+        (actionsLayout === "auto" && actionCount > INLINE_ACTIONS_MAX);
     return (
         <Card
             id={id}

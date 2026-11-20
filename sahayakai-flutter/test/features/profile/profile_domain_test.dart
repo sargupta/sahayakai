@@ -70,7 +70,7 @@ void main() {
       expect(const TeacherProfile(schoolName: 'A').isEmpty, isFalse);
       expect(const TeacherProfile(state: 'Kerala').isEmpty, isFalse);
       expect(const TeacherProfile(district: 'Kannur').isEmpty, isFalse);
-      expect(const TeacherProfile(phoneNumber: '9845012345').isEmpty, isFalse);
+      expect(const TeacherProfile(phoneNumber: '9800000502').isEmpty, isFalse);
       expect(const TeacherProfile(pincode: '570001').isEmpty, isFalse);
       expect(const TeacherProfile(subjects: ['Science']).isEmpty, isFalse);
       expect(const TeacherProfile(gradeLevels: ['Class 6']).isEmpty, isFalse);

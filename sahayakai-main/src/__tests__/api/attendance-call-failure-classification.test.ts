@@ -112,10 +112,26 @@ describe('Twilio failure classification (class gate)', () => {
     });
 
     describe('unknown and malformed input', () => {
-        it('an unrecognised code stays a 502 rather than guessing', () => {
-            const f = classifyTwilioFailure(99999, 400);
+        it('an unrecognised code with no 4xx status stays a 502 rather than guessing', () => {
+            const f = classifyTwilioFailure(99999, undefined);
             expect(f.category).toBe('unknown');
             expect(f.status).toBe(502);
+        });
+
+        it('an unrecognised code on a 4xx is Twilio refusing OUR request: never retryable', () => {
+            // 2026-10-08: a trial account answered 400 with code 0, "trial accounts
+            // have limited parameter access". The same request fails the same way
+            // every time, so it must not read as a transient outage.
+            for (const status of [400, 404, 409, 422]) {
+                const f = classifyTwilioFailure(0, status);
+                expect(f).toMatchObject({ category: 'provider_unconfigured', status: 503, retryable: false });
+                expect(releasesDedupWindow(f)).toBe(true);
+            }
+            expect(classifyTwilioFailure(99999, 400).retryable).toBe(false);
+        });
+
+        it('a 429 with an unrecognised code is still transient', () => {
+            expect(classifyTwilioFailure(0, 429)).toMatchObject({ category: 'provider_transient', retryable: true });
         });
 
         it('a 401 with NO parsable code is still treated as our auth', () => {
@@ -139,7 +155,7 @@ describe('Twilio failure classification (class gate)', () => {
         it('a string code is NOT silently treated as its number', () => {
             // Twilio sends a number. If it ever sends a string we want the
             // conservative fallback, not a coincidental match.
-            expect(classifyTwilioFailure('20003', 400).category).toBe('unknown');
+            expect(classifyTwilioFailure('20003', undefined).category).toBe('unknown');
         });
     });
 });

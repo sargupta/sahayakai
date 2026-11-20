@@ -15,11 +15,15 @@
  * the shared window, so a new one cannot ship without one.
  */
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { posix } from 'node:path';
 
 import { CALLING_WINDOW_END_HOUR, CALLING_WINDOW_START_HOUR, checkCallingWindow } from '@/lib/calling-hours';
 
-const ROOT = process.cwd();
+// Posix joins throughout: the routes are repo-relative keys (EXEMPT is written with '/'), and
+// Node reads '/' paths on Windows too. With the platform join every key became 'src\app\…' on
+// Windows, the exemption never matched, and this gate failed there for no real reason.
+const { join } = posix;
+const ROOT = process.cwd().split('\\').join('/');
 
 /**
  * Every route that can cause, or continue, a phone conversation with a parent.

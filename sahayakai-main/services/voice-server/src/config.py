@@ -14,6 +14,17 @@ class Config:
     port: int
     twilio_account_sid: str
     twilio_auth_token: str
+    # Vobiz media path
+    google_cloud_project: str
+    request_signing_key: str
+    vobiz_auth_id: str
+    vobiz_auth_token: str
+    # Gemini endpoint (src/gemini_backend.py). Defaults keep the AI Studio key.
+    gemini_backend: str = "ai_studio"
+    vertex_location: str = "asia-south1"
+    # The built-in __test__ call scenarios start a full, billed pipeline.
+    # Off unless explicitly enabled; never enable in production.
+    allow_test_scenarios: bool = False
 
 
 def load_config() -> Config:
@@ -32,4 +43,15 @@ def load_config() -> Config:
         port=int(os.environ.get("PORT", "8000")),
         twilio_account_sid=os.environ.get("TWILIO_ACCOUNT_SID", ""),
         twilio_auth_token=os.environ.get("TWILIO_AUTH_TOKEN", ""),
+        # Vobiz media path: context is read straight from Firestore
+        # (GOOGLE_CLOUD_PROJECT), the stream URL is verified with the same
+        # signing key the web app mints with, and the leg is ended over Vobiz REST.
+        google_cloud_project=os.environ.get("GOOGLE_CLOUD_PROJECT", ""),
+        request_signing_key=os.environ.get("SAHAYAKAI_REQUEST_SIGNING_KEY", ""),
+        vobiz_auth_id=os.environ.get("VOBIZ_AUTH_ID", ""),
+        vobiz_auth_token=os.environ.get("VOBIZ_AUTH_TOKEN", ""),
+        gemini_backend=os.environ.get("SAHAYAKAI_GEMINI_BACKEND", "ai_studio"),
+        vertex_location=os.environ.get("SAHAYAKAI_VERTEX_LOCATION", "asia-south1"),
+        allow_test_scenarios=os.environ.get("SAHAYAKAI_ALLOW_TEST_SCENARIOS", "").strip().lower()
+        in ("1", "true", "yes"),
     )

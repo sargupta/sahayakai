@@ -184,6 +184,10 @@ const voiceToTextPrompt = ai.definePrompt({
   name: 'voiceToTextPrompt',
   input: { schema: VoiceToTextInputSchema },
   output: { schema: VoiceToTextOutputSchema },
+  // Transcription needs no reasoning. Left at the model's default, Gemini 2.5 Flash
+  // "thinks" before transcribing: production took 24.4 s for one clip (17 Nov 2026).
+  // Gate: voice-to-text-latency.test.ts.
+  config: { thinkingConfig: { thinkingBudget: 0 } },
   prompt: `You are a multilingual speech-to-text engine optimized for Indian languages and English.
 
 Your task is to transcribe the audio and detect its language.

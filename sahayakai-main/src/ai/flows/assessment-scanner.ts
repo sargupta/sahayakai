@@ -1,7 +1,7 @@
 /**
  * @fileOverview Assessment Scanner — AI grading of student answer sheets.
  *
- * Phase-2 scope: up to 3 pages per scan, multiple subject families
+ * Phase-2 scope: up to ASSESSMENT_DEMO_PAGE_CAP (10) pages per scan, multiple subject families
  * (Mathematics, Science, EVS, Social Science, Hindi, English, Other).
  *
  * Two-pass strategy:
@@ -887,7 +887,7 @@ async function extractSinglePage(
 async function extractPagesFanOut(
     validPages: Array<{ pageIndex: number; imageDataUri: string }>,
     input: AssessmentScannerInput,
-): Promise<{ pages: PageScan[]; failure?: unknown }> {
+): Promise<{ pages: PageScan[]; failure?: unknown; failedPageIndexes: number[] }> {
     let transientError: unknown;
     let otherFailure: unknown;
     const results = await mapWithConcurrency(
@@ -910,7 +910,13 @@ async function extractPagesFanOut(
     const pages = validPages.map(
         (p, i) => results[i] ?? unreadablePlaceholder(p.pageIndex),
     );
-    return { pages, failure: otherFailure };
+    // Pages whose model call FAILED (as opposed to a page the model read as
+    // unreadable) — surfaced with their own notice so the teacher re-runs the
+    // scan instead of re-photographing a perfectly good page.
+    const failedPageIndexes = validPages
+        .filter((_, i) => results[i] === null)
+        .map((p) => p.pageIndex);
+    return { pages, failure: otherFailure, failedPageIndexes };
 }
 
 async function extractAllPages(
@@ -1451,6 +1457,7 @@ function aggregate(
         studentRecommendations: string[];
         teacherParentNote: string[];
     },
+    processingFailedPages: ReadonlySet<number> = new Set(),
 ): AssessmentScannerOutput {
     // Merge the Q&A that Pass 2 no longer echoes: fill `questionText` /
     // `studentAnswer` from the Pass-1 extraction by `questionId`. A NON-EMPTY
@@ -1661,11 +1668,12 @@ function aggregate(
     // knows exactly which one to re-shoot, rather than only seeing status
     // 'partial' with no per-page detail.
     for (const p of pages) {
-        if (p.pageType === 'unreadable') {
-            skippedPageNotices.push(
-                `Page ${p.pageIndex + 1}: couldn't read this page (image unclear or corrupt) — please re-upload a clearer photo.`,
-            );
-        }
+        if (p.pageType !== 'unreadable') continue;
+        skippedPageNotices.push(
+            processingFailedPages.has(p.pageIndex)
+                ? `Page ${p.pageIndex + 1}: couldn't be processed (the grading service failed on this page), so it is not in this grade — run the scan again to include it.`
+                : `Page ${p.pageIndex + 1}: couldn't read this page (image unclear or corrupt) — please re-upload a clearer photo.`,
+        );
     }
 
     // Status: 'partial' only when a page was UNREADABLE — some content couldn't
@@ -1784,13 +1792,14 @@ export async function gradeAssessment(
     // prior single multi-image call for A/B measurement. A transient 429/503
     // propagates; any other total failure comes back as `failure` (rethrown below
     // only if nothing was gradable).
-    const extraction =
+    const extraction: { pages: PageScan[]; failure?: unknown; failedPageIndexes?: number[] } =
         validPages.length === 0
             ? { pages: [] as PageScan[], failure: undefined as unknown }
             : PASS1_STRATEGY === 'fanout'
               ? await extractPagesFanOut(validPages, input)
               : await extractAllPages(validPages, validPages.length, input);
     const extractionFailure = extraction.failure;
+    const processingFailedPages = new Set(extraction.failedPageIndexes ?? []);
 
     // Re-assemble the full page list in pageIndex order: extracted results for
     // valid pages + unreadable placeholders for the corrupt/undecodable ones.
@@ -1893,7 +1902,9 @@ export async function gradeAssessment(
     }
 
     // Aggregate + validate
-    const output = AssessmentScannerOutputSchema.parse(aggregate(input, pages, pass2));
+    const output = AssessmentScannerOutputSchema.parse(
+        aggregate(input, pages, pass2, processingFailedPages),
+    );
 
     // Persist (fire-and-forget — don't block the response on Firestore)
     void persist(input, output);

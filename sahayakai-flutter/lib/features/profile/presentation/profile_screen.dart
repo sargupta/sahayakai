@@ -238,7 +238,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             children: [
               LabeledField(
                 label: l10n.profileNameLabel,
-                leadingIcon: LucideIcons.user,
                 hint: l10n.profileNameHint,
                 child: TextFormField(
                   controller: _name,
@@ -253,7 +252,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               const SizedBox(height: AppSpacing.space6),
               LabeledField(
                 label: l10n.profileSchoolLabel,
-                leadingIcon: LucideIcons.school,
                 child: TextFormField(
                   controller: _school,
                   textCapitalization: TextCapitalization.words,
@@ -299,7 +297,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               const SizedBox(height: AppSpacing.space6),
               LabeledField(
                 label: l10n.profileDistrictLabel,
-                leadingIcon: LucideIcons.map,
                 hint: l10n.profileDistrictHint,
                 child: TextFormField(
                   controller: _district,
@@ -310,7 +307,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               const SizedBox(height: AppSpacing.space6),
               LabeledField(
                 label: l10n.profilePincodeLabel,
-                leadingIcon: LucideIcons.hash,
                 hint: l10n.profilePincodeHint,
                 child: TextFormField(
                   controller: _pincode,
@@ -332,7 +328,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
         child: AppCard(
           child: LabeledField(
             label: l10n.profilePhoneLabel,
-            leadingIcon: LucideIcons.phone,
             hint: l10n.profilePhoneHint,
             child: TextFormField(
               controller: _phone,
@@ -409,7 +404,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _boardCategoryField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.profileBoardCategoryLabel,
-      leadingIcon: LucideIcons.layers,
       hint: l10n.profileBoardCategoryHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -451,7 +445,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     final boards = _category?.boards ?? kEducationBoards;
     return LabeledField(
       label: l10n.settingsBoardLabel,
-      leadingIcon: LucideIcons.landmark,
       child: DropdownButtonFormField<String?>(
         initialValue: _draft.settings.educationBoard,
         isExpanded: true, // long board names ellipsize instead of overflowing
@@ -479,7 +472,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _subjectsField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.profileSubjectsLabel,
-      leadingIcon: LucideIcons.bookOpen,
       hint: l10n.profileSubjectsHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -509,7 +501,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _gradesField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.profileGradesLabel,
-      leadingIcon: LucideIcons.graduationCap,
       hint: l10n.profileGradesHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -539,7 +530,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _stateField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.profileStateLabel,
-      leadingIcon: LucideIcons.mapPin,
       child: DropdownButtonFormField<String?>(
         initialValue: _draft.state,
         isExpanded: true,
@@ -562,7 +552,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _adminRoleField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.settingsAdminRoleLabel,
-      leadingIcon: LucideIcons.briefcase,
       child: DropdownButtonFormField<AdministrativeRole?>(
         initialValue: _draft.settings.administrativeRole,
         isExpanded: true,
@@ -683,7 +672,6 @@ class _IdentityCard extends StatelessWidget {
         : l10n.profileNoName;
 
     return AppCard(
-      accentBar: true,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -742,7 +730,6 @@ class _SignedOutCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return AppCard(
-      accentBar: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,

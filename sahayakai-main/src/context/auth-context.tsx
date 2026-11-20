@@ -8,13 +8,17 @@ import { initAnalytics, trackSessionStart, trackSessionEnd, flushAnalytics } fro
 import { syncUserAction } from '@/lib/api/auth';
 import { startTeacherSession, endTeacherSession } from '@/lib/teacher-activity-tracker';
 import { consumePendingSignIn } from '@/lib/sign-in-with-google';
+import { devLoginActive } from '@/lib/dev-login';
 
 // Keep the auth-token cookie in sync with Firebase's token lifecycle.
 // onIdTokenChanged fires on login AND on automatic token refresh (~every 55 min),
 // so the cookie stays fresh. Middleware reads this cookie to inject x-user-id
 // into server actions, which don't carry an Authorization header.
-function syncAuthCookie(token: string | null) {
+export function syncAuthCookie(token: string | null) {
     if (typeof document === 'undefined') return;
+    // Local development: a developer who chose the documented dev login keeps it, even if a
+    // Firebase user is also signed in in this browser (src/lib/dev-login.ts). Never in production.
+    if (process.env.NODE_ENV === 'development' && devLoginActive()) return;
     if (token) {
         const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
         // SameSite=Lax: still CSRF-safe, but the cookie survives the return
