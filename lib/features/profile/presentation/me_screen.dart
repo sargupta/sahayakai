@@ -673,6 +673,11 @@ class _SettingsCard extends ConsumerWidget {
         trailing: const _Chevron(),
         onTap: () => context.push(Routes.privacyForTeachers),
       ),
+      _SettingsRow(
+        label: l10n.meSourcesDisclaimer,
+        trailing: const _Chevron(),
+        onTap: () => context.push(Routes.sources),
+      ),
     ];
 
     return MapCard(

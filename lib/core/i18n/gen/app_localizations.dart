@@ -7346,6 +7346,12 @@ abstract class AppLocalizations {
   /// **'Privacy for teachers'**
   String get mePrivacyForTeachers;
 
+  /// Link to the page saying SahayakAI is not a government app and linking the official syllabus sources (NCERT, CBSE, Ministry of Education).
+  ///
+  /// In en, this message translates to:
+  /// **'Sources & disclaimer'**
+  String get meSourcesDisclaimer;
+
   /// Orb side setting: VIDYA sits on the left (tab bar and floating orb). The switch is on.
   ///
   /// In en, this message translates to:

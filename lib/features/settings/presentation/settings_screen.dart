@@ -119,6 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       const _OrbHandSection(),
       if (signedIn) _profileSection(l10n) else const _SignedOutCard(),
       const _PrivacyRow(),
+      const _SourcesRow(),
       if (signedIn) const _BlockedTeachersRow(),
       if (signedIn) _deleteSection(l10n),
     ];
@@ -790,6 +791,38 @@ class _PrivacyRow extends StatelessWidget {
             Expanded(
               child: Text(
                 context.l10n.mePrivacyForTeachers,
+                style: text.bodyLarge?.copyWith(
+                  fontSize: 14,
+                  color: AppColors.textStrong,
+                ),
+              ),
+            ),
+            const _Chevron(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Not-a-government-app disclaimer and the official syllabus sources.
+class _SourcesRow extends StatelessWidget {
+  const _SourcesRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      child: MapCard(
+        key: const ValueKey('settings-sources'),
+        onTap: () => context.push(Routes.sources),
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 14, 10, 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                context.l10n.meSourcesDisclaimer,
                 style: text.bodyLarge?.copyWith(
                   fontSize: 14,
                   color: AppColors.textStrong,

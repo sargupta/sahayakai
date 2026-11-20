@@ -4317,6 +4317,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get mePrivacyForTeachers => 'ஆசிரியர்களுக்கான தனியுரிமை';
 
   @override
+  String get meSourcesDisclaimer => 'Sources & disclaimer';
+
+  @override
   String get vidyaSideLeft => 'VIDYA இடப்பக்கம்';
 
   @override

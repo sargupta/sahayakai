@@ -48,6 +48,10 @@ class Routes {
   /// Privacy explainer for teachers (Pillar 06). Pushed from Settings.
   static const String privacyForTeachers = '/privacy-for-teachers';
 
+  /// Not-a-government-app disclaimer and the official syllabus sources (Play
+  /// Misleading Claims policy). Pushed from Settings and the Me tab.
+  static const String sources = '/sources';
+
   /// The teachers this teacher has blocked, with Unblock. Pushed from Settings.
   static const String blockedTeachers = '/settings/blocked-teachers';
 

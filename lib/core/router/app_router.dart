@@ -35,6 +35,7 @@ import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/rubric_generator/presentation/rubric_generator_screen.dart';
 import '../../features/settings/presentation/privacy_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/settings/presentation/sources_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/staffroom/data/chat_stream_provider.dart';
 import '../../features/staffroom/domain/group.dart';
@@ -339,6 +340,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.privacyForTeachers,
         builder: (context, state) => const PrivacyScreen(),
+      ),
+      GoRoute(
+        path: Routes.sources,
+        builder: (context, state) => const SourcesScreen(),
       ),
       GoRoute(
         path: Routes.blockedTeachers,

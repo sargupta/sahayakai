@@ -4212,6 +4212,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mePrivacyForTeachers => 'Privacy for teachers';
 
   @override
+  String get meSourcesDisclaimer => 'Sources & disclaimer';
+
+  @override
   String get vidyaSideLeft => 'VIDYA on the left';
 
   @override

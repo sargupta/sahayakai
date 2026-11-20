@@ -4239,6 +4239,9 @@ class AppLocalizationsGu extends AppLocalizations {
   String get mePrivacyForTeachers => 'શિક્ષકો માટે ગોપનીયતા';
 
   @override
+  String get meSourcesDisclaimer => 'Sources & disclaimer';
+
+  @override
   String get vidyaSideLeft => 'VIDYA ડાબી બાજુ';
 
   @override

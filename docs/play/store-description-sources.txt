@@ -1,0 +1,14 @@
+Paste this at the END of the Play Store full description, in every language listing.
+(Grow users > Store presence > Main store listing > Full description.)
+Keep the in-app list in lib/features/settings/presentation/sources_screen.dart in step with it.
+
+----- copy from the next line -----
+SOURCES AND DISCLAIMER
+SahayakAI is made by SARGVISION, a private company. It is not a government app and is not affiliated with, endorsed by or acting on behalf of NCERT, CBSE, the Ministry of Education or any state government or education board. Syllabus references in the app come from these official sources:
+• NCERT textbooks: https://ncert.nic.in/textbook.php
+• NCERT syllabus: https://ncert.nic.in/syllabus.php
+• CBSE curriculum: https://cbseacademic.nic.in/
+• Ministry of Education: https://www.education.gov.in/
+• DIKSHA: https://diksha.gov.in/
+For state board syllabi, see your state education board's official website. The same links are in the app under Settings > Sources & disclaimer.
+----- end -----

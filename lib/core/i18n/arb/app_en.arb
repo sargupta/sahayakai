@@ -5105,6 +5105,10 @@
   "@mePrivacyForTeachers": {
     "description": "Link to the Privacy for teachers page."
   },
+  "meSourcesDisclaimer": "Sources & disclaimer",
+  "@meSourcesDisclaimer": {
+    "description": "Link to the page saying SahayakAI is not a government app and linking the official syllabus sources (NCERT, CBSE, Ministry of Education)."
+  },
   "vidyaSideLeft": "VIDYA on the left",
   "@vidyaSideLeft": {
     "description": "Orb side setting: VIDYA sits on the left (tab bar and floating orb). The switch is on."

@@ -4253,6 +4253,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get mePrivacyForTeachers => 'ಶಿಕ್ಷಕರ ಗೌಪ್ಯತೆ';
 
   @override
+  String get meSourcesDisclaimer => 'Sources & disclaimer';
+
+  @override
   String get vidyaSideLeft => 'VIDYA ಎಡಭಾಗದಲ್ಲಿ';
 
   @override
