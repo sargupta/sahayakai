@@ -6,7 +6,6 @@ import { Loader2, Globe2, MapPin, Compass } from "lucide-react";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
-import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
@@ -137,11 +136,7 @@ function VirtualFieldTripContent() {
                         className="min-h-[120px] rounded-xl bg-muted/20 text-base"
                       />
                     </FormControl>
-                    <MicrophoneInput
-                      onTranscriptChange={(text, lang) => { form.setValue("topic", text); if (lang) form.setValue("language", lang); }}
-                      label={t.speakLabel}
-                      iconSize="sm"
-                    />
+                    {/* No mic here: VIDYA (the floating orb) already takes the trip idea by voice. */}
                     <FormMessage />
                   </FormItem>
                 )}
