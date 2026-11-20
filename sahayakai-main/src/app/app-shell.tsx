@@ -123,7 +123,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <AppSidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line-hairline bg-surface-chrome px-3 md:h-topbar md:px-6">
+          {/* Phone budget: menu + wordmark on the left, four 36–44px
+              controls on the right, and nothing may shrink (a squeezed menu
+              button or a wordmark running under Search is the failure). The
+              full wordmark needs ~380px of screen, so below 390px the header
+              shows the design system's compact mark (the orb; the name stays
+              as the link's accessible text). Gaps are tighter below `sm`.
+              From `md` up nothing here applies. Guarded by
+              qa/e2e/phone-overflow.spec.ts. */}
+          <header
+            data-testid="app-header"
+            className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 sm:gap-3 border-b border-line-hairline bg-surface-chrome px-3 md:h-topbar md:px-6"
+          >
             {/* Phone: menu + wordmark. Tablet/desktop: search. */}
             <div className="flex min-w-0 items-center gap-1 md:hidden">
               <button
@@ -131,12 +142,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 onClick={() => setMenuOpen(true)}
                 aria-label={t("Open menu")}
                 aria-expanded={menuOpen}
-                className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-pill text-ink-600 hover:bg-tint-subtle hover:text-ink-900"
+                className="focus-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-ink-600 hover:bg-tint-subtle hover:text-ink-900"
               >
                 <Menu aria-hidden="true" strokeWidth={1.7} className="h-5 w-5" />
               </button>
-              <Link href="/" className="focus-ring flex min-h-11 items-center rounded-pill px-1">
-                <SahayakWordmark />
+              <Link href="/" className="focus-ring flex min-h-11 shrink-0 items-center rounded-pill px-1">
+                <SahayakWordmark compact className="min-[390px]:hidden" />
+                <SahayakWordmark className="max-[389px]:hidden" />
               </Link>
             </div>
             <button
@@ -148,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="flex-1 truncate text-tile">{t("Search tools and your work")}</span>
               <kbd className="rounded-xs bg-tint-quiet px-1.5 py-0.5 text-xs font-medium text-ink-500">⌘K</kbd>
             </button>
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
               <button
                 type="button"
                 onClick={openCommandPalette}
