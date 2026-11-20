@@ -23,8 +23,10 @@ from pipecat.frames.frames import Frame, LLMContextFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
 
-# Prefix for phase instructions — used to filter from transcripts
-PHASE_INSTRUCTION_PREFIX = "[Guide"
+# Prefix for phase instructions — used to filter from transcripts.
+# Lives with the guidance text in the pure prompts module; re-exported here
+# because CallManager has always imported it from this module.
+from src.prompts.phase_guidance import PHASE_INSTRUCTION_PREFIX  # noqa: E402
 
 
 class ConversationPhase(Enum):
@@ -36,53 +38,10 @@ class ConversationPhase(Enum):
     ENDED = "ended"            # Call done
 
 
-# Soft guidance per phase. These are hints, not scripts.
-# The LLM's system prompt already has the persona and rules —
-# these just nudge "what to focus on THIS turn."
-#
-# Key design: every instruction includes "If parent brings up something
-# else, address THAT instead" — so the LLM never ignores real concerns
-# to follow a script.
-PHASE_GUIDANCE: dict[ConversationPhase, str] = {
-    ConversationPhase.OPENING: (
-        "{prefix}: Parent just responded to your greeting. "
-        "Your greeting ALREADY mentioned {student_name} and the reason ({reason}). "
-        "STAY ON TOPIC — do NOT change subject or ask unrelated questions like "
-        "'ghar pe sab theek hai'. Follow up DIRECTLY on the topic you introduced. "
-        "For attendance: ask if the child was ill or when they'll return. "
-        "For exam/studies: ask whether studying happens at home, frame as 'difficulty', never state the exact score. "
-        "For behavior: ask how the child is at home, frame as 'I wanted to discuss', never say 'complaint'. "
-        "For homework/fees: address homework first; fees as a separate, gentle mention. "
-        "Speak in the parent's language. If parent already started sharing something, respond to THAT. "
-        "NEVER ask 'how can I help' — you called them.]"
-    ),
-    ConversationPhase.EXPLORE: (
-        "{prefix}: You're understanding the situation. "
-        "STAY ON TOPIC — keep discussing {reason}. "
-        "Listen and acknowledge warmly in the parent's language. "
-        "If they shared a real problem (health, money, family), show empathy first. "
-        "If defensive, don't argue — say you want to work together. "
-        "If embarrassed, reassure gently. "
-        "Ask ONE follow-up about {student_name} if needed, or move to suggestion. "
-        "If parent brings up something unrelated, briefly acknowledge, then return to {reason}.]"
-    ),
-    ConversationPhase.ADVISE: (
-        "{prefix}: You understand the situation now. "
-        "Give ONE practical suggestion connected to {reason}. "
-        "Academic: offer extra class or a home routine. "
-        "Behavior: suggest a short meeting at school to work together. "
-        "Fees: offer to speak with the principal, reassure. "
-        "Homework: suggest a daily routine or offer to check in. "
-        "If parent raised a concern, address it. Then ask if there's anything else. "
-        "If parent says no or sounds ready to end, wrap up next turn.]"
-    ),
-    ConversationPhase.CLOSE: (
-        "{prefix}: Wrap up the call NOW in ONE short sentence in parent's language. "
-        "Thank them warmly, mention {student_name} positively, say goodbye naturally. "
-        "Do NOT ask any more questions. Do NOT start a new topic. "
-        "If parent raises a NEW concern, briefly acknowledge, then STILL close.]"
-    ),
-}
+# The guidance text itself is chosen per call by call_policy.plan_call and
+# lives in src/prompts/phase_guidance.py (pure, so the tests can read it):
+# the original table for positive_feedback calls, the request-to-talk table
+# for every other call.
 
 # Default phase transition — but CallManager can also skip phases
 _NEXT_PHASE: dict[ConversationPhase, ConversationPhase] = {
@@ -112,11 +71,11 @@ class PhaseInstructor(FrameProcessor):
     after each completed turn.
     """
 
-    def __init__(self, *, call_context: dict, **kwargs):
+    def __init__(self, *, guidance: dict[str, str], **kwargs):
+        """`guidance` maps a phase value to its fully rendered text (CallPlan.phase_guidance)."""
         super().__init__(**kwargs)
         self._phase = ConversationPhase.OPENING
-        self._student_name = call_context.get("studentName", "student")
-        self._reason = call_context.get("reason", "school matters")
+        self._guidance = dict(guidance)
         self._turns_in_phase = 0
 
     @property
@@ -153,13 +112,8 @@ class PhaseInstructor(FrameProcessor):
 
         if isinstance(frame, LLMContextFrame):
             # Inject phase guidance into context right before LLM inference
-            template = PHASE_GUIDANCE.get(self._phase)
-            if template:
-                guidance = template.format(
-                    prefix=PHASE_INSTRUCTION_PREFIX,
-                    student_name=self._student_name,
-                    reason=self._reason,
-                )
+            guidance = self._guidance.get(self._phase.value)
+            if guidance:
                 frame.context.add_message({
                     "role": "user",
                     "content": guidance,

@@ -9,7 +9,8 @@
  *
  * Authentication (defense in depth — F12-P0-01 fix):
  *   1. CRON_SECRET bearer (Cloud Scheduler manual runs / cron), OR
- *   2. Pub/Sub OIDC bearer token (Google-signed, audience matches our endpoint).
+ *   2. Pub/Sub OIDC bearer token (Google-signed, audience matches our endpoint, AND the
+ *      verified `email` is in PUBSUB_PUSH_SERVICE_ACCOUNTS — required; unset = OIDC refused).
  *   Unauth requests → 401.
  * Path allowlist:
  *   storagePath MUST start with one of: temp/, voice-messages/{uid}/, lessons/{uid}/,
@@ -111,12 +112,15 @@ async function verifyPubSubOidc(authHeader: string | null, expectedAudience: str
         if (payload.iss !== 'https://accounts.google.com' && payload.iss !== 'accounts.google.com') {
             return { ok: false, reason: 'bad_issuer' };
         }
-        // Optional: enforce SA allowlist via env (comma-separated emails).
+        // REQUIRED service-account allowlist (comma-separated emails). Any Google
+        // account in ANY project can mint an ID token for our URL as audience, so a
+        // valid Google signature alone proves nothing about the caller. Without the
+        // allowlist the OIDC path is closed (fail closed); CRON_SECRET still works.
         const allowed = (process.env.PUBSUB_PUSH_SERVICE_ACCOUNTS || '').split(',').map(s => s.trim()).filter(Boolean);
-        if (allowed.length > 0 && payload.email && !allowed.includes(payload.email)) {
-            return { ok: false, reason: 'sa_not_allowlisted' };
-        }
-        return { ok: true, subject: payload.email || payload.sub };
+        if (allowed.length === 0) return { ok: false, reason: 'sa_allowlist_unset' };
+        if (!payload.email || payload.email_verified !== true) return { ok: false, reason: 'email_unverified' };
+        if (!allowed.includes(payload.email)) return { ok: false, reason: 'sa_not_allowlisted' };
+        return { ok: true, subject: payload.email };
     } catch (err: any) {
         return { ok: false, reason: `verify_failed:${err?.message || 'unknown'}` };
     }

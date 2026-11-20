@@ -12,6 +12,7 @@ import 'package:sahayakai/features/quiz_generator/presentation/quiz_generator_sc
 import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_result_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'quiz_fixtures.dart';
 
 /// Form-layer gates: the chips, dropdowns and stepper are the overflow-prone
@@ -28,7 +29,7 @@ Widget _hostScreen({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -47,7 +48,7 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets(
           'form renders at 360dp, textScale $scale, ${brightness.name}',
@@ -63,11 +64,11 @@ void main() {
             expect(tester.takeException(), isNull);
 
             // Every field is laid out, including the wrapping chip groups.
-            expect(find.text('Topic'), findsOneWidget);
-            expect(find.text('Number of questions'), findsOneWidget);
-            expect(find.text('Question types'), findsOneWidget);
+            expect(findFieldLabel('Topic'), findsOneWidget);
+            expect(findFieldLabel('Number of questions'), findsOneWidget);
+            expect(findFieldLabel('Question types'), findsOneWidget);
             expect(find.text('All levels'), findsOneWidget);
-            expect(find.text('Thinking skills'), findsOneWidget);
+            expect(findFieldLabel('Thinking skills'), findsOneWidget);
           },
         );
       }

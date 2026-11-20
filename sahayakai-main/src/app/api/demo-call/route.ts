@@ -1,3 +1,4 @@
+import { clientAddress } from '@/lib/client-address';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { isDemoLanguage } from '@/lib/demo-call/scripts';
@@ -32,8 +33,7 @@ interface DemoCallBody {
 }
 
 function clientIp(req: NextRequest): string {
-    const fwd = req.headers.get('x-forwarded-for');
-    return (fwd ? fwd.split(',')[0] : '').trim() || 'unknown';
+    return clientAddress(req);
 }
 
 /** Keep only expected small string fields; never store arbitrary client JSON. */

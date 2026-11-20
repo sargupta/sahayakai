@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en" class="sc-root">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SahayakAI UI Showcase</title>
+<meta name="description" content="The existing SahayakAI design system (develop @ 92837486), rendered with the app's own compiled CSS.">
+<!--
+  HOW THIS PAGE IS BUILT
+  - assets/sahayakai-app.develop-92837486.css is the REAL stylesheet Next.js compiled from
+    src/app/globals.css + tailwind.config.ts at develop 92837486 (fetched from `next dev`).
+    Every specimen below uses class strings copied verbatim from the named source file, so
+    colours, radii, shadows, hovers and animations come from production CSS, not from this page.
+  - Fonts: the app self-hosts Instrument Sans / Bricolage Grotesque / Noto Sans via next/font.
+    This page loads the SAME families from Google Fonts and sets the same CSS variables
+    (--font-ui, --font-display, --font-noto-devanagari). Glyphs match; hinting may differ slightly.
+  - Icons: Lucide (the app's icon set) loaded from unpkg at the app's lucide-react version.
+  - Anything that is not a verbatim class string is tagged "Reconstructed".
+  - Classes prefixed `sc-` belong to this documentation page only.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/sahayakai-app.develop-92837486.css">
+<style>
+  /* Same variable names next/font sets on <html> in src/app/layout.tsx */
+  :root {
+    --font-ui: 'Instrument Sans';
+    --font-display: 'Bricolage Grotesque';
+    --font-noto-devanagari: 'Noto Sans Devanagari';
+  }
+  /* ---------- documentation chrome (sc-*) — built from the app's own tokens ---------- */
+  html.sc-root { scroll-behavior: smooth; }
+  body { margin: 0; }
+  .sc-layout { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+  .sc-toc { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 20px 14px 32px; border-right: 1px solid var(--border-hairline); background: var(--surface-chrome); }
+  .sc-toc a { display: block; padding: 7px 12px; border-radius: 9999px; color: hsl(var(--ink-600)); text-decoration: none; font-size: 13px; line-height: 1.3; }
+  .sc-toc a:hover { background: var(--fill-subtle); color: hsl(var(--ink-900)); }
+  .sc-toc a.sc-on { background: hsl(var(--milk-400)); color: hsl(var(--ink-900)); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border-hairline); }
+  .sc-main { min-width: 0; padding: 0 40px 96px; }
+  .sc-hero { padding: 48px 0 24px; max-width: 980px; }
+  .sc-sec { padding: 40px 0 8px; border-top: 1px solid var(--border-hairline); scroll-margin-top: 8px; }
+  .sc-sec > h2 { font-family: var(--font-display); font-weight: 600; font-size: 28px; line-height: 1.15; letter-spacing: -0.01em; color: hsl(var(--ink-900)); margin: 0 0 6px; }
+  .sc-sec > p.sc-lead { margin: 0 0 22px; color: hsl(var(--ink-500)); max-width: 76ch; font-size: 14px; }
+  .sc-h3 { font-family: var(--font-display); font-weight: 600; font-size: 17px; color: hsl(var(--ink-900)); margin: 28px 0 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sc-src { font: 500 11.5px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; color: hsl(var(--ink-500)); background: var(--fill-quiet); padding: 2px 7px; border-radius: 6px; word-break: break-all; }
+  .sc-tag { font: 600 10.5px/1 var(--font-ui), sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 4px 7px; border-radius: 9999px; white-space: nowrap; }
+  .sc-tag.v { background: var(--success-tint); color: hsl(var(--leaf-700)); }
+  .sc-tag.r { background: var(--amber-tint); color: hsl(var(--saffron-800)); }
+  .sc-tag.s { background: var(--info-tint); color: hsl(var(--indigo-500)); }
+  .sc-board { background: hsl(var(--background)); border: 1px solid var(--border-row); border-radius: 18px; padding: 22px; }
+  .sc-board.sc-wash { background-color: hsl(var(--milk-200)); background-image: var(--glow-saffron), var(--wash-screen); background-repeat: no-repeat; background-position: right -160px top -200px, 0 0; background-size: 640px 640px, 100% 100%; }
+  .sc-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .sc-grid { display: grid; gap: 16px; }
+  .sc-g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sc-g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sc-cap { font-size: 12px; color: hsl(var(--ink-500)); margin-top: 6px; line-height: 1.4; }
+  .sc-cap code, .sc-note code, td code { font: 500 11.5px ui-monospace, Consolas, monospace; }
+  .sc-note { font-size: 13px; color: hsl(var(--ink-600)); background: var(--accent-tint-soft); border: 1px solid var(--accent-tint-border); border-radius: 12px; padding: 10px 14px; margin: 12px 0; }
+  .sc-warn { font-size: 13px; color: hsl(var(--ink-800)); background: var(--red-tint); border: 1px solid rgba(192,57,43,.25); border-radius: 12px; padding: 10px 14px; margin: 12px 0; }
+  /* swatches */
+  .sc-sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .sc-chip { border-radius: 14px; overflow: hidden; border: 1px solid var(--border-row); background: #fff; }
+  .sc-chip > div:first-child { height: 64px; }
+  .sc-chip .meta { padding: 8px 10px 10px; font-size: 11.5px; line-height: 1.35; color: hsl(var(--ink-600)); }
+  .sc-chip .meta b { display: block; font: 600 12px ui-monospace, Consolas, monospace; color: hsl(var(--ink-900)); word-break: break-all; }
+  .sc-chip .ok { color: hsl(var(--leaf-500)); font-weight: 600; }
+  .sc-chip .bad { color: hsl(var(--red-500)); font-weight: 600; }
+  /* tables in the doc */
+  table.sc-t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.sc-t th { text-align: left; font-weight: 600; color: hsl(var(--ink-600)); padding: 8px 10px; border-bottom: 1px solid var(--border-row); white-space: nowrap; }
+  table.sc-t td { padding: 9px 10px; border-bottom: 1px solid var(--border-hairline); vertical-align: top; color: hsl(var(--ink-800)); }
+  /* stage: a transformed box makes the app's `fixed` overlays position inside it */
+  .sc-stage { position: relative; transform: translateZ(0); overflow: hidden; border-radius: 18px; border: 1px solid var(--border-row); background: hsl(var(--background)); }
+  .sc-shot { border: 1px solid var(--border-row); border-radius: 14px; overflow: hidden; background: #fff; }
+  .sc-shot img { display: block; width: 100%; height: auto; }
+  .sc-shot figcaption { padding: 8px 12px; font-size: 12px; color: hsl(var(--ink-600)); border-top: 1px solid var(--border-hairline); }
+  .sc-shot.tall img { max-height: 560px; object-fit: cover; object-position: top; }
+  .sc-menu-btn { display: none; }
+  @media (max-width: 900px) {
+    .sc-layout { grid-template-columns: 1fr; }
+    .sc-toc { position: fixed; z-index: 60; inset: 0 auto 0 0; width: 260px; transform: translateX(-100%); transition: transform .3s cubic-bezier(.4,0,.2,1); box-shadow: var(--shadow-float); }
+    .sc-toc.open { transform: none; }
+    .sc-menu-btn { display: inline-flex; position: fixed; z-index: 61; left: 12px; top: 12px; }
+    .sc-main { padding: 0 16px 80px; }
+    .sc-hero { padding-top: 64px; }
+    .sc-g2, .sc-g3 { grid-template-columns: 1fr; }
+  }
+  [data-lucide] { width: 1em; height: 1em; }
+  .sc-mot:hover .sc-dot { transform: translateX(248px); } /* duration + easing come from the app's classes */
+</style>
+</head>
+<body class="font-body antialiased">
+<button class="sc-menu-btn focus-ring h-11 w-11 items-center justify-center rounded-pill border border-line-glass bg-surface-capsule shadow-float text-ink-600" aria-label="Open contents" onclick="document.querySelector('.sc-toc').classList.toggle('open')"><i data-lucide="menu" class="h-5 w-5"></i></button>
+<div class="sc-layout">
+<nav class="sc-toc" aria-label="Contents">
+  <div style="padding:6px 12px 18px">
+    <span class="inline-flex items-center gap-2">
+      <span aria-hidden="true" class="inline-block h-[18px] w-[18px] shrink-0 rounded-pill shadow-orb" style="background: var(--orb-resting)"></span>
+      <span class="font-display text-brand font-semibold leading-none tracking-[-0.01em] text-ink-900">SahayakAI</span>
+    </span>
+    <p class="type-eyebrow text-ink-500" style="margin:12px 0 0">UI showcase · develop 92837486</p>
+  </div>
+  <a href="#about">About this page</a>
+  <a href="#colour">1 · Brand &amp; colour</a>
+  <a href="#type">2 · Typography</a>
+  <a href="#buttons">3 · Buttons</a>
+  <a href="#cards">4 · Cards &amp; containers</a>
+  <a href="#inputs">5 · Inputs &amp; form controls</a>
+  <a href="#nav">6 · Navigation &amp; sidebar</a>
+  <a href="#tabs">7 · Tabs &amp; selectors</a>
+  <a href="#tables">8 · Tables &amp; data</a>
+  <a href="#badges">9 · Badges &amp; status</a>
+  <a href="#overlays">10 · Modals &amp; overlays</a>
+  <a href="#states">11 · Empty, loading, error</a>
+  <a href="#vidya">11b · VIDYA</a>
+  <a href="#responsive">12 · Responsive</a>
+  <a href="#pages">13 · Page patterns</a>
+  <a href="#tokens">Tokens: radius, shadow, motion</a>
+  <a href="#issues">Inconsistencies</a>
+</nav>
+
+<main class="sc-main">
+
+<!-- ============================================================ -->
+<header class="sc-hero" id="about">
+  <p class="type-eyebrow text-saffron-600" style="margin:0 0 10px">Existing design system · documentation, not a proposal</p>
+  <h1 class="font-headline text-3xl md:text-5xl font-bold text-foreground tracking-tight leading-[1.15]" style="margin:0">SahayakAI, <span class="text-saffron-600">as built.</span></h1>
+  <p class="text-base md:text-lg text-muted-foreground leading-relaxed" style="max-width:70ch;margin:14px 0 18px">
+    This page renders the SahayakAI design system from <b>develop @ 92837486</b>, using the stylesheet the app itself compiles. The swatches below read their colour from the live CSS variables and check each against the hex documented in <code>SAHAYAKAI_DESIGN_SYSTEM.md</code>. Hover, focus and press any control: the app's CSS handles those states, not this page.
+  </p>
+  <div class="sc-row" style="gap:8px">
+    <span class="sc-tag v">Live CSS</span><span class="sc-cap" style="margin:0">class strings copied verbatim from the cited file</span>
+    <span class="sc-tag r" style="margin-left:12px">Reconstructed</span><span class="sc-cap" style="margin:0">assembled by hand for this page (cited source explains what is real)</span>
+    <span class="sc-tag s" style="margin-left:12px">Screenshot</span><span class="sc-cap" style="margin:0">captured from the running clean checkout</span>
+  </div>
+  <div id="css-check" class="sc-warn" style="display:none"></div>
+</header>
+
+<!-- ============================================================ 1 -->
+<section class="sc-sec" id="colour">
+  <h2>1 · Brand &amp; colour palette</h2>
+  <p class="sc-lead">The page ground is warm milk with an ink-to-saffron accent. Saffron is the one action colour. Leaf means done or success, indigo means working or info, and red is for errors. Source: <code>src/app/globals.css</code> <code>:root</code>, mapped in <code>tailwind.config.ts</code>.</p>
+
+  <div class="sc-h3">Wordmarks <span class="sc-tag v">Live CSS</span><span class="sc-src">src/components/shell/brand.tsx</span></div>
+  <div class="sc-board sc-wash sc-row" style="gap:40px">
+    <span class="inline-flex items-center gap-2">
+      <span aria-hidden="true" class="inline-block h-[18px] w-[18px] shrink-0 rounded-pill shadow-orb" style="background: var(--orb-resting)"></span>
+      <span class="font-display text-brand font-semibold leading-none tracking-[-0.01em] text-ink-900">SahayakAI</span>
+    </span>
+    <span class="inline-flex items-center gap-2">
+      <span aria-hidden="true" class="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-pill bg-tint-success">
+        <svg viewBox="0 0 20 20" class="h-[14px] w-[14px] text-leaf-500" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7.5" cy="10" r="4.25"/><circle cx="12.5" cy="10" r="4.25"/></svg>
+      </span>
+      <span class="font-display text-brand font-semibold leading-none tracking-[-0.01em] text-ink-900">SamparkAI</span>
+    </span>
+    <span class="sc-cap" style="margin:0">ChromeOrb is 18px, <code>--orb-resting</code>, <code>shadow-orb</code>. The wordmark is Bricolage 600, 17px (<code>text-brand</code>).</span>
+  </div>
+
+  <div class="sc-h3">Semantic tokens (shadcn layer) <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-sw" data-swatches="semantic"></div>
+  <div class="sc-h3">Saffron: action <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-sw" data-swatches="saffron"></div>
+  <div class="sc-h3">Milk: surfaces · Ink: text · Stone</div>
+  <div class="sc-sw" data-swatches="milk"></div>
+  <div class="sc-h3">Leaf · Indigo · status extras</div>
+  <div class="sc-sw" data-swatches="meaning"></div>
+  <div class="sc-h3">Surfaces, lines &amp; tints (rgba, shown on the app wash) <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board sc-wash"><div class="sc-sw" data-swatches="rgba"></div></div>
+  <div class="sc-h3">Gradients &amp; the app ground <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-grid sc-g3">
+    <div><div class="bg-wash-screen" style="height:150px;border-radius:14px;border:1px solid var(--border-row)"></div><p class="sc-cap"><code>.bg-wash-screen</code>: milk-200, plus <code>--glow-saffron</code> at the top right, over <code>--wash-screen</code> (168°: #fff3e4 → #fdefee → #eff4ee → #fff7ec). The app ground.</p></div>
+    <div><div style="height:150px;border-radius:14px;background:var(--band-cta)"></div><p class="sc-cap"><code>--band-cta</code> 140°: #c96a28 → #a5551d → #7e3f16</p></div>
+    <div><div style="height:150px;border-radius:14px;border:1px solid var(--border-row);background:hsl(var(--background))" class="relative overflow-hidden"><div class="ambient-glow"></div><div class="ambient-grain"></div></div><p class="sc-cap"><code>.ambient-glow</code> and <code>.ambient-grain</code>: the landing atmosphere (breathes over 9s)</p></div>
+    <div class="sc-row" style="gap:18px">
+      <div style="width:84px;height:84px;border-radius:9999px;background:var(--orb-live);box-shadow:var(--shadow-orb-live)"></div>
+      <div style="width:84px;height:84px;border-radius:9999px;background:var(--orb-live-working);box-shadow:var(--shadow-orb-live-working)"></div>
+      <div style="width:84px;height:84px;border-radius:9999px;background:var(--orb-live-speaking);box-shadow:var(--shadow-orb-live-speaking)"></div>
+      <p class="sc-cap" style="flex-basis:100%"><code>--orb-live</code> / <code>-working</code> / <code>-speaking</code> with their <code>--shadow-orb-live-*</code> shadows (the CSS fallback for the WebGL VidyaSphere)</p>
+    </div>
+    <div><div class="card-accent-bar"></div><p class="sc-cap"><code>.card-accent-bar</code>: <code>from-primary to-primary/40</code>, 4px</p></div>
+  </div>
+  <div class="sc-h3">Charts</div>
+  <div class="sc-sw" data-swatches="chart"></div>
+  <div class="sc-h3">SamparkAI palette <span class="sc-tag v">Live CSS</span><span class="sc-src">globals.css "SamparkAI theme"</span></div>
+  <div class="sc-sw" data-swatches="sampark"></div>
+  <div class="sc-h3">Dark mode: the <code>.dark</code> scope re-points only the shadcn tokens <span class="sc-tag v">Live CSS</span></div>
+  <div class="dark sc-board" style="background:hsl(var(--background));color:hsl(var(--foreground))">
+    <div class="sc-sw" data-swatches="dark"></div>
+    <p class="sc-cap" style="color:hsl(var(--muted-foreground))">These swatches sit inside <code>class="dark"</code>, so they show the dark values. Milk, ink, surface and tint tokens have <b>no</b> dark values.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section class="sc-sec" id="type">
+  <h2>2 · Typography</h2>
+  <p class="sc-lead"><b>Bricolage Grotesque</b> (display; <code>font-headline</code> or <code>font-display</code>, optical-size axis) and <b>Instrument Sans</b> (UI and body; <code>font-body</code>). Each falls back to the Noto Sans family for its Indian script. Source: <code>src/app/layout.tsx</code>, <code>tailwind.config.ts</code>.</p>
+  <div class="sc-grid sc-g2">
+    <div class="sc-board">
+      <p class="type-eyebrow text-ink-500" style="margin:0 0 8px">Display · Bricolage Grotesque</p>
+      <p class="font-display text-ink-900" style="font-size:44px;line-height:1.05;margin:0;font-weight:700">Aa Namaste, Priya.</p>
+      <p class="font-display text-ink-900" style="margin:8px 0 0;font-size:16px">400 <span style="font-weight:500">500</span> <span style="font-weight:600">600</span> <span style="font-weight:700">700</span></p>
+    </div>
+    <div class="sc-board">
+      <p class="type-eyebrow text-ink-500" style="margin:0 0 8px">UI · Instrument Sans</p>
+      <p class="font-body text-ink-900" style="font-size:44px;line-height:1.05;margin:0">Aa Lesson plan</p>
+      <p class="font-body text-ink-900" style="margin:8px 0 0;font-size:16px">400 <span style="font-weight:500">500</span> <span style="font-weight:600">600</span> <span style="font-weight:700">700</span></p>
+    </div>
+  </div>
+
+  <div class="sc-h3">A. Oct 2026 named sizes <span class="sc-tag v">Live CSS</span><span class="sc-src">tailwind.config.ts fontSize</span></div>
+  <div class="sc-board">
+    <table class="sc-t"><thead><tr><th>Class</th><th>Size / LH</th><th>Specimen</th></tr></thead><tbody>
+      <tr><td><code>text-metric</code></td><td>26 / 1.05</td><td class="font-display text-metric font-semibold text-ink-900">1,284 calls</td></tr>
+      <tr><td><code>text-page-title</code></td><td>22 / 1.2</td><td class="font-display text-page-title font-semibold text-ink-900">Your schools</td></tr>
+      <tr><td><code>text-output-title</code></td><td>20 / 1.22</td><td class="font-display text-output-title font-semibold text-ink-900">Photosynthesis · Class 7</td></tr>
+      <tr><td><code>text-brand</code></td><td>17 / 1</td><td class="font-display text-brand font-semibold text-ink-900">SahayakAI</td></tr>
+      <tr><td><code>text-card-title</code></td><td>15 / 1.3</td><td class="font-display text-card-title font-semibold text-ink-900">Hillview Demo School</td></tr>
+      <tr><td><code>text-value</code></td><td>14 / 1.3</td><td class="font-display text-value font-semibold text-ink-900">Home (primary nav)</td></tr>
+      <tr><td><code>text-tile</code></td><td>13 / 1.3</td><td class="text-tile font-medium text-ink-600">Lesson Plan (secondary nav)</td></tr>
+      <tr><td><code>.type-eyebrow</code></td><td>12 / 1.22 · .16em</td><td class="type-eyebrow text-ink-500">Make · Class · Explore</td></tr>
+      <tr><td><code>text-web-h1</code></td><td>clamp(40,6vw,68) / 1.02</td><td class="font-display text-web-h1 font-semibold text-ink-900" style="letter-spacing:-.02em">Give your teachers</td></tr>
+      <tr><td><code>text-web-h2</code> · <code>-h3</code> · <code>-lead</code></td><td>clamp(30,4vw,44) · 21 · 18</td><td><span class="font-display text-web-h2 font-semibold text-ink-900">Reach every parent.</span><br><span class="text-web-lead text-ink-600">In their own language.</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="sc-h3">B. Phase-1 utilities <span class="sc-tag v">Live CSS</span><span class="sc-src">globals.css @layer utilities</span></div>
+  <div class="sc-board" style="display:grid;gap:10px">
+    <div class="type-h1 text-foreground">type-h1 · 30px bold 1.15</div>
+    <div class="type-h2 text-foreground">type-h2 · 24px semibold 1.2</div>
+    <div class="type-h3 text-foreground">type-h3 · 18px semibold 1.3</div>
+    <div class="type-body-lg text-foreground">type-body-lg · 16px medium 1.6: lead paragraphs</div>
+    <div class="type-body text-foreground">type-body · 14px regular 1.6: the default body text across SectionCard, EmptyState and ErrorPanel.</div>
+    <div class="type-caption text-muted-foreground">type-caption · 12px medium uppercase tracking-wide</div>
+  </div>
+
+  <div class="sc-h3">C. Headings as actually written in pages <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board" style="display:grid;gap:18px">
+    <div><h1 class="font-headline text-3xl md:text-5xl font-bold text-foreground tracking-tight indic-text leading-[1.15]" style="margin:0">Namaste, <span class="text-saffron-600 dark:text-primary">Priya.</span></h1><p class="sc-cap"><code>dashboard-home.tsx</code> greeting</p></div>
+    <div><h1 class="font-headline text-2xl sm:text-3xl text-foreground" style="margin:0">Worksheet Wizard</h1><p class="sc-cap"><code>generator-page.tsx</code> tool title (weight inherits 400)</p></div>
+    <div><h1 class="font-display text-2xl font-semibold leading-tight text-ink-900 md:text-3xl" style="margin:0">Your schools</h1><p class="sc-cap">Sampark <code>console-ui.tsx PageHeader</code></p></div>
+    <div><div class="font-headline text-xl font-semibold leading-snug tracking-tight">Card title</div><p class="sc-cap"><code>ui/card.tsx CardTitle</code></p></div>
+  </div>
+
+  <div class="sc-h3">Indic text (<code>:lang(hi)</code>: Noto Sans Devanagari, line-height 1.7)</div>
+  <div class="sc-board" lang="hi">
+    <p class="type-eyebrow text-ink-500" style="margin:0 0 6px">कक्षा · विषय</p>
+    <p class="font-headline text-2xl font-semibold text-foreground" style="margin:0">प्रकाश संश्लेषण · कक्षा 7</p>
+    <p class="type-body text-muted-foreground indic-text" style="margin:6px 0 0">पौधे सूर्य के प्रकाश, पानी और कार्बन डाइऑक्साइड से अपना भोजन बनाते हैं। eyebrow लेबल हिंदी में बड़े अक्षरों या letter-spacing के बिना दिखते हैं।</p>
+  </div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="sc-sec" id="buttons">
+  <h2>3 · Buttons</h2>
+  <p class="sc-lead"><code>src/components/ui/button.tsx</code> (138 importers). Hover each one: <b>outline</b> and <b>ghost</b> turn <b>indigo</b> because <code>--accent</code> is #2A3B8F. This is a recorded inconsistency, not a choice made for this page.</p>
+  <div class="sc-h3">Variants <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board sc-row" id="btn-variants"></div>
+  <div class="sc-h3">Sizes <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board sc-row" id="btn-sizes"></div>
+  <div class="sc-h3">States <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board sc-row" id="btn-states"></div>
+  <div class="sc-h3">Buttons as pages use them</div>
+  <div class="sc-board sc-wash sc-grid" style="gap:18px">
+    <div>
+      <button type="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 w-full py-5 text-base font-headline shadow-lg shadow-primary/20 transition-all">Generate Worksheet</button>
+      <p class="sc-cap">Tool CTA: Button default + <code>w-full py-5 text-base font-headline shadow-lg shadow-primary/20</code> (<code>worksheet-wizard-view.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div class="sc-row">
+      <button type="button" class="focus-ring flex min-h-11 items-center gap-3 rounded-pill border border-tint-accent-border bg-tint-accent px-4 text-left font-display text-value font-semibold text-saffron-700 transition-colors duration-small ease-standard hover:bg-tint-accent-strong" style="width:230px"><i data-lucide="audio-lines" class="h-[18px] w-[18px] shrink-0"></i><span class="flex-1">Talk to VIDYA</span></button>
+      <button type="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 py-2 gap-2 shadow-sm font-bold"><svg class="h-4 w-4" viewBox="0 0 24 24"><path fill="#fff" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="#fff" opacity=".8" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/></svg>Sign in with Google</button>
+      <button type="button" class="inline-flex items-center gap-1.5 px-3 h-9 rounded-pill bg-primary/10 text-primary font-medium text-sm hover:bg-primary/15 transition-colors duration-micro ease-out-quart"><i data-lucide="globe" class="h-3.5 w-3.5"></i><span class="tracking-tight">EN</span></button>
+      <button type="button" class="focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-saffron-500 text-white shadow-mic transition-colors duration-micro hover:bg-saffron-600 active:scale-95"><i data-lucide="arrow-right" class="h-5 w-5"></i></button>
+      <button type="button" class="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-pill text-ink-600 hover:bg-tint-subtle hover:text-ink-900"><i data-lucide="menu" class="h-5 w-5"></i></button>
+    </div>
+    <p class="sc-cap">Left to right: VIDYA lead (<code>app-sidebar.tsx</code>); top-bar Google sign-in (<code>auth/auth-button.tsx</code>, Button + <code>shadow-sm font-bold</code>; the G icon is <b>reconstructed</b> in white); LanguagePill (<code>language-pill.tsx</code>); composer send disc (<code>dashboard-home.tsx</code>); shell icon button (<code>app-shell.tsx</code>). <span class="sc-tag v">Live CSS</span></p>
+  </div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section class="sc-sec" id="cards">
+  <h2>4 · Cards &amp; containers</h2>
+  <p class="sc-lead">Cards are 12px radius, milk-50 (#FFFDF9), with a 1px warm border and <code>shadow-soft</code>. Sampark cards are crisp white on hairlines.</p>
+  <div class="sc-board sc-wash sc-grid sc-g2">
+    <div>
+      <div class="rounded-[var(--radius)] border bg-card text-card-foreground shadow-soft transition-colors duration-150">
+        <div class="flex flex-col space-y-1.5 p-4 md:p-6"><div class="font-headline text-xl font-semibold leading-snug tracking-tight">Card title</div><div class="text-sm text-muted-foreground leading-relaxed">CardDescription: <code>text-sm text-muted-foreground leading-relaxed</code></div></div>
+        <div class="p-4 md:p-6 pt-0 text-sm">CardContent: <code>p-4 md:p-6 pt-0</code></div>
+        <div class="flex items-center p-4 md:p-6 pt-0"><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-3">Footer action</button></div>
+      </div>
+      <p class="sc-cap">Card <span class="sc-tag v">Live CSS</span> <code>src/components/ui/card.tsx</code></p>
+    </div>
+    <div style="display:grid;gap:16px">
+      <section class="rounded-surface-md border border-border shadow-soft p-4 md:p-6 space-y-3 bg-card">
+        <header class="flex items-start justify-between gap-3"><div class="space-y-1"><h2 class="type-h3 flex items-center gap-2 text-foreground" style="margin:0"><i data-lucide="users" class="h-4 w-4 text-muted-foreground shrink-0"></i>Class details</h2><p class="type-body text-muted-foreground" style="margin:0">Tell us about your class</p></div></header>
+        <p class="type-body" style="margin:0">SectionCard, tone <code>default</code></p>
+      </section>
+      <section class="rounded-surface-md border border-border shadow-soft p-4 md:p-6 space-y-3 bg-muted/30"><h2 class="type-h3 text-foreground" style="margin:0">Helper block</h2><p class="type-body text-muted-foreground" style="margin:0">SectionCard, tone <code>muted</code> (<code>bg-muted/30</code>)</p></section>
+      <p class="sc-cap">SectionCard <span class="sc-tag v">Live CSS</span> <code>src/components/layout/section-card.tsx</code></p>
+    </div>
+  </div>
+
+  <div class="sc-h3">GeneratorPage tool card <span class="sc-tag v">Live CSS</span><span class="sc-src">src/features/generator/components/generator-page.tsx</span></div>
+  <div class="sc-board sc-wash">
+    <section class="rounded-surface-md border border-border bg-card shadow-soft overflow-hidden" style="max-width:640px;margin:0 auto">
+      <div class="card-accent-bar"></div>
+      <div class="p-4 sm:p-6 space-y-6">
+        <header class="text-center space-y-2">
+          <div class="flex justify-center items-center mb-2"><div class="p-3 rounded-full bg-primary/10 text-primary"><i data-lucide="pencil-ruler" class="w-8 h-8"></i></div></div>
+          <h1 class="font-headline text-2xl sm:text-3xl text-foreground" style="margin:0">Worksheet Wizard</h1>
+          <div class="text-sm text-muted-foreground max-w-prose mx-auto">Upload a textbook page and describe the worksheet you want to create.</div>
+        </header>
+        <div class="rounded-surface-md border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4 text-sm">Info callout: <code>border-l-4 border-l-primary/70 bg-primary/5</code></div>
+      </div>
+    </section>
+    <div class="my-8 flex items-center gap-3" style="max-width:640px;margin:28px auto 0"><hr class="flex-1 border-border/40"><span class="type-caption text-muted-foreground uppercase tracking-widest px-2">Result</span><hr class="flex-1 border-border/40"></div>
+    <p class="sc-cap" style="text-align:center">Result divider (same file)</p>
+  </div>
+
+  <div class="sc-h3">ResultShell: the frame for every AI output <span class="sc-tag v">Live CSS</span><span class="sc-src">src/components/ui/result-shell.tsx</span></div>
+  <div class="sc-board sc-wash sc-grid">
+    <div class="rounded-[var(--radius)] border text-card-foreground shadow-soft transition-colors duration-150 mt-6 w-full overflow-hidden max-w-4xl bg-card" style="margin-top:0">
+      <div class="flex flex-col space-y-1.5 gap-4 border-b border-border flex flex-col sm:flex-row sm:items-start sm:justify-between p-4 sm:p-6">
+        <div class="flex-1 min-w-0 space-y-2">
+          <div class="font-headline font-semibold leading-snug tracking-tight text-xl sm:text-2xl md:text-3xl flex items-center gap-2"><span class="text-primary flex-shrink-0 [&>svg]:h-6 [&>svg]:w-6 sm:[&>svg]:h-7 sm:[&>svg]:w-7"><i data-lucide="calendar-days"></i></span><span class="break-words">Photosynthesis</span></div>
+          <p class="text-sm text-muted-foreground leading-relaxed" style="margin:0">A 40-minute lesson for Class 7 Science.</p>
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 transition-colors border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-1 text-xs font-normal"><span class="text-muted-foreground">Grade:</span><span>Class 7</span></div>
+            <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 transition-colors border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-1 text-xs font-normal"><span>Science</span></div>
+            <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 transition-colors text-foreground flex items-center gap-1 text-xs font-normal"><span>40 min</span></div>
+          </div>
+        </div>
+        <div class="no-print flex flex-wrap items-center gap-2 sm:ml-4 sm:flex-shrink-0">
+          <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-3.5 text-sm"><span class="mr-1.5 [&>svg]:h-4 [&>svg]:w-4"><i data-lucide="download"></i></span>PDF</button>
+          <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-3.5 text-sm" disabled aria-busy="true"><i data-lucide="loader-2" class="mr-1.5 h-4 w-4 animate-spin"></i>Saving</button>
+        </div>
+      </div>
+      <div class="p-4 sm:p-6 md:p-8 text-sm"><p class="indic-text" style="margin:0">Body content (<code>p-4 sm:p-6 md:p-8</code>). The meta badges are <b>green</b> because Badge <code>secondary</code> = leaf.</p></div>
+      <div class="no-print flex justify-end border-t border-border p-3 sm:p-4"><span class="text-sm text-muted-foreground">Footer (FeedbackDialog slot)</span></div>
+    </div>
+    <p class="sc-cap">variant <code>solid</code>. With variant <code>glass</code>, the card becomes <code>bg-card/70 backdrop-blur-lg</code> and the header gets <code>bg-gradient-to-r from-primary/10</code>.</p>
+  </div>
+
+  <div class="sc-h3">Dashboard suggestion card and Sampark containers</div>
+  <div class="sc-board sc-wash sc-grid sc-g3">
+    <a href="#cards" class="group" style="text-decoration:none">
+      <div class="rounded-[var(--radius)] bg-card text-card-foreground h-full rounded-surface-md border border-border shadow-soft hover:border-primary/50 hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
+        <div class="p-4 flex flex-col gap-2"><span class="type-caption text-primary/70">Lesson Plan</span><h3 class="font-headline text-sm font-semibold text-foreground leading-tight" style="margin:0">Fractions with rotis</h3><p class="text-xs text-muted-foreground" style="margin:0">Mathematics · Class 4</p><div class="mt-auto pt-2 text-primary font-medium text-xs flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">Start <i data-lucide="arrow-right" class="h-3 w-3"></i></div></div>
+      </div>
+      <p class="sc-cap">Suggestion card (<code>dashboard-home.tsx</code>); hover it <span class="sc-tag v">Live CSS</span></p>
+    </a>
+    <div>
+      <div class="rounded-xl border p-4 shadow-sampark-card md:p-6 border-sampark-peach-border bg-sampark-peach">
+        <div class="mb-4 flex items-start gap-3"><span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-card/80 text-sampark-saffron-strong"><i data-lucide="phone-call" class="h-4 w-4"></i></span><div><h2 class="font-display text-base font-semibold leading-snug text-ink-900" style="margin:0">Calling now</h2><p class="text-sm text-ink-500" style="margin:0">Panel tone <code>live</code></p></div></div>
+        <div class="h-2 w-full overflow-hidden rounded-full bg-sampark-slate-soft"><div class="h-full rounded-full bg-sampark-saffron" style="width:62%"></div></div>
+      </div>
+      <p class="sc-cap">Sampark <code>Panel</code> + <code>ProgressBar</code> (<code>console-ui.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div>
+      <div class="rounded-xl border p-4 shadow-sampark-card md:p-6 border-sampark-line bg-card">
+        <div class="flex items-center justify-between gap-2"><span class="text-sm font-medium text-ink-600">Parents reached</span><span class="flex h-8 w-8 items-center justify-center rounded-lg bg-sampark-leaf-soft text-sampark-leaf"><i data-lucide="check-check" class="h-4 w-4"></i></span></div>
+        <p class="mt-2 font-display text-3xl font-semibold leading-none text-ink-900" style="margin-bottom:0">412</p><p class="mt-2 text-xs text-ink-500" style="margin-bottom:0">of 460 this week</p>
+      </div>
+      <p class="sc-cap">Sampark <code>KpiCard</code>, tone <code>done</code> <span class="sc-tag v">Live CSS</span></p>
+    </div>
+  </div>
+  <div class="sc-row" style="margin-top:14px">
+    <div style="flex:1;min-width:260px"><div class="rounded-xl border p-4 md:p-6 border-sampark-indigo-border bg-sampark-indigo-soft text-sm">tone <code>notice</code></div></div>
+    <div style="flex:1;min-width:260px"><div class="rounded-xl border p-4 md:p-6 border-sampark-leaf-border bg-sampark-leaf-soft text-sm">tone <code>done</code></div></div>
+    <div style="flex:1;min-width:260px"><div class="rounded-xl border p-4 md:p-6 border-sampark-rose-border bg-sampark-rose-soft text-sm">tone <code>alert</code></div></div>
+    <div style="flex:1;min-width:260px"><div class="card-section text-sm"><code>.card-section</code>: <code>bg-muted/20 rounded-xl p-4 md:p-5</code></div></div>
+  </div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section class="sc-sec" id="inputs">
+  <h2>5 · Inputs &amp; form controls</h2>
+  <p class="sc-lead">Click into each field. Input and Select focus with a <code>ring-2</code> plus offset. Textarea focuses with <code>ring-1</code> and no offset; that difference is real.</p>
+  <div class="sc-board sc-wash sc-grid sc-g2">
+    <div class="space-y-4">
+      <div class="space-y-2"><label class="text-sm font-medium leading-none" for="i1">Topic <span class="sc-src">ui/label.tsx</span></label>
+        <input id="i1" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm" placeholder="e.g., Photosynthesis, Newton's Laws"></div>
+      <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm" disabled value="Disabled input">
+      <textarea class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" style="min-height:110px" placeholder="Textarea: e.g., Create 5 fill-in-the-blank questions for Class 2…"></textarea>
+      <p class="sc-cap">Input <code>ui/input.tsx</code> · Textarea <code>ui/textarea.tsx</code> (<code>min-h</code> added here) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div class="space-y-4">
+      <div class="grid grid-cols-3 gap-3">
+        <div class="space-y-2"><span class="text-xs font-semibold text-muted-foreground">Class</span><button type="button" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 [&>span]:line-clamp-1"><span>Class 4</span><i data-lucide="chevron-down" class="h-4 w-4 opacity-50"></i></button></div>
+        <div class="space-y-2"><span class="text-xs font-semibold text-muted-foreground">Subject</span><button type="button" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"><span>General</span><i data-lucide="chevron-down" class="h-4 w-4 opacity-50"></i></button></div>
+        <div class="space-y-2"><span class="text-xs font-semibold text-muted-foreground">Language</span><button type="button" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"><span>English</span><i data-lucide="chevron-down" class="h-4 w-4 opacity-50"></i></button></div>
+      </div>
+      <div class="relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md" style="max-width:240px">
+        <div class="p-1">
+          <div class="py-1.5 pl-8 pr-2 text-sm font-semibold">Primary</div>
+          <div class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground"><span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center"><i data-lucide="check" class="h-4 w-4"></i></span>Class 4</div>
+          <div class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none bg-accent text-accent-foreground">Class 5 (focused)</div>
+          <div class="-mx-1 my-1 h-px bg-muted"></div>
+          <div class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none opacity-50">Class 6 (disabled)</div>
+        </div>
+      </div>
+      <p class="sc-cap">SelectTrigger and open SelectContent (<code>ui/select.tsx</code>). The focused item is <b>indigo</b> (<code>focus:bg-accent</code>). The content panel is shown static. <span class="sc-tag v">Live CSS</span></p>
+    </div>
+  </div>
+  <div class="sc-board sc-wash sc-grid sc-g2" style="margin-top:16px">
+    <div class="space-y-4">
+      <div class="sc-row">
+        <label class="sc-row" style="gap:8px"><button type="button" role="checkbox" aria-checked="true" data-state="checked" class="peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"><span class="flex items-center justify-center text-current"><i data-lucide="check" class="h-4 w-4"></i></span></button><span class="text-sm">Checked</span></label>
+        <label class="sc-row" style="gap:8px"><button type="button" role="checkbox" aria-checked="false" data-state="unchecked" class="peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"></button><span class="text-sm">Unchecked</span></label>
+        <label class="sc-row" style="gap:8px"><button type="button" role="radio" aria-checked="true" class="aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"><span class="flex items-center justify-center"><svg class="h-2.5 w-2.5" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="currentColor"/></svg></span></button><span class="text-sm">Radio</span></label>
+      </div>
+      <div class="sc-row">
+        <button type="button" role="switch" aria-checked="true" data-state="checked" class="peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"><span data-state="checked" class="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"></span></button>
+        <button type="button" role="switch" aria-checked="false" data-state="unchecked" class="peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"><span data-state="unchecked" class="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"></span></button>
+        <span class="sc-cap" style="margin:0">Switch on / off</span>
+      </div>
+      <div class="relative flex w-full touch-none select-none items-center" style="max-width:300px"><div class="relative h-2 w-full grow overflow-hidden rounded-full bg-muted"><div class="absolute h-full bg-primary" style="width:25%"></div></div><span class="block h-5 w-5 rounded-full border-2 border-primary bg-background" style="position:absolute;left:calc(25% - 10px)"></span></div>
+      <p class="sc-cap">Checkbox, RadioGroup, Switch, Slider (<code>ui/*.tsx</code>; Radix markup reproduced with its <code>data-state</code>) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div class="space-y-4">
+      <div class="w-full border-2 border-dashed border-border rounded-lg flex justify-center items-center text-center cursor-pointer hover:border-primary transition-colors h-32 flex-col p-4"><i data-lucide="upload-cloud" class="text-muted-foreground h-10 w-10 mb-2"></i><p class="text-muted-foreground text-sm" style="margin:0">Drag &amp; drop here or <span class="font-semibold text-primary">browse</span></p></div>
+      <p class="sc-cap">ImageUploader drop zone (<code>image-uploader.tsx</code>); hover turns the border saffron <span class="sc-tag v">Live CSS</span></p>
+      <div class="flex flex-wrap gap-2">
+        <button class="inline-flex items-center justify-center gap-2 rounded-md font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input text-sm h-auto py-2 px-3 bg-card hover:bg-primary/5 hover:text-primary hover:border-primary/30 border-border hover:shadow-sm transition-all duration-200 whitespace-normal text-left block w-full sm:w-auto">Why is the sky blue?</button>
+        <button class="inline-flex items-center justify-center gap-2 rounded-md font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input text-sm h-auto py-2 px-3 bg-card hover:bg-primary/5 hover:text-primary hover:border-primary/30 border-border hover:shadow-sm transition-all duration-200 whitespace-normal text-left block w-full sm:w-auto">A lesson on 'Healthy Food' for grades 1, 2 and 3.</button>
+      </div>
+      <p class="sc-cap">ExamplePrompts "Quick Ideas" chips (<code>example-prompts.tsx</code>). These are Button outline with overrides, so hover is saffron here, not indigo. <span class="sc-tag v">Live CSS</span></p>
+      <div class="rounded-pill border border-line-glass bg-surface-disc py-1.5 pl-[18px] pr-2 shadow-float backdrop-blur-sm transition-shadow duration-micro ease-out-quart focus-within:shadow-current">
+        <div class="flex items-center gap-2"><input class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" placeholder="Ask VIDYA or type a topic…"><button type="button" class="focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-saffron-500 text-white shadow-mic transition-colors duration-micro hover:bg-saffron-600 active:scale-95"><i data-lucide="arrow-right" class="h-5 w-5"></i></button></div>
+      </div>
+      <p class="sc-cap">Dashboard composer pill (<code>dashboard-home.tsx</code>). Focus inside it to see <code>shadow-current</code>. The inner input classes are <b>reconstructed</b>. <span class="sc-tag v">Live CSS</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section class="sc-sec" id="nav">
+  <h2>6 · Navigation &amp; sidebar</h2>
+  <p class="sc-lead">One renderer, <code>ProductSideNav</code> (<code>src/components/shell/side-nav.tsx</code>), serves both products. Items are pills. The active item is a milk-400 fill with a hairline border, a saffron-600 icon and a 6px saffron-500 dot. Hover uses a 4% ink tint.</p>
+  <div class="sc-grid" style="grid-template-columns: 256px minmax(0,1fr); gap:20px; align-items:start" id="nav-grid">
+    <aside class="side-nav flex h-full shrink-0 flex-col bg-surface-chrome border border-line-hairline" data-force-full="true" style="border-radius:16px;overflow:hidden">
+      <div class="flex h-topbar shrink-0 items-center justify-between gap-2 pl-5 pr-3">
+        <span class="inline-flex items-center gap-2"><span aria-hidden="true" class="inline-block h-[18px] w-[18px] shrink-0 rounded-pill shadow-orb" style="background: var(--orb-resting)"></span><span class="font-display text-brand font-semibold leading-none tracking-[-0.01em] text-ink-900">SahayakAI</span></span>
+        <button class="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-pill text-ink-500 transition-colors duration-small ease-standard hover:bg-tint-subtle hover:text-ink-900"><i data-lucide="panel-left-close" class="h-[18px] w-[18px]"></i></button>
+      </div>
+      <div class="shrink-0 px-3 pb-3"><button type="button" class="focus-ring flex min-h-11 w-full items-center gap-3 rounded-pill border border-tint-accent-border bg-tint-accent px-4 text-left font-display text-value font-semibold text-saffron-700 transition-colors duration-small ease-standard hover:bg-tint-accent-strong"><i data-lucide="audio-lines" class="h-[18px] w-[18px] shrink-0"></i><span class="flex-1">Talk to VIDYA</span></button></div>
+      <nav class="space-y-5 px-3 pb-6 pt-1" id="nav-full"></nav>
+      <div class="shrink-0 border-t border-line-hairline p-3"><div class="flex items-center gap-3 rounded-tile bg-surface-glass p-3"><span aria-hidden="true" class="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-pill bg-tint-success"><svg viewBox="0 0 20 20" class="h-[14px] w-[14px] text-leaf-500" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7.5" cy="10" r="4.25"/><circle cx="12.5" cy="10" r="4.25"/></svg></span><span class="min-w-0 flex-1"><span class="block text-tile font-semibold text-ink-900">SamparkAI</span><span class="block text-xs text-ink-500">Calls and notices to parents</span></span><i data-lucide="arrow-up-right" class="h-4 w-4 text-ink-500"></i></div></div>
+    </aside>
+    <div class="space-y-4" style="min-width:0">
+      <p class="sc-cap" style="margin:0">Full sidebar, 256px <span class="sc-tag v">Live CSS</span> (items generated from <code>app-sidebar.tsx</code>'s nav model using <code>FullItem</code>'s exact classes). The footer card is <span class="sc-tag r">Reconstructed</span> from the screenshot.</p>
+      <div class="sc-h3" style="margin-top:4px">Rail (768–1023px, or folded) <span class="sc-tag v">Live CSS</span></div>
+      <div class="sc-board" style="display:flex;gap:6px;flex-wrap:wrap;background:var(--surface-chrome)" id="nav-rail"></div>
+      <div class="sc-h3">Top bar <span class="sc-tag v">Live CSS</span><span class="sc-src">src/app/app-shell.tsx</span></div>
+      <header class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line-hairline bg-surface-chrome px-3 md:h-topbar md:px-6" style="border-radius:14px;border:1px solid var(--border-hairline)">
+        <button type="button" class="focus-ring inline-flex h-11 w-full max-w-sm items-center gap-2 rounded-pill border border-line-glass bg-surface-glass px-4 text-left text-ink-500 transition-colors duration-small ease-standard hover:bg-surface-glass-strong hover:text-ink-600"><i data-lucide="search" class="h-4 w-4 shrink-0"></i><span class="flex-1 truncate text-tile">Search tools and your work</span><kbd class="rounded-xs bg-tint-quiet px-1.5 py-0.5 text-xs font-medium text-ink-500">⌘K</kbd></button>
+        <div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <button class="inline-flex items-center gap-1.5 px-3 h-9 rounded-pill bg-primary/10 text-primary font-medium text-sm hover:bg-primary/15 transition-colors duration-micro ease-out-quart"><i data-lucide="globe" class="h-3.5 w-3.5"></i><span class="tracking-tight">EN</span></button>
+          <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 py-2 gap-2 shadow-sm font-bold">Sign in with Google</button>
+        </div>
+      </header>
+      <div class="sc-h3">Phone TabBar capsule <span class="sc-tag v">Live CSS</span><span class="sc-src">src/components/mobile-bottom-nav.tsx</span></div>
+      <div class="sc-board sc-wash" style="display:flex;justify-content:center">
+        <ul class="flex items-center gap-1.5 rounded-pill border border-line-glass bg-surface-capsule p-[7px] shadow-float" style="margin:0;list-style:none" id="tabbar"></ul>
+      </div>
+      <div class="sc-h3">Command palette item states <span class="sc-tag v">Live CSS</span><span class="sc-src">src/components/command-palette.tsx</span></div>
+      <div class="rounded-surface-md border bg-background shadow-floating p-2" style="max-width:420px">
+        <div class="px-3 py-2 type-caption text-muted-foreground">Create</div>
+        <div class="flex items-center gap-3 px-3 py-2.5 rounded-surface-sm cursor-pointer type-body text-foreground bg-primary/10"><i data-lucide="calendar-days" class="h-4 w-4 text-muted-foreground shrink-0"></i>Lesson Plan (selected)</div>
+        <div class="flex items-center gap-3 px-3 py-2.5 rounded-surface-sm cursor-pointer type-body text-foreground"><i data-lucide="pencil-ruler" class="h-4 w-4 text-muted-foreground shrink-0"></i>Worksheet Wizard</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section class="sc-sec" id="tabs">
+  <h2>7 · Tabs &amp; selectors</h2>
+  <p class="sc-lead">SahayakAI tabs are <b>filled saffron</b> when active and bordered when inactive. That is not stock shadcn. The selection metaphors differ by component; see Inconsistencies.</p>
+  <div class="sc-board sc-wash sc-grid" style="gap:22px">
+    <div>
+      <div role="tablist" class="inline-flex h-10 items-center justify-center rounded-md bg-muted/50 p-1 text-muted-foreground gap-1" id="tabs-demo"></div>
+      <p class="sc-cap">Tabs (<code>ui/tabs.tsx</code>); click to switch <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div>
+      <div class="card-section flex flex-wrap gap-2" style="max-width:420px">
+        <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent cursor-pointer transition-all bg-primary hover:bg-primary/90 text-white">Remember</div>
+        <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent cursor-pointer transition-all bg-primary hover:bg-primary/90 text-white">Understand</div>
+        <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors cursor-pointer transition-all bg-muted/20 hover:bg-muted/40 text-muted-foreground">Apply</div>
+        <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors cursor-pointer transition-all bg-muted/20 hover:bg-muted/40 text-muted-foreground">Analyze</div>
+      </div>
+      <p class="sc-cap">Bloom's level chips: Badge plus overrides (<code>quiz-generator-view.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div class="sc-row" style="align-items:stretch">
+      <div class="rounded-[var(--radius)] border bg-card text-card-foreground shadow-soft cursor-pointer transition-all duration-200 ring-2 ring-primary/60 shadow-elevated bg-primary/5" style="width:150px"><div class="p-2 relative flex flex-col items-center justify-center gap-1" style="min-height:76px"><i data-lucide="check-circle-2" class="absolute top-1 right-1 h-4 w-4 text-primary"></i><i data-lucide="list-checks" class="h-6 w-6 text-primary"></i><p class="text-[10px] font-medium text-center leading-tight text-foreground" style="margin:0">Multiple Choice</p></div></div>
+      <div class="rounded-[var(--radius)] border bg-card text-card-foreground shadow-soft cursor-pointer transition-all duration-200 border-border hover:border-primary/40 hover:shadow-soft hover:bg-muted/30" style="width:150px"><div class="p-2 relative flex flex-col items-center justify-center gap-1" style="min-height:76px"><i data-lucide="square-check" class="h-6 w-6 text-primary"></i><p class="text-[10px] font-medium text-center leading-tight text-foreground" style="margin:0">True/False</p></div></div>
+      <button class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 hover:shadow-elevated text-center h-full bg-card border-border hover:border-primary/60 hover:bg-primary/5 hover:text-primary" style="width:110px"><div class="h-7 w-7 rounded-full flex items-center justify-center text-lg mb-1 bg-blue-100 text-blue-700"><i data-lucide="pen-tool" class="h-4 w-4"></i></div><div class="font-medium text-xs leading-tight text-foreground">Fractions</div><div class="text-[9px] uppercase tracking-widest font-medium text-muted-foreground mt-1">Mathematics</div></button>
+      <button class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 hover:shadow-elevated text-center h-full bg-card border-border hover:border-primary/60 hover:bg-primary/5 hover:text-primary" style="width:110px"><div class="h-7 w-7 rounded-full flex items-center justify-center text-lg mb-1 bg-indigo-100 text-indigo-700"><i data-lucide="triangle" class="h-4 w-4"></i></div><div class="font-medium text-xs leading-tight text-foreground">Basic Shapes</div><div class="text-[9px] uppercase tracking-widest font-medium text-muted-foreground mt-1">Mathematics</div></button>
+    </div>
+    <p class="sc-cap">SelectableCard selected and unselected (<code>selectable-card.tsx</code>, 10px label); Quick Start template tiles (<code>quick-templates.tsx</code> plus <b>raw palette</b> colours from <code>src/data/quick-templates.ts</code>, 9px subject label) <span class="sc-tag v">Live CSS</span></p>
+  </div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section class="sc-sec" id="tables">
+  <h2>8 · Tables &amp; data displays</h2>
+  <p class="sc-lead"><code>ui/table.tsx</code> has a single importer (<code>rubric-display.tsx</code>). Most lists are hand-built rows such as the Sampark school list below.</p>
+  <div class="sc-board sc-wash sc-grid" style="gap:22px">
+    <div class="rounded-surface-md border bg-card overflow-hidden">
+      <div class="relative w-full overflow-auto"><table class="w-full caption-bottom text-sm">
+        <thead class="[&_tr]:border-b"><tr class="border-b transition-colors hover:bg-muted/50"><th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Criterion</th><th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Excellent (4)</th><th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Good (3)</th><th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Needs work (1)</th></tr></thead>
+        <tbody class="[&_tr:last-child]:border-0">
+          <tr class="border-b transition-colors hover:bg-muted/50"><td class="p-4 align-middle font-medium">Understanding</td><td class="p-4 align-middle">Explains clearly with examples</td><td class="p-4 align-middle">Explains with prompting</td><td class="p-4 align-middle">Cannot explain</td></tr>
+          <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted" data-state="selected"><td class="p-4 align-middle font-medium">Presentation (selected row)</td><td class="p-4 align-middle">Neat, labelled</td><td class="p-4 align-middle">Mostly neat</td><td class="p-4 align-middle">Untidy</td></tr>
+        </tbody>
+      </table></div>
+      <p class="mt-4 text-sm text-muted-foreground" style="padding:0 16px 14px">TableCaption: rubric example (content is illustrative)</p>
+    </div>
+    <p class="sc-cap">ui/table <span class="sc-tag v">Live CSS</span></p>
+    <ul class="space-y-3" style="margin:0;padding:0;list-style:none">
+      <li class="flex flex-col gap-3 rounded-tile border border-line-glass bg-surface-glass p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex min-w-0 items-start gap-3"><div class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-row bg-milk-400 text-ink-600"><i data-lucide="school" class="h-5 w-5"></i></div>
+          <div class="min-w-0 space-y-1"><p class="font-display text-card-title font-semibold leading-snug text-ink-900 break-words" style="margin:0">Hillview Demo School</p><span class="inline-flex items-center gap-2 rounded-pill border px-2 py-1 text-xs font-medium leading-normal whitespace-nowrap border-border bg-muted text-foreground"><span class="h-2 w-2 shrink-0 rounded-pill bg-muted-foreground"></span>Not switched on</span></div></div>
+        <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 py-2 shrink-0">Enable school calls</button>
+      </li>
+    </ul>
+    <p class="sc-cap">Sampark school row (<code>app/sampark/(workspace)/workspace/page.tsx</code>) with StatusPill <code>neutral</code> <span class="sc-tag v">Live CSS</span>. Inside the real Sampark pages <code>.theme-sampark</code> re-points milk and ink to slate, so it renders cooler (see the screenshot in §13).</p>
+    <div class="sc-row">
+      <div class="rounded-lg bg-sampark-slate-soft px-3 py-2.5"><p class="text-xs text-ink-500" style="margin:0">Answered</p><p class="font-display text-xl font-semibold leading-tight text-ink-900" style="margin:0">86%</p><p class="text-xs text-ink-500" style="margin:0">this week</p></div>
+      <div class="rounded-lg bg-sampark-slate-soft px-3 py-2.5"><p class="text-xs text-ink-500" style="margin:0">Callbacks</p><p class="font-display text-xl font-semibold leading-tight text-ink-900" style="margin:0">7</p></div>
+      <div role="img" aria-label="sparkline" class="flex h-10 shrink-0 items-end gap-1" id="spark"></div>
+      <span class="sc-cap" style="margin:0">MiniStat (<code>console-ui.tsx</code>) · Sparkline (<code>kpi-tile.tsx</code>; bar colours <b>reconstructed</b>) <span class="sc-tag v">Live CSS</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 9 -->
+<section class="sc-sec" id="badges">
+  <h2>9 · Badges &amp; status indicators</h2>
+  <div class="sc-board sc-wash sc-grid" style="gap:20px">
+    <div class="sc-row">
+      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none border-transparent bg-primary text-primary-foreground hover:bg-primary/80">default</div>
+      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">secondary</div>
+      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80">destructive</div>
+      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors text-foreground">outline</div>
+      <span class="sc-cap" style="margin:0">Badge (<code>ui/badge.tsx</code>) <span class="sc-tag v">Live CSS</span></span>
+    </div>
+    <div class="sc-row" id="pills"></div>
+    <p class="sc-cap" style="margin-top:-8px">StatusPill tones (<code>sampark/status-pill.tsx</code>). Text carries the meaning, the dot reinforces it, and <code>title</code> explains it. <span class="sc-tag v">Live CSS</span></p>
+    <div class="sc-row">
+      <span class="inline-flex shrink-0 items-center justify-center rounded-pill font-semibold leading-none text-white bg-primary h-5 min-w-5 px-1.5 text-xs">New</span>
+      <span class="inline-flex shrink-0 items-center justify-center rounded-pill font-semibold leading-none text-white bg-destructive h-5 min-w-5 px-1.5 text-xs">3</span>
+      <span class="inline-flex shrink-0 items-center justify-center rounded-pill font-semibold leading-none text-white bg-primary h-[18px] min-w-[18px] px-1 text-xs">9</span>
+      <span class="sc-cap" style="margin:0">Nav count badges: brand, danger, compact (<code>shell/side-nav.tsx</code>)</span>
+      <kbd class="rounded-xs bg-tint-quiet px-1.5 py-0.5 text-xs font-medium text-ink-500">⌘K</kbd>
+      <span class="vidya-status sc-row" data-state="listening" style="gap:8px"><span class="vidya-status-dot"></span><span class="text-sm text-muted-foreground">Listening…</span></span>
+      <span class="vidya-status sc-row" data-state="thinking" style="gap:8px"><span class="vidya-status-dot"></span><span class="text-sm text-muted-foreground">Thinking…</span></span>
+      <span class="vidya-status sc-row" data-state="error" style="gap:8px"><span class="vidya-status-dot"></span><span class="text-sm text-muted-foreground">Voice isn't available</span></span>
+      <span class="sc-cap" style="margin:0">kbd chip · VIDYA status dots (<code>.vidya-status-dot</code>)</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section class="sc-sec" id="overlays">
+  <h2>10 · Modals &amp; overlays</h2>
+  <p class="sc-lead">Each frame below is a transformed box, so the components' own <code>position: fixed</code> classes resolve inside the frame instead of the window. The markup and classes are the real ones.</p>
+  <div class="sc-grid sc-g2">
+    <div>
+      <div class="sc-stage" style="height:340px">
+        <div class="sc-wash" style="position:absolute;inset:0;background-color:hsl(var(--milk-200));background-image:var(--wash-screen)"></div>
+        <div data-state="open" class="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=open]:fade-in-0"></div>
+        <div role="dialog" data-state="open" class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:rounded-lg" style="max-width:88%">
+          <div class="flex flex-col space-y-1.5 text-center sm:text-left"><h2 class="text-lg font-semibold leading-none tracking-tight" style="margin:0">Share to Community?</h2><p class="text-sm text-muted-foreground" style="margin:0">Other teachers will be able to see and reuse this lesson plan.</p></div>
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"><button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-4 py-2">Cancel</button><button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 py-2">Share</button></div>
+          <button class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100"><i data-lucide="x" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+      <p class="sc-cap">Dialog (<code>ui/dialog.tsx</code>): <code>bg-black/80</code> overlay, <code>shadow-lg sm:rounded-lg</code> <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div>
+      <div class="sc-stage" style="height:340px">
+        <div style="position:absolute;inset:0;background:hsl(var(--background))"></div>
+        <div class="fixed inset-0 z-50 bg-black/80"></div>
+        <div data-state="open" class="fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=open]:duration-500 inset-y-0 left-0 h-full w-3/4 border-r data-[state=open]:slide-in-from-left sm:max-w-sm">
+          <p class="text-lg font-semibold text-foreground" style="margin:0 0 6px">Sheet (left)</p><p class="text-sm text-muted-foreground" style="margin:0">On phones, the app puts the full sidebar here (<code>app-shell.tsx</code>). Opens in 500ms, closes in 300ms.</p>
+        </div>
+      </div>
+      <p class="sc-cap">Sheet (<code>ui/sheet.tsx</code>), side <code>left</code> <span class="sc-tag v">Live CSS</span></p>
+    </div>
+  </div>
+  <div class="sc-board sc-wash sc-grid sc-g3" style="margin-top:16px">
+    <div>
+      <div class="z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md" style="max-width:220px">
+        <div class="px-2 py-1.5 text-sm font-semibold">Priya Sharma</div><div class="-mx-1 my-1 h-px bg-muted"></div>
+        <div class="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"><i data-lucide="user" class="h-4 w-4"></i>Profile</div>
+        <div class="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"><i data-lucide="settings" class="h-4 w-4"></i>Settings</div>
+        <div class="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"><i data-lucide="log-out" class="h-4 w-4"></i>Sign out</div>
+      </div>
+      <p class="sc-cap">DropdownMenu (<code>ui/dropdown-menu.tsx</code>, as used by AuthButton); hover an item and it turns indigo <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div class="space-y-3">
+      <div class="z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md text-sm" style="max-width:100%">Popover: <code>w-72 rounded-md p-4 shadow-md</code></div>
+      <div class="z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md" style="display:inline-block">Tooltip: Bloom's hint</div>
+      <p class="sc-cap">Popover · Tooltip (<code>ui/popover.tsx</code>, <code>ui/tooltip.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div class="space-y-3">
+      <div class="group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all border bg-background text-foreground"><div class="grid gap-1"><div class="text-sm font-semibold">Saved to Library</div><div class="text-sm opacity-90">Your lesson plan is ready.</div></div></div>
+      <div class="destructive group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all border-destructive bg-destructive text-destructive-foreground"><div class="grid gap-1"><div class="text-sm font-semibold">Daily voice limit reached</div><div class="text-sm opacity-90">Try again tomorrow.</div></div></div>
+      <p class="sc-cap">Toast <code>default</code> / <code>destructive</code> (<code>ui/toast.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+  </div>
+  <div class="sc-grid sc-g2" style="margin-top:16px">
+    <figure class="sc-shot" style="margin:0"><img src="screenshots/14-command-palette-modal.png" alt="Command palette open over Lesson Plan" loading="lazy"><figcaption><span class="sc-tag s">Screenshot</span> ⌘K command palette: Dialog overridden to <code>rounded-surface-md shadow-floating</code>. Note the ✕ overlapping "ESC".</figcaption></figure>
+    <figure class="sc-shot" style="margin:0"><img src="screenshots/15-vidya-talk-open.png" alt="Talk to VIDYA pressed with no microphone" loading="lazy"><figcaption><span class="sc-tag s">Screenshot</span> "Talk to VIDYA" with no microphone (headless browser): the orb's error toast and the desaturated orb</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============================================================ 11 -->
+<section class="sc-sec" id="states">
+  <h2>11 · Empty, loading, error &amp; success states</h2>
+  <div class="sc-board sc-wash sc-grid sc-g2">
+    <div>
+      <div class="flex flex-col items-center text-center py-8 md:py-12 space-y-6">
+        <div class="flex flex-col items-center gap-3 max-w-md"><div class="inline-flex items-center justify-center h-12 w-12 rounded-pill bg-primary/10 text-primary"><i data-lucide="library" class="h-6 w-6"></i></div><h3 class="type-h3 text-foreground" style="margin:0">Nothing saved yet</h3><p class="type-body text-muted-foreground" style="margin:0">Lesson plans and quizzes you make will appear here.</p></div>
+        <div class="w-full max-w-md relative"><div class="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-pill bg-muted text-[10px] font-semibold uppercase tracking-wide text-muted-foreground border border-border">Example</div><div class="rounded-surface-md border border-dashed border-border bg-muted/20 p-4 text-left text-sm">Photosynthesis · Class 7 · Lesson plan</div></div>
+        <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 py-2">Create your first lesson plan</button>
+      </div>
+      <p class="sc-cap">EmptyState with sample (<code>layout/empty-state.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div class="space-y-4">
+      <div role="alert" class="flex flex-col gap-3 rounded-surface-md border border-destructive/40 bg-destructive/10 p-4 sm:flex-row sm:items-start"><i data-lucide="alert-triangle" class="h-5 w-5 shrink-0 text-destructive"></i><div class="min-w-0 flex-1 space-y-1"><p class="type-body font-semibold text-foreground" style="margin:0">Couldn't load the call log</p><p class="type-body text-muted-foreground break-words" style="margin:0">The school's data is not reachable right now.</p></div><button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-3 shrink-0">Try again</button></div>
+      <p class="sc-cap">ErrorPanel (<code>sampark/states.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+      <div role="alert" class="relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 border-destructive/50 text-destructive"><i data-lucide="circle-alert" class="h-4 w-4" style="position:absolute;left:16px;top:16px"></i><div style="padding-left:28px"><h5 class="mb-1 font-medium leading-none tracking-tight" style="margin-top:0">Image too large</h5><div class="text-sm">Choose a photo under 10 MB.</div></div></div>
+      <p class="sc-cap">Alert <code>destructive</code> (<code>ui/alert.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+      <div class="rounded-xl border p-4 border-sampark-leaf-border bg-sampark-leaf-soft text-sm sc-row" style="gap:10px"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sampark-leaf-soft text-sampark-leaf"><i data-lucide="check" class="h-4 w-4"></i></span>Success: Sampark <code>done</code> tone (no generic success alert exists)</div>
+    </div>
+    <div class="space-y-3">
+      <div class="space-y-3"><div class="animate-pulse rounded-surface-sm bg-muted h-5 w-48"></div><div class="animate-pulse rounded-surface-sm bg-muted h-4 w-full"></div><div class="animate-pulse rounded-surface-sm bg-muted h-4 w-5/6"></div><div class="animate-pulse rounded-surface-sm bg-muted h-4 w-4/6"></div></div>
+      <div class="flex items-center gap-3 p-3 rounded-surface-sm bg-card border border-border"><div class="animate-pulse bg-muted h-10 w-10 rounded-pill shrink-0"></div><div class="flex-1 space-y-2 min-w-0"><div class="animate-pulse rounded-surface-sm bg-muted h-4 w-1/3"></div><div class="animate-pulse rounded-surface-sm bg-muted h-3 w-full"></div></div></div>
+      <p class="sc-cap">Skeleton and the list preset (<code>ui/skeleton.tsx</code>) <span class="sc-tag v">Live CSS</span></p>
+    </div>
+    <div class="space-y-3">
+      <span class="inline-flex items-center gap-2 type-body text-muted-foreground"><i data-lucide="loader-2" class="h-4 w-4 animate-spin"></i>Loading calls…</span>
+      <div><button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground h-11 px-4 py-2 w-full py-5 text-base font-headline shadow-lg shadow-primary/20 disabled:pointer-events-none disabled:opacity-50" disabled aria-busy="true"><i data-lucide="loader-2" class="mr-2 h-6 w-6 animate-spin"></i>Generating…</button></div>
+      <div class="flex flex-col items-center text-center py-6"><div class="inline-flex items-center justify-center h-12 w-12 rounded-pill bg-primary/10 text-primary"><i data-lucide="pencil-ruler" class="h-6 w-6"></i></div><h3 class="type-h3 text-foreground" style="margin:10px 0 4px">Your result will appear here</h3><p class="type-body text-muted-foreground" style="margin:0">Fill in the details above and tap Generate.</p></div>
+      <p class="sc-cap">InlineSpinner (<code>states.tsx</code>) · busy CTA · GeneratorPage pre-result empty state <span class="sc-tag v">Live CSS</span></p>
+    </div>
+  </div>
+  <div class="sc-h3">Focus treatments <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board sc-row">
+    <button class="focus-ring inline-flex h-11 items-center rounded-pill border border-line-control px-4 text-sm" id="focus-a">.focus-ring (outline)</button>
+    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background h-11 px-4" id="focus-b">shadcn ring-2 + offset</button>
+    <span class="sc-cap" style="margin:0">Press Tab to move focus here and compare. Both are shown pinned below:</span>
+    <span class="inline-flex h-11 items-center rounded-pill border border-line-control px-4 text-sm" style="outline:2px solid hsl(var(--saffron-600));outline-offset:2px">outline 2px saffron-600, offset 2px</span>
+    <span class="inline-flex items-center rounded-md text-sm font-medium border border-input bg-background h-11 px-4" style="box-shadow:0 0 0 2px hsl(var(--background)),0 0 0 4px hsl(var(--ring))">ring-2 ring-ring ring-offset-2 (pinned via inline box-shadow)</span>
+  </div>
+</section>
+
+<!-- ============================================================ 11b -->
+<section class="sc-sec" id="vidya">
+  <h2>11b · VIDYA: the orb is the control</h2>
+  <p class="sc-lead"><code>VidyaPresence</code> (CSS orb, <code>.vidya-*</code> in <code>globals.css</code>), rendered here in every state with the real classes. The app's other renderer, <code>VidyaSphere</code> (WebGL), uses <b>leaf</b> while speaking and is "never red" on error. That conflict is recorded under Inconsistencies.</p>
+  <div class="sc-board sc-wash" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px" id="vidya-states"></div>
+  <p class="sc-cap">The wordmark inside the orb asks for <code>var(--font-bricolage), var(--font-outfit)</code>. Neither variable exists, so it falls back to system-ui in the app too. <span class="sc-tag v">Live CSS</span></p>
+</section>
+
+<!-- ============================================================ 12 -->
+<section class="sc-sec" id="responsive">
+  <h2>12 · Responsive layout</h2>
+  <p class="sc-lead">Tailwind's default breakpoints, with three shells: phone (<b>&lt;768</b>: top bar plus floating TabBar plus a menu Sheet), tablet (<b>768–1023</b>: 76px rail) and desktop (<b>≥1024</b>: 256px sidebar, foldable). The top bar is 56px on phones and 64px from <code>md</code>.</p>
+  <div class="sc-grid" style="grid-template-columns: 1.1fr 1.2fr 2.4fr; align-items:start">
+    <figure class="sc-shot tall" style="margin:0"><img src="screenshots/24-phone-lesson-plan.png" alt="Lesson Plan at 390px" loading="lazy"><figcaption><span class="sc-tag s">Screenshot</span> 390px phone</figcaption></figure>
+    <figure class="sc-shot tall" style="margin:0"><img src="screenshots/23-tablet-rail-lesson-plan.png" alt="Lesson Plan at 900px with rail" loading="lazy"><figcaption><span class="sc-tag s">Screenshot</span> 900px: rail</figcaption></figure>
+    <figure class="sc-shot tall" style="margin:0"><img src="screenshots/02-lesson-plan.png" alt="Lesson Plan at 1440px" loading="lazy"><figcaption><span class="sc-tag s">Screenshot</span> 1440px: sidebar, two-column form</figcaption></figure>
+  </div>
+  <table class="sc-t" style="margin-top:18px"><thead><tr><th>Token</th><th>Value</th><th>Source</th></tr></thead><tbody>
+    <tr><td><code>sm / md / lg / xl / 2xl</code></td><td>640 / 768 / 1024 / 1280 / 1536</td><td>Tailwind defaults (no <code>screens</code> override)</td></tr>
+    <tr><td><code>--sidebar-w</code> · <code>--sidebar-w-rail</code> · <code>--topbar-h</code></td><td>256px · 76px · 64px</td><td>globals.css <code>:root</code></td></tr>
+    <tr><td><code>container-narrow / default / wide</code></td><td>672 / 1024 / 1280 max</td><td>globals.css utilities</td></tr>
+    <tr><td><code>main</code> padding</td><td><code>px-3 sm:px-4 md:px-8 pt-4 md:pt-8 pb-[calc(96px+safe)] md:pb-24</code></td><td>app-shell.tsx</td></tr>
+    <tr><td>GeneratorSubmitBar</td><td>sticky at <code>bottom: 3.5rem + safe + .5rem</code> below md</td><td>generator-page.tsx</td></tr>
+  </tbody></table>
+</section>
+
+<!-- ============================================================ 13 -->
+<section class="sc-sec" id="pages">
+  <h2>13 · Existing page-level patterns</h2>
+  <p class="sc-lead">Every image below was captured from the running clean checkout of <b>develop @ 92837486</b> on 2026-11-03, signed out (see the README in <code>screenshots/</code>). Pages that need a signed-in teacher show their sign-in state.</p>
+  <div class="sc-grid sc-g2" id="gallery"></div>
+  <div class="sc-h3">Signed-in teacher dashboard <span class="sc-tag r">Reconstructed</span><span class="sc-src">src/components/dashboard/dashboard-home.tsx</span></div>
+  <div class="sc-board sc-wash">
+    <div class="flex flex-col items-center gap-8 py-8">
+      <div class="text-center space-y-3 max-w-2xl"><h1 class="font-headline text-3xl md:text-5xl font-bold text-foreground tracking-tight indic-text leading-[1.15]" style="margin:0">Namaste, <span class="text-saffron-600">Priya.</span></h1><p class="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4" style="margin:0">What are we preparing today?</p></div>
+      <div class="vidya-stage" data-state="idle" data-size="compact" style="width:160px"><button class="vidya-sphere" aria-label="Talk to VIDYA"><span class="vidya-ring"></span><span class="vidya-core"><i data-lucide="mic" class="vidya-icon"></i></span></button></div>
+      <div class="w-full max-w-xl"><div class="rounded-pill border border-line-glass bg-surface-disc py-1.5 pl-[18px] pr-2 shadow-float backdrop-blur-sm"><div class="flex items-center gap-2"><span class="flex-1 text-sm text-muted-foreground">Type a topic or ask VIDYA…</span><span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-saffron-500 text-white shadow-mic"><i data-lucide="arrow-right" class="h-5 w-5"></i></span></div></div></div>
+      <nav class="w-full max-w-2xl"><h2 class="type-caption text-muted-foreground mb-3" style="margin-top:0">Prep tools</h2><div class="flex flex-wrap gap-2" id="prep-chips"></div></nav>
+    </div>
+    <p class="sc-cap">Assembled from the component's class strings. It could not be captured live, because it needs a real Google/Firebase sign-in. The greeting, data and the orb renderer are illustrative: the real page uses the WebGL <code>VidyaSphere</code>, not this CSS orb.</p>
+  </div>
+</section>
+
+<!-- ============================================================ tokens -->
+<section class="sc-sec" id="tokens">
+  <h2>Tokens: radius, shadow, motion</h2>
+  <div class="sc-h3">Radii: four vocabularies on one config <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board sc-row" id="radii" style="gap:18px;align-items:flex-end"></div>
+  <div class="sc-h3">Shadows <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board sc-wash sc-row" id="shadows" style="gap:22px"></div>
+  <div class="sc-h3">Motion: hover the bars <span class="sc-tag v">Live CSS</span></div>
+  <div class="sc-board" id="motion" style="display:grid;gap:10px"></div>
+</section>
+
+<!-- ============================================================ issues -->
+<section class="sc-sec" id="issues">
+  <h2>Inconsistencies seen on this page</h2>
+  <p class="sc-lead">The full, sourced list (29 items) is in <code>DESIGN_REFERENCE_INDEX.md §6</code>. These are recorded, not fixed.</p>
+  <table class="sc-t"><thead><tr><th>#</th><th>What</th><th>Where you can see it above</th></tr></thead><tbody>
+    <tr><td>1</td><td><code>--primary</code> is #A5551D (saffron-600). Docs and the inline comment say #C96A28 (saffron-500)</td><td>§1 semantic swatches</td></tr>
+    <tr><td>2</td><td><code>--accent</code> = indigo, so outline and ghost buttons, Select and Dropdown items, and BackButton hover or focus to indigo</td><td>§3, §5, §10</td></tr>
+    <tr><td>3</td><td>Badge <code>secondary</code> and Button <code>secondary</code> are leaf green; ResultShell meta badges are green by default</td><td>§4 ResultShell, §9</td></tr>
+    <tr><td>4</td><td>Two focus systems (outline vs ring box-shadow); Textarea uses ring-1</td><td>§5, §11</td></tr>
+    <tr><td>5</td><td>Three type scales plus 261 arbitrary <code>text-[Npx]</code> (e.g. the 9px and 10px tile labels)</td><td>§2, §7</td></tr>
+    <tr><td>6</td><td>Four radius vocabularies; <code>rounded-xl</code> = <code>rounded-lg</code> = 12px</td><td>Tokens</td></tr>
+    <tr><td>7</td><td>Two "single" easing curves (<code>out-quart</code> and <code>standard</code>)</td><td>Tokens: motion</td></tr>
+    <tr><td>8</td><td>Raw palette colours in template tiles; token gate on develop is over budget (760 &gt; 744)</td><td>§7</td></tr>
+    <tr><td>9</td><td>Two VIDYA renderers with conflicting speaking and error colours; <code>.vidya-wordmark</code> font vars undefined</td><td>§11b</td></tr>
+    <tr><td>10</td><td>Sampark re-points shared tokens to cool slate</td><td>§1 Sampark, §13 screenshots</td></tr>
+    <tr><td>11</td><td>Command palette: ✕ overlaps the ESC hint</td><td>§10 screenshot</td></tr>
+  </tbody></table>
+</section>
+
+<p class="sc-cap" style="margin-top:40px">Generated 2026-11-03 from <code>develop @ 92837486</code>. Companion docs: <code>SAHAYAKAI_DESIGN_SYSTEM.md</code> · <code>COMPONENT_INVENTORY.md</code> · <code>DESIGN_REFERENCE_INDEX.md</code>.</p>
+</main>
+</div>
+
+<script>
+// ---------- token data: name, documented hex (computed from source HSL), tailwind name ----------
+const T = {
+  semantic: [['--primary','#A5551D','primary'],['--primary-foreground','#FFFFFF'],['--secondary','#2C5F2D','secondary'],['--accent','#2A3B8F','accent'],['--background','#FBF8F3','background'],['--foreground','#171310','foreground'],['--card','#FFFDF9','card'],['--muted','#F6F1E9','muted'],['--muted-foreground','#5C534A','muted-foreground'],['--border','#E4E1DC','border'],['--input','#DBD8D3','input'],['--ring','#A5551D','ring'],['--destructive','#C0392B','destructive'],['--success','#2C5F2D','success'],['--warning','#B45309','warning'],['--info','#2A3B8F','info']],
+  saffron: [['--saffron-50','#FFF4EB'],['--saffron-100','#FFE3C2'],['--saffron-200','#FFD9AE'],['--saffron-300','#E0A878'],['--saffron-400','#E08A3C'],['--saffron-500','#C96A28'],['--saffron-600','#A5551D'],['--saffron-700','#8A4A08'],['--saffron-800','#7E3F16']],
+  milk: [['--milk-50','#FFFDF9'],['--milk-100','#FFF8F0'],['--milk-200','#FBF8F3'],['--milk-300','#FBF6EE'],['--milk-400','#F6F1E9'],['--milk-500','#F4F2ED'],['--ink-400','#8A7F73'],['--ink-500','#6E655C'],['--ink-600','#5C534A'],['--ink-800','#1B1713'],['--ink-900','#171310'],['--stone-100','#E6E1DA'],['--stone-500','#8A8178']],
+  meaning: [['--leaf-100','#CFE6CF'],['--leaf-300','#7FBF7F'],['--leaf-500','#2C5F2D'],['--leaf-700','#234B24'],['--indigo-100','#DCE2FA'],['--indigo-500','#2A3B8F'],['--red-500','#C0392B'],['--red-700','#8A1C1C'],['--amber-500','#B45309']],
+  chart: [['--chart-1','#C96A28'],['--chart-2','#2C5F2D'],['--chart-3','#2A3B8F'],['--chart-4','#FBBD23'],['--chart-5','#E92063']],
+  sampark: [['--sampark-saffron','#C96A28'],['--sampark-saffron-strong','#A5551D'],['--sampark-peach','#FEF4EC'],['--sampark-peach-border','#F5DAC2'],['--sampark-indigo','#293A8E'],['--sampark-indigo-soft','#F1F3FE'],['--sampark-indigo-border','#D4DBF7'],['--sampark-leaf','#2B5E2C'],['--sampark-leaf-soft','#EDF7EE'],['--sampark-leaf-border','#CAE2CB'],['--sampark-rose','#B6251B'],['--sampark-rose-soft','#FEF2F1'],['--sampark-rose-border','#F9D0CD'],['--sampark-slate','#0F1729'],['--sampark-slate-soft','#F8FAFC'],['--sampark-line','#EAECF0']],
+  dark: [['--background','#13151B'],['--card','#1C1F26'],['--foreground','#F2F5F8'],['--primary','#EB9447'],['--primary-foreground','#0F1729'],['--secondary','#448848'],['--muted','#252931'],['--muted-foreground','#95A1B2'],['--accent','#2B303B'],['--border','#31353F'],['--destructive','#BA2C2C'],['--success','#48E080'],['--warning','#FBC823'],['--info','#61A6FA']],
+  rgba: [['--surface-glass'],['--surface-glass-soft'],['--surface-glass-strong'],['--surface-chrome'],['--surface-capsule'],['--surface-float'],['--surface-segment'],['--surface-disc'],['--border-hairline'],['--border-row'],['--border-control'],['--fill-quiet'],['--fill-subtle'],['--fill-mark'],['--accent-tint'],['--accent-tint-strong'],['--accent-tint-border'],['--accent-tint-soft'],['--success-tint'],['--leaf-tint-border'],['--info-tint'],['--info-tint-border'],['--red-tint'],['--amber-tint']]
+};
+const toHex = (c) => { const m = c.match(/\d+(\.\d+)?/g); if (!m) return ''; return '#' + m.slice(0,3).map(v => Math.round(+v).toString(16).padStart(2,'0')).join('').toUpperCase(); };
+let mismatches = 0, checked = 0;
+document.querySelectorAll('[data-swatches]').forEach(box => {
+  const set = T[box.dataset.swatches];
+  set.forEach(([name, hex, tw]) => {
+    const chip = document.createElement('div'); chip.className = 'sc-chip';
+    const sw = document.createElement('div');
+    const isRgba = box.dataset.swatches === 'rgba';
+    sw.style.background = isRgba ? `var(${name})` : `hsl(var(${name}))`;
+    if (isRgba) sw.style.backgroundColor = 'transparent', sw.style.background = `var(${name})`;
+    const meta = document.createElement('div'); meta.className = 'meta';
+    chip.append(sw, meta); box.append(chip);
+    const raw = getComputedStyle(box).getPropertyValue(name).trim();
+    const live = isRgba ? raw : toHex(getComputedStyle(sw).backgroundColor);
+    let verdict = '';
+    if (hex) { checked++; const ok = live === hex; if (!ok) mismatches++; verdict = ok ? `<span class="ok">✓ live CSS = ${hex}</span>` : `<span class="bad">✗ live ${live} ≠ doc ${hex}</span>`; }
+    meta.innerHTML = `<b>${name}</b>${isRgba ? `<span>${raw}</span>` : `<span>hsl(${raw})</span><br>${verdict}`}${tw ? `<br><span>${tw.split(' ').map(t=>'bg-'+t).join(' ')}</span>` : ''}`;
+  });
+});
+const cc = document.getElementById('css-check');
+if (!getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()) {
+  cc.style.display = 'block'; cc.innerHTML = '<b>The app stylesheet did not load.</b> Keep <code>assets/sahayakai-app.develop-92837486.css</code> next to this file.';
+} else if (mismatches) {
+  cc.style.display = 'block'; cc.textContent = `${mismatches} of ${checked} colour tokens differ from the documented hex values.`;
+} else {
+  cc.style.display = 'block'; cc.className = 'sc-note'; cc.innerHTML = `<b>Token check passed:</b> all ${checked} documented hex values match the live CSS variables of the app stylesheet.`;
+}
+
+// ---------- buttons (exact cva from ui/button.tsx) ----------
+const BASE = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0';
+const V = { default:'bg-primary text-primary-foreground hover:bg-primary/90', destructive:'bg-destructive text-destructive-foreground hover:bg-destructive/90', outline:'border border-input bg-background hover:bg-accent hover:text-accent-foreground', secondary:'bg-secondary text-secondary-foreground hover:bg-secondary/80', ghost:'hover:bg-accent hover:text-accent-foreground', link:'text-primary underline-offset-4 hover:underline' };
+const S = { default:'h-11 px-4 py-2', sm:'h-10 rounded-md px-3', lg:'h-12 rounded-md px-8', icon:'h-11 w-11' };
+const btn = (v, s, label, extra='') => `<div style="display:grid;gap:6px;justify-items:start"><button type="button" class="${BASE} ${V[v]} ${S[s]}" ${extra}>${label}</button><span class="sc-cap" style="margin:0"><code>${v}</code> · <code>${s}</code></span></div>`;
+document.getElementById('btn-variants').innerHTML = Object.keys(V).map(v => btn(v, 'default', v[0].toUpperCase()+v.slice(1))).join('');
+document.getElementById('btn-sizes').innerHTML = ['sm','default','lg'].map(s => btn('default', s, 'Generate')).join('') + btn('outline','icon','<i data-lucide="mic"></i>','aria-label="Mic"');
+document.getElementById('btn-states').innerHTML = btn('default','default','Disabled','disabled') + btn('outline','default','Disabled','disabled') + btn('default','default','<i data-lucide="loader-2" class="animate-spin"></i>Loading','disabled aria-busy="true"') + btn('default','default','<i data-lucide="sparkles"></i>With icon');
+
+// ---------- sidebar (FullItem / RailTile classes from shell/side-nav.tsx) ----------
+const FULL_BASE = 'focus-ring group/item flex w-full items-center gap-3 rounded-pill border px-3 transition-colors duration-small ease-standard';
+const TIER = { primary:'min-h-11 font-display text-value font-semibold tracking-[-0.005em]', secondary:'min-h-10 text-tile font-medium' };
+const ACT = 'border-line-hairline bg-milk-400 text-ink-900', IDLE = 'border-transparent text-ink-600 hover:bg-tint-subtle hover:text-ink-900';
+const item = (icon, label, tier, active, badge) => `<li><a href="#nav" class="${FULL_BASE} ${TIER[tier]} ${active?ACT:IDLE}" style="text-decoration:none"><i data-lucide="${icon}" class="h-[18px] w-[18px] shrink-0 ${active?'text-saffron-600':'text-ink-500 group-hover/item:text-ink-600'}"></i><span class="min-w-0 flex-1 break-words leading-snug ${active&&tier==='secondary'?'font-semibold':''}">${label}</span>${badge?`<span class="inline-flex shrink-0 items-center justify-center rounded-pill font-semibold leading-none text-white bg-primary h-5 min-w-5 px-1.5 text-xs">${badge}</span>`:(active?'<span class="h-1.5 w-1.5 shrink-0 rounded-pill bg-saffron-500"></span>':'')}</a></li>`;
+const sections = [
+  { tier:'primary', items:[['home','Home'],['library','Library'],['users','Community',0,'New'],['user','Profile']] },
+  { tier:'secondary', label:'Make', fold:true, items:[['calendar-days','Lesson Plan'],['pencil-ruler','Worksheet',1],['list-checks','Quiz'],['file-text','Exam Paper'],['clipboard-check','Rubric'],['lightbulb','Instant Answer']] },
+  { tier:'secondary', label:'Class', items:[['clipboard-list','Attendance']] },
+  { tier:'secondary', items:[['graduation-cap','Teacher Training']] },
+];
+document.getElementById('nav-full').innerHTML = sections.map(s => `<div>${s.label ? (s.fold ? `<button type="button" class="focus-ring flex min-h-9 w-full items-center justify-between rounded-pill px-3 text-left text-ink-500 transition-colors duration-small ease-standard hover:text-ink-900"><span class="type-eyebrow">${s.label}</span><i data-lucide="chevron-down" class="h-4 w-4 rotate-180"></i></button>` : `<p class="type-eyebrow mb-1 flex min-h-7 items-center px-3 text-ink-500" style="margin-top:0">${s.label}</p>`) : ''}<ul class="space-y-0.5" style="margin:0;padding:0;list-style:none">${s.items.map(([i,l,a,b]) => item(i,l,s.tier,!!a,b)).join('')}</ul></div>`).join('');
+const rail = (icon, label, active) => `<a href="#nav" style="width:64px;text-decoration:none" class="focus-ring group/rail flex min-h-11 flex-col items-center gap-1 rounded-tile py-1.5" style="text-decoration:none"><span class="relative flex h-9 w-12 items-center justify-center rounded-pill border transition-colors duration-small ease-standard ${active?'border-line-hairline bg-milk-400 text-saffron-600':'border-transparent text-ink-600 group-hover/rail:bg-tint-subtle group-hover/rail:text-ink-900'}"><i data-lucide="${icon}" class="h-[18px] w-[18px]"></i></span><span class="max-w-full text-center text-xs leading-tight ${active?'font-semibold text-ink-900':'font-medium text-ink-600'}">${label}</span></a>`;
+document.getElementById('nav-rail').innerHTML = `<a style="width:64px" class="focus-ring group/rail flex min-h-11 flex-col items-center gap-1 rounded-tile py-1.5"><span class="flex h-9 w-12 items-center justify-center rounded-pill border border-tint-accent-border bg-tint-accent text-saffron-700"><i data-lucide="audio-lines" class="h-[18px] w-[18px]"></i></span><span class="text-xs font-medium text-ink-600">VIDYA</span></a>` + [['home','Home'],['library','Library',1],['users','Community'],['pen-line','Make'],['clipboard-list','Class'],['compass','Explore']].map(([i,l,a]) => rail(i,l,!!a)).join('');
+document.getElementById('tabbar').innerHTML = [['home',1],['library'],['users'],['user']].map(([i,a]) => `<li><a href="#nav" class="focus-ring flex h-11 w-11 items-center justify-center rounded-pill transition-colors duration-small ease-standard"><span class="flex h-[42px] w-[42px] items-center justify-center rounded-pill ${a?'bg-saffron-500 text-white':'text-ink-500 hover:bg-tint-subtle hover:text-ink-900'}"><i data-lucide="${i}" class="h-5 w-5"></i></span></a></li>`).join('');
+
+// ---------- tabs ----------
+const TRIG = 'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground data-[state=inactive]:border data-[state=inactive]:border-input';
+const tabsEl = document.getElementById('tabs-demo');
+tabsEl.innerHTML = ['Lesson plans','Quizzes','Worksheets'].map((l,i) => `<button role="tab" data-state="${i?'inactive':'active'}" class="${TRIG}">${l}</button>`).join('');
+tabsEl.addEventListener('click', e => { const b = e.target.closest('[role=tab]'); if (!b) return; tabsEl.querySelectorAll('[role=tab]').forEach(x => x.dataset.state = x === b ? 'active' : 'inactive'); });
+
+// ---------- status pills (status-pill.tsx) ----------
+const TONE = { neutral:['border-border bg-muted text-foreground','bg-muted-foreground','Not switched on'], info:['border-info/30 bg-info/10 text-foreground','bg-info','Scheduled'], success:['border-success/30 bg-success/10 text-foreground','bg-success','Reached'], warning:['border-warning/40 bg-warning/10 text-foreground','bg-warning','No answer'], danger:['border-destructive/40 bg-destructive/10 text-foreground','bg-destructive','Failed'], brand:['border-primary/30 bg-primary/10 text-foreground','bg-primary','Calling now'] };
+document.getElementById('pills').innerHTML = Object.entries(TONE).map(([k,[c,d,l]]) => `<span title="tone: ${k}" class="inline-flex items-center gap-2 rounded-pill border px-2 py-1 text-xs font-medium leading-normal whitespace-nowrap ${c}"><span class="h-2 w-2 shrink-0 rounded-pill ${d}"></span>${l}</span>`).join('');
+
+// ---------- sparkline ----------
+document.getElementById('spark').innerHTML = [8,12,7,15,11,18,22].map((v,i,a) => `<span class="w-2 rounded-surface-sm ${i===a.length-1?'bg-primary':'bg-muted-foreground/25'}" style="height:${v*1.6}px"></span>`).join('');
+
+// ---------- VIDYA states (.vidya-* in globals.css) ----------
+document.getElementById('vidya-states').innerHTML = [['idle',0],['connecting',0],['listening',.55],['processing',0],['speaking',.8],['error',0]].map(([s,l]) => `<div style="display:grid;justify-items:center;gap:10px"><div class="vidya-stage" data-state="${s}" data-size="compact" style="width:96px;--vidya-level:${l}"><button class="vidya-sphere" aria-label="VIDYA ${s}"><span class="vidya-ring"></span><span class="vidya-core"><i data-lucide="${s==='error'?'mic-off':'mic'}" class="vidya-icon"></i></span></button></div><span class="sc-cap" style="margin:0"><code>data-state="${s}"</code></span></div>`).join('');
+
+// ---------- prep chips (dashboard-home.tsx) ----------
+document.getElementById('prep-chips').innerHTML = [['calendar-days','Lesson Plan'],['pencil-ruler','Worksheet'],['list-checks','Quiz'],['file-text','Exam Paper']].map(([i,l]) => `<a href="#pages" class="inline-flex items-center gap-2 rounded-surface-sm border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-soft hover:border-primary/50 hover:text-primary transition-colors duration-micro" style="text-decoration:none"><i data-lucide="${i}" class="h-4 w-4 text-ink-500"></i>${l}</a>`).join('');
+
+// ---------- radii / shadows / motion ----------
+const R = [['rounded-sm','8px · shadcn'],['rounded-md','10px · shadcn (Button, Input)'],['rounded-lg','12px · = --radius'],['rounded-xl','12px · Tailwind'],['rounded-2xl','16px · Tailwind'],['rounded-surface-sm','6px'],['rounded-surface-md','12px'],['rounded-surface-lg','20px'],['rounded-xs','6px'],['rounded-mark','8px'],['rounded-row','12px'],['rounded-field','14px'],['rounded-tile','16px'],['rounded-card','18px'],['rounded-panel','20px'],['rounded-web-metric','24px'],['rounded-sheet','26px'],['rounded-band','36px'],['rounded-pill','9999px']];
+// Defined in tailwind.config.ts but never written as a plain class in src/, so Tailwind's JIT did not emit them:
+// shown with their config value inline and flagged.
+const UNEMITTED = { 'rounded-panel':'border-radius:20px', 'rounded-sheet':'border-radius:26px', 'shadow-glow':'box-shadow:0 0 0 3px hsl(24 65% 47% / 0.12), 0 4px 12px -2px rgb(0 0 0 / 0.08)', 'shadow-inner-soft':'box-shadow:inset 0 1px 2px 0 rgb(0 0 0 / 0.04)', 'shadow-current':'box-shadow:var(--shadow-current)', 'shadow-sampark-raised':'box-shadow:var(--shadow-sampark-raised)' };
+const flag = (c) => UNEMITTED[c] ? '<span class="sc-cap" style="margin:0;color:hsl(var(--saffron-800))">not emitted, inline value</span>' : '';
+document.getElementById('radii').innerHTML = R.map(([c,v]) => `<div style="display:grid;gap:6px;justify-items:center;width:104px"><div class="${c} border border-line-control bg-milk-400" style="width:72px;height:56px;${UNEMITTED[c]||''}"></div>${flag(c)}<code style="font-size:11px">${c}</code><span class="sc-cap" style="margin:0;text-align:center">${v}</span></div>`).join('');
+const SH = ['shadow-soft','shadow-elevated','shadow-floating','shadow-glow','shadow-inner-soft','shadow-float','shadow-card','shadow-cta','shadow-orb','shadow-current','shadow-mic','shadow-sampark-card','shadow-sampark-raised','shadow-md','shadow-lg'];
+document.getElementById('shadows').innerHTML = SH.map(c => `<div style="display:grid;gap:8px;justify-items:center"><div class="${c} bg-card rounded-tile" style="width:108px;height:72px;${UNEMITTED[c]||''}"></div><code style="font-size:11px">${c}</code>${flag(c)}</div>`).join('');
+const M = [['duration-micro ease-out-quart','150ms · out-quart (Phase 1)'],['duration-small ease-standard','250ms · standard (Oct 2026)'],['duration-medium ease-out-quart','350ms · out-quart'],['duration-sheet ease-standard','400ms · standard (sheet, sidebar width)']];
+document.getElementById('motion').innerHTML = M.map(([c,l]) => `<div class="sc-mot sc-row" style="gap:14px"><div style="width:280px;height:28px;border-radius:9999px;background:var(--fill-quiet);position:relative"><div class="sc-dot transition-transform ${c}" style="position:absolute;left:2px;top:2px;width:24px;height:24px;border-radius:9999px;background:hsl(var(--saffron-500))"></div></div><code style="font-size:12px">${c}</code><span class="sc-cap" style="margin:0">${l}</span></div>`).join('');
+
+// ---------- gallery ----------
+const G = [
+ ['01-landing-logged-out','Landing (signed out): ambient glow, Indic marks, hero VIDYA orb, black "Start free" pill','tall'],
+ ['02-lesson-plan','Lesson Plan: bespoke two-column form, Quick Ideas, Quick Start Templates, settings panel'],
+ ['03-worksheet-wizard','Worksheet Wizard: the GeneratorPage pattern (strongest tool template)','tall'],
+ ['04-quiz-generator','Quiz Generator: GeneratorPage plus SelectableCards, Bloom chips, slider','tall'],
+ ['05-exam-paper','Exam Paper (signed out): a bare message with no sign-in button'],
+ ['06-rubric-generator','Rubric Generator','tall'],
+ ['07-instant-answer','Instant Answer','tall'],
+ ['08-my-library','Library (signed out): sign-in empty state with CTA'],
+ ['09-community','Community','tall'],
+ ['11-teacher-training-vidya','Teacher Training (signed out): titled "AI Coach"'],
+ ['12-messages','Messages (signed out)'],
+ ['13-usage','Usage (signed out)'],
+ ['16-sampark-public-site','SamparkAI public site','tall'],
+ ['17-sampark-workspace','SamparkAI workspace: cool slate theme via .theme-sampark'],
+ ['18-sampark-school-today','SamparkAI school "Today" console','tall'],
+ ['19-sampark-calls','SamparkAI calls','tall'],
+ ['20-sampark-families','SamparkAI families roster','tall'],
+ ['21-sampark-campaigns','SamparkAI campaigns','tall'],
+ ['22-sampark-demo','SamparkAI demo (Sargvision)','tall'],
+ ['25-phone-landing','Landing at 390px']
+];
+document.getElementById('gallery').innerHTML = G.map(([f,c,t]) => `<figure class="sc-shot ${t||''}" style="margin:0" data-shot="${f}"><a href="screenshots/${f}.png" target="_blank" rel="noopener"><img src="screenshots/${f}.png" alt="${c}" loading="lazy" onerror="this.closest('figure').remove()"></a><figcaption><span class="sc-tag s">Screenshot</span> ${c} · <code>${f}.png</code></figcaption></figure>`).join('');
+
+// ---------- toc highlight ----------
+const links = [...document.querySelectorAll('.sc-toc a')];
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle('sc-on', a.getAttribute('href') === '#' + e.target.id)); }), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('section[id], header[id]').forEach(s => io.observe(s));
+links.forEach(a => a.addEventListener('click', () => document.querySelector('.sc-toc').classList.remove('open')));
+</script>
+<script src="https://unpkg.com/lucide@0.563.0/dist/umd/lucide.min.js" onload="lucide.createIcons()"></script>
+</body>
+</html>

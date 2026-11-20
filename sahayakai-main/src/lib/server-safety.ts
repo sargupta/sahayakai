@@ -99,24 +99,28 @@ export async function checkServerRateLimit(userId: string): Promise<void> {
         const now = Date.now();
         const windowStart = now - SAFETY_CONFIG.WINDOW_MS;
 
-        const doc = await limitRef.get();
-        let requests: number[] = [];
+        // Read-check-write in ONE transaction: with a plain get() then set(), N parallel
+        // requests all read the same count and all passed (the limit did not hold).
+        await db.runTransaction(async (tx) => {
+            const doc = await tx.get(limitRef);
+            let requests: number[] = [];
 
-        if (doc.exists) {
-            const data = doc.data();
-            // Filter old timestamps
-            requests = (data?.requests || []).filter((time: number) => time > windowStart);
-        }
+            if (doc.exists) {
+                const data = doc.data();
+                // Filter old timestamps
+                requests = (data?.requests || []).filter((time: number) => time > windowStart);
+            }
 
-        if (requests.length >= SAFETY_CONFIG.MAX_REQUESTS_PER_WINDOW) {
-            const oldest = Math.min(...requests);
-            const waitMin = Math.ceil((SAFETY_CONFIG.WINDOW_MS - (now - oldest)) / 60000);
-            throw new Error(`Rate limit exceeded. Please wait ${waitMin} minutes.`);
-        }
+            if (requests.length >= SAFETY_CONFIG.MAX_REQUESTS_PER_WINDOW) {
+                const oldest = Math.min(...requests);
+                const waitMin = Math.ceil((SAFETY_CONFIG.WINDOW_MS - (now - oldest)) / 60000);
+                throw new Error(`Rate limit exceeded. Please wait ${waitMin} minutes.`);
+            }
 
-        // Add new request
-        requests.push(now);
-        await limitRef.set({ requests }, { merge: true });
+            // Add new request
+            requests.push(now);
+            tx.set(limitRef, { requests }, { merge: true });
+        });
 
     } catch (error: any) {
         // Re-throw if it's a legitimate rate limit error

@@ -68,6 +68,12 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// execFileSync kills the child past maxBuffer (Node default: 1 MB). A long
+// branch's diff output outgrew that and crashed Gate 11 with ENOBUFS
+// (2026-11-15); every CI child call gets the same generous cap.
+// Class gate: src/__tests__/scripts/ci-git-max-buffer.test.ts.
+const CHILD_MAX_BUFFER = 256 * 1024 * 1024;
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(HERE, '..', '..'); // sahayakai-main/
 const BASELINE_PATH = path.join(HERE, 'firestore-queries-baseline.json');
@@ -359,7 +365,7 @@ if (baseSha) {
     const changed = execFileSync(
       'git',
       ['diff', '--name-only', `${baseSha}...HEAD`],
-      { cwd: APP_ROOT, encoding: 'utf8' }
+      { cwd: APP_ROOT, encoding: 'utf8', maxBuffer: CHILD_MAX_BUFFER }
     );
     if (changed.split('\n').some((f) => f.endsWith('firestore.indexes.json'))) {
       console.log(

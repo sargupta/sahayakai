@@ -2,7 +2,7 @@
  * POST /api/ai/assessment-scanner
  *
  * Run the AI grading flow on an uploaded student answer page (or up to
- * ASSESSMENT_DEMO_PAGE_CAP pages, currently 3).
+ * ASSESSMENT_DEMO_PAGE_CAP pages, currently 10).
  *
  * Phase-2 scope:
  *   - Pages: up to ASSESSMENT_DEMO_PAGE_CAP per request (schema ceiling is 15)
@@ -38,11 +38,27 @@ import { withPlanCheck } from '@/lib/plan-guard';
 import { dbAdapter } from '@/lib/db/adapter';
 import { dispatchAssessmentScanner } from '@/lib/sidecar/assessment-scanner-dispatch';
 import { isGradedResult } from '@/ai/schemas/assessment-scanner-utils';
+import { ASSESSMENT_PAGE_DATA_URI_RE } from '@/ai/schemas/assessment-scanner-constants';
 
 // Allow up to 120s for AI scanning (multi-page OCR + grading can be slow)
 export const maxDuration = 120;
 
 const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
+
+/**
+ * Index of the first `pageUrls` entry that is neither an https URL nor an inline
+ * JPEG/PNG/WEBP image, or -1. A PDF data URI is the important case: one entry
+ * holding a whole multi-page PDF would be graded as ONE page, silently dropping
+ * the rest of the document. PDFs must be split into page images first (the
+ * website does this in the browser).
+ */
+function firstUnsupportedPage(pageUrls: unknown[]): number {
+    return pageUrls.findIndex((p) => {
+        if (typeof p !== 'string') return true;
+        if (p.startsWith('https://')) return false;
+        return !ASSESSMENT_PAGE_DATA_URI_RE.test(p);
+    });
+}
 
 /**
  * Normalise the request body so older clients that still send `pageUrl`
@@ -148,6 +164,22 @@ async function _handler(request: Request) {
                     error: 'INVALID_INPUT',
                     message: 'At least one page is required (send `pageUrls` as a non-empty array, or `pageUrl` as a string).',
                     code: 'NO_PAGES',
+                },
+                { status: 400 },
+            );
+        }
+        const badPage = firstUnsupportedPage(pageUrls);
+        if (badPage !== -1) {
+            const entry = pageUrls[badPage];
+            const isPdf = typeof entry === 'string' && /^data:application\/pdf/i.test(entry);
+            return NextResponse.json(
+                {
+                    error: 'INVALID_INPUT',
+                    message: isPdf
+                        ? `Page ${badPage + 1} is a whole PDF. Send each PDF page as a separate image (JPEG, PNG or WEBP); the Assessment Scanner page converts PDFs automatically.`
+                        : `Page ${badPage + 1} is not a supported image. Send an https link or a base64 JPEG, PNG or WEBP image for every page.`,
+                    code: 'UNSUPPORTED_PAGE_FORMAT',
+                    pageNumber: badPage + 1,
                 },
                 { status: 400 },
             );

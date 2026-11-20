@@ -1,0 +1,155 @@
+# Cloud Build: the ONE deploy definition for the live parent-call engine,
+# Cloud Run service `sahayakai-telephony` (project sahayakai-b4248,
+# asia-southeast1). Until this file it was deployed by hand with
+# `gcloud run deploy --source`, so nothing in the repo said what production was.
+#
+# A deploy NEVER takes traffic by itself: the new revision is created with
+# --no-traffic and tagged `candidate`. Promotion is a separate, manual step
+# after a test call reaches the candidate.
+#
+# Build and deploy a candidate, from the MONOREPO ROOT. The upload is limited to
+# this service plus the web and agents files its contract tests read
+# (cloudbuild.gcloudignore, an allowlist); the Docker build context is still
+# this directory only:
+#   gcloud builds submit . \
+#     --config=sahayakai-main/services/voice-server/cloudbuild.yaml \
+#     --ignore-file=sahayakai-main/services/voice-server/cloudbuild.gcloudignore \
+#     --project=sahayakai-b4248
+#
+# Candidate URL (reaches the new revision only):
+#   https://candidate---sahayakai-telephony-zwydpvyuca-as.a.run.app
+#
+# Promote, after a test call through the candidate:
+#   gcloud run services update-traffic sahayakai-telephony \
+#     --to-tags=candidate=100 --region=asia-southeast1 --project=sahayakai-b4248
+#
+# Roll back to a named revision:
+#   gcloud run services update-traffic sahayakai-telephony \
+#     --to-revisions=<previous-revision>=100 --region=asia-southeast1 --project=sahayakai-b4248
+#
+# The spec below is the live service as of revision sahayakai-telephony-00037
+# (2026-11-15, read with `gcloud run services describe`). Flags set every
+# field explicitly so a deploy reproduces it instead of inheriting drift:
+# --set-env-vars / --set-secrets REPLACE the whole env, they do not merge.
+#
+# Not changed by a deploy, on purpose (service-level, not part of a revision):
+#   - IAM: allUsers holds roles/run.invoker so the carrier can open the media
+#     socket; the signed single-use stream token is the gate.
+#   - The service-level instance cap (run.googleapis.com/maxScale: 10).
+#
+# Reproducible image: the Dockerfile installs ONLY from requirements.lock
+# (every package pinned, sha256-hashed). Do not regenerate it to promote: it
+# is resolved by scripts/lock.sh at the pinned cutoff 2026-10-01T10:36:44Z,
+# when the source of revision 00037's image was uploaded, the closest
+# recoverable match to 00037's package set (its build log is empty and
+# reading the image needs a pull). The test step below fails unless the lock
+# was resolved at that cutoff (VOICE_SERVER_REQUIRE_PINNED_LOCK=1). An upgrade
+# is its own reviewed change: scripts/lock.sh <new cutoff>, moving the pinned
+# cutoff in lock.sh, PROMOTE.md and here together.
+#
+# Leftovers from the never-deployed sahayakai-agents engine that this Pipecat
+# app does not read: SAHAYAKAI_AGENTS_ENV, SAHAYAKAI_PROMPTS_DIR,
+# SAHAYAKAI_REQUIRE_APP_CHECK, SAHAYAKAI_TELEPHONY_ONLY. Kept so the env of
+# the first deploy from this file matches 00037; drop them in a separate change.
+#
+# Gemini backend: Vertex AI as the runtime service account (it holds
+# roles/aiplatform.user), SAHAYAKAI_GEMINI_BACKEND=vertex, default location
+# asia-south1. Chosen 17 Nov 2026: the AI Studio key (GOOGLE_GENAI_API_KEY, still
+# bound for anything that reads it) returned 402 RESOURCE_EXHAUSTED on 16 Nov and
+# broke production calls; production web already runs on Vertex. A candidate is
+# test-called before promotion (PROMOTE.md). See src/gemini_backend.py.
+#
+# No trigger runs this file. CLASS GATE: sahayakai-main/src/__tests__/scripts/
+# one-deploy-source-per-service.test.ts fails if a second deploy definition
+# targets sahayakai-telephony, or if any does without --no-traffic.
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s
+
+steps:
+  # The engine's unit gates (request-to-talk, do-not-call). They need pytest
+  # only, so a red gate stops the deploy before anything is built.
+  - id: test
+    name: python:3.12-slim
+    dir: sahayakai-main/services/voice-server
+    # The contract tests read the web and agents files uploaded alongside;
+    # without the monorepo they must fail, not skip.
+    env:
+      - VOICE_SERVER_REQUIRE_MONOREPO=1
+      - VOICE_SERVER_REQUIRE_PINNED_LOCK=1
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        pip install --quiet --no-cache-dir pytest==8.4.2
+        python -m pytest tests -q -p no:cacheprovider
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=asia-southeast1-docker.pkg.dev/sahayakai-b4248/cloud-run-source-deploy/sahayakai-telephony:$BUILD_ID
+      - sahayakai-main/services/voice-server
+    waitFor: [test]
+
+  # Run the engine against the REAL packages in the image it just built: the
+  # unit tests stub pipecat, so only this catches a dependency that moved
+  # (src/smoke_check.py). Builds both Gemini backends' pipelines, starts
+  # nothing, calls no API. --network=cloudbuild gives it ADC for Vertex.
+  - id: smoke-real-pipecat
+    name: gcr.io/cloud-builders/docker
+    args:
+      - run
+      - --rm
+      - --network=cloudbuild
+      - --entrypoint=python
+      - asia-southeast1-docker.pkg.dev/sahayakai-b4248/cloud-run-source-deploy/sahayakai-telephony:$BUILD_ID
+      - -m
+      - src.smoke_check
+    waitFor: [build]
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/sahayakai-b4248/cloud-run-source-deploy/sahayakai-telephony:$BUILD_ID
+    waitFor: [smoke-real-pipecat]
+
+  - id: deploy-candidate
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - sahayakai-telephony
+      - --image=asia-southeast1-docker.pkg.dev/sahayakai-b4248/cloud-run-source-deploy/sahayakai-telephony:$BUILD_ID
+      - --project=sahayakai-b4248
+      - --region=asia-southeast1
+      # Never takes traffic; promotion is manual (see the header).
+      - --no-traffic
+      - --tag=candidate
+      - --service-account=sahayakai-agents-runtime@sahayakai-b4248.iam.gserviceaccount.com
+      - --execution-environment=gen2
+      - --cpu=2
+      - --memory=1Gi
+      # The audio relay runs continuously for the whole call; a throttled CPU
+      # between requests stutters the stream.
+      - --no-cpu-throttling
+      - --cpu-boost
+      - --concurrency=8
+      # A media socket stays open for the length of the call.
+      - --timeout=900
+      - --max-instances=4
+      # No warm instance: an idle tagged revision with min-instances bills
+      # around the clock.
+      - --min-instances=default
+      - --port=8080
+      - --ingress=all
+      - --startup-probe=httpGet.path=/readyz,httpGet.port=8080,periodSeconds=2,timeoutSeconds=1,failureThreshold=30
+      - --liveness-probe=httpGet.path=/healthz,httpGet.port=8080,periodSeconds=10,timeoutSeconds=2,failureThreshold=3
+      - --set-env-vars=GOOGLE_CLOUD_PROJECT=sahayakai-b4248,GOOGLE_CLOUD_REGION=asia-southeast1,SAHAYAKAI_AGENTS_ENV=production,SAHAYAKAI_PROMPTS_DIR=/srv/prompts,SAHAYAKAI_REQUIRE_APP_CHECK=false,SAHAYAKAI_TELEPHONY_ONLY=1,SAHAYAKAI_GEMINI_BACKEND=vertex
+      - --set-secrets=GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest,SAHAYAKAI_REQUEST_SIGNING_KEY=SAHAYAKAI_REQUEST_SIGNING_KEY:latest,SARVAM_AI_API_KEY=SARVAM_AI_API_KEY:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest
+      - --quiet
+    waitFor: [push]

@@ -14,12 +14,11 @@ Future<void> _pumpSeal(
   SealMicState state, {
   bool reduceMotion = false,
   double amplitude = 0,
-  Brightness brightness = Brightness.light,
   VoidCallback? onTap,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       home: Builder(
         builder: (context) => MediaQuery(
           data: MediaQuery.of(
@@ -140,14 +139,4 @@ void main() {
     expect(size.height, greaterThanOrEqualTo(48));
   });
 
-  testWidgets('renders in dark without error', (tester) async {
-    await _pumpSeal(
-      tester,
-      SealMicState.listening,
-      amplitude: 0.8,
-      brightness: Brightness.dark,
-    );
-    expect(tester.takeException(), isNull);
-    expect(find.byType(SealMic), findsOneWidget);
-  });
 }

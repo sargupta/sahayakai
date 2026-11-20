@@ -1,12 +1,13 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Sparkles,
   Library,
+  Bookmark,
 } from 'lucide-react';
 import { AuthGate } from '@/components/auth/auth-gate';
 import { LanguageSelector } from '@/components/language-selector';
@@ -18,8 +19,13 @@ import { useAuth } from '@/context/auth-context';
 import { useLanguage } from '@/context/language-context';
 import { getProfileData } from '@/lib/api/profile';
 import { ContentGallery } from '@/components/library/content-gallery';
+import { ConversationList } from '@/components/library/conversation-list';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useVidyaCapability, useVidyaScreenContext } from '@/hooks/use-vidya-app-context';
 
-export default function MyLibraryPage() {
+type LibraryTab = 'generations' | 'conversations';
+
+function MyLibraryContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   // Use the global language context — the previous local `translations` object
@@ -28,6 +34,18 @@ export default function MyLibraryPage() {
   const { language, setLanguage, t } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [resourceCount, setResourceCount] = useState(0);
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<LibraryTab>(searchParams.get('tab') === 'conversations' ? 'conversations' : 'generations');
+  const selectTab = (next: LibraryTab) => {
+    setTab(next);
+    router.replace(next === 'generations' ? '/my-library' : '/my-library?tab=conversations', { scroll: false });
+  };
+  // VIDYA sees which Library tab is open (the gallery publishes its own items).
+  useVidyaScreenContext('my-library.tab', user ? { libraryTab: tab } : null);
+  useVidyaCapability('library.show_tab', ({ tab: next }) => {
+    if (next !== 'generations' && next !== 'conversations') throw new Error('unknown_tab');
+    selectTab(next);
+  }, { enabled: !!user });
 
   // Real avatar precedence (no AI generation):
   //   1. profile.photoURL  — user-uploaded via Settings (custom)
@@ -104,14 +122,45 @@ export default function MyLibraryPage() {
             </div>
           </div>
 
-          <div className="p-6 bg-muted/30">
-            <ContentGallery
-              userId={userId}
-              onCountChange={setResourceCount}
-            />
-          </div>
+          {/* One Library, two clearly separate things:
+              Generations  = artifacts VIDYA/tools produced (users/{uid}/content)
+              Conversations = chats the teacher explicitly bookmarked
+                              (users/{uid}/vidya_sessions, saved: true).
+              Ordinary chat and internal logs appear in neither. */}
+          <Tabs value={tab} onValueChange={(v) => selectTab(v === 'conversations' ? 'conversations' : 'generations')}>
+            <div className="px-6 pt-4">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="generations" className="gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  {t("Generations")}
+                </TabsTrigger>
+                <TabsTrigger value="conversations" className="gap-2">
+                  <Bookmark className="h-4 w-4" />
+                  {t("Conversations")}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="generations" className="mt-0 p-6 bg-muted/30">
+              <ContentGallery
+                userId={userId}
+                onCountChange={setResourceCount}
+              />
+            </TabsContent>
+            <TabsContent value="conversations" className="mt-0 p-6 bg-muted/30">
+              <ConversationList />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </SectionCard>
     </div>
+  );
+}
+
+// useSearchParams (the ?tab= deep link) needs a Suspense boundary for prerender.
+export default function MyLibraryPage() {
+  return (
+    <Suspense fallback={null}>
+      <MyLibraryContent />
+    </Suspense>
   );
 }

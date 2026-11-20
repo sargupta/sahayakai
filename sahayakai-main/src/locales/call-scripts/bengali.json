@@ -1,0 +1,314 @@
+{
+  "_meta": {
+    "language": "Bengali",
+    "bcp47": "bn-IN",
+    "reviewStatus": "draft — needs native-speaker sign-off",
+    "reviewedBy": null,
+    "charsPerSecond": 11.3,
+    "notes": [
+      "Siliguri spoken Bengali, the way a school office talks to parents: প্যারেন্ট টিচার মিটিং, মেসেজ, অ্যানুয়াল ডে, স্পোর্টস ডে, ক্লাস টিচার, \"আপনি এলে আমরা খুব খুশি হব\". Not bookish or translated forms (অভিভাবক-শিক্ষক সভা, বার্তা, বার্ষিক ক্রীড়া প্রতিযোগিতা, সাদর আমন্ত্রণ) and no Bangladeshi words (পানি, দাওয়াত, গোসল).",
+      "Keypad keys always take নম্বর: \"এক নম্বর টিপুন\", \"নয় নম্বর টিপুন\". নয় on its own also means \"is not\", so a bare \"নয় টিপুন\" is ambiguous.",
+      "Class numbers are said as English words in Bengali script, with the letter before সেকশন: \"ক্লাস সেভেন, বি সেকশন\"; the genitive is \"বি সেকশনের\" (lexicon.grade.genitivePattern), never a suffix hyphenated onto a letter (\"বি-র\").",
+      "Dates use the date forms (পয়লা, দোসরা, দশই, উনিশে).",
+      "Times are the locative clock forms (দশটায়, সাড়ে দশটায়, দেড়টায়, আড়াইটায়), so the template adds no postposition after {time}.",
+      "The school name is followed by থেকে, never a genitive, so any school name works without inflecting it.",
+      "names.venues are plain nouns; the locative (হলে, মাঠে, লাইব্রেরিতে) is formed from lexicon.locative.",
+      "names.closureReasons carry their own postposition (ভারী বৃষ্টির জন্য, ধসের ভয়ে), because the template puts {reason} straight before আজ / আগামীকাল.",
+      "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early).",
+      "Short clips do not open with \"ধন্যবাদ\": the word is identical in Hindi, and the recogniser then transcribed a 4-second Bengali clip as Hindi. Thanks go last.",
+      "common.withdrawn is played instead of the message when a parent picks up a call whose campaign was cancelled while it rang (hardening H4): the school's name, \"আমাদের মেসেজটা তুলে নেওয়া হয়েছে\", an apology and a goodbye, in about ten seconds. It never says the call is recorded."
+    ]
+  },
+  "lexicon": {
+    "numbers": {
+      "0": "শূন্য",
+      "1": "এক",
+      "2": "দুই",
+      "3": "তিন",
+      "4": "চার",
+      "5": "পাঁচ",
+      "6": "ছয়",
+      "7": "সাত",
+      "8": "আট",
+      "9": "নয়",
+      "10": "দশ",
+      "11": "এগারো",
+      "12": "বারো",
+      "13": "তেরো",
+      "14": "চোদ্দো",
+      "15": "পনেরো",
+      "16": "ষোলো",
+      "17": "সতেরো",
+      "18": "আঠারো",
+      "19": "উনিশ",
+      "20": "কুড়ি",
+      "21": "একুশ",
+      "22": "বাইশ",
+      "23": "তেইশ",
+      "24": "চব্বিশ",
+      "25": "পঁচিশ",
+      "26": "ছাব্বিশ",
+      "27": "সাতাশ",
+      "28": "আঠাশ",
+      "29": "উনত্রিশ",
+      "30": "তিরিশ",
+      "31": "একত্রিশ",
+      "32": "বত্রিশ",
+      "33": "তেত্রিশ",
+      "34": "চৌত্রিশ",
+      "35": "পঁয়ত্রিশ",
+      "36": "ছত্রিশ",
+      "37": "সাঁইত্রিশ",
+      "38": "আটত্রিশ",
+      "39": "উনচল্লিশ",
+      "40": "চল্লিশ",
+      "41": "একচল্লিশ",
+      "42": "বিয়াল্লিশ",
+      "43": "তেতাল্লিশ",
+      "44": "চুয়াল্লিশ",
+      "45": "পঁয়তাল্লিশ",
+      "46": "ছেচল্লিশ",
+      "47": "সাতচল্লিশ",
+      "48": "আটচল্লিশ",
+      "49": "উনপঞ্চাশ",
+      "50": "পঞ্চাশ",
+      "51": "একান্ন",
+      "52": "বাহান্ন",
+      "53": "তিপ্পান্ন",
+      "54": "চুয়ান্ন",
+      "55": "পঞ্চান্ন",
+      "56": "ছাপ্পান্ন",
+      "57": "সাতান্ন",
+      "58": "আটান্ন",
+      "59": "উনষাট",
+      "60": "ষাট"
+    },
+    "numberAliases": {
+      "বিশ": 20,
+      "ত্রিশ": 30,
+      "দু": 2,
+      "ছ": 6,
+      "চোদ্দ": 14,
+      "ষোল": 16
+    },
+    "multipliers": {
+      "100": [
+        "শো",
+        "শ"
+      ],
+      "1000": [
+        "হাজার"
+      ],
+      "100000": [
+        "লাখ",
+        "লক্ষ"
+      ]
+    },
+    "weekdays": [
+      "রবিবার",
+      "সোমবার",
+      "মঙ্গলবার",
+      "বুধবার",
+      "বৃহস্পতিবার",
+      "শুক্রবার",
+      "শনিবার"
+    ],
+    "months": [
+      "জানুয়ারি",
+      "ফেব্রুয়ারি",
+      "মার্চ",
+      "এপ্রিল",
+      "মে",
+      "জুন",
+      "জুলাই",
+      "আগস্ট",
+      "সেপ্টেম্বর",
+      "অক্টোবর",
+      "নভেম্বর",
+      "ডিসেম্বর"
+    ],
+    "dayOfMonth": {
+      "1": "পয়লা",
+      "2": "দোসরা",
+      "3": "তেসরা",
+      "4": "চৌঠা",
+      "5": "পাঁচই",
+      "6": "ছয়ই",
+      "7": "সাতই",
+      "8": "আটই",
+      "9": "নয়ই",
+      "10": "দশই",
+      "11": "এগারোই",
+      "12": "বারোই",
+      "13": "তেরোই",
+      "14": "চোদ্দই",
+      "15": "পনেরোই",
+      "16": "ষোলোই",
+      "17": "সতেরোই",
+      "18": "আঠারোই",
+      "19": "উনিশে",
+      "20": "বিশে",
+      "21": "একুশে",
+      "22": "বাইশে",
+      "23": "তেইশে",
+      "24": "চব্বিশে",
+      "25": "পঁচিশে",
+      "26": "ছাব্বিশে",
+      "27": "সাতাশে",
+      "28": "আঠাশে",
+      "29": "উনত্রিশে",
+      "30": "তিরিশে",
+      "31": "একত্রিশে"
+    },
+    "dateFormat": "{weekday}, {day} {month}",
+    "dayPeriods": [
+      {
+        "id": "morning",
+        "fromHour": 6,
+        "toHour": 12,
+        "word": "সকাল"
+      },
+      {
+        "id": "afternoon",
+        "fromHour": 12,
+        "toHour": 16,
+        "word": "দুপুর"
+      },
+      {
+        "id": "late_afternoon",
+        "fromHour": 16,
+        "toHour": 18,
+        "word": "বিকেল"
+      },
+      {
+        "id": "evening",
+        "fromHour": 18,
+        "toHour": 20,
+        "word": "সন্ধ্যা"
+      }
+    ],
+    "time": {
+      "hourWords": {
+        "1": "একটায়",
+        "2": "দুটোয়",
+        "3": "তিনটেয়",
+        "4": "চারটেয়",
+        "5": "পাঁচটায়",
+        "6": "ছটায়",
+        "7": "সাতটায়",
+        "8": "আটটায়",
+        "9": "নটায়",
+        "10": "দশটায়",
+        "11": "এগারোটায়",
+        "12": "বারোটায়"
+      },
+      "whole": "{period} {hour}",
+      "half": "{period} সাড়ে {hour}",
+      "halfSpecial": {
+        "1": "{period} দেড়টায়",
+        "2": "{period} আড়াইটায়"
+      },
+      "special": {}
+    },
+    "grade": {
+      "pattern": "ক্লাস {grade}, {section} সেকশন",
+      "genitivePattern": "ক্লাস {grade}, {section} সেকশনের",
+      "gradeWords": {
+        "1": "ওয়ান",
+        "2": "টু",
+        "3": "থ্রি",
+        "4": "ফোর",
+        "5": "ফাইভ",
+        "6": "সিক্স",
+        "7": "সেভেন",
+        "8": "এইট",
+        "9": "নাইন",
+        "10": "টেন",
+        "11": "ইলেভেন",
+        "12": "টুয়েলভ"
+      }
+    },
+    "sectionLetters": {
+      "A": "এ",
+      "B": "বি",
+      "C": "সি",
+      "D": "ডি",
+      "E": "ই",
+      "F": "এফ",
+      "G": "জি",
+      "H": "এইচ"
+    },
+    "sectionLettersGenitive": {
+      "A": "এ",
+      "B": "বি",
+      "C": "সি",
+      "D": "ডি",
+      "E": "ই",
+      "F": "এফ",
+      "G": "জি",
+      "H": "এইচ"
+    },
+    "venuePhrase": "{venueLocative}",
+    "locative": {
+      "afterConsonant": "ে",
+      "afterVowel": "তে"
+    }
+  },
+  "names": {
+    "eventTypes": {
+      "annual_day": "অ্যানুয়াল ডে",
+      "sports_day": "স্পোর্টস ডে",
+      "science_fair": "বিজ্ঞান মেলা",
+      "cultural_programme": "কালচারাল প্রোগ্রাম",
+      "parent_workshop": "প্যারেন্টস ওয়ার্কশপ"
+    },
+    "closureReasons": {
+      "rain_landslide": "ভারী বৃষ্টি আর ধসের ভয়ে",
+      "heavy_rain": "ভারী বৃষ্টির জন্য",
+      "bandh": "বনধের জন্য",
+      "local_emergency": "এলাকার জরুরি পরিস্থিতির জন্য"
+    },
+    "venues": {
+      "school_hall": "স্কুলের হল",
+      "main_ground": "স্কুলের মাঠ",
+      "auditorium": "স্কুলের অডিটোরিয়াম"
+    },
+    "audience": {
+      "section": "{classGen} অভিভাবকদের",
+      "school": "সব অভিভাবকদের"
+    }
+  },
+  "common": {
+    "opt_out_confirm": "এরকম কল বন্ধ করতে আর একবার নয় নম্বর টিপুন। তবে হঠাৎ স্কুল বন্ধ থাকলে সেই খবর আপনি পাবেন।",
+    "opt_out_done": "ঠিক আছে, আপনাকে আর এরকম কল করা হবে না। তবে হঠাৎ স্কুল বন্ধ থাকলে সেই খবর আপনি পাবেন। ভালো থাকবেন, ধন্যবাদ।",
+    "no_input": "শোনার জন্য ধন্যবাদ। ভালো থাকবেন।",
+    "fallback_office": "নমস্কার, এটা {schoolName}। এখন আমাদের মেসেজটা শোনানো গেল না। দয়া করে স্কুল অফিসে একবার ফোন করে নেবেন। ধন্যবাদ।",
+    "withdrawn": "নমস্কার, আমি {schoolName} থেকে বলছি। আমাদের মেসেজটা তুলে নেওয়া হয়েছে, ওটা নিয়ে আর ভাববেন না। বিরক্ত করার জন্য দুঃখিত, নমস্কার।"
+  },
+  "purposes": {
+    "ptm_invite": {
+      "message": "নমস্কার, আমি {schoolName} থেকে বলছি। {audience} জন্য একটা খবর ছিল। {date}, {time} {venue} প্যারেন্ট টিচার মিটিং আছে। আপনি এলে আমরা খুব খুশি হব।",
+      "menu": "আসতে পারলে এক নম্বর টিপুন। ওই সময়ে আসতে অসুবিধা হলে দুই নম্বর টিপুন। আর এরকম কল না চাইলে নয় নম্বর টিপুন।",
+      "confirm_1": "আপনি আসছেন, সেটা স্কুলকে জানিয়ে দিলাম। দেখা হবে, ধন্যবাদ।",
+      "confirm_2": "জানানোর জন্য ধন্যবাদ। অন্য সময় ঠিক করতে ক্লাস টিচার বা স্কুল অফিসের সঙ্গে একটু কথা বলে নেবেন, ওঁরা সাহায্য করবেন। নমস্কার।"
+    },
+    "event_invite": {
+      "message": "নমস্কার, আমি {schoolName} থেকে বলছি। {audience} জন্য একটা খবর ছিল। {date}, {time} {venue} আমাদের {eventName} হবে। বাড়ির সবাইকে নিয়ে আসবেন, আমরা খুব খুশি হব।",
+      "menu": "আসতে পারলে এক নম্বর টিপুন। আসতে না পারলে দুই নম্বর টিপুন। আর এরকম কল না চাইলে নয় নম্বর টিপুন।",
+      "confirm_1": "আপনি আসছেন, সেটা স্কুলকে জানিয়ে দিলাম। দেখা হবে, ধন্যবাদ।",
+      "confirm_2": "জানানোর জন্য ধন্যবাদ। পরের অনুষ্ঠানে নিশ্চয়ই দেখা হবে। নমস্কার।"
+    },
+    "emergency_closure": {
+      "message": {
+        "today": "নমস্কার, আমি {schoolName} থেকে বলছি, একটা জরুরি খবর আছে। {reason} আজ, {date}, স্কুল বন্ধ থাকবে। {buses}",
+        "tomorrow": "নমস্কার, আমি {schoolName} থেকে বলছি, একটা জরুরি খবর আছে। {reason} আগামীকাল, {date}, স্কুল বন্ধ থাকবে। {buses}"
+      },
+      "buses": {
+        "running": "স্কুল বাস অবশ্য রোজকার মতোই চলবে।",
+        "notRunning": "স্কুল বাসও চলবে না।"
+      },
+      "menu": "মেসেজটা শুনে থাকলে এক নম্বর টিপুন। আর এরকম কল না চাইলে নয় নম্বর টিপুন।",
+      "confirm_1": "সবাই সাবধানে থাকবেন, ধন্যবাদ।"
+    }
+  }
+}

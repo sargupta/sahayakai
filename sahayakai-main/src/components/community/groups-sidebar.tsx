@@ -120,16 +120,16 @@ export function GroupsSidebar({
   };
 
   return (
-    <aside className="hidden lg:block w-72 space-y-5 sticky top-4">
+    <aside className="hidden lg:block w-72 shrink-0 space-y-5 sticky top-[calc(var(--topbar-h)+1.5rem)] self-start">
       {/* People You May Know (moved above groups per UX feedback — social first, then structure) */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          <h3 className="type-caption text-muted-foreground">
             {t("People You May Know")}
           </h3>
           <button
             onClick={onOpenTeacherDirectory}
-            className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
+            className="text-xs font-bold text-primary hover:text-primary/80 transition-colors"
           >
             {t("View All")}
           </button>
@@ -165,7 +165,7 @@ export function GroupsSidebar({
                     </div>
                   </div>
                   {connectedUids.includes(teacher.uid) ? (
-                    <Button size="sm" variant="ghost" className="shrink-0 text-xs text-emerald-600" disabled>
+                    <Button size="sm" variant="ghost" className="shrink-0 text-xs text-success" disabled>
                       <UserCheck className="h-3.5 w-3.5" />
                     </Button>
                   ) : sentRequestUids.includes(teacher.uid) || connectingTeachers.has(teacher.uid) ? (
@@ -191,7 +191,7 @@ export function GroupsSidebar({
           </div>
           <button
             onClick={onOpenTeacherDirectory}
-            className="mt-3 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+            className="mt-3 w-full text-center text-xs font-bold text-primary hover:text-primary/80 py-1.5 rounded-surface-sm hover:bg-tint-accent-soft transition-colors"
           >
             {t("Browse All Teachers")}
           </button>
@@ -200,7 +200,7 @@ export function GroupsSidebar({
 
       {/* Staff Room */}
       <Card
-        className="p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+        className="p-4 cursor-pointer hover:bg-muted transition-colors"
         onClick={onOpenStaffRoom}
       >
         <div className="flex items-center gap-3">
@@ -212,17 +212,17 @@ export function GroupsSidebar({
                   decorative-always pulse was misleading. */}
               <span className="relative flex h-2 w-2">
                 {staffRoomIsLive && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-pill bg-success/60 opacity-75" />
                 )}
                 <span
                   className={cn(
-                    "relative inline-flex rounded-full h-2 w-2",
-                    staffRoomIsLive ? "bg-green-500" : "bg-muted-foreground/40",
+                    "relative inline-flex rounded-pill h-2 w-2",
+                    staffRoomIsLive ? "bg-success" : "bg-muted-foreground/40",
                   )}
                 />
               </span>
               <span className="text-xs text-muted-foreground">
-                {staffRoomIsLive ? "Live" : "Quiet"}
+                {staffRoomIsLive ? t("Live") : t("Quiet")}
               </span>
             </div>
           </div>
@@ -233,7 +233,7 @@ export function GroupsSidebar({
       {/* My Groups — collapsed after 5 rows to keep sidebar scannable */}
       {myGroups.length > 0 && (
         <div>
-          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+          <h3 className="type-caption text-muted-foreground mb-2">
             {t("My Groups")}
           </h3>
           <Card className="p-4">
@@ -242,10 +242,10 @@ export function GroupsSidebar({
                 <button
                   key={group.id}
                   onClick={() => onSelectGroup(group.id)}
-                  className="w-full flex items-start gap-3 rounded-lg p-2 text-left hover:bg-slate-50 transition-colors"
+                  className="w-full flex items-start gap-3 rounded-surface-sm p-2 text-left hover:bg-muted transition-colors"
                 >
                   <span
-                    className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0"
+                    className="mt-1.5 h-2.5 w-2.5 rounded-pill shrink-0"
                     style={{ background: getGroupColor(group.name) }}
                   />
                   <div className="min-w-0">
@@ -253,7 +253,7 @@ export function GroupsSidebar({
                       {group.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
+                      {group.memberCount === 1 ? t("1 member") : t("{count} members").replace("{count}", String(group.memberCount))}
                     </p>
                   </div>
                 </button>
@@ -262,9 +262,9 @@ export function GroupsSidebar({
             {hiddenMyGroupsCount > 0 && (
               <button
                 onClick={() => setMyGroupsExpanded((v) => !v)}
-                className="mt-2 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+                className="mt-2 w-full text-center text-xs font-bold text-primary hover:text-primary/80 py-1.5 rounded-surface-sm hover:bg-tint-accent-soft transition-colors"
               >
-                {myGroupsExpanded ? "Show fewer" : `Show all (${myGroups.length})`}
+                {myGroupsExpanded ? t("Show fewer") : t("Show all ({count})").replace("{count}", String(myGroups.length))}
               </button>
             )}
           </Card>
@@ -275,13 +275,13 @@ export function GroupsSidebar({
       {suggestedGroups.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            <h3 className="type-caption text-muted-foreground">
               {t("Discover Groups")}
             </h3>
             {onViewAllGroups && suggestedGroups.length > 5 && (
               <button
                 onClick={onViewAllGroups}
-                className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
+                className="text-xs font-bold text-primary hover:text-primary/80 transition-colors"
               >
                 {t("View All")}
               </button>
@@ -302,7 +302,7 @@ export function GroupsSidebar({
                       {group.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
+                      {group.memberCount === 1 ? t("1 member") : t("{count} members").replace("{count}", String(group.memberCount))}
                     </p>
                   </button>
                   <Button
@@ -310,16 +310,16 @@ export function GroupsSidebar({
                     variant={joinedSet.has(group.id) ? "ghost" : "outline"}
                     className={cn(
                       "shrink-0 text-xs",
-                      joinedSet.has(group.id) && "text-emerald-600"
+                      joinedSet.has(group.id) && "text-success"
                     )}
                     disabled={joiningGroups.has(group.id) || joinedSet.has(group.id)}
                     onClick={() => handleJoinGroup(group.id)}
                   >
                     {joinedSet.has(group.id)
-                      ? "Joined"
+                      ? t("Joined")
                       : joiningGroups.has(group.id)
-                        ? "Joining..."
-                        : "Join"}
+                        ? t("Joining...")
+                        : t("Join")}
                   </Button>
                 </div>
               ))}
@@ -327,7 +327,7 @@ export function GroupsSidebar({
             {onViewAllGroups && (
               <button
                 onClick={onViewAllGroups}
-                className="mt-3 w-full text-center text-xs font-bold text-orange-500 hover:text-orange-600 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+                className="mt-3 w-full text-center text-xs font-bold text-primary hover:text-primary/80 py-1.5 rounded-surface-sm hover:bg-tint-accent-soft transition-colors"
               >
                 {t("Browse all groups")}
               </button>

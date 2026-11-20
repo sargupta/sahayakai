@@ -7,16 +7,16 @@ import 'core/i18n/gen/app_localizations.dart';
 import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/theme_mode_provider.dart';
 import 'features/vidya/presentation/vidya_overlay.dart';
 
-/// Root widget: MaterialApp.router wired to the theme (light + dark),
-/// localization delegates, and the active locale. When an Indic locale is
-/// active, line-heights are raised via [AppTheme.withIndic].
+/// Root widget: MaterialApp.router wired to the one light theme, localization
+/// delegates, and the active locale. When an Indic locale is active,
+/// line-heights are raised via [AppTheme.withIndic].
 ///
-/// Both switchable app-wide preferences are watched here, so Settings (P0.7)
-/// re-themes and re-localizes the running app live: [localeControllerProvider]
-/// drives `locale`, [themeModeControllerProvider] drives `themeMode`.
+/// The app is light only (design system, decided 26 Oct 2026): no dark theme
+/// and no theme switch, whatever the phone's own setting. The locale is the
+/// one switchable app-wide preference, watched here so Settings (P0.7)
+/// re-localizes the running app live.
 ///
 /// The `builder` mounts [VidyaOverlay] once, above the Navigator, so VIDYA's
 /// draggable orb floats over every route (the tool screens push on top of the
@@ -29,21 +29,16 @@ class SahayakApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeControllerProvider);
-    final themeMode = ref.watch(themeModeControllerProvider);
 
     final light = locale.isIndic
         ? AppTheme.withIndic(AppTheme.light())
         : AppTheme.light();
-    final dark = locale.isIndic
-        ? AppTheme.withIndic(AppTheme.dark())
-        : AppTheme.dark();
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: light,
-      darkTheme: dark,
-      themeMode: themeMode,
+      themeMode: ThemeMode.light,
       routerConfig: router,
       builder: (context, child) => Stack(
         children: [

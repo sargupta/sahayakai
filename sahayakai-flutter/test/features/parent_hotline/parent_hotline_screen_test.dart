@@ -26,6 +26,7 @@ import 'package:sahayakai/shared/widgets/secondary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'fake_parent_hotline_repositories.dart';
 
 /// U-PH3 — the Parent Hotline screen (stages 1–4 + decision bar).
@@ -123,9 +124,7 @@ Future<void> _pump(
     ProviderScope(
       overrides: overrides,
       child: MaterialApp(
-        theme: brightness == Brightness.dark
-            ? AppTheme.dark()
-            : AppTheme.light(),
+        theme: AppTheme.light(),
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -410,7 +409,7 @@ void main() {
         ),
       );
       expect(find.text('What happened'), findsOneWidget); // evidence header
-      expect(find.text('Add a note'), findsOneWidget);
+      expect(findFieldLabel('Add a note'), findsOneWidget);
       expect(find.text('Draft the message'), findsOneWidget);
     });
 
@@ -1013,7 +1012,7 @@ void main() {
       ),
     ];
 
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final (code, language, message) in reviewProbes) {
         testWidgets(
           'review chrome at 360dp x 1.3 in $code (${brightness.name})',

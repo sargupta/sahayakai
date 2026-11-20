@@ -7,11 +7,73 @@ import { logger } from '@/lib/logger';
 import { fanoutNewTeacherJoinedNotification } from '@/lib/notifications/fanout';
 
 /**
+ * The ONLY keys of `UserProfileSchema` a client may write through this route.
+ *
+ * Everything else the schema carries — `uid`, `email`, `planType`,
+ * `impactScore`, `contentSharedCount`, `createdAt`, `lastLogin` — is
+ * server-controlled and appears in `protectedUserFields()` in firestore.rules.
+ * Those are written only by dedicated server flows (Razorpay webhook →
+ * planType, aggregator → impactScore, auth → email/uid).
+ *
+ * Why this list exists even though `dbAdapter.updateUser` already filters
+ * through `CLIENT_EDITABLE_USER_FIELDS`: the new-user branch below writes via
+ * `createUser`, which is an UNFILTERED `set(merge:true)` (it must be — it seeds
+ * the very server-controlled fields the allowlist rejects). This list is what
+ * keeps client input out of that seed. The adapter allowlist remains the second
+ * layer on the update branch.
+ */
+const CLIENT_WRITABLE_PROFILE_KEYS = [
+    'displayName',
+    'photoURL',
+    'phoneNumber',
+    'schoolName',
+    'teachingGradeLevels',
+    'subjects',
+    'preferredLanguage',
+] as const;
+
+/**
+ * Pick the client-writable slice of a validated profile payload.
+ *
+ * `sentKeys === null` (new user) takes schema defaults, which is exactly what a
+ * fresh document wants. For an EXISTING user `sentKeys` is the set of keys the
+ * client actually put on the wire, so Zod's defaults can never be resurrected
+ * over stored values: omitting `subjects` used to write `[]` and wipe them.
+ */
+function pickClientWritable(
+    validated: Record<string, unknown>,
+    sentKeys: Set<string> | null,
+): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const key of CLIENT_WRITABLE_PROFILE_KEYS) {
+        if (sentKeys && !sentKeys.has(key)) continue;
+        if (validated[key] === undefined) continue;
+        out[key] = validated[key];
+    }
+    // Wire field `teachingGradeLevels` is stored as `gradeLevels`.
+    if ('teachingGradeLevels' in out) {
+        out.gradeLevels = out.teachingGradeLevels;
+        delete out.teachingGradeLevels;
+    }
+    return out;
+}
+
+function sortedJson(v: unknown): string {
+    return JSON.stringify([...((v as unknown[]) ?? [])].sort());
+}
+
+/**
  * @swagger
  * /api/user/profile:
  *   post:
  *     summary: Create or Update User Profile
- *     description: Upserts a user profile. Useful for simulating Onboarding completion.
+ *     description: >
+ *       Upserts a user profile. Useful for simulating Onboarding completion.
+ *       Server-controlled fields (planType, impactScore, contentSharedCount,
+ *       email, uid, createdAt, badges, follower counts, verifiedStatus) are
+ *       IGNORED if present in the body — they are written only by the billing
+ *       webhook / aggregators / auth. On update, omitted fields keep their
+ *       stored value; they are not reset to schema defaults.
  *     tags:
  *       - User
  *     requestBody:
@@ -79,56 +141,74 @@ export async function POST(request: Request) {
             );
         }
 
-        const { teachingGradeLevels: _tgl, ...restData } = validationResult.data as any;
+        const validated = validationResult.data as Record<string, unknown>;
 
-        // Check if profile already exists — only set social defaults for new users
+        // Keys the client actually put on the wire. Zod fills the rest in with
+        // schema defaults, and those defaults must never reach an update.
+        const sentKeys = new Set(
+            body && typeof body === 'object' && !Array.isArray(body) ? Object.keys(body) : [],
+        );
+
+        // Check if profile already exists — only seed server-controlled values for new users
         const existingProfile = await dbAdapter.getUser(requestingUserId);
         const isNewUser = !existingProfile;
 
-        const profile: UserProfile = {
-            ...restData,
-            // Normalize field: accept both old and new field names
-            gradeLevels: (restData.gradeLevels ?? _tgl ?? []) as any,
-            subjects: restData.subjects as any,
-            preferredLanguage: validationResult.data.preferredLanguage as any,
-            // Only set social/badge defaults for new profiles — never overwrite existing values
-            ...(isNewUser ? {
+        if (isNewUser) {
+            // New document: schema defaults are appropriate here, but every
+            // server-controlled field is stamped by the server, NOT by the
+            // client. A brand-new profile is always a free plan with zeroed
+            // aggregates no matter what the request body asked for.
+            const now = { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() };
+            const profile = {
+                ...pickClientWritable(validated, null),
+                uid: requestingUserId, // never body.uid
+                email: validated.email,
+                planType: 'free' as const,
+                impactScore: 0,
+                contentSharedCount: 0,
                 badges: [],
                 followersCount: 0,
                 followingCount: 0,
                 verifiedStatus: 'none' as const,
-                createdAt: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() },
-            } : {}),
-            lastLogin: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() }
-        };
+                createdAt: now,
+                lastLogin: now,
+            } as unknown as UserProfile;
 
-        // If existing user changed group-affecting fields, reset groupsInitialized so groups re-sync
-        if (!isNewUser && existingProfile) {
-            const schoolChanged = profile.schoolName !== existingProfile.schoolName;
-            const newSubjects = [...(profile.subjects ?? [])].sort();
-            const oldSubjects = [...(existingProfile.subjects ?? [])].sort();
-            const subjectsChanged = JSON.stringify(newSubjects) !== JSON.stringify(oldSubjects);
-            const newGrades = [...(profile.gradeLevels ?? [])].sort();
-            const oldGrades = [...(existingProfile.gradeLevels ?? [])].sort();
-            const gradesChanged = JSON.stringify(newGrades) !== JSON.stringify(oldGrades);
-            if (schoolChanged || subjectsChanged || gradesChanged) {
-                (profile as any).groupsInitialized = false;
-            }
-        }
+            // createUser uses set(merge:true), safe for upsert
+            await dbAdapter.createUser(profile);
 
-        // createUser uses set(merge:true), safe for upsert
-        await dbAdapter.createUser(profile);
-
-        // Fan-out: notify nearby teachers (same district + primary subject)
-        // when a new teacher completes their first profile save. Fire-and-
-        // forget — never block the response and never throw on failure.
-        if (isNewUser) {
-            void fanoutNewTeacherJoinedNotification(profile.uid).catch((err) => {
-                logger.error('fanoutNewTeacherJoined dispatch failed', err, 'PROFILE', { uid: profile.uid });
+            // Fan-out: notify nearby teachers (same district + primary subject)
+            // when a new teacher completes their first profile save. Fire-and-
+            // forget — never block the response and never throw on failure.
+            void fanoutNewTeacherJoinedNotification(requestingUserId).catch((err) => {
+                logger.error('fanoutNewTeacherJoined dispatch failed', err, 'PROFILE', { uid: requestingUserId });
             });
+
+            return NextResponse.json({ success: true, uid: requestingUserId });
         }
 
-        return NextResponse.json({ success: true, uid: profile.uid });
+        // Existing document: write ONLY what the client sent, and only the
+        // client-writable slice of it. Anything omitted keeps its stored value.
+        const updateData = pickClientWritable(validated, sentKeys);
+
+        // If the teacher changed a group-affecting field, reset groupsInitialized
+        // so groups re-sync. Only fields actually sent can count as "changed".
+        const schoolChanged =
+            'schoolName' in updateData && updateData.schoolName !== existingProfile.schoolName;
+        const subjectsChanged =
+            'subjects' in updateData && sortedJson(updateData.subjects) !== sortedJson(existingProfile.subjects);
+        const gradesChanged =
+            'gradeLevels' in updateData && sortedJson(updateData.gradeLevels) !== sortedJson(existingProfile.gradeLevels);
+        if (schoolChanged || subjectsChanged || gradesChanged) {
+            updateData.groupsInitialized = false;
+        }
+
+        // updateUser filters through CLIENT_EDITABLE_USER_FIELDS and stamps
+        // uid + lastLogin server-side — the second layer behind the
+        // route-level allowlist above.
+        await dbAdapter.updateUser(requestingUserId, updateData as Partial<UserProfile>);
+
+        return NextResponse.json({ success: true, uid: requestingUserId });
 
     } catch (error) {
         logger.error('Profile Save API Failed', error, 'PROFILE');

@@ -75,6 +75,12 @@ _PASS2_PER_CALL_TIMEOUT_S = 45.0
 # even on a poor connection; anything longer is an outage signal.
 _IMAGE_FETCH_TIMEOUT_S = 10.0
 
+# Most Pass-1 page calls in flight at once. The schema allows up to
+# ASSESSMENT_MAX_PAGES (15) pages; firing all of them at once would burst past
+# the per-minute model quota. The TS dispatcher only routes scans of up to 3
+# pages here today (ASSESSMENT_SIDECAR_MAX_PAGES), so this is defence in depth.
+PASS1_MAX_CONCURRENCY = 5
+
 
 # ---- Image fetching ------------------------------------------------------
 
@@ -447,11 +453,14 @@ async def grade_assessment(
     # so one page raising `AssessmentPageUnreadableError` doesn't cancel
     # siblings; we surface the FIRST such error after the gather
     # completes (matching the TS Promise.allSettled hardening).
+    pass1_slots = asyncio.Semaphore(PASS1_MAX_CONCURRENCY)
+
+    async def _bounded_extract(url: str, i: int) -> PageScan:
+        async with pass1_slots:
+            return await _extract_page(url, i, page_count, payload, api_keys, settings)
+
     pass1_results = await asyncio.gather(
-        *[
-            _extract_page(url, i, page_count, payload, api_keys, settings)
-            for i, url in enumerate(payload.pageUrls)
-        ],
+        *[_bounded_extract(url, i) for i, url in enumerate(payload.pageUrls)],
         return_exceptions=True,
     )
 

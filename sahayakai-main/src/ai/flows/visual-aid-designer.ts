@@ -7,6 +7,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { resolveContentId } from '@/lib/content-id';
 import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,6 +22,7 @@ export const VisualAidInputSchema = z.object({
   language: z.string().max(50).optional().describe('The language for any text in the visual aid.'),
   gradeLevel: z.string().optional().describe('The grade level for which the visual aid is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the visual aid is being generated.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
   subject: z.string().optional().describe('The academic subject.'),
 });
 
@@ -217,7 +219,7 @@ const visualAidFlow = ai.defineFlow(
         try {
           const storage = await getStorageInstance();
           const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
-          const contentId = uuidv4();
+          const contentId = resolveContentId(input.contentId);
           const safeTitle = prompt.substring(0, 30).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
           const fileName = `${timestamp}_${safeTitle}.png`;
           const filePath = `users/${userId}/visual-aids/${fileName}`;

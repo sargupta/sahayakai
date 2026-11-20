@@ -1,0 +1,88 @@
+# Voice server (the live parent-call engine) unit gates.
+#
+# WHY THIS EXISTS
+# sahayakai-main/services/voice-server is the Pipecat app that production's
+# sahayakai-telephony service runs. Until this workflow it had no automated
+# test at all, and it is deployed by hand. Its gates (request-to-talk for every
+# concern call, the do-not-call record, single-use stream tokens, log
+# redaction, the Gemini backend switch) live in services/voice-server/tests.
+#
+# The policy modules are stdlib-only and the tests stub pipecat and the
+# provider SDKs (tests/bot_harness.py), so the job installs pytest and nothing
+# else: no provider credential, no network call, no secret. The same suite runs
+# as the first step of services/voice-server/cloudbuild.yaml, so a red gate
+# also stops a deploy.
+#
+# The repo-wide class gate that the live service has exactly one deploy
+# definition (src/__tests__/scripts/one-deploy-source-per-service.test.ts), and
+# the web-side half of the contract (voice-engine-contract.test.ts), are jest
+# tests and run in the Test Suite workflow on every PR, not here.
+name: Voice server
+
+# Also on the web and agents files the contract tests read (tests/bot_harness.py
+# CONTRACT_FILES) and the web code they pin, so a change on either side runs
+# them. tests/test_contract_wiring.py keeps this list complete.
+on:
+  pull_request:
+    branches: [main, 'release/**']
+    paths:
+      - 'sahayakai-main/services/voice-server/**'
+      - '.github/workflows/voice-server.yml'
+      - 'sahayakai-main/src/lib/vobiz/**'
+      - 'sahayakai-main/src/app/api/attendance/**'
+      - 'sahayakai-main/src/lib/call-suppression.ts'
+      - 'sahayakai-main/src/__tests__/lib/call-suppression.test.ts'
+      - 'sahayakai-main/src/locales/call-scripts/**'
+      - 'sahayakai-agents/tests/unit/test_telephony_opt_out_persistence.py'
+      - 'sahayakai-agents/src/sahayakai_agents/telephony/suppression.py'
+  push:
+    branches: [main]
+    paths:
+      - 'sahayakai-main/services/voice-server/**'
+      - 'sahayakai-main/src/lib/vobiz/**'
+      - 'sahayakai-main/src/app/api/attendance/**'
+      - 'sahayakai-main/src/lib/call-suppression.ts'
+      - 'sahayakai-main/src/__tests__/lib/call-suppression.test.ts'
+      - 'sahayakai-main/src/locales/call-scripts/**'
+      - 'sahayakai-agents/tests/unit/test_telephony_opt_out_persistence.py'
+      - 'sahayakai-agents/src/sahayakai_agents/telephony/suppression.py'
+  workflow_dispatch:
+
+concurrency:
+  group: voice-server-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: sahayakai-main/services/voice-server
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: 'Voice server: unit gates (pytest only)'
+    # Pinned like the Playwright jobs: a runner image change should be a
+    # decision, not a surprise. 3.12 matches the python:3.12-slim image.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install pytest (and nothing else)
+        run: python -m pip install pytest==8.4.2
+
+      - name: Byte-compile every module (catches syntax errors in the pipecat-bound files)
+        run: python -m compileall -q src
+
+      - name: Unit gates
+        # The whole monorepo is checked out, so a contract test that cannot
+        # find it must fail, not skip.
+        env:
+          VOICE_SERVER_REQUIRE_MONOREPO: '1'
+        run: python -m pytest tests -q -p no:cacheprovider -rs

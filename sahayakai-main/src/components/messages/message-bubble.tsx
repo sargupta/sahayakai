@@ -1,6 +1,7 @@
 "use client";
 
 import { Message } from "@/types/messages";
+import { isSafeAppRouteSlug } from "@/lib/security/safe-links";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,13 +24,13 @@ import { isPrivateStoragePath, signMediaPath } from "@/lib/api/media";
 // ── Resource card config (mirrors community page TYPE_CONFIG) ─────────────────
 
 const RESOURCE_CONFIG: Record<string, { color: string; icon: React.ElementType; label: string }> = {
-    "lesson-plan":        { color: "bg-orange-50 border-orange-200 text-orange-700",  icon: BookOpen,       label: "Lesson Plan"   },
-    "quiz":               { color: "bg-blue-50 border-blue-200 text-blue-700",        icon: ClipboardCheck, label: "Quiz"          },
-    "worksheet":          { color: "bg-emerald-50 border-emerald-200 text-emerald-700", icon: FileSignature, label: "Worksheet"     },
-    "visual-aid":         { color: "bg-pink-50 border-pink-200 text-pink-700",        icon: Images,         label: "Visual Aid"    },
-    "virtual-field-trip": { color: "bg-teal-50 border-teal-200 text-teal-700",        icon: Globe2,         label: "Field Trip"    },
-    "rubric":             { color: "bg-violet-50 border-violet-200 text-violet-700",  icon: GraduationCap,  label: "Rubric"        },
-    "teacher-training":   { color: "bg-amber-50 border-amber-200 text-amber-700",     icon: Wand2,          label: "Training"      },
+    "lesson-plan":        { color: "bg-tint-accent-soft border-primary/30 text-saffron-700", icon: BookOpen,       label: "Lesson Plan"   },
+    "quiz":               { color: "bg-tint-info border-tint-info-border text-info", icon: ClipboardCheck, label: "Quiz"          },
+    "worksheet":          { color: "bg-tint-success border-tint-success-border text-success", icon: FileSignature, label: "Worksheet"     },
+    "visual-aid":         { color: "bg-chart-5/10 border-chart-5/30 text-chart-5", icon: Images,         label: "Visual Aid"    },
+    "virtual-field-trip": { color: "bg-leaf-100/50 border-leaf-300 text-leaf-700", icon: Globe2,         label: "Field Trip"    },
+    "rubric":             { color: "bg-muted border-border text-foreground", icon: GraduationCap,  label: "Rubric"        },
+    "teacher-training":   { color: "bg-tint-warning border-warning/30 text-warning", icon: Wand2,          label: "AI Coach"      },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -57,7 +58,7 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
     const router = useRouter();
     const { t } = useLanguage();
     const cfg = RESOURCE_CONFIG[resource.type] ?? {
-        color: "bg-slate-50 border-slate-200 text-slate-700",
+        color: "bg-muted border-border text-foreground",
         icon: BookOpen,
         label: "Resource",
     };
@@ -69,39 +70,41 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
         if (resource.gradeLevel) params.set("gradeLevel", resource.gradeLevel);
         if (resource.subject)    params.set("subject", resource.subject);
         if (resource.language)   params.set("language", resource.language ?? "");
+        // Messages can be written by other clients: never navigate off-app.
+        if (!isSafeAppRouteSlug(resource.route)) return;
         router.push(`/${resource.route}?${params.toString()}`);
     };
 
     return (
         <div className={cn(
             "mt-2 rounded-xl border p-3 space-y-2 text-left",
-            isOwn ? "border-orange-300/50 bg-orange-400/20" : cfg.color
+            isOwn ? "border-white/30 bg-white/15" : cfg.color
         )}>
             <div className="flex items-center gap-2">
                 <div className={cn("p-1.5 rounded-lg", isOwn ? "bg-white/30" : "bg-white/80")}>
                     <Icon className="h-3.5 w-3.5" />
                 </div>
-                <Badge className={cn("text-[9px] px-1.5 py-0 border-0 font-bold rounded-full",
+                <Badge className={cn("text-xs px-1.5 py-0 border-0 font-bold rounded-full",
                     isOwn ? "bg-white/30 text-white" : "bg-white/70"
                 )}>
                     {t(cfg.label)}
                 </Badge>
             </div>
-            <p className={cn("text-xs font-bold leading-snug", isOwn ? "text-white" : "text-slate-800")}>
+            <p className={cn("text-xs font-bold leading-snug", isOwn ? "text-white" : "text-foreground")}>
                 {resource.title}
             </p>
             {(resource.gradeLevel || resource.subject) && (
                 <div className="flex gap-1 flex-wrap">
                     {resource.gradeLevel && (
-                        <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                            isOwn ? "bg-white/20 text-white" : "bg-white/70 text-slate-600"
+                        <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded-full",
+                            isOwn ? "bg-white/20 text-white" : "bg-white/70 text-muted-foreground"
                         )}>
                             {resource.gradeLevel ? t(resource.gradeLevel) : resource.gradeLevel}
                         </span>
                     )}
                     {resource.subject && (
-                        <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                            isOwn ? "bg-white/20 text-white" : "bg-white/70 text-slate-600"
+                        <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded-full",
+                            isOwn ? "bg-white/20 text-white" : "bg-white/70 text-muted-foreground"
                         )}>
                             {resource.subject ? t(resource.subject) : resource.subject}
                         </span>
@@ -112,7 +115,7 @@ function ResourceCard({ resource, isOwn }: { resource: NonNullable<Message["reso
                 size="sm"
                 onClick={handleOpen}
                 className={cn(
-                    "h-7 w-full text-[11px] font-bold gap-1 rounded-lg",
+                    "h-7 w-full text-xs font-bold gap-1 rounded-lg",
                     isOwn
                         ? "bg-white/20 hover:bg-white/30 text-white border border-white/30"
                         : "bg-background hover:bg-muted text-foreground border border-border"
@@ -161,9 +164,9 @@ function AudioBubble({ audioUrl, duration, isOwn }: { audioUrl: string; duration
         )}>
             <div className={cn(
                 "p-1.5 rounded-full shrink-0",
-                isOwn ? "bg-white/20" : "bg-orange-100"
+                isOwn ? "bg-white/20" : "bg-saffron-50"
             )}>
-                <Mic className={cn("h-3.5 w-3.5", isOwn ? "text-white" : "text-orange-500")} />
+                <Mic className={cn("h-3.5 w-3.5", isOwn ? "text-white" : "text-saffron-600")} />
             </div>
             <audio
                 src={resolvedSrc}
@@ -173,7 +176,7 @@ function AudioBubble({ audioUrl, duration, isOwn }: { audioUrl: string; duration
                 style={{ colorScheme: "normal" }}
             />
             {duration && (
-                <span className={cn("text-[10px] font-medium shrink-0", isOwn ? "text-white/70" : "text-muted-foreground")}>
+                <span className={cn("text-xs font-medium shrink-0", isOwn ? "text-white/70" : "text-muted-foreground")}>
                     {formatDuration(duration)}
                 </span>
             )}
@@ -198,7 +201,7 @@ function DeliveryStatus({
     if (!status) {
         const allRead = participantIds.every((uid) => message.readBy?.includes(uid));
         return allRead
-            ? <CheckCheck className="h-3 w-3 text-blue-300 shrink-0" />
+            ? <CheckCheck className="h-3 w-3 text-info shrink-0" />
             : <Check className="h-3 w-3 text-white/50 shrink-0" />;
     }
 
@@ -210,12 +213,12 @@ function DeliveryStatus({
         case 'delivered':
             return <CheckCheck className="h-3 w-3 text-white/50 shrink-0" />;
         case 'read':
-            return <CheckCheck className="h-3 w-3 text-blue-300 shrink-0" />;
+            return <CheckCheck className="h-3 w-3 text-info shrink-0" />;
         case 'failed':
             return (
                 <button onClick={onRetry} className="flex items-center gap-0.5 shrink-0">
-                    <AlertCircle className="h-3 w-3 text-red-300" />
-                    <RotateCcw className="h-2.5 w-2.5 text-red-300" />
+                    <AlertCircle className="h-3 w-3 text-destructive" />
+                    <RotateCcw className="h-2.5 w-2.5 text-destructive" />
                 </button>
             );
         default:
@@ -244,8 +247,8 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRe
                     <Avatar className="h-7 w-7 ring-1 ring-white shadow-sm">
                         <AvatarImage src={message.senderPhotoURL ?? undefined} referrerPolicy="no-referrer" />
                         <AvatarFallback className={cn(
-                            "text-[10px] font-bold text-white",
-                            isOwn ? "bg-orange-500" : "bg-slate-400"
+                            "text-xs font-bold text-white",
+                            isOwn ? "bg-saffron-600" : "bg-ink-500"
                         )}>
                             {getInitials(message.senderName)}
                         </AvatarFallback>
@@ -256,16 +259,16 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRe
             {/* Bubble */}
             <div className={cn("max-w-[72%] space-y-0.5", isOwn && "items-end flex flex-col")}>
                 {showAvatar && !isOwn && (
-                    <p className="text-[10px] font-bold text-muted-foreground px-1">{message.senderName}</p>
+                    <p className="text-xs font-bold text-muted-foreground px-1">{message.senderName}</p>
                 )}
 
                 <div className={cn(
                     "px-3.5 py-2.5 rounded-2xl",
                     isOwn
-                        ? "bg-orange-500 text-white rounded-br-sm"
+                        ? "bg-saffron-600 text-white rounded-br-sm"
                         : "bg-muted text-foreground rounded-bl-sm border border-border/40",
                     message.deliveryStatus === 'sending' && "opacity-70",
-                    message.deliveryStatus === 'failed' && "ring-1 ring-red-400/60",
+                    message.deliveryStatus === 'failed' && "ring-1 ring-destructive/60",
                 )}>
                     {/* Text */}
                     {message.text && (
@@ -285,7 +288,7 @@ export function MessageBubble({ message, isOwn, showAvatar, participantIds, onRe
 
                 {/* Timestamp + read receipt */}
                 <div className={cn("flex items-center gap-1 px-1", isOwn && "flex-row-reverse")}>
-                    <p className="text-[10px] text-muted-foreground">{formatTime(message.createdAt, uiLangCode)}</p>
+                    <p className="text-xs text-muted-foreground">{formatTime(message.createdAt, uiLangCode)}</p>
                     {isOwn && <DeliveryStatus message={message} participantIds={participantIds} onRetry={onRetry} />}
                 </div>
             </div>

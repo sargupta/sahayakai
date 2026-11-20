@@ -3,7 +3,7 @@
  *
  * Covers the Phase-2 surface area:
  *   - Subject allow-list (Mathematics + 5 more, plus "Other") vs unknowns
- *   - Page count guard (1..ASSESSMENT_DEMO_PAGE_CAP, currently 3)
+ *   - Page count guard (1..ASSESSMENT_DEMO_PAGE_CAP, currently 10)
  *   - Backwards-compat: legacy `{ pageUrl: string }` is accepted as one page
  *   - Auth header is required
  *

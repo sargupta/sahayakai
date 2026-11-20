@@ -7,16 +7,51 @@ import { useAuth } from "@/context/auth-context";
 import { useFeatureFlag } from "@/context/feature-flags-context";
 import { stripRedundantGreeting } from "@/lib/vidya-greeting-suppressor";
 import { auth } from "@/lib/firebase";
-import { MicrophoneInput } from "@/components/microphone-input";
+import { MicrophoneInput, type MicStatus } from "@/components/microphone-input";
+import { VidyaSphere, type VidyaOrbState } from "@/components/vidya/vidya-sphere";
+import { useOverlayOpen } from "@/components/vidya/use-overlay-open";
+import { deriveOrbState } from "@/components/vidya/orb-state";
 import { Button } from "@/components/ui/button";
-import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
+import { Trash2, BrainCircuit, Sparkles, Cloud, Bookmark } from "lucide-react";
 import { tts } from "@/lib/tts";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
 import type { VidyaAction } from "@/lib/sidecar/types.generated";
-import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
+import { buildVidyaAppContext, subscribeVidyaAppContext } from "@/lib/vidya/app-context-registry";
+import { buildLiveAppContextFrame, liveToolCallToAppAction, LIVE_APP_TOOL_NAMES } from "@/lib/vidya/live-app-context";
+import { validateAppAction, type VidyaAppAction } from "@/lib/vidya/app-context-contract";
+import { runAppAction } from "@/lib/vidya/run-app-action";
+import { vidyaFlowTargetUrl } from "@/lib/vidya-action-normalizer";
 import { logger } from '@/lib/client-logger';
+import { VidyaLiveOrb } from "@/components/vidya-live-orb";
+import { useVidyaLiveSession } from "@/components/vidya/vidya-live-provider";
+import type { VidyaLiveToolCall } from "@/lib/vidya-live/live-session";
+
+// Hands-free voice (Google ADK / Gemini Live via the sidecar /stream socket).
+// Off by default: the turn-based STT → /api/assistant → TTS mic stays the
+// shipped path until the live path is rolled out. Server-side access is still
+// gated by VIDYA_VOICE_LIVE_ENABLED + VIDYA_VOICE_LIVE_ALLOWED_UIDS.
+
+// ADK tool name (`open_lesson_plan`) → routable flow id (`lesson-plan`).
+// Anything not in KNOWN_FLOWS is dropped, same guard as the text path.
+function liveToolToAction(call: VidyaLiveToolCall): VidyaAction | null {
+    if (!call.name.startsWith("open_")) return null;
+    const flow = call.name.slice(5).replace(/_/g, "-") as VidyaAction["flow"];
+    if (!KNOWN_FLOWS.has(flow)) return null;
+    const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+    return {
+        type: "NAVIGATE_AND_FILL",
+        flow,
+        params: {
+            topic: str(call.args.topic),
+            gradeLevel: str(call.args.gradeLevel),
+            subject: str(call.args.subject),
+            language: str(call.args.language),
+        },
+    };
+}
 
 // Known routable flow ids. Mirrors the wire enum in
 // `src/lib/sidecar/types.generated.ts` (`VidyaAction.flow`) and the
@@ -50,7 +85,7 @@ const FLOW_LABEL: Record<VidyaAction['flow'], string> = {
     'visual-aid-designer': 'Visual aid',
     'worksheet-wizard': 'Worksheet',
     'virtual-field-trip': 'Field trip',
-    'teacher-training': 'Training',
+    'teacher-training': 'AI Coach',
     'rubric-generator': 'Rubric',
     'exam-paper': 'Exam paper',
     'video-storyteller': 'Video',
@@ -81,7 +116,7 @@ async function vidyaApiFetch(path: string, options: RequestInit = {}): Promise<R
 export function OmniOrb() {
     const router = useRouter();
     const pathname = usePathname();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const { t, language: uiLanguage } = useLanguage();
     // Feature flag: vidyaGreetingSuppressor
@@ -104,6 +139,7 @@ export function OmniOrb() {
         mergeTeacherProfile,
         clearStructuredDataIfStale,
         markQueryCompleted,
+        bindOwner,
     } = useJarvisStore();
 
     // 2026-04-26: hide OmniOrb when the page-mounted VoiceAssistant chat
@@ -253,6 +289,24 @@ export function OmniOrb() {
         return () => mq.removeEventListener("change", onChange);
     }, [isClient]);
 
+    // ── The orb's state, from real signals only ──────────────────────────
+    // listening: the microphone is recording · thinking: transcribing, or the
+    // /api/assistant request is in flight · speaking: VIDYA's audio is playing
+    // (tts.subscribeSpeaking) · error: the last request failed (shown briefly).
+    const [micStatus, setMicStatus] = useState<MicStatus>("idle");
+    const [awaitingReply, setAwaitingReply] = useState(false);
+    const [speaking, setSpeaking] = useState(false);
+    const [failed, setFailed] = useState(false);
+    useEffect(() => tts.subscribeSpeaking(setSpeaking), []);
+    useEffect(() => {
+        if (!failed) return;
+        const id = setTimeout(() => setFailed(false), 4000);
+        return () => clearTimeout(id);
+    }, [failed]);
+    const orbState: VidyaOrbState = deriveOrbState({ failed, micStatus, speaking, awaitingReply });
+    // A dialog, sheet or menu is open: step aside so the orb never covers it.
+    const overlayOpen = useOverlayOpen(isClient);
+
     // ── Proactive daily-inspiration greeting (once per session) ──────────
     useEffect(() => {
         if (proactiveShown.current) return;
@@ -277,6 +331,17 @@ export function OmniOrb() {
     // from Firestore. This enables cross-device memory — a teacher who logs in
     // on a different device gets their context back immediately.
     useEffect(() => {
+        // Memory isolation: the persisted VIDYA memory (chat history, profile,
+        // form drafts) belongs to ONE teacher. Once auth has settled, a
+        // different uid — or sign-out — wipes it before anything reads it,
+        // so teacher B on a shared school device never sees teacher A's.
+        if (authLoading) return;
+        const uid = user?.uid ?? null;
+        if (useJarvisStore.getState().ownerUid !== uid) {
+            bindOwner(uid);
+            currentSessionRef.current = null;
+            sessionIsNewRef.current = true;
+        }
         if (!user) return;
 
         // 1. Restore teacher profile (Firestore wins if more recent than local)
@@ -288,7 +353,7 @@ export function OmniOrb() {
             .catch(console.warn);
 
         // 2. Restore latest conversation (only if store is empty — no override)
-        if (chatHistory.length === 0) {
+        if (useJarvisStore.getState().chatHistory.length === 0) {
             vidyaApiFetch("/api/vidya/session")
                 .then((res) => res?.json())
                 .then((data) => {
@@ -306,7 +371,7 @@ export function OmniOrb() {
         }
     // Re-run only when the logged-in user identity changes (login / logout)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?.uid]);
+    }, [user?.uid, authLoading]);
 
     // ── Sync a conversation turn pair to Firestore (fire-and-forget) ─────
     const syncSessionTurn = useCallback(
@@ -331,6 +396,36 @@ export function OmniOrb() {
         },
         [user, pathname],
     );
+
+    // ── Explicitly save (bookmark) the current conversation ──────────────
+    // Bookmarks the teacher's own Firestore session; it then shows under
+    // My Library → Conversations. The conversation is synced first so the
+    // saved copy contains everything on screen.
+    const saveCurrentConversation = useCallback(async () => {
+        if (!user || chatHistory.length === 0) return;
+        if (!currentSessionRef.current) {
+            currentSessionRef.current = `sess_${user.uid.slice(0, 8)}_${Date.now()}`;
+            sessionIsNewRef.current = true;
+        }
+        const sessionId = currentSessionRef.current;
+        try {
+            const isNew = sessionIsNewRef.current;
+            sessionIsNewRef.current = false;
+            const synced = await vidyaApiFetch("/api/vidya/session", {
+                method: "POST",
+                body: JSON.stringify({ sessionId, messages: chatHistory, isNew, screenPath: pathname }),
+            });
+            if (!synced?.ok) throw new Error("sync failed");
+            const res = await vidyaApiFetch("/api/vidya/session", {
+                method: "PATCH",
+                body: JSON.stringify({ sessionId, saved: true }),
+            });
+            if (!res?.ok) throw new Error("save failed");
+            toast({ title: t("Conversation saved"), description: t("My Library") });
+        } catch {
+            toast({ title: t("Something went wrong"), description: t("Please try again."), variant: "destructive" });
+        }
+    }, [user, chatHistory, pathname, toast, t]);
 
     // ── Sync a teacher profile patch to Firestore (fire-and-forget) ──────
     const syncProfilePatch = useCallback(
@@ -407,6 +502,11 @@ export function OmniOrb() {
         const carryHistory = sinceLastQuery < FRESH_QUERY_WINDOW_MS && samePageAsLast;
         const effectiveChatHistory = carryHistory ? chatHistory : [];
         const effectiveStructuredData = storeSnapshot.structuredData;
+        // Live application context: which screen this is, what it shows, and
+        // which real actions it offers (see app-context-registry). Snapshot
+        // at request time; the fingerprint guards against acting on a screen
+        // that changed while VIDYA was thinking.
+        const appContext = buildVidyaAppContext(pathname);
 
         // eslint-disable-next-line no-console
         console.info('[OmniOrb] new query — staging cleared', {
@@ -439,6 +539,8 @@ export function OmniOrb() {
             ?? (profileLang && LANG_TO_BCP47[profileLang])
             ?? 'en-IN';
 
+        setFailed(false);
+        setAwaitingReply(true);
         try {
             logger.info('POST /api/assistant', 'VIDYA OmniOrb', {
                 transcriptLen: transcript.length,
@@ -459,7 +561,7 @@ export function OmniOrb() {
                     // but only when they belong to the current page (the
                     // store's `clearStructuredDataIfStale` already wiped
                     // mismatched payloads on navigation; this is read-back).
-                    currentScreenContext: { path: pathname, uiState: effectiveStructuredData },
+                    currentScreenContext: { path: pathname, uiState: effectiveStructuredData, app: appContext },
                     // Pass long-term teacher profile for personalised context
                     teacherProfile,
                     // Pass detected speech language so VIDYA responds in the same language
@@ -488,7 +590,7 @@ export function OmniOrb() {
             // Parse JSON in its own try so a malformed body surfaces a
             // distinct error rather than getting confused with a network
             // failure in the outer catch.
-            let payload: { response?: string; action?: VidyaAction | null; plannedActions?: VidyaAction[] };
+            let payload: { response?: string; action?: VidyaAction | null; plannedActions?: VidyaAction[]; appAction?: unknown };
             try {
                 payload = await res.json();
             } catch (parseErr) {
@@ -614,9 +716,18 @@ export function OmniOrb() {
                 syncSessionTurn(updatedMessages, null);
                 setPendingActions([]);
             } else {
-                // Conversational turn — persist without action metadata
-                syncSessionTurn(updatedMessages, null);
+                // Conversational turn. May carry an in-app action (navigate /
+                // invoke a real on-screen action) — re-validated here against
+                // what this screen offered, then run through the app's own
+                // handler. Plain answers persist without action metadata.
+                const appAction = validateAppAction(payload.appAction, appContext);
+                const appActionRecord = !appAction ? null
+                    : appAction.type === 'NAVIGATE'
+                        ? { flow: `app:${appAction.destination}`, params: {} }
+                        : { flow: `app:${appAction.capability}`, params: appAction.params ?? {} };
+                syncSessionTurn(updatedMessages, appActionRecord);
                 setPendingActions([]);
+                if (appAction) executeAppAction(appAction, appContext.fingerprint, response ?? '');
             }
         } catch (e) {
             const errMsg = e instanceof Error ? e.message : String(e);
@@ -632,6 +743,9 @@ export function OmniOrb() {
                 description: errMsg.slice(0, 200),
                 variant: 'destructive',
             });
+            setFailed(true);
+        } finally {
+            setAwaitingReply(false);
         }
     };
 
@@ -645,6 +759,10 @@ export function OmniOrb() {
         // when params lack topic. Optional: chip taps replay the same
         // logic from the existing chatHistory closure.
         _originalTranscript?: string,
+        // Live voice: the model passes `topic` itself when the teacher gave one. The
+        // stored chat history may hold an old turn (or VIDYA's own words heard back
+        // through the speakers), which must never land in the destination form.
+        { topicFallback = true }: { topicFallback?: boolean } = {},
     ) => {
         // Learn teacher preferences from agentic actions.
         //
@@ -677,37 +795,16 @@ export function OmniOrb() {
         syncSessionTurn(updatedMessages, { flow: action.flow, params: action.params });
 
         // If VIDYA couldn't extract a topic (vague follow-up like "those locations"),
-        // fall back to the last user message from chatHistory as context.
-        // Cast to writable shape for the local fallback patch — `params` is
-        // bound to the supervisor's emitted object, so editing it here only
-        // affects the route hand-off below, not the persisted record above.
+        // the text path falls back to the teacher's last message. Language is
+        // normalised to ISO-2 inside (the destination <LanguageSelector> rejects
+        // display names — the "form shows English, output Hindi" bug).
         const params = action.params as Record<string, string | undefined | null>;
-        if (!params.topic && !params.question && !params.prompt) {
-            const lastUserMsg = [...chatHistory].reverse().find(m => m.role === "user");
-            if (lastUserMsg) {
-                params.topic = lastUserMsg.parts.map((p: { text: string }) => p.text).join("").trim();
-            }
-        }
-
-        // Normalise language to an ISO-2 code BEFORE it lands in the URL.
-        // The destination forms (lesson-plan, quiz-generator, …) drive
-        // <LanguageSelector> with ISO values ("en", "hi"). VIDYA's
-        // supervisor sometimes emits the display name ("English") which
-        // the selector then rejects and falls back to the default — that
-        // is the second half of the "form shows English, output Hindi"
-        // bug. Shared with the destination forms via
-        // `@/lib/vidya-action-normalizer` so both ends agree.
-        const queryParams = new URLSearchParams();
-        if (params.topic) queryParams.set("topic", params.topic);
-        if (params.question) queryParams.set("question", params.question);
-        if (params.assignmentDescription) queryParams.set("assignmentDescription", params.assignmentDescription);
-        if (params.prompt) queryParams.set("prompt", params.prompt);
-        if (params.subject) queryParams.set("subject", params.subject);
-        if (params.gradeLevel) queryParams.set("gradeLevel", params.gradeLevel);
-        const normalisedLang = normaliseVidyaLanguage(params.language);
-        if (normalisedLang) queryParams.set("language", normalisedLang);
-
-        const targetUrl = `/${action.flow}?${queryParams.toString()}`;
+        const lastUserMsg = topicFallback ? [...chatHistory].reverse().find(m => m.role === "user") : undefined;
+        const targetUrl = vidyaFlowTargetUrl(
+            action.flow,
+            params,
+            lastUserMsg ? lastUserMsg.parts.map((p: { text: string }) => p.text).join("") : null,
+        );
         logger.info('navigating to', 'VIDYA OmniOrb', { targetUrl });
 
         // ── Make the navigation VISIBLE ──────────────────────────────────
@@ -735,6 +832,133 @@ export function OmniOrb() {
         router.push(targetUrl);
     }, [chatHistory, router, pathname, toast, updateTeacherProfile, syncProfilePatch, syncSessionTurn]);
 
+    // ── In-app actions (navigate / invoke a real on-screen action) ───────
+    // VIDYA only REQUESTS; `runAppAction` decides against the live screen
+    // (manifest routes only; registered + enabled handlers only; screen
+    // unchanged since the request; data-saving actions need Confirm). This
+    // callback only supplies the UI: router, toasts, confirm button.
+    const executeAppAction = useCallback((
+        appAction: VidyaAppAction,
+        requestFingerprint: string,
+        spokenResponse: string,
+    ) => {
+        const outcome = runAppAction(appAction, requestFingerprint, {
+            livePath: () => window.location.pathname,
+            navigate: (section) => {
+                toast({ title: t(section.label) });
+                setOrbOpen(false);
+                router.push(section.route);
+            },
+            requestConfirmation: (proceed) => toast({
+                title: t('Confirm'),
+                description: spokenResponse.slice(0, 200) || undefined,
+                action: (
+                    <ToastAction altText={t('Confirm')} onClick={proceed}>
+                        {t('Confirm')}
+                    </ToastAction>
+                ),
+            }),
+            onRefused: (reason) => {
+                logger.warn('app action refused', 'VIDYA OmniOrb', { appAction, reason });
+                toast({ title: t('Something went wrong'), description: t('Please try again.'), variant: 'destructive' });
+            },
+        });
+        logger.info('app action', 'VIDYA OmniOrb', { appAction, outcome });
+    }, [router, t, toast]);
+
+    // ── Hands-free live voice (ADK) wiring ───────────────────────────────
+    const buildLiveSessionInput = useCallback(() => {
+        const iso = LANGUAGE_TO_ISO[uiLanguage] ?? teacherProfile.preferredLanguage ?? "en";
+        const clamp = (v: string | null | undefined, n: number) => (v ? v.slice(0, n) : undefined);
+        return {
+            startSessionBody: {
+                teacherProfile: teacherProfile as unknown as Record<string, unknown>,
+                currentScreenContext: { path: pathname || "/", uiState: structuredData ?? undefined },
+                detectedLanguage: iso,
+            },
+            setup: {
+                grade: clamp(teacherProfile.preferredGrade, 50),
+                subject: clamp(teacherProfile.preferredSubject, 100),
+                schoolContext: clamp(teacherProfile.schoolContext, 2000),
+                language: clamp(iso, 10),
+                screenPath: clamp(pathname || "/", 500),
+            },
+        };
+    }, [uiLanguage, teacherProfile, pathname, structuredData]);
+
+    const onLiveToolCall = useCallback((call: VidyaLiveToolCall) => {
+        // App navigation / on-screen actions: the SAME validated path text
+        // VIDYA uses (manifest routes only; only actions this screen offers;
+        // stale-screen refusal; Confirm before anything is saved).
+        if (LIVE_APP_TOOL_NAMES.has(call.name)) {
+            const request = liveToolCallToAppAction(call, window.location.pathname);
+            if (!request) {
+                logger.warn('live app tool refused (not offered on this screen)', 'VIDYA OmniOrb', { name: call.name });
+                toast({ title: t('Something went wrong'), description: t('Please try again.'), variant: 'destructive' });
+                return;
+            }
+            const { action: appAction } = request;
+            syncSessionTurn(chatHistory, appAction.type === 'NAVIGATE'
+                ? { flow: `app:${appAction.destination}`, params: {} }
+                : { flow: `app:${appAction.capability}`, params: appAction.params ?? {} });
+            executeAppAction(appAction, request.fingerprint, request.description);
+            return;
+        }
+        const action = liveToolToAction(call);
+        if (!action) {
+            logger.warn('live voice tool call ignored', 'VIDYA OmniOrb', { name: call.name });
+            return;
+        }
+        // Voice session stays open across the navigation: OmniOrb lives in the
+        // app shell, which persists over client-side route changes.
+        executeAction(action, chatHistory, undefined, { topicFallback: false });
+    }, [executeAction, executeAppAction, syncSessionTurn, chatHistory, toast, t]);
+
+    // Hand the guarded executor + teacher context to the app-wide live session
+    // (VidyaLiveProvider) so the central home VIDYA and the compact tool-page
+    // VIDYA both act through exactly this code path.
+    const liveSession = useVidyaLiveSession();
+    // Hands-free VIDYA only when this teacher may use it (server-decided); else the tap-to-talk mic.
+    const liveEnabled = liveSession?.liveEnabled === true;
+    const registerToolHandler = liveSession?.registerToolHandler;
+    const registerInputBuilder = liveSession?.registerInputBuilder;
+    useEffect(() => {
+        if (!liveEnabled || !registerToolHandler || !registerInputBuilder) return;
+        registerToolHandler(onLiveToolCall);
+        registerInputBuilder(buildLiveSessionInput);
+    }, [liveEnabled, registerToolHandler, registerInputBuilder, onLiveToolCall, buildLiveSessionInput]);
+    useEffect(() => () => {
+        registerToolHandler?.(null);
+        registerInputBuilder?.(null);
+    }, [registerToolHandler, registerInputBuilder]);
+
+    // Keep the live session's app context fresh — the same screen snapshot
+    // text VIDYA sends per request — on every route change and whenever a
+    // screen publishes state or (un)registers an action. Debounced; it is
+    // stored by the sidecar for `get_app_context`, never spoken as a turn.
+    // An enhancement only: any failure here leaves voice untouched.
+    const setLiveAppContext = liveSession?.setAppContext;
+    useEffect(() => {
+        if (!liveEnabled || !setLiveAppContext) return;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const push = () => {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+                try {
+                    setLiveAppContext(buildLiveAppContextFrame(window.location.pathname) as unknown as Record<string, unknown>);
+                } catch (err) {
+                    logger.warn('live app context push failed', 'VIDYA OmniOrb', { err: String(err) });
+                }
+            }, 250);
+        };
+        push();
+        const unsubscribe = subscribeVidyaAppContext(push);
+        return () => {
+            if (timer) clearTimeout(timer);
+            unsubscribe();
+        };
+    }, [liveEnabled, setLiveAppContext, pathname]);
+
     // Chip tap handler — pops the action from pendingActions and dispatches.
     // Chips render one-shot so consecutive taps cleanly chain navigations.
     const onChipTap = useCallback((action: VidyaAction) => {
@@ -753,13 +977,25 @@ export function OmniOrb() {
     // is open. Prevents two simultaneous voice surfaces (UX bug).
     if (voiceDialogOpen) return null;
 
+    const stateWords: Record<VidyaOrbState, string> = {
+        idle: t("VIDYA is ready"),
+        listening: t("VIDYA is listening"),
+        thinking: t("VIDYA is thinking"),
+        speaking: t("VIDYA is speaking"),
+        error: t("VIDYA could not act on that"),
+    };
+
     return (
         <div
             ref={orbRef}
+            // The sidebar's "Talk to VIDYA" presses this orb's mic (src/lib/vidya-entry.ts).
+            data-vidya-entry="orb"
+            data-vidya-state={orbState}
+            aria-hidden={overlayOpen || undefined}
             className={`fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-4 sm:bottom-12 sm:right-12 z-[90] ${
                 reducedMotion ? "" : "transition-[transform,opacity] duration-300"
             } ${
-                hiddenByScroll && !orbOpen && !isDragging
+                overlayOpen || (hiddenByScroll && !orbOpen && !isDragging)
                     ? "opacity-0 pointer-events-none"
                     : "opacity-100"
             }`}
@@ -771,12 +1007,28 @@ export function OmniOrb() {
         >
             {/* Explicit Memory Drawer */}
             {orbOpen && (
-                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-card text-card-foreground rounded-3xl shadow-2xl border border-border p-4 animate-in fade-in slide-in-from-bottom-5">
+                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-card text-card-foreground rounded-surface-lg shadow-floating border border-border p-4 animate-in fade-in slide-in-from-bottom-5">
                     <div className="flex justify-between items-center mb-4 pb-2 border-b">
                         <h3 className="font-bold flex items-center gap-2">
                             <BrainCircuit className="h-5 w-5 text-primary" />
                             {t("VIDYA Memory")}
                         </h3>
+                        <div className="flex items-center gap-1">
+                        {/* Explicit bookmark: the ONLY way a conversation appears
+                            under My Library → Conversations. It stays in the
+                            session store; it never becomes a Generations artifact. */}
+                        {user && chatHistory.length > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-primary hover:bg-primary/10"
+                                onClick={saveCurrentConversation}
+                                title={t("Save conversation")}
+                                aria-label={t("Save conversation")}
+                            >
+                                <Bookmark className="h-4 w-4" />
+                            </Button>
+                        )}
                         <Button
                             variant="ghost"
                             size="icon"
@@ -794,6 +1046,7 @@ export function OmniOrb() {
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
+                        </div>
                     </div>
 
                     {/* Teacher profile summary */}
@@ -816,7 +1069,7 @@ export function OmniOrb() {
                             <p className="text-muted-foreground italic text-center py-4">{t("Memory is clear. I have no context of prior conversations.")}</p>
                         ) : (
                             chatHistory.map((msg, i) => (
-                                <div key={i} className={"p-3 rounded-2xl " + (msg.role === "user" ? "bg-muted self-end ml-4" : "bg-primary/10 self-start mr-4")}>
+                                <div key={i} className={"p-3 rounded-surface-lg " + (msg.role === "user" ? "bg-muted self-end ml-4" : "bg-primary/10 self-start mr-4")}>
                                     {msg.parts.map((p) => p.text).join("")}
                                 </div>
                             ))
@@ -863,7 +1116,7 @@ export function OmniOrb() {
                 {/* Proactive daily-inspiration tip */}
                 {proactiveTip && (
                     <div
-                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-card border border-primary/20 rounded-2xl shadow-xl p-3 text-xs text-foreground animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
+                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-card border border-primary/20 rounded-surface-lg shadow-floating p-3 text-xs text-foreground animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
                     >
                         <div className="flex items-start gap-2">
                             <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -888,7 +1141,9 @@ export function OmniOrb() {
                                 style={{ animationDuration: "2.4s" }}
                             />
                         )}
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1">
+                        {/* Anchored to the orb's right edge so it grows LEFTWARD: centred, it hung
+                            ~38px off the right edge of a phone screen (the orb sits there). */}
+                        <div className="absolute -top-12 right-0 whitespace-nowrap text-xs font-semibold text-primary bg-card px-3 py-1.5 rounded-full shadow-md pointer-events-none border border-primary/20 flex items-center gap-1" data-testid="orb-reply-hint">
                             <BrainCircuit className="h-3 w-3" />
                             {t("Tap to reply")}
                         </div>
@@ -896,13 +1151,23 @@ export function OmniOrb() {
                 )}
 
                 <div className="relative z-10 pointer-events-auto">
-                    <MicrophoneInput
-                        onTranscriptChange={processTranscription}
-                        isFloating={true}
-                        iconSize="lg"
-                        className="shadow-2xl transition-transform hover:scale-105"
-                    />
+                    {liveEnabled ? (
+                        // Home ("/") shows VIDYA large and central in the
+                        // workspace itself; everywhere else the SAME session
+                        // is shown as a compact presence. Never two mics.
+                        pathname !== "/" ? <VidyaLiveOrb /> : null
+                    ) : (
+                        <MicrophoneInput
+                            onTranscriptChange={processTranscription}
+                            onStatusChange={setMicStatus}
+                            renderVisual={() => <VidyaSphere state={orbState} reducedMotion={reducedMotion} />}
+                            isFloating={true}
+                            iconSize="lg"
+                            className={reducedMotion ? "" : "transition-transform hover:scale-105"}
+                        />
+                    )}
                 </div>
+                <span className="sr-only" role="status" aria-live="polite">{stateWords[orbState]}</span>
 
                 {/* Toggle Memory Button */}
                 <Button
@@ -910,7 +1175,7 @@ export function OmniOrb() {
                         e.stopPropagation();
                         if (!isDragging) setOrbOpen(!orbOpen);
                     }}
-                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
+                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-elevated opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
                     size="icon"
                     title={t("View Memory")}
                 >

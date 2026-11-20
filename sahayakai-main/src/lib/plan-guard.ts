@@ -1,5 +1,6 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
+import { demoAnswerCacheEnabled, getDemoAnswer, putDemoAnswer } from '@/lib/demo-answer-cache';
 import type { GatedFeature } from './plan-config';
 import { PLAN_CONFIG, getMinimumPlan, PLAN_DISPLAY_NAMES } from './plan-config';
 import { normalizePlan } from './plan-utils';
@@ -109,6 +110,19 @@ export async function reservePlanQuota(request: Request, feature: GatedFeature):
 export function withPlanCheck(feature: GatedFeature) {
     return function <T extends Request>(handler: (request: T) => Promise<NextResponse>) {
         return async function (request: T): Promise<NextResponse> {
+            // Local demo only (src/lib/demo-answer-cache.ts): an exact repeat of an earlier
+            // successful request — e.g. an on-screen template — is answered at once.
+            let demoBody: string | null = null;
+            if (demoAnswerCacheEnabled() && request.method === 'POST') {
+                demoBody = await request.clone().text().catch(() => null);
+                const hit = demoBody !== null ? getDemoAnswer(feature, demoBody) : undefined;
+                if (hit !== undefined) {
+                    return NextResponse.json(hit, { status: 200, headers: { 'x-sahayak-demo-cache': 'hit' } });
+                }
+                // Development only: the request shape, so the launcher can pre-generate the
+                // on-screen templates with exactly what the page sends.
+                console.info(`[demo-answer-cache] miss ${feature} ${demoBody}`);
+            }
             const gate = await reservePlanQuota(request, feature);
             if (!gate.ok) {
                 return NextResponse.json(gate.body, { status: gate.status });
@@ -121,6 +135,9 @@ export function withPlanCheck(feature: GatedFeature) {
                 const response = await handler(request);
                 if (!response.ok) {
                     await gate.rollback();
+                } else if (demoBody !== null && (response.headers.get('content-type') ?? '').includes('application/json')) {
+                    const answer = await response.clone().json().catch(() => null);
+                    if (answer && !(answer as { error?: unknown }).error) putDemoAnswer(feature, demoBody, answer);
                 }
                 return response;
             } catch (err: any) {

@@ -1,0 +1,7 @@
+{
+  "_about": "Shared do-not-call key fixture. call_suppressions/{id} is keyed by lower-case hex sha256 of the trimmed E.164 number. The web app (sahayakai-main/src/lib/call-suppression.ts, phoneSuppressionId) and the sahayakai-agents bridge (telephony/suppression.py) pin this same pair in their own tests; if any of the three ever disagree, an opt-out is written under one key and looked up under another, and the parent is called again. Made-up numbers from the +9198000001xx test range.",
+  "cases": [
+    {"phone": "+919800000101", "digest": "1775163af1a0b1e46b138f7908ca90c7faa36273ae53b36a40640bba2b0ba8bd"},
+    {"phone": "+919800000102", "digest": "b2d6b1ce8f33ffce5203eea7d339254662c02396e27e436ed94f1cf1fcd04aea"}
+  ]
+}

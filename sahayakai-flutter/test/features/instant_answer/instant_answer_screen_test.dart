@@ -6,6 +6,7 @@ import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/instant_answer/presentation/instant_answer_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'instant_answer_fixtures.dart';
 
 /// Form-layer gates: the multiline question box and three dropdowns face the
@@ -20,7 +21,7 @@ Widget _hostScreen({
 }) {
   return ProviderScope(
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -39,7 +40,7 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets(
           'form renders at 360dp, textScale $scale, ${brightness.name}',
@@ -54,10 +55,10 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Your question'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
-            expect(find.text('Subject'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(findFieldLabel('Your question'), findsOneWidget);
+            expect(findFieldLabel('Grade level'), findsOneWidget);
+            expect(findFieldLabel('Subject'), findsOneWidget);
+            expect(findFieldLabel('Language'), findsOneWidget);
           },
         );
       }

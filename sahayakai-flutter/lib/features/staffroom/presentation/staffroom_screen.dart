@@ -13,7 +13,6 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
-import '../../vidya/presentation/vidya_sheet.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/community_post.dart';
 import '../domain/group.dart';
@@ -52,7 +51,6 @@ class StaffroomScreen extends StatelessWidget {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.staffroomTitle),
-        actions: const [VidyaAppBarAction()],
       ),
       body: const SafeArea(child: StaffroomFeedView()),
     );
@@ -367,17 +365,9 @@ class _StaffroomHero extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        EditorialSectionHeader(l10n.staffroomTitle, rule: false),
+        EditorialSectionHeader(l10n.staffroomTitle),
         const SizedBox(height: AppSpacing.space3),
         Text(l10n.staffroomHeroTitle, style: text.displaySmall),
-        const SizedBox(height: AppSpacing.space3),
-        const SizedBox(
-          width: 48,
-          height: 2,
-          child: DecoratedBox(
-            decoration: BoxDecoration(gradient: AppGradients.accentBar),
-          ),
-        ),
         const SizedBox(height: AppSpacing.space3),
         Text(
           // Full-ink on the scaffold ground: onSurfaceVariant is only 4.36:1 on

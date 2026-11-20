@@ -172,8 +172,8 @@ void main() {
     expect(find.text(l10n.networkTabStaffroom), findsWidgets);
     expect(find.text(l10n.networkTabMessages), findsWidgets);
     expect(find.text(l10n.networkTabUpdates), findsWidgets);
-    // The Network hub title.
-    expect(find.text(l10n.networkTitle), findsOneWidget);
+    // The hub is titled as its tab: Community.
+    expect(find.text(l10n.navCommunity), findsOneWidget);
     // The Staffroom tab is active → the feed body shows; the Messages tab is
     // offstage → its conversation is not found.
     expect(find.text('staffroom body'), findsOneWidget);

@@ -19,6 +19,9 @@ class AppMotion {
   static const Duration large = Duration(milliseconds: 420); // hero / splash element (single)
   static const Duration stagger = Duration(milliseconds: 55); // per-item entrance offset
 
+  /// Design system v2: small changes (chips, tabs) take .25s on [standard].
+  static const Duration change = Duration(milliseconds: 250);
+
   // Curves — the WHOLE sanctioned set.
   static const Cubic easeOutQuart = Cubic(0.16, 1.0, 0.30, 1.0); // entrances, reveals, settle
   static const Cubic emphasized = Cubic(0.20, 0.00, 0.00, 1.0); // page/sheet/result

@@ -1,0 +1,555 @@
+{
+  "_about": "The final review's live-stop probe phrases (scratchpad probe_stop.py, 2026-11-16). not_stops: must never fire live (a false stop ends the call). strong_stops: must fire at once.",
+  "not_stops": [
+    {
+      "category": "busy",
+      "text": "I'm busy, call me later"
+    },
+    {
+      "category": "busy",
+      "text": "I'm busy, don't call"
+    },
+    {
+      "category": "busy",
+      "text": "Sorry I'm busy, don't call, we'll talk again"
+    },
+    {
+      "category": "busy",
+      "text": "मैं बिज़ी हूँ, फ़ोन मत करो, फिर बात करेंगे"
+    },
+    {
+      "category": "busy",
+      "text": "আমি ব্যস্ত, ফোন করবেন না, আবার কথা হবে"
+    },
+    {
+      "category": "busy",
+      "text": "আমার শরীর খারাপ আর আমি ব্যস্ত, ফোন করবেন না"
+    },
+    {
+      "category": "busy",
+      "text": "আমি আর আমার স্বামী দুজনেই ব্যস্ত, ফোন করবেন না"
+    },
+    {
+      "category": "busy",
+      "text": "मी कामात आहे, फोन करू नका, मी परत फोन करते"
+    },
+    {
+      "category": "busy",
+      "text": "मी कामात आहे, फोन करू नका"
+    },
+    {
+      "category": "busy",
+      "text": "હું વ્યસ્ત છું, ફોન ન કરો, ફરી વાત કરીશું"
+    },
+    {
+      "category": "busy",
+      "text": "ਮੈਂ ਬਿਜ਼ੀ ਹਾਂ, ਫ਼ੋਨ ਨਾ ਕਰੋ, ਫਿਰ ਗੱਲ ਕਰਾਂਗੇ"
+    },
+    {
+      "category": "busy",
+      "text": "ನಾನು ಬ್ಯುಸಿ ಇದ್ದೀನಿ, ಫೋನ್ ಮಾಡಬೇಡಿ, ಮತ್ತೆ ಮಾತಾಡೋಣ"
+    },
+    {
+      "category": "busy",
+      "text": "நான் பிஸியா இருக்கேன், போன் பண்ணாதீங்க, மறுபடியும் பேசலாம்"
+    },
+    {
+      "category": "busy",
+      "text": "నేను బిజీగా ఉన్నాను, ఫోన్ చేయకండి, మళ్ళీ మాట్లాడదాం"
+    },
+    {
+      "category": "busy",
+      "text": "ഞാൻ തിരക്കിലാണ്, വിളിക്കരുത്, പിന്നെ സംസാരിക്കാം"
+    },
+    {
+      "category": "busy",
+      "text": "ഞാൻ തിരക്കിലാണ്, വിളിക്കരുത്, വീണ്ടും സംസാരിക്കാം"
+    },
+    {
+      "category": "time",
+      "text": "Please don't call me on Sundays"
+    },
+    {
+      "category": "time",
+      "text": "Don't call between 10 and 5"
+    },
+    {
+      "category": "time",
+      "text": "Don't call me in the daytime"
+    },
+    {
+      "category": "time",
+      "text": "Don't call me during school hours"
+    },
+    {
+      "category": "time",
+      "text": "संडे को फ़ोन मत करना"
+    },
+    {
+      "category": "time",
+      "text": "रविवार को फ़ोन मत करना"
+    },
+    {
+      "category": "time",
+      "text": "दस से पाँच के बीच फ़ोन मत करना"
+    },
+    {
+      "category": "time",
+      "text": "दिन में फ़ोन मत करना"
+    },
+    {
+      "category": "time",
+      "text": "ड्यूटी टाइम में फ़ोन मत करना"
+    },
+    {
+      "category": "time",
+      "text": "রবিবার ফোন করবেন না"
+    },
+    {
+      "category": "time",
+      "text": "रविवारी फोन करू नका"
+    },
+    {
+      "category": "place",
+      "text": "मैं ड्यूटी पर हूँ, फ़ोन मत करो"
+    },
+    {
+      "category": "place",
+      "text": "मैं दुकान पर हूँ, फ़ोन मत करो"
+    },
+    {
+      "category": "place",
+      "text": "I'm on duty, don't call"
+    },
+    {
+      "category": "place",
+      "text": "I'm at the hospital, don't call"
+    },
+    {
+      "category": "place",
+      "text": "I'm in class, please don't call"
+    },
+    {
+      "category": "place",
+      "text": "मी ऑफिसात आहे, फोन करू नका"
+    },
+    {
+      "category": "place",
+      "text": "मी ऑफिसला आहे, फोन करू नका"
+    },
+    {
+      "category": "place",
+      "text": "ਮੈਂ ਦਫ਼ਤਰ ਵਿੱਚ ਹਾਂ, ਫ਼ੋਨ ਨਾ ਕਰੋ"
+    },
+    {
+      "category": "place",
+      "text": "ನಾನು ಆಫೀಸ್‌ನಲ್ಲಿ ಇದ್ದೀನಿ, ಫೋನ್ ಮಾಡಬೇಡಿ"
+    },
+    {
+      "category": "place",
+      "text": "நான் ஆபீஸ்ல இருக்கேன், போன் பண்ணாதீங்க"
+    },
+    {
+      "category": "place",
+      "text": "నేను ఆఫీసులో ఉన్నాను, ఫోన్ చేయకండి"
+    },
+    {
+      "category": "place",
+      "text": "ഞാൻ ഓഫീസിലാണ്, വിളിക്കരുത്"
+    },
+    {
+      "category": "place",
+      "text": "Don't call this number, call my other number"
+    },
+    {
+      "category": "place",
+      "text": "इस नंबर पर फ़ोन मत करो, दूसरे नंबर पर करो"
+    },
+    {
+      "category": "place",
+      "text": "पुराना नंबर हटा दीजिए, नया नंबर लिख लीजिए"
+    },
+    {
+      "category": "place",
+      "text": "purana number hata do, naya number likh lo"
+    },
+    {
+      "category": "hangup",
+      "text": "Sorry, can you say that again?"
+    },
+    {
+      "category": "hangup",
+      "text": "Sorry, can you say that again? Don't call me, I'm busy"
+    },
+    {
+      "category": "hangup",
+      "text": "फ़ोन बंद करो"
+    },
+    {
+      "category": "hangup",
+      "text": "phone band karo"
+    },
+    {
+      "category": "hangup",
+      "text": "phone band kar do"
+    },
+    {
+      "category": "hangup",
+      "text": "ये कॉल बंद करो"
+    },
+    {
+      "category": "hangup",
+      "text": "कॉल बंद करो"
+    },
+    {
+      "category": "hangup",
+      "text": "बंद करो ये कॉल"
+    },
+    {
+      "category": "hangup",
+      "text": "फ़ोन रख दो"
+    },
+    {
+      "category": "hangup",
+      "text": "call cut kar do"
+    },
+    {
+      "category": "hangup",
+      "text": "ফোনটা রাখুন"
+    },
+    {
+      "category": "hangup",
+      "text": "ফোন বন্ধ করুন"
+    },
+    {
+      "category": "hangup",
+      "text": "फोन बंद करा"
+    },
+    {
+      "category": "hangup",
+      "text": "ફોન બંધ કરો"
+    },
+    {
+      "category": "hangup",
+      "text": "ਫ਼ੋਨ ਬੰਦ ਕਰੋ"
+    },
+    {
+      "category": "hangup",
+      "text": "ಫೋನ್ ಕಟ್ ಮಾಡಿ"
+    },
+    {
+      "category": "hangup",
+      "text": "போனை வையுங்க"
+    },
+    {
+      "category": "hangup",
+      "text": "ఫోన్ పెట్టేయండి"
+    },
+    {
+      "category": "hangup",
+      "text": "ഫോൺ വെക്കൂ"
+    },
+    {
+      "category": "hangup",
+      "text": "ज़रा फिर से बोलिए"
+    },
+    {
+      "category": "hangup",
+      "text": "दोबारा बोलिए, फ़ोन मत काटना"
+    },
+    {
+      "category": "hangup",
+      "text": "আবার বলুন, ফোন কাটবেন না"
+    },
+    {
+      "category": "question",
+      "text": "Why do you keep calling me?"
+    },
+    {
+      "category": "question",
+      "text": "Will you call me again tomorrow?"
+    },
+    {
+      "category": "question",
+      "text": "Why don't you call my husband?"
+    },
+    {
+      "category": "question",
+      "text": "क्या मुझे फ़ोन नहीं करना चाहिए था?"
+    },
+    {
+      "category": "question",
+      "text": "आपने पहले फ़ोन क्यों नहीं किया?"
+    },
+    {
+      "category": "question",
+      "text": "क्या आप फिर से फ़ोन करेंगे?"
+    },
+    {
+      "category": "question",
+      "text": "आप दोबारा फ़ोन करेंगे क्या?"
+    },
+    {
+      "category": "question",
+      "text": "আপনি কি আবার ফোন করবেন?"
+    },
+    {
+      "category": "question",
+      "text": "तुम्ही पुन्हा फोन कराल का?"
+    },
+    {
+      "category": "question",
+      "text": "તમે ફરી ફોન કરશો?"
+    },
+    {
+      "category": "question",
+      "text": "ਕੀ ਤੁਸੀਂ ਦੁਬਾਰਾ ਫ਼ੋਨ ਕਰੋਗੇ?"
+    },
+    {
+      "category": "question",
+      "text": "ನೀವು ಮತ್ತೆ ಫೋನ್ ಮಾಡ್ತೀರಾ?"
+    },
+    {
+      "category": "question",
+      "text": "நீங்க மறுபடியும் போன் பண்ணுவீங்களா?"
+    },
+    {
+      "category": "question",
+      "text": "మీరు మళ్ళీ ఫోన్ చేస్తారా?"
+    },
+    {
+      "category": "question",
+      "text": "നിങ്ങൾ വീണ്ടും വിളിക്കുമോ?"
+    },
+    {
+      "category": "question",
+      "text": "Should I not call the school then?"
+    },
+    {
+      "category": "question",
+      "text": "Didn't the teacher say don't call during exams?"
+    },
+    {
+      "category": "question",
+      "text": "It's not that I don't want calls, I'm just busy"
+    },
+    {
+      "category": "question",
+      "text": "I never said don't call me"
+    },
+    {
+      "category": "question",
+      "text": "मैंने कब कहा कि फ़ोन मत करना?"
+    },
+    {
+      "category": "name",
+      "text": "Don't call me madam, call me Priya"
+    },
+    {
+      "category": "name",
+      "text": "Please don't call it a problem, he is trying"
+    },
+    {
+      "category": "party",
+      "text": "Don't call Rahul's father"
+    },
+    {
+      "category": "party",
+      "text": "Don't call the father, he gets angry"
+    },
+    {
+      "category": "party",
+      "text": "Please don't call my mother-in-law"
+    },
+    {
+      "category": "party",
+      "text": "राहुल के पापा को फ़ोन मत करना"
+    },
+    {
+      "category": "party",
+      "text": "मेरी सास को फ़ोन मत करना"
+    },
+    {
+      "category": "party",
+      "text": "ওর বাবাকে ফোন করবেন না"
+    },
+    {
+      "category": "party",
+      "text": "আমার শাশুড়িকে ফোন করবেন না"
+    },
+    {
+      "category": "party",
+      "text": "त्याच्या वडिलांना फोन करू नका"
+    },
+    {
+      "category": "party",
+      "text": "माझ्या मिस्टरांना फोन करू नका, मला करा"
+    },
+    {
+      "category": "party",
+      "text": "એના પપ્પાને ફોન ન કરો"
+    },
+    {
+      "category": "party",
+      "text": "ਉਹਦੇ ਪਾਪਾ ਨੂੰ ਫ਼ੋਨ ਨਾ ਕਰੋ"
+    },
+    {
+      "category": "party",
+      "text": "ಅವರ ಅಪ್ಪನಿಗೆ ಫೋನ್ ಮಾಡಬೇಡಿ"
+    },
+    {
+      "category": "party",
+      "text": "அவங்க அப்பாவுக்கு போன் பண்ணாதீங்க"
+    },
+    {
+      "category": "party",
+      "text": "వాళ్ళ నాన్నకి ఫోన్ చేయకండి"
+    },
+    {
+      "category": "party",
+      "text": "അവന്റെ അച്ഛനെ വിളിക്കരുത്"
+    },
+    {
+      "category": "party",
+      "text": "Don't call his father again, call me"
+    },
+    {
+      "category": "party",
+      "text": "उसके पापा को दोबारा फ़ोन मत करना"
+    },
+    {
+      "category": "party",
+      "text": "त्याच्या वडिलांना पुन्हा फोन करू नका"
+    },
+    {
+      "category": "party",
+      "text": "அவங்க அப்பாவுக்கு இனிமேல் போன் பண்ணாதீங்க"
+    }
+  ],
+  "strong_stops": [
+    {
+      "category": "stop",
+      "text": "I told you not to call me again"
+    },
+    {
+      "category": "stop",
+      "text": "Okay fine, never call me again"
+    },
+    {
+      "category": "stop",
+      "text": "Look, never call this number again"
+    },
+    {
+      "category": "stop",
+      "text": "I don't want you calling me"
+    },
+    {
+      "category": "stop",
+      "text": "Do not contact me again"
+    },
+    {
+      "category": "stop",
+      "text": "Remove me from your list"
+    },
+    {
+      "category": "stop",
+      "text": "Please stop, I don't want to talk to the school"
+    },
+    {
+      "category": "stop",
+      "text": "दोबारा फ़ोन मत कीजिएगा"
+    },
+    {
+      "category": "stop",
+      "text": "फ़ोन मत करियेगा"
+    },
+    {
+      "category": "stop",
+      "text": "फ़ोन मत करिये"
+    },
+    {
+      "category": "stop",
+      "text": "आगे से फ़ोन करने की ज़रूरत नहीं है"
+    },
+    {
+      "category": "stop",
+      "text": "मुझे call मत करो"
+    },
+    {
+      "category": "stop",
+      "text": "mujhe call nahi chahiye"
+    },
+    {
+      "category": "stop",
+      "text": "मेरा नाम लिस्ट से हटा दो"
+    },
+    {
+      "category": "stop",
+      "text": "আর ফোন করার দরকার নেই"
+    },
+    {
+      "category": "stop",
+      "text": "फोन करू नको"
+    },
+    {
+      "category": "stop",
+      "text": "मला असे फोन नकोत"
+    },
+    {
+      "category": "stop",
+      "text": "ફોન કરવાની જરૂર નથી"
+    },
+    {
+      "category": "stop",
+      "text": "ਫੋਨ ਨਾ ਕਰਿਆ ਕਰੋ"
+    },
+    {
+      "category": "stop",
+      "text": "ಫೋನ್ ಮಾಡ್ಬೇಡ"
+    },
+    {
+      "category": "stop",
+      "text": "ಇನ್ಮೇಲೆ ಕಾಲ್ ಮಾಡಬೇಡಿ"
+    },
+    {
+      "category": "stop",
+      "text": "இனிமே கால் பண்ணாதீங்க"
+    },
+    {
+      "category": "stop",
+      "text": "ఫోన్ చెయ్యద్దు"
+    },
+    {
+      "category": "stop",
+      "text": "ఇంకెప్పుడూ కాల్ చేయకండి"
+    },
+    {
+      "category": "stop",
+      "text": "കോൾ ചെയ്യരുത്"
+    },
+    {
+      "category": "stop",
+      "text": "ഇനി ഫോൺ ചെയ്യണ്ട"
+    },
+    {
+      "category": "stop",
+      "text": "Please don't call me again, I'm at work all day"
+    },
+    {
+      "category": "stop",
+      "text": "Stop calling me, I'm in the office"
+    },
+    {
+      "category": "stop",
+      "text": "मुझे दोबारा फ़ोन मत करना, मैं ऑफिस में रहता हूँ"
+    },
+    {
+      "category": "stop",
+      "text": "Don't call me again, my husband handles school things"
+    },
+    {
+      "category": "stop",
+      "text": "Never call again, I will come to school myself"
+    }
+  ]
+}

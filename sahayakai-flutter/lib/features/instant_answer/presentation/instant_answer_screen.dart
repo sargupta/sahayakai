@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -224,7 +223,6 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   Widget _questionField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.instantAnswerQuestionLabel,
-      leadingIcon: LucideIcons.helpCircle,
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
         onResult: (text) => _questionController.text = text,
@@ -251,7 +249,6 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     return LabeledField(
       label: l10n.instantAnswerGradeLabel,
       optionalLabel: l10n.instantAnswerOptional,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -272,7 +269,6 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     return LabeledField(
       label: l10n.instantAnswerSubjectLabel,
       optionalLabel: l10n.instantAnswerOptional,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -292,7 +288,6 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

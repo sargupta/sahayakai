@@ -31,6 +31,9 @@ const languageMap: Record<string, string> = {
     Telugu: "Telugu",
     Tamil: "Tamil",
     Gujarati: "Gujarati",
+    // Items saved with an ISO code show the language name, not "en".
+    en: "English", hi: "Hindi", kn: "Kannada", ta: "Tamil", te: "Telugu", mr: "Marathi",
+    bn: "Bengali", gu: "Gujarati", pa: "Punjabi", ml: "Malayalam", or: "Odia",
 };
 
 export function LibraryCard({
@@ -53,10 +56,25 @@ export function LibraryCard({
         : 'Just now';
 
     return (
-        <Card className="flex flex-col h-full group hover:shadow-elevated transition-all duration-300 border-border bg-card overflow-hidden">
-            <CardHeader className="p-5 pb-3">
+        <Card className="relative flex flex-col h-full group hover:shadow-elevated transition-all duration-300 border-border bg-card overflow-hidden">
+            {/* Delete lives in the corner, out of the action row (the footer used to hold
+                language + delete + Open + Export and crowded on 4-column grids). */}
+            {onDelete && !confirmDelete && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2 h-9 w-9 p-0 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    onClick={() => setConfirmDelete(true)}
+                    title={t("Delete")}
+                    aria-label={t("Delete")}
+                    data-testid="library-card-delete"
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            )}
+            <CardHeader className="p-5 pb-3 pr-12">
                 <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                    <div className="shrink-0 p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
                         <FileTypeIcon type={resource.type} className="h-6 w-6" />
                     </div>
                     <div className="space-y-1.5 flex-1 min-w-0">
@@ -64,19 +82,35 @@ export function LibraryCard({
                             {resource.title}
                         </CardTitle>
 
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                            <Badge variant="secondary" className="bg-muted text-muted-foreground border-none text-[10px] px-2 py-0.5">
-                                {resource.gradeLevel ? t(resource.gradeLevel) : resource.gradeLevel}
-                            </Badge>
-                            <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none text-[10px] px-2 py-0.5">
-                                {resource.subject ? t(resource.subject) : resource.subject}
-                            </Badge>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            {resource.gradeLevel && (
+                                <Badge variant="secondary" className="bg-muted text-muted-foreground border-none text-xs px-2 py-0.5">
+                                    {t(resource.gradeLevel)}
+                                </Badge>
+                            )}
+                            {resource.subject && (
+                                <Badge variant="secondary" className="bg-tint-info text-info border-none text-xs px-2 py-0.5">
+                                    {t(resource.subject)}
+                                </Badge>
+                            )}
+                            {resource.language && (
+                                <Badge variant="outline" className="bg-card text-muted-foreground border-border text-xs px-2 py-0.5">
+                                    {t(languageMap[resource.language] || resource.language)}
+                                </Badge>
+                            )}
+                            {/* In-flight artifact (202 STILL_GENERATING path). Failed
+                                ones never reach the list — see isListableContent. */}
+                            {resource.status === "generating" && (
+                                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs px-2 py-0.5">
+                                    {t("Generating...")}
+                                </Badge>
+                            )}
                         </div>
 
                         {showAuthor && (
                             <div className="flex items-center gap-2 pt-2">
                                 <Avatar className="h-5 w-5 border border-border">
-                                    <AvatarFallback className="text-[10px] bg-muted">AI</AvatarFallback>
+                                    <AvatarFallback className="text-xs bg-muted">AI</AvatarFallback>
                                 </Avatar>
                                 <span className="text-xs font-medium text-muted-foreground truncate">
                                     {t("SahayakAI Assistant")}
@@ -90,71 +124,55 @@ export function LibraryCard({
             <CardContent className="flex-grow px-5 py-2">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mt-1">
                     <Calendar className="h-3 w-3" />
-                    <span>Updated {formattedDate}</span>
+                    <span>{t("Updated")} {formattedDate}</span>
                 </div>
             </CardContent>
 
-            <CardFooter className="p-3 bg-muted/50 backdrop-blur-sm border-t border-border flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-card text-muted-foreground border-border text-[10px] px-2 py-0.5 font-bold">
-                        {languageMap[resource.language] || resource.language}
-                    </Badge>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {onDelete && (
-                        confirmDelete ? (
-                            <>
-                                <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    className="h-8 gap-1 font-bold px-3"
-                                    onClick={() => { onDelete(resource); setConfirmDelete(false); }}
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                    <span>{t("Confirm")}</span>
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 px-2 text-muted-foreground"
-                                    onClick={() => setConfirmDelete(false)}
-                                >
-                                    {t("Cancel")}
-                                </Button>
-                            </>
-                        ) : (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="min-h-[44px] min-w-[44px] p-0 text-muted-foreground/70 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                onClick={() => setConfirmDelete(true)}
-                                title={t("Delete")}
-                                aria-label={t("Delete")}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        )
-                    )}
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-2 text-muted-foreground hover:text-primary transition-all font-bold px-3"
-                        onClick={() => onOpen?.(resource)}
-                    >
-                        <BookOpen className="h-4 w-4" />
-                        <span>Open</span>
-                    </Button>
-                    <Button
-                        variant="default"
-                        size="sm"
-                        className="h-8 gap-2 shadow-soft font-bold px-3"
-                        onClick={() => onDownload?.(resource)}
-                    >
-                        <Download className="h-4 w-4" />
-                        <span className="hidden sm:inline">{t("Export")}</span>
-                    </Button>
-                </div>
+            {/* Two equal, labelled actions that never wrap or overflow; confirming a delete
+                temporarily takes over the same row. */}
+            <CardFooter className="p-3 md:p-3 bg-muted/50 border-t border-border grid grid-cols-2 gap-2" data-testid="library-card-actions">
+                {confirmDelete && onDelete ? (
+                    <>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-9 w-full gap-1.5 font-semibold"
+                            onClick={() => { onDelete(resource); setConfirmDelete(false); }}
+                        >
+                            <Trash2 className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{t("Confirm")}</span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 w-full font-semibold"
+                            onClick={() => setConfirmDelete(false)}
+                        >
+                            <span className="truncate">{t("Cancel")}</span>
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 w-full min-w-0 gap-1.5 px-2 font-semibold"
+                            onClick={() => onOpen?.(resource)}
+                        >
+                            <BookOpen className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{t("Open")}</span>
+                        </Button>
+                        <Button
+                            variant="default"
+                            size="sm"
+                            className="h-9 w-full min-w-0 gap-1.5 px-2 font-semibold shadow-soft"
+                            onClick={() => onDownload?.(resource)}
+                        >
+                            <Download className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{t("Export")}</span>
+                        </Button>
+                    </>
+                )}
             </CardFooter>
         </Card>
     );

@@ -642,4 +642,35 @@ void main() {
       );
     });
   });
+
+  group('a typed request (voice\'s equal sibling)', () {
+    test('runs the same turn a spoken one does, with no capture or STT', () async {
+      final recorder = FakeAudioRecorderService();
+      final container = _container(client: _happyClient(), recorder: recorder);
+      final client = container.read(apiClientProvider) as FakeApiClient;
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.submitText('  Class 10 maths lesson on fractions ');
+
+      final state = container.read(vidyaControllerProvider);
+      expect(state.conversation.first.role, ConversationRole.teacher);
+      expect(
+        state.conversation.first.text,
+        'Class 10 maths lesson on fractions',
+      );
+      expect(state.pendingNavigation?.flow, VidyaFlow.lessonPlan);
+      expect(client.multiparts, isEmpty, reason: 'typed turns skip STT');
+    });
+
+    test('an empty line does nothing', () async {
+      final container = _container(client: _happyClient());
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.submitText('   ');
+
+      final state = container.read(vidyaControllerProvider);
+      expect(state.conversation, isEmpty);
+      expect(state.status, VidyaStatus.idle);
+    });
+  });
 }

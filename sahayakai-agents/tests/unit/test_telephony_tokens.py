@@ -22,6 +22,9 @@ from sahayakai_agents.telephony.tokens import (
     vobiz_token_message,
 )
 
+# CI selects tests by marker (ci-agents.yml); a class gate without one never runs.
+pytestmark = pytest.mark.unit
+
 KEY = "k" * 64
 
 
