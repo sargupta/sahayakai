@@ -523,6 +523,9 @@ const TEACHER_FACING: Record<string, string> = {
     'components/attendance/contact-parent-modal.tsx': "the teacher's own draft, shown to the teacher in the modal",
     'app/api/attendance/transcript-sync/route.ts': 'passes the message to the post-call summary written for the teacher',
     'app/api/attendance/twiml-status/route.ts': 'passes the message to the post-call summary written for the teacher',
+    'lib/mcp/calling/service.ts':
+        "the disabled MCP initiate_parent_call (decision 1): drafts and stores the outreach exactly as the Contact-Parent " +
+        'modal does; a parent hears it only through call-context and parentCallContent',
     'scripts/seed-attendance-demo.ts': 'seeds demo outreach records; never runs on a call',
 };
 

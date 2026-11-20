@@ -41,6 +41,13 @@ jest.mock('@/lib/calling-hours', () => {
     return { ...actual, checkCallingWindow: (at?: Date) => actual.checkCallingWindow(at ?? (global as any).__gateNow) };
 });
 jest.mock('@/lib/firebase-admin', () => ({ getDb: async () => (global as any).__fakeDb }));
+// The shared contact check (src/lib/contact-policy) runs on its own clock and store; its behaviour on
+// every provider is gated in src/__tests__/contact-policy/gate-contact-policy-behaviour.test.ts. Here
+// it always clears, so this file keeps testing the route's own refusals and their release.
+jest.mock('@/lib/contact-policy/teacher', () => ({
+    clearTeacherCall: async () => ({ ok: true, orgId: null, clearance: { orgId: null, phoneHash: 'h', kind: 'routine', at: new Date() } }),
+    recordTeacherContact: async () => undefined,
+}));
 jest.mock('@/lib/voice-pipeline/health', () => ({ getEffectiveMode: async () => 'batch' }));
 jest.mock('@/lib/vobiz/tokens', () => ({
     VOBIZ_DOMAINS: { ANSWER: 'answer', STATUS: 'status' },

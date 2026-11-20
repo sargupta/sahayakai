@@ -44,6 +44,13 @@ const DIAL_SIGNATURES: { carrier: string; re: RegExp }[] = [
 const ALLOWED: Record<string, string> = {
     'lib/vobiz/client.ts':
         'The Vobiz HTTP client itself (definitions of placeVobizCall / placeVobizCallDetailed). Its callers are checked here.',
+    'lib/exotel/config.ts':
+        'Reads whether VOICE_EXOTEL_CALL_URL is set, for the attendance route\'s refusal step. A configuration ' +
+        'check, not a dial: the dial (forwardToExotel) reads the URL itself and requires a ContactClearance.',
+    'lib/sampark/conversation/vobiz-provider.ts':
+        'Riya-over-Vobiz carrier adapter (added on main after Step 2 was written). Its only caller, startRiyaCall ' +
+        '(server/sampark/conversation.ts), runs the full Sampark gate first: opt-outs, suppression, do-not-contact, ' +
+        'the frequency cap and hours. FOLLOW-UP: route it through checkContact too, so the teacher contact ledger counts.',
     'app/api/demo-call/route.ts':
         'Public "Hear the Call" demo: rings the VISITOR\'S OWN number once, at their request, with their consent, behind ' +
         'DEMO_CALL_ENABLED, Turnstile and per-number cooldowns. Not a school-to-parent call. Flagged for review in the Step 2 PR.',

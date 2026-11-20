@@ -33,7 +33,12 @@ function mockDoc(path: string): any {
         collection: (c: string) => ({ doc: (id: string) => mockDoc(`${path}/${c}/${id}`) }),
     };
 }
-const mockDb = { collection: (c: string) => ({ doc: (id: string) => mockDoc(`${c}/${id}`) }) };
+const mockDb = {
+    collection: (c: string) => ({ doc: (id: string) => mockDoc(`${c}/${id}`) }),
+    // The route's one-dial claim and status writes run in a transaction; this fake applies them in order.
+    runTransaction: async <T,>(fn: (tx: any) => Promise<T>): Promise<T> =>
+        fn({ get: (ref: any) => ref.get(), update: (ref: any, data: Record<string, unknown>) => ref.update(data), set: (ref: any, data: Record<string, unknown>) => ref.update(data) }),
+};
 jest.mock('@/lib/firebase-admin', () => ({ getDb: async () => mockDb, initializeFirebase: async () => undefined }));
 
 import { NextResponse } from 'next/server';
@@ -103,7 +108,10 @@ afterEach(() => jest.useRealTimers());
 function newOutreach(phone = PARENT): string {
     outreachSeq += 1;
     const id = `out-${outreachSeq}`;
-    mockDocs.set(`parent_outreach/${id}`, { teacherUid: TEACHER, parentPhone: phone, parentLanguage: 'Hindi', deliveryMethod: 'twilio_call', callStatus: 'initiated' });
+    // The route dials the number on the student record (and refuses an outreach whose copy differs).
+    mockDocs.set(`classes/class-a`, { teacherUid: TEACHER });
+    mockDocs.set(`classes/class-a/students/student-${id}`, { parentPhone: phone });
+    mockDocs.set(`parent_outreach/${id}`, { teacherUid: TEACHER, classId: 'class-a', studentId: `student-${id}`, parentPhone: phone, parentLanguage: 'Hindi', deliveryMethod: 'twilio_call', callStatus: 'initiated' });
     return id;
 }
 

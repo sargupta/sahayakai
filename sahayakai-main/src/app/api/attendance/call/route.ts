@@ -8,6 +8,7 @@ import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors'
 import { claimOutreachDial } from '@/lib/attendance/claim-dial';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import { refuseIfParentOptedOut } from '@/lib/call-suppression';
+import { exotelConfigured } from '@/lib/exotel/config';
 import { type ContactClearance, type ContactDecision } from '@/lib/contact-policy';
 import { clearTeacherCall, recordTeacherContact, type TeacherSchoolDb } from '@/lib/contact-policy/teacher';
 import { isDestinationAllowed, placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
@@ -30,7 +31,9 @@ import type { Language } from '@/types';
  *   VOICE_EXOTEL_CALL_URL — full URL of the voicebot's start-call endpoint,
  *     e.g. https://sahayakai-voice-call-xxxx.a.run.app/api/exotel/call
  */
-async function forwardToExotel(userId: string, outreachId: string, callUrl: string, _clearance: ContactClearance): Promise<NextResponse> {
+async function forwardToExotel(userId: string, outreachId: string, _clearance: ContactClearance): Promise<NextResponse> {
+    // Configured: refuseBeforeDial refused (and released) an unconfigured Exotel before the claim.
+    const callUrl = process.env.VOICE_EXOTEL_CALL_URL as string;
     try {
         const res = await fetch(callUrl, {
             method: 'POST',
@@ -327,7 +330,7 @@ function refuseBeforeDial(
         };
     };
     if (ctx.provider === 'exotel') {
-        return process.env.VOICE_EXOTEL_CALL_URL ? null : unconfigured('VOICE_PROVIDER=exotel but VOICE_EXOTEL_CALL_URL is not set');
+        return exotelConfigured() ? null : unconfigured('VOICE_PROVIDER=exotel but VOICE_EXOTEL_CALL_URL is not set');
     }
     if (ctx.provider === 'vobiz') {
         return readVobizConfig()
@@ -377,19 +380,19 @@ function contactRefusal(
     ctx: { userId: string; outreachId: string },
 ): { category: string; response: NextResponse } {
     logger.warn(`Parent call refused by the contact policy (${decision.reason})`, 'ATTENDANCE', { ...ctx, reason: decision.reason });
-    const code = {
-        outside_hours: 'OUTSIDE_CALLING_HOURS',
-        opted_out: 'OPTED_OUT',
-        frequency_cap: 'FREQUENCY_CAP',
-        policy_unavailable: 'CONTACT_POLICY_UNAVAILABLE',
-    }[decision.reason];
-    return {
-        category: `contact_policy_${decision.reason}`,
-        response: NextResponse.json(
-            { error: decision.message, code, nextAllowedAt: decision.nextAllowedAt?.toISOString() ?? null, retryable: decision.reason === 'policy_unavailable' },
-            { status: decision.reason === 'policy_unavailable' ? 503 : 409 },
-        ),
-    };
+    const next = decision.nextAllowedAt?.toISOString() ?? null;
+    const category = `contact_policy_${decision.reason}`;
+    // One literal code per reason; each has a translated label in call-refusal-messages.ts.
+    switch (decision.reason) {
+        case 'outside_hours':
+            return { category, response: NextResponse.json({ error: decision.message, code: 'OUTSIDE_CALLING_HOURS', nextAllowedAt: next, retryable: false }, { status: 409 }) };
+        case 'opted_out':
+            return { category, response: NextResponse.json({ error: decision.message, code: 'OPTED_OUT', nextAllowedAt: next, retryable: false }, { status: 409 }) };
+        case 'frequency_cap':
+            return { category, response: NextResponse.json({ error: decision.message, code: 'FREQUENCY_CAP', nextAllowedAt: next, retryable: false }, { status: 409 }) };
+        default:
+            return { category, response: NextResponse.json({ error: decision.message, code: 'CONTACT_POLICY_UNAVAILABLE', nextAllowedAt: null, retryable: true }, { status: 503 }) };
+    }
 }
 
 /**
@@ -434,16 +437,23 @@ async function placeOwnedCall(
 ): Promise<CallOutcome> {
     const provider = (process.env.VOICE_PROVIDER || 'twilio').toLowerCase();
     const override = provider === 'vobiz' ? process.env.VOBIZ_TEST_OVERRIDE_NUMBER : provider === 'twilio' ? process.env.TWILIO_TEST_OVERRIDE_NUMBER : undefined;
-    const refusal = refuseBeforeDial(suppressed, { provider, ...ctx, destination: override || target.parentPhone });
-    if (refusal) return { refused: true, ...refusal };
+    let refusal = refuseBeforeDial(suppressed, { provider, ...ctx, destination: override || target.parentPhone });
 
-    // The shared contact check, for EVERY provider below (src/lib/contact-policy). After the
-    // route's own refusals, before the claim. Fails closed: if the rules cannot be read, nothing dials.
-    const cleared = await clearTeacherCall({ db: db as unknown as TeacherSchoolDb, uid: ctx.userId, parentPhone: target.parentPhone, at: new Date() });
-    if (!cleared.ok) return { refused: true, ...contactRefusal(cleared.decision, ctx) };
-    const clearance = cleared.clearance;
-    const unrecorded = await recordBeforeDial(clearance, ctx.outreachId, !override);
-    if (unrecorded) return { refused: true, ...unrecorded };
+    // The shared contact check, for EVERY provider below (src/lib/contact-policy): after the
+    // route's own refusals, before the claim. Fails closed: if the rules cannot be read, nothing
+    // dials. Its refusals join the one refusal return below, so POST releases them all.
+    let clearance: ContactClearance | null = null;
+    if (!refusal) {
+        const cleared = await clearTeacherCall({ db: db as unknown as TeacherSchoolDb, uid: ctx.userId, parentPhone: target.parentPhone, at: new Date() });
+        if (cleared.ok) {
+            clearance = cleared.clearance;
+            refusal = await recordBeforeDial(clearance, ctx.outreachId, !override);
+        } else {
+            refusal = contactRefusal(cleared.decision, ctx);
+        }
+    }
+    if (refusal) return { refused: true, ...refusal };
+    const cleared = clearance as ContactClearance; // set whenever there is no refusal
 
     // One dial per outreach record, claimed atomically before ANY provider is
     // contacted: a repeated POST (double click, retry loop, script) must not ring
@@ -462,16 +472,16 @@ async function placeOwnedCall(
     if (provider === 'exotel') {
         // The voicebot dials the number on the outreach doc itself; ownership, the
         // destination and the opt-out were all checked above, before this switch.
-        return { refused: false, response: await forwardToExotel(ctx.userId, ctx.outreachId, process.env.VOICE_EXOTEL_CALL_URL!, clearance) };
+        return { refused: false, response: await forwardToExotel(ctx.userId, ctx.outreachId, cleared) };
     }
     // Vobiz owns a real Indian origination number, so unlike the Twilio TRIAL
     // account it can actually reach a parent. It streams the leg into a live
     // conversation with VIDYA rather than reading a fixed script.
     if (provider === 'vobiz') {
-        return { refused: false, response: await forwardToVobiz(req, db, ctx.outreachId, target, readVobizConfig()!, clearance) };
+        return { refused: false, response: await forwardToVobiz(req, db, ctx.outreachId, target, readVobizConfig()!, cleared) };
     }
 
-    return { refused: false, response: await placeTwilioCall(req, db, ctx.outreachId, target, clearance) };
+    return { refused: false, response: await placeTwilioCall(req, db, ctx.outreachId, target, cleared) };
 }
 
 /** The Twilio batch TwiML path. Configuration and language were verified by refuseBeforeDial. */
