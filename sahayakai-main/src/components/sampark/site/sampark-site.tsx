@@ -106,14 +106,13 @@ function WebNav({ workspaceHref }: { workspaceHref: string }) {
 function WorkspacePreview() {
     const { t } = useLanguage();
     const rows = [
-        { who: "Class 7 B · Roll 12", phone: "••••••0720", lang: "हिन्दी", reason: t("PTM invitation"), outcome: t("Confirmed"), tone: "leaf" },
-        { who: "Class 7 B · Roll 18", phone: "••••••4412", lang: "English", reason: t("PTM invitation"), outcome: t("No answer · retrying"), tone: "amber" },
-        { who: "Class 5 A · Roll 03", phone: "••••••1187", lang: "বাংলা", reason: t("Event invitation"), outcome: t("Heard the notice"), tone: "leaf" },
-        { who: "Class 5 A · Roll 21", phone: "••••••9036", lang: "नेपाली", reason: t("Event invitation"), outcome: t("Asked not to be called"), tone: "stone" },
+        { who: "Class 7 B · Roll 12", phone: "••••••0720", lang: "hi", langName: "हिन्दी", reason: t("PTM invitation"), outcome: t("Confirmed"), tone: "leaf" },
+        { who: "Class 7 B · Roll 18", phone: "••••••4412", lang: "en", langName: "English", reason: t("PTM invitation"), outcome: t("No answer · retrying"), tone: "amber" },
+        { who: "Class 5 A · Roll 03", phone: "••••••1187", lang: "bn", langName: "বাংলা", reason: t("Event invitation"), outcome: t("Heard the notice"), tone: "leaf" },
+        { who: "Class 5 A · Roll 21", phone: "••••••9036", lang: "ne", langName: "नेपाली", reason: t("Event invitation"), outcome: t("Asked not to be called"), tone: "stone" },
     ] as const;
-    const langCode: Record<string, string> = { English: "en", "हिन्दी": "hi", "বাংলা": "bn", "नेपाली": "ne" };
     return (
-        <figure className="relative">
+        <figure className="relative min-w-0">
             <div className="overflow-hidden rounded-web-metric border border-[color:var(--web-device-edge)] bg-milk-50 shadow-card">
                 <div className="flex items-center gap-2 border-b border-line-hairline bg-milk-300 px-4 py-2.5">
                     <span aria-hidden="true" className="h-2.5 w-2.5 rounded-pill bg-stone-100" />
@@ -152,7 +151,7 @@ function WorkspacePreview() {
                                     </div>
                                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                                         <span className="text-xs text-ink-600">
-                                            {r.reason} · <span lang={langCode[r.lang]}>{r.lang}</span>
+                                            {r.reason} · <span lang={r.lang}>{r.langName}</span>
                                         </span>
                                         <span className="flex items-center gap-2 text-xs font-medium text-ink-600">
                                             <span
@@ -182,8 +181,12 @@ function Hero({ workspaceHref }: { workspaceHref: string }) {
         <section className="relative overflow-hidden bg-milk-200">
             <div aria-hidden="true" className="pointer-events-none absolute -right-40 -top-40 h-[560px] w-[560px]" style={{ background: "var(--glow-web-saffron)" }} />
             <div aria-hidden="true" className="pointer-events-none absolute -bottom-48 -left-40 h-[480px] w-[480px]" style={{ background: "var(--glow-web-indigo)" }} />
-            <div className={cn(CONTAINER, "relative grid items-center gap-12 py-16 md:py-24 lg:grid-cols-[1.05fr_1fr]")}>
-                <div>
+            {/* Tracks are minmax(0, …), not the implicit `auto` column: an auto
+                track grows to its widest child's min-content (the stat row was
+                444px), and this section's overflow-hidden then CLIPS the headline
+                on a phone instead of scrolling. Gate: qa/e2e/phone-overflow.spec.ts. */}
+            <div className={cn(CONTAINER, "relative grid grid-cols-1 items-center gap-12 py-16 md:py-24 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]")}>
+                <div className="min-w-0">
                     <span className="inline-flex items-center gap-2 rounded-pill border border-line-glass bg-[color:var(--web-glass)] px-3 py-1.5 text-xs font-semibold text-ink-600">
                         <span aria-hidden="true" className="h-2 w-2 rounded-pill bg-leaf-500" />
                         {t("School-to-parent calls, in every parent's language")}
@@ -209,17 +212,17 @@ function Hero({ workspaceHref }: { workspaceHref: string }) {
                             {t("How it works")}
                         </a>
                     </div>
-                    <dl className="mt-10 grid max-w-lg grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
+                    <dl className="mt-10 grid max-w-lg grid-cols-3 gap-2 sm:gap-3">
                         {[
                             { value: "3", label: t("notice types ready to send") },
                             { value: "4", label: t("parent languages") },
                             { value: "1", label: t("tap pauses every call") },
                         ].map((m) => (
-                            <div key={m.label} className="rounded-web-metric border border-line-glass bg-[color:var(--web-glass)] px-4 py-3">
+                            <div key={m.label} className="min-w-0 rounded-web-metric border border-line-glass bg-[color:var(--web-glass)] px-3 py-3 sm:px-4">
                                 <dt className="sr-only">{m.label}</dt>
                                 <dd>
                                     <span className="block font-display text-metric font-bold tracking-[-0.02em] text-ink-900">{m.value}</span>
-                                    <span className="mt-1 block text-xs leading-snug text-ink-600" aria-hidden="true">{m.label}</span>
+                                    <span className="mt-1 block break-words text-xs leading-snug text-ink-600" aria-hidden="true">{m.label}</span>
                                 </dd>
                             </div>
                         ))}
@@ -257,7 +260,7 @@ function HowItWorks() {
     ];
     return (
         <Section id="how" eyebrow={t("How it works")} title={<>{t("Five steps.")} {t("You approve each one.")}</>} lead={t("SamparkAI drafts the calls; the school decides who is called, what they hear and when.")}>
-            <ol className="grid gap-x-8 gap-y-10 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+            <ol className="grid gap-x-8 gap-y-10 [grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))]">
                 {steps.map((s, i) => (
                     <li key={s.title} className="relative">
                         <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-mark bg-tint-mark font-display text-card-title font-bold text-ink-900">
@@ -283,7 +286,7 @@ function Workspace() {
     ];
     return (
         <Section band eyebrow={t("The workspace")} title={<>{t("One place for the school's calls.")} {t("Nothing hidden.")}</>} lead={t("SamparkAI is the school's own workspace, separate from the teacher's. School administrators sign in with their SahayakAI account.")}>
-            <dl className="grid gap-x-12 gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+            <dl className="grid gap-x-12 gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr))]">
                 {parts.map((p) => (
                     <div key={p.lead} className="border-t border-line-row pt-5">
                         <dt className="font-display text-brand font-bold text-ink-900">{p.lead}</dt>
@@ -307,7 +310,7 @@ function Safeguards() {
     ];
     return (
         <Section id="safeguards" eyebrow={t("Safeguards")} title={<>{t("Built to be careful.")} {t("Parents are never surprised.")}</>}>
-            <ul className="grid gap-x-12 gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+            <ul className="grid gap-x-12 gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr))]">
                 {items.map((i) => (
                     <li key={i.lead} className="text-card-title text-ink-600">
                         <strong className="font-semibold text-ink-900">{i.lead}</strong> {i.body}
