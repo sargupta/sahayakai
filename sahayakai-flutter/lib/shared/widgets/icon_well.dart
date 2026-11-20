@@ -35,14 +35,13 @@ class IconWell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final box = feature ? 64.0 : AppIconSize.wellBox; // 64 / 48
     final glyph = feature ? 28.0 : AppIconSize.well; // 28 / 20
 
-    final borderGradient =
-        isDark ? AppGlass.dBorderGradient : AppGlass.lBorderGradient;
-    final outerShape = AppGlass.squircle(AppRadius.well);
-    final innerShape = AppGlass.squircle(AppRadius.well - AppGlass.borderWidth);
+    const borderGradient =
+        AppGlass.lBorderGradient;
+    final outerShape = AppGlass.shape(AppRadius.well);
+    final innerShape = AppGlass.shape(AppRadius.well - AppGlass.borderWidth);
 
     return SizedBox(
       width: box,

@@ -19,6 +19,12 @@
  *   4. Raw Tailwind palette classes — bg-red-500, text-green-600, etc.
  *      Status UI has tokens now: success / warning / info (+ destructive),
  *      mapped in tailwind.config.ts to globals.css HSL vars.
+ *      NOT banned: the design-system families whose names collide with a
+ *      Tailwind palette (stone-100, indigo-500, ...). tailwind.config.ts maps
+ *      exactly those shades to `hsl(var(--stone-100))` etc., so the class IS a
+ *      token. The exempt set is read from the config, shade by shade: any
+ *      shade the config does not map (stone-200, indigo-600) is still
+ *      Tailwind's raw palette and still banned.
  *
  * REPO-WIDE BUDGET (in addition to the per-PR added-lines ratchet):
  * total banned-pattern hits across src/**\/*.tsx are compared to the
@@ -60,14 +66,25 @@ const BANNED = [
   },
   {
     name: 'raw Tailwind palette class (use tokens: success/warning/info/destructive, primary/saffron, muted)',
-    re: /\b(?:bg|text|border|ring|from|via|to|fill|stroke|divide|outline|decoration|accent|caret|shadow)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-(?:50|[1-9]00|950)\b/,
+    // Global + capture groups: a line is scanned past token-backed matches
+    // (see tokenBackedShades) to the first raw one.
+    re: /\b(?:bg|text|border|ring|from|via|to|fill|stroke|divide|outline|decoration|accent|caret|shadow)-(red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-(50|[1-9]00|950)\b/g,
+    isToken: (m) => TOKEN_BACKED_SHADES.has(`${m[1]}-${m[2]}`),
   },
 ];
 
 const ALLOW_MARKER = 'design-token-allow';
 
+// execFileSync buffers the child's whole stdout and kills it past maxBuffer
+// (Node's default is 1 MB). A long-lived branch's `git diff -U0` against main
+// is easily larger than that — 2026-11-15 it was ~1.4 MB and this gate crashed
+// with `spawnSync git ENOBUFS` instead of reporting. 256 MB is far past any
+// diff this repo produces while still bounding a runaway child.
+// Class gate: src/__tests__/scripts/ci-git-max-buffer.test.ts.
+const GIT_MAX_BUFFER = 256 * 1024 * 1024;
+
 function git(args, opts = {}) {
-  return execFileSync('git', args, { encoding: 'utf8', ...opts }).trim();
+  return execFileSync('git', args, { encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER, ...opts }).trim();
 }
 
 const repoRoot = git(['rev-parse', '--show-toplevel']);
@@ -75,6 +92,38 @@ const repoRoot = git(['rev-parse', '--show-toplevel']);
 const appPrefix = existsSync(join(repoRoot, 'sahayakai-main', 'src'))
   ? 'sahayakai-main/'
   : '';
+
+/**
+ * Palette-named shades that tailwind.config.ts maps to a design-system CSS
+ * variable, as `family-shade` (e.g. `stone-100` from
+ * `stone: { 100: 'hsl(var(--stone-100))' }`). Those classes are tokens.
+ * Line-based on purpose (the config is TS, and this gate must not need a TS
+ * loader): a `name: {` line opens a family, a line starting with `}` closes
+ * it, and a `NNN: 'hsl(var(--...))'` line inside it is a token-backed shade.
+ */
+function tokenBackedShades() {
+  const cfg = join(repoRoot, `${appPrefix}tailwind.config.ts`);
+  const out = new Set();
+  if (!existsSync(cfg)) return out;
+  let family = null;
+  for (const line of readFileSync(cfg, 'utf8').split('\n')) {
+    const open = line.match(/^\s*['"]?([a-z]+)['"]?\s*:\s*\{\s*$/);
+    if (open) {
+      family = open[1];
+      continue;
+    }
+    if (/^\s*\}/.test(line)) {
+      family = null;
+      continue;
+    }
+    if (!family) continue;
+    const shade = line.match(/^\s*['"]?(\d{2,3})['"]?\s*:\s*['"`]hsl\(var\(--[\w-]+\)\)['"`]/);
+    if (shade) out.add(`${family}-${shade[1]}`);
+  }
+  return out;
+}
+
+const TOKEN_BACKED_SHADES = tokenBackedShades();
 
 function isTarget(file) {
   if (!file.startsWith(`${appPrefix}src/`)) return false;
@@ -90,8 +139,8 @@ function scanFile(relPath) {
   const lines = readFileSync(abs, 'utf8').split('\n');
   lines.forEach((line, i) => {
     if (line.includes(ALLOW_MARKER)) return;
-    for (const { name, re } of BANNED) {
-      const m = line.match(re);
+    for (const { name, re, isToken } of BANNED) {
+      const m = isToken ? [...line.matchAll(re)].find((x) => !isToken(x)) : line.match(re);
       if (m) hits.push({ file: relPath, line: i + 1, rule: name, match: m[0] });
     }
   });

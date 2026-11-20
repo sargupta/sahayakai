@@ -30,6 +30,17 @@ jest.mock('@/lib/plan-utils', () => ({
     hasAdvancedPlan: () => true,
 }));
 
+// Pinned inside the calling window: the route now refuses a call outreach
+// outside 10:00-19:00 IST, and these tests must not depend on the wall clock.
+// The hours refusal itself is covered by attendance-call-refusals-gate.test.ts.
+jest.mock('@/lib/calling-hours', () => {
+    const actual = jest.requireActual('@/lib/calling-hours');
+    return {
+        ...actual,
+        checkCallingWindow: () => actual.checkCallingWindow(new Date('2026-11-16T06:30:00.000Z')), // 12:00 IST
+    };
+});
+
 // In-memory fake Firestore — just enough for the route's reads/writes.
 type DocMap = Record<string, Record<string, any>>;
 const fakeStore: {

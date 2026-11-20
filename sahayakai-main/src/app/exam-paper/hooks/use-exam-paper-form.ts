@@ -116,16 +116,18 @@ export function useExamPaperForm(preferredBoard: string | null) {
     return [...new Set(subjects)];
   }, [board, gradeLevel, allBlueprints]);
 
-  // Reset subject + chapters when board/grade changes if current subject not available
+  // Reconcile subject + chapters when the blueprint set (board/grade) changes.
+  // Keyed on the blueprint set ALONE. It used to list `subject` too while also
+  // writing it, so with no blueprint for the board/grade (or the blueprint
+  // fetch failing) every keystroke in the free-text subject field re-ran it and
+  // the empty branch wiped what had just been typed — Generate, disabled while
+  // `!subject`, could never be pressed. Same founder bug as 2026-08-25, which
+  // was fixed only in the unrouted src/features/exam-paper copy.
   useEffect(() => {
-    if (availableSubjects.length > 0 && !availableSubjects.includes(subject)) {
-      setSubject(availableSubjects[0]);
-      setChapters([]);
-    } else if (availableSubjects.length === 0) {
-      setSubject("");
-      setChapters([]);
-    }
-  }, [availableSubjects, subject]);
+    setChapters((prev) => (prev.length > 0 ? [] : prev));
+    if (availableSubjects.length === 0) return; // free text: keep what's typed
+    setSubject((current) => (availableSubjects.includes(current) ? current : availableSubjects[0]));
+  }, [availableSubjects]);
 
   // Reset chapters when subject changes
   const prevSubjectRef = useRef(subject);

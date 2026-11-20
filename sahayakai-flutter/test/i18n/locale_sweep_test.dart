@@ -64,29 +64,6 @@ void main() {
     }
   });
 
-  group('renders in every supported locale in dark at 360dp x 1.3', () {
-    for (final locale in locales) {
-      testWidgets('${locale.languageCode}: dark theme lays out', (
-        tester,
-      ) async {
-        await pumpSignedInApp(
-          tester,
-          locale: locale,
-          textScale: 1.3,
-          surface: kNarrowPhone,
-          brightness: Brightness.dark,
-        );
-        expect(
-          tester.takeException(),
-          isNull,
-          reason:
-              'dark theme failed to render in ${locale.languageCode} at 360dp '
-              'x 1.3',
-        );
-      });
-    }
-  });
-
   group('the signed-out surface renders in every locale', () {
     for (final locale in locales) {
       testWidgets('${locale.languageCode}: login lays out', (tester) async {

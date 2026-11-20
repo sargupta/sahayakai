@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'virtual_field_trip_fixtures.dart';
 
 /// Screen-layer gates: the inputs render, tapping Plan drives the real
@@ -37,7 +38,7 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -106,8 +107,8 @@ void main() {
         expect(find.text('Did you know?'), findsWidgets);
         expect(find.text('Think about this'), findsWidgets);
         // The analogy + explanation section labels render.
-        expect(find.text('In our context'), findsWidgets);
-        expect(find.text('Why we visit'), findsWidgets);
+        expect(findEyebrow('In our context'), findsWidgets);
+        expect(findEyebrow('Why we visit'), findsWidgets);
         // The document footer offers Regenerate + Done.
         expect(find.text('Regenerate'), findsOneWidget);
         expect(find.text('Done'), findsOneWidget);
@@ -337,7 +338,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets(
           'form renders at 360dp, textScale $scale, ${brightness.name}',
@@ -352,15 +353,15 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Topic or theme'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(findFieldLabel('Topic or theme'), findsOneWidget);
+            expect(findFieldLabel('Grade level'), findsOneWidget);
+            expect(findFieldLabel('Language'), findsOneWidget);
           },
         );
       }
     }
 
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets(
         'the itinerary does not overflow at 360dp x 1.3 in ${brightness.name} '
         '(Indic probe)',

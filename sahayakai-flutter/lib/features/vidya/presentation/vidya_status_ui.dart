@@ -1,6 +1,7 @@
 import '../../../core/i18n/gen/app_localizations.dart';
 import 'vidya_controller.dart';
 import 'widgets/seal_mic.dart';
+import 'widgets/vidya_orb.dart';
 
 /// The canonical `VidyaStatus → UI` mappings, shared by the VIDYA home and the
 /// everywhere VIDYA sheet so the two surfaces render the same seal phase,
@@ -25,6 +26,36 @@ SealMicState sealStateForStatus(VidyaStatus status) {
     case VidyaStatus.limitReached:
     case VidyaStatus.failed:
       return SealMicState.idle;
+  }
+}
+
+/// The orb's colour state for a controller [status]: the one mapping shared by
+/// the parked orb (the overlay) and Home's hero orb, so VIDYA never shows two
+/// states at once. A minimised generation still running ([bgActive]) shows
+/// the working orb even while VIDYA's own turn is idle; finished, undelivered
+/// work ([readyCount]) shows the ready orb.
+VidyaOrbVisual vidyaOrbVisualFor(
+  VidyaStatus status, {
+  bool dragging = false,
+  int readyCount = 0,
+  bool bgActive = false,
+}) {
+  if (dragging) return VidyaOrbVisual.dragging;
+  switch (status) {
+    case VidyaStatus.requestingPermission:
+    case VidyaStatus.listening:
+      return VidyaOrbVisual.listening;
+    case VidyaStatus.transcribing:
+    case VidyaStatus.thinking:
+    case VidyaStatus.speaking:
+      return VidyaOrbVisual.working;
+    case VidyaStatus.idle:
+    case VidyaStatus.micDenied:
+    case VidyaStatus.signedOut:
+    case VidyaStatus.limitReached:
+    case VidyaStatus.failed:
+      if (bgActive) return VidyaOrbVisual.working;
+      return readyCount > 0 ? VidyaOrbVisual.ready : VidyaOrbVisual.resting;
   }
 }
 

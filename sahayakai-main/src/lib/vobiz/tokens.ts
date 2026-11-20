@@ -46,6 +46,12 @@ export const VOBIZ_DOMAINS = {
     STREAM: 'vobiz-call',
     /** Authorises reporting ring/hangup progress for one outreach record. */
     STATUS: 'vobiz-status',
+    /** Sampark Riya over Vobiz: call-control XML for one Sampark call (sampark~org~call). */
+    SAMPARK_RIYA_ANSWER: 'sampark-riya-answer',
+    /** Sampark Riya over Vobiz: ring/hangup progress for one Sampark call. */
+    SAMPARK_RIYA_STATUS: 'sampark-riya-status',
+    /** Sampark Riya over Vobiz: the bridge fetching one call's variables. */
+    SAMPARK_RIYA_CONTEXT: 'sampark-riya-context',
 } as const;
 
 export type VobizDomain = (typeof VOBIZ_DOMAINS)[keyof typeof VOBIZ_DOMAINS];
@@ -57,6 +63,19 @@ export type VobizDomain = (typeof VOBIZ_DOMAINS)[keyof typeof VOBIZ_DOMAINS];
  * staying far shorter than a call.
  */
 export const VOBIZ_TOKEN_TTL_SECONDS = 300;
+
+/**
+ * The media-stream token needs only the answer-to-connect gap.
+ *
+ * It is minted in the answer webhook, after the parent has already picked up,
+ * and Vobiz presents it seconds later when it opens the media socket. It rides
+ * in the stream URL (moving it out needs carrier support), so whoever sees that
+ * URL in a carrier log or a proxy can open a billable socket until it expires.
+ * Sixty seconds covers the connect with a wide margin and is a fifth of the
+ * default; a call already in progress is not affected, because the token is
+ * checked only when the socket opens.
+ */
+export const VOBIZ_STREAM_TTL_SECONDS = 60;
 
 /**
  * Status tokens need a MUCH longer life than the others.
@@ -100,6 +119,13 @@ function sign(key: string, message: string): string {
     return crypto.createHmac('sha256', key).update(message, 'utf8').digest('base64url');
 }
 
+/** The expiry exactly as the minter writes it: a positive integer with no sign, padding or junk. */
+const CANONICAL_EXP = /^[1-9][0-9]*$/;
+/** base64url without padding: the alphabet the minter's `digest('base64url')` emits. */
+const BASE64URL_NO_PAD = /^[A-Za-z0-9_-]+$/;
+/** HMAC-SHA256 is 32 bytes. */
+const SIGNATURE_BYTES = 32;
+
 export interface VobizToken {
     token: string;
     expiresAt: number;
@@ -138,17 +164,29 @@ export async function verifyVobizToken(
     // silently re-joined into something that validates.
     if (parts.length !== 3) return null;
     const [outreachId, expRaw, sig] = parts;
-    const exp = Number.parseInt(expRaw, 10);
-    if (!Number.isFinite(exp) || !outreachId || !sig) return null;
+    if (!outreachId) return null;
+
+    // Accept ONLY the canonical form the minter emits. `parseInt` read "0179...",
+    // "179abc" and " 179" as the same expiry, so one signature verified for many
+    // different strings; a verifier should accept exactly one spelling of a token.
+    if (!CANONICAL_EXP.test(expRaw)) return null;
+    const exp = Number(expRaw);
+    if (!Number.isSafeInteger(exp)) return null;
     if (exp < Math.floor(Date.now() / 1000)) return null;
 
-    const expected = sign(await getSigningKey(), vobizTokenMessage(domain, outreachId, exp));
-    // Constant-time compare. `timingSafeEqual` throws on length mismatch, so the
-    // lengths are checked first rather than letting a wrong-length signature
-    // raise instead of returning null.
-    const a = Buffer.from(expected, 'utf8');
-    const b = Buffer.from(sig, 'utf8');
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    // The signature must be unpadded base64url that round-trips: Node's decoder
+    // ignores padding, stray characters and the unused low bits of the last
+    // character, so several spellings decode to the same 32 bytes.
+    if (!BASE64URL_NO_PAD.test(sig)) return null;
+    const presented = Buffer.from(sig, 'base64url');
+    if (presented.length !== SIGNATURE_BYTES || presented.toString('base64url') !== sig) return null;
+
+    // Constant-time compare of the raw HMAC bytes (equal lengths by construction).
+    const expected = crypto
+        .createHmac('sha256', await getSigningKey())
+        .update(vobizTokenMessage(domain, outreachId, exp), 'utf8')
+        .digest();
+    if (!crypto.timingSafeEqual(expected, presented)) return null;
     return outreachId;
 }
 

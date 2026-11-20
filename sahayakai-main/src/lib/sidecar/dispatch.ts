@@ -62,7 +62,17 @@ export interface DispatchInput extends AgentReplyInput {
     callSid: string;
 }
 
-function toSidecarRequest(input: DispatchInput): SidecarReplyRequest {
+/**
+ * Sent as `subject` when a turn has none. The sidecar contract requires a
+ * non-empty subject (`AgentReplyRequest.subject: min_length=1`), but a
+ * request-to-talk call has none by design and an outreach may be saved
+ * without one; an empty value 422s at the sidecar and every such turn paid a
+ * wasted round trip before falling back. Neutral: it says nothing about why
+ * the school is calling.
+ */
+export const SIDECAR_NEUTRAL_SUBJECT = 'General';
+
+export function toSidecarRequest(input: DispatchInput): SidecarReplyRequest {
     // Filter the transcript to the role/text the sidecar contract
     // expects — the Next.js side carries timestamps that the sidecar
     // doesn't need (it persists its own `createdAt`).
@@ -76,7 +86,7 @@ function toSidecarRequest(input: DispatchInput): SidecarReplyRequest {
         turnNumber: input.turnNumber,
         studentName: input.studentName,
         className: input.className,
-        subject: input.subject,
+        subject: input.subject.trim() || SIDECAR_NEUTRAL_SUBJECT,
         reason: input.reason,
         teacherMessage: input.teacherMessage,
         teacherName: input.teacherName,
@@ -220,6 +230,17 @@ async function decideDispatchWithTimeout(
  * route's outer try/catch then lands the canned safe wrap-up.
  */
 export async function dispatchParentCallReply(input: DispatchInput): Promise<DispatchedReply> {
+    // A request-to-talk turn is served by Genkit only. Its rules are system
+    // instructions in the Genkit prompt, selected by `requestToTalk`; the
+    // sidecar's parent-call agent has no such rules (and its request contract
+    // has no such field), so it must not answer a concern call.
+    if (input.requestToTalk) {
+        const decision: ParentCallSidecarDecision = { mode: 'off', reason: 'request_to_talk', bucket: 0 };
+        const out = await generateAgentReply(input);
+        logDispatch(decision, { source: 'genkit', callSid: input.callSid, turnNumber: input.turnNumber });
+        return genkitOutputToReply(out, 'genkit', decision);
+    }
+
     const decision = await decideDispatchWithTimeout(input.callSid);
 
     // ── off ────────────────────────────────────────────────────────────

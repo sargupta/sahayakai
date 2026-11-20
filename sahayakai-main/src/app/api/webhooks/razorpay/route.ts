@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { readBodyCapped } from '@/lib/http/read-body-capped';
 import { verifyWebhookSignature, resolvePlanTypeFromPlanId } from '@/lib/razorpay';
 import { logger } from '@/lib/logger';
 
@@ -11,8 +12,37 @@ import { logger } from '@/lib/logger';
  *
  * Idempotent via `webhook_events` collection — safe to receive the same event twice.
  */
+/**
+ * Idempotency key for one Razorpay delivery. Razorpay sends a unique
+ * `x-razorpay-event-id` per event (redeliveries reuse it), so a second
+ * `subscription.paused` after a `resumed` is a NEW event. The old key
+ * (`<event>_<paymentId|subscriptionId>`) collided for such events and silently
+ * dropped them; it remains only as the fallback when the header is absent.
+ */
+function webhookEventKey(event: any, headerEventId: string | null): string {
+    if (headerEventId && /^[A-Za-z0-9_-]{1,128}$/.test(headerEventId)) return `evt_${headerEventId}`;
+    // Use payment ID for uniqueness — subscription ID alone collides across billing cycles
+    const paymentId = event.payload?.payment?.entity?.id;
+    const subscriptionId = event.payload?.subscription?.entity?.id;
+    return String(event.event + '_' + (paymentId || subscriptionId || Date.now())).replace(/\//g, '_');
+}
+
+const MAX_RAZORPAY_WEBHOOK_BYTES = 256 * 1024;
+
+/** A 'processing' claim older than this belongs to a worker that died. */
+const STALE_PROCESSING_MS = 5 * 60 * 1000;
+
+function isStaleProcessing(data: any, now: number = Date.now()): boolean {
+    if (data?.status !== 'processing') return false;
+    const at = data.retriedAt ?? data.receivedAt;
+    const ms = at instanceof Date ? at.getTime() : typeof at?.toMillis === 'function' ? at.toMillis() : Date.parse(String(at ?? ''));
+    return Number.isFinite(ms) && now - ms > STALE_PROCESSING_MS;
+}
+
 export async function POST(request: Request) {
-    const body = await request.text();
+    // Razorpay events are a few KB; refuse anything far larger before buffering it.
+    const body = await readBodyCapped(request, MAX_RAZORPAY_WEBHOOK_BYTES);
+    if (body === null) return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
     const signature = request.headers.get('x-razorpay-signature');
 
     if (!signature) {
@@ -33,11 +63,17 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
-    const event = JSON.parse(body);
-    // Use payment ID for uniqueness — subscription ID alone collides across billing cycles
-    const paymentId = event.payload?.payment?.entity?.id;
-    const subscriptionId = event.payload?.subscription?.entity?.id;
-    const eventId = event.event + '_' + (paymentId || subscriptionId || Date.now());
+    let event: any;
+    try {
+        event = JSON.parse(body);
+    } catch {
+        // Signed but unparsable: a permanent failure, so 400 (no retry storm), never a 500.
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    if (!event || typeof event.event !== 'string') {
+        return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
+    }
+    const eventId = webhookEventKey(event, request.headers.get('x-razorpay-event-id'));
 
     const { getDb } = await import('@/lib/firebase-admin');
     const db = await getDb();
@@ -64,8 +100,11 @@ export async function POST(request: Request) {
             // wins the flip; everyone else gets `already_processed`.
             const wonTheFlip = await db.runTransaction(async (tx) => {
                 const existing = await tx.get(eventRef);
-                const existingStatus = existing.data()?.status;
-                if (existingStatus === 'failed') {
+                const existingData = existing.data();
+                const existingStatus = existingData?.status;
+                // A 'processing' record whose worker died (instance killed, timeout) would
+                // otherwise swallow every retry forever: take it over once it is stale.
+                if (existingStatus === 'failed' || isStaleProcessing(existingData)) {
                     tx.update(eventRef, { status: 'processing', retriedAt: new Date() });
                     return true;
                 }

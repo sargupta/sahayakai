@@ -1,10 +1,33 @@
 import { LABS_TOOLS, isLabsRoute } from '@/lib/labs';
+import { getCapability, getSection } from '@/lib/vidya/app-manifest';
 
 describe('labs registry', () => {
     it('matches parked routes and their subroutes', () => {
         expect(isLabsRoute('/video-storyteller')).toBe(true);
         expect(isLabsRoute('/video-storyteller/history')).toBe(true);
-        expect(isLabsRoute('/teacher-training')).toBe(true);
+    });
+
+    it('keeps Teacher Training out of Labs (restored to the main nav)', () => {
+        expect(isLabsRoute('/teacher-training')).toBe(false);
+        // VIDYA must direct teachers to where it really is, and may act there.
+        const section = getSection('teacher-training');
+        expect(section?.group).not.toBe('Labs');
+        expect(section?.whereToFind).not.toMatch(/Labs/);
+        expect(getCapability('teacher-training.ask')?.kind).toBe('mutation');
+        expect(getCapability('teacher-training.save')?.kind).toBe('mutation');
+    });
+
+    it.each([
+        ['virtual-field-trip', '/virtual-field-trip'],
+        ['assessment-scanner', '/assessment-scanner'],
+    ] as const)('keeps %s out of Labs (restored to the main nav)', (id, href) => {
+        expect(isLabsRoute(href)).toBe(false);
+        expect(isLabsRoute(`${href}/anything`)).toBe(false);
+        // VIDYA must send teachers to the sidebar entry, not to the staff-only Labs page.
+        const section = getSection(id);
+        expect(section?.group).not.toBe('Labs');
+        expect(section?.whereToFind).not.toMatch(/Labs/);
+        expect(section?.whereToFind).toMatch(/^Sidebar/);
     });
 
     it('does not match spine tools or prefix look-alikes', () => {

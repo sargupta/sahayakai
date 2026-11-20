@@ -7,7 +7,7 @@
  * The schema-drift check is exercised against two on-disk fixture dirs.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -87,9 +87,9 @@ describe('check-schema-drift', () => {
     write('qa/baseline-schemas-fresh/lesson-plan.json', schema);
     // Copy DRIFT_SCRIPT into the fake repo so relative paths resolve.
     const fakeScript = path.join(dir, 'check-schema-drift.mjs');
-    execFileSync('cp', [DRIFT_SCRIPT, fakeScript]);
+    copyFileSync(DRIFT_SCRIPT, fakeScript); // portable: no `cp` on Windows
     mkdirSync(path.join(dir, 'scripts', 'ci'), { recursive: true });
-    execFileSync('cp', [DRIFT_SCRIPT, path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')]);
+    copyFileSync(DRIFT_SCRIPT, path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')); // portable: no `cp` on Windows
     const res = spawnSync('node', [path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')], { cwd: dir, encoding: 'utf8' });
     expect(res.status).toBe(0);
     expect(res.stdout).toMatch(/PASS/);
@@ -104,7 +104,7 @@ describe('check-schema-drift', () => {
     write('qa/baseline-schemas/lesson-plan.json', big);
     write('qa/baseline-schemas-fresh/lesson-plan.json', { type: 'object' });
     mkdirSync(path.join(dir, 'scripts', 'ci'), { recursive: true });
-    execFileSync('cp', [DRIFT_SCRIPT, path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')]);
+    copyFileSync(DRIFT_SCRIPT, path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs')); // portable: no `cp` on Windows
     const res = spawnSync('node', [path.join(dir, 'scripts', 'ci', 'check-schema-drift.mjs'), '--threshold=10'], { cwd: dir, encoding: 'utf8' });
     expect(res.status).toBe(1);
     expect(res.stderr + res.stdout).toMatch(/FAIL/);

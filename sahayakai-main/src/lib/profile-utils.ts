@@ -1,4 +1,5 @@
 import type { UserProfile } from '@/types';
+import { isNewUserPhase, normalizeOnboardingPhase, type OnboardingPhase } from '@/lib/onboarding-phase';
 
 /**
  * Profile completion level utilities.
@@ -35,14 +36,17 @@ export function isProfileSufficientForAI(
 
 /**
  * Resolve the effective onboarding phase, handling backward compatibility.
- * Existing users with schoolName but no onboardingPhase are treated as 'done'.
+ * Stored values are normalised through src/lib/onboarding-phase.ts, so legacy
+ * aliases (e.g. 'completed') resolve to their canonical phase. Users with
+ * schoolName but no recognised onboardingPhase are treated as 'done'.
  */
 export function getEffectiveOnboardingPhase(
     profile: Partial<UserProfile> | null | undefined
-): NonNullable<UserProfile['onboardingPhase']> {
+): OnboardingPhase {
     if (!profile) return 'setup';
 
-    if (profile.onboardingPhase) return profile.onboardingPhase;
+    const stored = normalizeOnboardingPhase(profile.onboardingPhase);
+    if (stored) return stored;
 
     // Backward compatibility: existing users who completed old onboarding
     if (profile.schoolName) return 'done';
@@ -50,11 +54,16 @@ export function getEffectiveOnboardingPhase(
     return 'setup';
 }
 
+/**
+ * New-user mode (reduced sidebar, spotlights, new-user dashboard): onboarding
+ * not finished and the account is inside its first week. See
+ * NEW_USER_MODE_MAX_DAYS — no phase can hold a teacher in this mode forever.
+ */
 export function isNewUser(
-    profile: Partial<UserProfile> | null | undefined
+    profile: Partial<UserProfile> | null | undefined,
+    now: Date = new Date(),
 ): boolean {
-    const phase = getEffectiveOnboardingPhase(profile);
-    return phase !== 'done';
+    return isNewUserPhase(getEffectiveOnboardingPhase(profile), profile?.createdAt, now);
 }
 
 /**

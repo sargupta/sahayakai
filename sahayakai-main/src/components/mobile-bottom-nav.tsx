@@ -1,154 +1,95 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Home, Sparkles, Library, User } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Home, Library, User, Users } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
-import { openCommandPalette } from "@/components/command-palette";
 import { cn } from "@/lib/utils";
 
 /**
- * Mobile bottom tab nav — Phase 4 (2026-04-24).
+ * TabBar — the phone's four destinations (design system, decided 26 Oct
+ * 2026): Home · Library · Community · Profile, four tabs and never five.
+ * It replaces the old Home · Create · Library · Me bar; creation starts
+ * from VIDYA and Home, and every tool is in the menu (top bar).
  *
- * Fixed to the viewport bottom on mobile (md:hidden). Four tabs:
- *   Home   (/)                 — dashboard / landing
- *   Create (opens ⌘K palette)  — search-driven tool selection
- *   Library (/my-library)      — saved work
- *   Me     (/my-profile)       — profile
- *
- * VIDYA voice assistant lives in the floating OmniOrb (bottom-right, above
- * this nav). This nav owns navigation intent; voice is always one orb-tap
- * away.
- *
- * Active tab: saffron icon + label. Others: muted.
- * Safe-area-inset-bottom padding for devices with home indicators.
+ * A floating capsule (surface-capsule, shadow-float) 18px above the foot,
+ * 42px discs, no visible labels but a name on every tab. The active tab is
+ * a saffron-500 disc (icon-only, so 3:1 is the bar) plus aria-current.
+ * Under 768px only; it slides away while scrolling down and returns on
+ * scroll up, as before.
  */
 
-type Tab = {
-  key: string;
-  icon: typeof Home;
-  label: string;
-  i18nKey: string;
-} & (
-  | { kind: "nav"; href: string }
-  | { kind: "action"; onClick: () => void }
-);
-
-const TABS: Tab[] = [
-  {
-    kind: "nav",
-    key: "home",
-    icon: Home,
-    label: "Home",
-    i18nKey: "Home",
-    href: "/",
-  },
-  {
-    kind: "action",
-    key: "create",
-    icon: Sparkles,
-    label: "Create",
-    i18nKey: "Create",
-    onClick: openCommandPalette,
-  },
-  {
-    kind: "nav",
-    key: "library",
-    icon: Library,
-    label: "Library",
-    i18nKey: "My Library",
-    href: "/my-library",
-  },
-  {
-    kind: "nav",
-    key: "me",
-    icon: User,
-    label: "Me",
-    i18nKey: "My Profile",
-    href: "/my-profile",
-  },
-];
+const TABS = [
+    { key: "home", icon: Home, i18nKey: "Home", href: "/", match: (p: string) => p === "/" },
+    { key: "library", icon: Library, i18nKey: "Library", href: "/my-library", match: (p: string) => p.startsWith("/my-library") },
+    { key: "community", icon: Users, i18nKey: "Community", href: "/community", match: (p: string) => p.startsWith("/community") },
+    {
+        key: "profile",
+        icon: User,
+        i18nKey: "Profile",
+        href: "/my-profile",
+        match: (p: string) => p.startsWith("/my-profile") || p.startsWith("/settings") || p.startsWith("/usage"),
+    },
+] as const;
 
 export function MobileBottomNav() {
-  const router = useRouter();
-  const pathname = usePathname() ?? "";
-  const { t } = useLanguage();
-  const [hidden, setHidden] = useState(false);
-  const lastScrollY = useRef(0);
+    const pathname = usePathname() ?? "";
+    const { t } = useLanguage();
+    const [hidden, setHidden] = useState(false);
+    const lastScrollY = useRef(0);
 
-  // Scroll-hide behaviour: slide the nav down on scroll-down, back up on
-  // scroll-up. Gives more vertical space for long-form content on mobile
-  // (lesson plans, quiz results) while keeping the nav one swipe away.
-  useEffect(() => {
-    const THRESHOLD = 12; // ignore jitter
-    const onScroll = () => {
-      const y = window.scrollY;
-      const dy = y - lastScrollY.current;
-      if (Math.abs(dy) < THRESHOLD) return;
-      if (y < 48) {
-        setHidden(false);
-      } else if (dy > 0) {
-        setHidden(true);
-      } else {
-        setHidden(false);
-      }
-      lastScrollY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const isActive = (tab: Tab) => {
-    if (tab.kind !== "nav") return false;
-    if (tab.href === "/") return pathname === "/";
-    return pathname.startsWith(tab.href);
-  };
-
-  return (
-    <nav
-      aria-label={t("Primary navigation")}
-      className={cn(
-        "md:hidden fixed inset-x-0 bottom-0 z-40",
-        "flex items-stretch justify-around",
-        "h-14 pb-[env(safe-area-inset-bottom)]",
-        "bg-background/95 backdrop-blur-md border-t border-border",
-        "shadow-floating",
-        "transition-transform duration-small ease-out-quart",
-        hidden && "translate-y-full",
-      )}
-    >
-      {TABS.map((tab) => {
-        const Icon = tab.icon;
-        const active = isActive(tab);
-        const handleClick = () => {
-          if (tab.kind === "nav") {
-            router.push(tab.href);
-          } else {
-            tab.onClick();
-          }
+    useEffect(() => {
+        const THRESHOLD = 12; // ignore jitter
+        const onScroll = () => {
+            const y = window.scrollY;
+            const dy = y - lastScrollY.current;
+            if (Math.abs(dy) < THRESHOLD) return;
+            setHidden(y >= 48 && dy > 0);
+            lastScrollY.current = y;
         };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
 
-        return (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={handleClick}
-            aria-label={t(tab.i18nKey)}
-            aria-current={active ? "page" : undefined}
+    return (
+        <nav
+            aria-label={t("Primary navigation")}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-0.5",
-              "transition-colors duration-micro ease-out-quart",
-              "active:bg-primary/5",
-              active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                "fixed bottom-[calc(18px+env(safe-area-inset-bottom))] left-1/2 z-30 -translate-x-1/2 md:hidden",
+                "transition-transform duration-sheet ease-standard motion-reduce:transition-none",
+                hidden && "translate-y-[calc(100%+40px)]",
             )}
-          >
-            <Icon className={cn("h-5 w-5", active && "scale-110")} />
-            <span className={cn("text-[10px] font-medium leading-none", active && "font-semibold")}>
-              {t(tab.i18nKey)}
-            </span>
-          </button>
-        );
-      })}
-    </nav>
-  );
+        >
+            <ul className="flex items-center gap-1.5 rounded-pill border border-line-glass bg-surface-capsule p-[7px] shadow-float">
+                {TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = tab.match(pathname);
+                    return (
+                        <li key={tab.key}>
+                            <Link
+                                href={tab.href}
+                                aria-label={t(tab.i18nKey)}
+                                aria-current={active ? "page" : undefined}
+                                className={cn(
+                                    // 42px disc drawn, 44px touch target via the padding ring.
+                                    "focus-ring flex h-11 w-11 items-center justify-center rounded-pill",
+                                    "transition-colors duration-small ease-standard",
+                                )}
+                            >
+                                <span
+                                    className={cn(
+                                        "flex h-[42px] w-[42px] items-center justify-center rounded-pill",
+                                        active ? "bg-saffron-500 text-white" : "text-ink-500 hover:bg-tint-subtle hover:text-ink-900",
+                                    )}
+                                >
+                                    <Icon aria-hidden="true" strokeWidth={1.7} className="h-5 w-5" />
+                                </span>
+                            </Link>
+                        </li>
+                    );
+                })}
+            </ul>
+        </nav>
+    );
 }

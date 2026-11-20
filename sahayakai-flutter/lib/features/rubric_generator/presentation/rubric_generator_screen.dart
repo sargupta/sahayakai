@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -218,7 +217,6 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     return LabeledField(
       label: l10n.rubricAssignmentLabel,
       hint: l10n.rubricAssignmentHint,
-      leadingIcon: LucideIcons.clipboardList,
       // Voice-first: dictate the assignment description instead of typing it.
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
@@ -243,7 +241,6 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     return LabeledField(
       label: l10n.rubricGradeLabel,
       optionalLabel: l10n.rubricOptional,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -264,7 +261,6 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     return LabeledField(
       label: l10n.rubricSubjectLabel,
       optionalLabel: l10n.rubricOptional,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -284,7 +280,6 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

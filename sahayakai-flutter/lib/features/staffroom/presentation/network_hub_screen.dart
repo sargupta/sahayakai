@@ -16,7 +16,6 @@ import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
 import '../../notifications/data/notifications_store.dart';
 import '../../notifications/presentation/notifications_view.dart';
-import '../../vidya/presentation/vidya_sheet.dart';
 import 'staffroom_screen.dart';
 
 /// U-SI2 — the **Network** hub (the SPEC's "Network" surface = Staffroom (04) +
@@ -60,12 +59,11 @@ class _NetworkHubScreenState extends State<NetworkHubScreen> {
     final l10n = context.l10n;
     return Scaffold(
       appBar: GlassAppBar(
-        title: Text(l10n.networkTitle),
+        title: Text(l10n.navCommunity),
         actions: [
           _NotificationsBell(
             onPressed: () => setState(() => _index = _updatesIndex),
           ),
-          const VidyaAppBarAction(),
         ],
       ),
       body: SafeArea(
@@ -136,7 +134,6 @@ class _NotificationsBell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final unread = ref.watch(unreadNotificationCountProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return IconButton(
       tooltip: l10n.networkTabUpdates,
@@ -148,7 +145,7 @@ class _NotificationsBell extends ConsumerWidget {
           children: [
             Icon(unread > 0 ? LucideIcons.bellRing : LucideIcons.bell),
             if (unread > 0)
-              PositionedDirectional(
+              const PositionedDirectional(
                 top: -1,
                 end: -1,
                 child: SizedBox(
@@ -157,9 +154,7 @@ class _NotificationsBell extends ConsumerWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isDark
-                          ? AppColors.dPrimaryText
-                          : AppColors.lPrimaryText,
+                      color: AppColors.lPrimaryText,
                     ),
                   ),
                 ),

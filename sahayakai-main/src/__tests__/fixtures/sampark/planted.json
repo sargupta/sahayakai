@@ -1,0 +1,191 @@
+{
+  "seed": "hillview-demo-v1",
+  "anchorDate": "2026-09-30",
+  "subset": {
+    "grades": [
+      4,
+      7
+    ]
+  },
+  "planted": {
+    "siblings": {
+      "studentIds": [
+        "stu_0128",
+        "stu_0261"
+      ],
+      "guardianIds": [
+        "gdn_0001",
+        "gdn_0002"
+      ],
+      "note": "Class 4A and 7B share both guardians; a deleted duplicate record of the 7B child also exists."
+    },
+    "blendedFamily": {
+      "stepChildId": "stu_0254",
+      "jointChildId": "stu_0147",
+      "motherId": "gdn_0003",
+      "stepParentId": "gdn_0004",
+      "note": "The step-parent is linked to the step-child with isGuardianOfRecord=false."
+    },
+    "counsellorReferral": {
+      "studentId": "stu_0251"
+    },
+    "custodyRestriction": {
+      "studentId": "stu_0125"
+    },
+    "doNotContactGuardian": {
+      "guardianId": "gdn_0009",
+      "studentId": "stu_0269"
+    },
+    "nullLanguageGuardians": [
+      "gdn_0011",
+      "gdn_0012",
+      "gdn_0014"
+    ],
+    "leftStudent": {
+      "studentId": "stu_0247"
+    },
+    "tombstones": {
+      "studentIds": [
+        "stu_0160",
+        "stu_0281"
+      ],
+      "guardianIds": [
+        "gdn_0017"
+      ]
+    },
+    "malformed": {
+      "studentIds": [
+        "stu_9901",
+        "stu_9902"
+      ],
+      "guardianIds": [
+        "gdn_9901"
+      ],
+      "reasons": {
+        "stu_9901": "grade 14 is outside 1-12",
+        "stu_9902": "no guardians (a student needs at least one)",
+        "gdn_9901": "phone \"12345\" is not E.164"
+      }
+    },
+    "rteStudents": [
+      "stu_0132",
+      "stu_0134",
+      "stu_0137",
+      "stu_0247",
+      "stu_0273",
+      "stu_0275"
+    ],
+    "plantedRteStudents": [
+      "stu_0134",
+      "stu_0273"
+    ],
+    "missingSpokenNames": [
+      {
+        "studentId": "stu_0127",
+        "missing": [
+          "ne"
+        ]
+      },
+      {
+        "studentId": "stu_0253",
+        "missing": [
+          "bn"
+        ]
+      },
+      {
+        "studentId": "stu_0266",
+        "missing": [
+          "hi",
+          "bn",
+          "ne"
+        ]
+      },
+      {
+        "studentId": "stu_0270",
+        "missing": [
+          "ne"
+        ]
+      }
+    ],
+    "boarders": [
+      "stu_0260",
+      "stu_0264",
+      "stu_0271"
+    ],
+    "csvQuotingGuardian": {
+      "guardianId": "gdn_0008",
+      "fullName": "Mary \"Minnie\" Thomas"
+    },
+    "consentExamples": {
+      "deniedGuardianId": "gdn_0454",
+      "unknownNullGuardianId": "gdn_0457",
+      "unknownStatusGuardianId": "gdn_0351"
+    },
+    "attendance": {
+      "absenceStreak": {
+        "studentId": "stu_0153",
+        "dates": [
+          "2026-09-25",
+          "2026-09-28",
+          "2026-09-29",
+          "2026-09-30"
+        ]
+      },
+      "lowAttendance": {
+        "studentId": "stu_0250",
+        "presentRate": 0.7
+      }
+    },
+    "assessments": {
+      "sustainedDrop": {
+        "studentId": "stu_0245",
+        "averages": {
+          "PT1": 82.7,
+          "PT2": 60.2,
+          "HY": 39
+        }
+      },
+      "missedTest": {
+        "studentId": "stu_0276",
+        "assessmentId": "PT2"
+      }
+    },
+    "hpc": {
+      "conductShouldTrigger": {
+        "studentId": "stu_0274",
+        "entryIds": [
+          "hpc_002977",
+          "hpc_002978"
+        ]
+      },
+      "staffOnlyMustNotTrigger": {
+        "studentId": "stu_0122",
+        "entryIds": [
+          "hpc_002979",
+          "hpc_002980"
+        ]
+      },
+      "positiveRecognition": {
+        "studentId": "stu_0146",
+        "entryIds": [
+          "hpc_002981",
+          "hpc_002982"
+        ]
+      },
+      "counsellorConfidential": {
+        "studentId": "stu_0251",
+        "entryIds": [
+          "hpc_002983"
+        ]
+      }
+    },
+    "events": {
+      "ptm7B": "evt_ptm_7b_20261010",
+      "annualDay": "evt_annual_day_20261205",
+      "closure": "evt_closure_20260916"
+    },
+    "meetings": {
+      "sustainedDropRequest": "mtg_0015"
+    }
+  }
+}

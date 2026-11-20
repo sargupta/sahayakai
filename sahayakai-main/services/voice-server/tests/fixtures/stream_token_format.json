@@ -1,0 +1,7 @@
+{
+  "_about": "The one spelling of a Vobiz media-stream token the engine accepts (src/stream_tokens.py). The web app mints it in src/lib/vobiz/tokens.ts; sahayakai-main/src/__tests__/scripts/voice-engine-contract.test.ts mints one with the real mintVobizToken and checks it against these patterns on every pull request, and tests/test_stream_token_canonical.py checks the engine's own patterns equal these.",
+  "domain": "vobiz-call",
+  "outreach_id": "[A-Za-z0-9]{20}|__test__[0-9]{3}",
+  "exp": "[1-9][0-9]{0,11}",
+  "signature": "[A-Za-z0-9_-]{43}"
+}

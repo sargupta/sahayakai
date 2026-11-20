@@ -187,20 +187,31 @@ describe('validateChapter — Class 8 Science (Curiosity, NCF-2023)', () => {
     });
 });
 
-describe('validateChapter — Class 9 Mathematics', () => {
-    test('"Polynomials" → valid', () => {
-        const r = validateChapter('Class 9', 'Mathematics', 'Polynomials');
+// Class 9 Mathematics moved to Ganita Manjari (NCF-2023) for 2026-27. The
+// rationalized book's chapters — Polynomials, Coordinate Geometry, Linear
+// Equations in Two Variables — are retired, so the validator must no longer
+// accept them at this grade. Pinning the new titles here keeps the AI-side
+// index honest when the teacher-facing dataset changes: before this, the two
+// could disagree indefinitely because nothing compared them.
+describe('validateChapter — Class 9 Mathematics (Ganita Manjari)', () => {
+    test('"The World of Numbers" → valid', () => {
+        const r = validateChapter('Class 9', 'Mathematics', 'The World of Numbers');
         expect(r.valid).toBe(true);
     });
 
-    test('"Coordinate Geometry" → valid', () => {
-        const r = validateChapter('IX', 'Maths', 'Coordinate Geometry');
+    test('"Exploring Algebraic Identities" → valid', () => {
+        const r = validateChapter('IX', 'Maths', 'Exploring Algebraic Identities');
         expect(r.valid).toBe(true);
     });
 
-    test('"Linear Equations in Two Variables" → valid', () => {
-        const r = validateChapter('9', 'Math', 'Linear Equations in Two Variables');
+    test('"Measuring Space: Perimeter and Area" → valid', () => {
+        const r = validateChapter('9', 'Math', 'Measuring Space: Perimeter and Area');
         expect(r.valid).toBe(true);
+    });
+
+    test('a retired chapter of the superseded book is no longer accepted', () => {
+        const r = validateChapter('Class 9', 'Mathematics', 'Coordinate Geometry');
+        expect(r.valid).toBe(false);
     });
 });
 

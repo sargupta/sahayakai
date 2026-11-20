@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 import { Loader2, CheckCircle2, XCircle, Clock, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useVidyaCapability, useVidyaScreenContext } from "@/hooks/use-vidya-app-context";
 
 interface AttendanceGridProps {
     classId: string;
@@ -45,15 +46,22 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    // For VIDYA's "is attendance complete?": a record exists for this date,
+    // and whether the screen has edits that were not submitted yet.
+    const [hasSavedRecord, setHasSavedRecord] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
     // Load existing attendance for this date
     useEffect(() => {
         setLoading(true);
         setSaved(false);
+        setHasSavedRecord(false);
+        setHasUnsavedChanges(false);
         getAttendanceForDateAction(classId, date)
             .then((existing) => {
                 if (existing?.records) {
                     setRecords(existing.records);
+                    setHasSavedRecord(true);
                 } else {
                     // Default: all present
                     const defaults: StatusMap = {};
@@ -71,6 +79,7 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
 
     const cycle = useCallback((studentId: string) => {
         setSaved(false);
+        setHasUnsavedChanges(true);
         setRecords((prev) => {
             const current = prev[studentId] ?? 'present';
             const next: AttendanceStatus =
@@ -82,6 +91,7 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
 
     const markAllPresent = () => {
         setSaved(false);
+        setHasUnsavedChanges(true);
         const all: StatusMap = {};
         students.forEach((s) => { all[s.id] = 'present'; });
         setRecords(all);
@@ -92,6 +102,8 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
         try {
             await saveAttendanceAction(classId, date, records);
             setSaved(true);
+            setHasSavedRecord(true);
+            setHasUnsavedChanges(false);
             toast({ title: t("Attendance saved") });
         } catch (err: any) {
             const description = err.message === 'PREMIUM_REQUIRED'
@@ -106,6 +118,30 @@ export function AttendanceGrid({ classId, students, date }: AttendanceGridProps)
     const presentCount = Object.values(records).filter((s) => s === 'present').length;
     const absentCount  = Object.values(records).filter((s) => s === 'absent').length;
     const lateCount    = Object.values(records).filter((s) => s === 'late').length;
+
+    // VIDYA: today's attendance as shown on this screen. Counts, plus the
+    // names of absent/late students only (what "who is absent?" needs) —
+    // never the full roster, ids or parent contacts. "Submitted" means a
+    // record is saved for this date AND nothing was changed since.
+    const namesWith = (status: AttendanceStatus) =>
+        students.filter((s) => records[s.id] === status).map((s) => s.name);
+    useVidyaScreenContext("attendance.grid", loading ? null : {
+        attendanceDate: date,
+        totalStudents: students.length,
+        presentCount,
+        absentCount,
+        lateCount,
+        absentStudents: namesWith('absent'),
+        lateStudents: namesWith('late'),
+        attendanceSubmitted: hasSavedRecord && !hasUnsavedChanges,
+        hasUnsavedChanges,
+    });
+    const gridReady = !loading && students.length > 0;
+    // Same handlers as the "All Present" / "Submit Attendance" buttons.
+    // Submitting goes through saveAttendanceAction → the attendance API's
+    // own ownership + plan checks, exactly like a manual tap.
+    useVidyaCapability("attendance.mark_all_present", markAllPresent, { enabled: gridReady });
+    useVidyaCapability("attendance.submit", handleSubmit, { enabled: gridReady && !saving });
 
     if (loading) {
         return (

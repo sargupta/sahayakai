@@ -157,6 +157,22 @@ describe('dispatchVoiceToText — shadow mode', () => {
         expect(out.sidecarTelemetry).toBeUndefined();
     });
 
+    it('answers as soon as Genkit does, even if the sidecar never answers', async () => {
+        // Production, 17 Nov: shadow awaited both, so a 15 s sidecar made every
+        // voice turn wait 15 s+ (gate: shadow-never-blocks.test.ts).
+        setMode('shadow');
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+        mockSidecar.mockReturnValue(new Promise<SidecarVoiceToTextResponse>(() => {}));
+
+        const out = await Promise.race([
+            dispatchVoiceToText(BASE_INPUT),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('dispatch waited for the sidecar')), 1000)),
+        ]);
+        expect(out.source).toBe('genkit');
+        expect(out.text).toBe(GENKIT_OUTPUT.text);
+        expect(mockSidecar).toHaveBeenCalledTimes(1);
+    });
+
     it('still serves Genkit when sidecar errors', async () => {
         setMode('shadow');
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);

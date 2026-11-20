@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navLibrary => 'Library';
 
   @override
+  String get navCommunity => 'Community';
+
+  @override
   String get navProfile => 'Me';
 
   @override
@@ -757,18 +760,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsTitle => 'Settings';
-
-  @override
-  String get settingsAppearanceTitle => 'Appearance';
-
-  @override
-  String get settingsThemeSystem => 'Match my device';
-
-  @override
-  String get settingsThemeLight => 'Light';
-
-  @override
-  String get settingsThemeDark => 'Dark';
 
   @override
   String get settingsLanguageHint =>
@@ -3932,4 +3923,84 @@ class AppLocalizationsEn extends AppLocalizations {
   String attendanceVoiceMarked(int count) {
     return 'Marked $count names.';
   }
+
+  @override
+  String get homeSayItTitle => 'Say it, I’ll open it';
+
+  @override
+  String homeDayWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count things waiting today',
+      one: '1 thing waiting today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDayClear => 'Nothing waiting today';
+
+  @override
+  String homeSayCallAbsentees(int count, String className) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '“Call the parents of $count absentees in $className”',
+      one: '“Call the parents of 1 absentee in $className”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSayTakeAttendance(String className) {
+    return '“Take attendance for $className”';
+  }
+
+  @override
+  String homeSayOpenReady(String title) {
+    return '“Open $title”';
+  }
+
+  @override
+  String get homeSayLessonExample => '“A lesson plan for my next class”';
+
+  @override
+  String get homeSayQuizExample => '“A ten-question quiz on today’s topic”';
+
+  @override
+  String get homeSayAnswerExample => '“Explain a hard idea simply”';
+
+  @override
+  String get homeActionCall => 'Call';
+
+  @override
+  String get homeActionMark => 'Mark';
+
+  @override
+  String get homeActionMake => 'Make';
+
+  @override
+  String get homeActionAsk => 'Ask';
+
+  @override
+  String get homeStatusUrgent => 'urgent';
+
+  @override
+  String get homeStatusToDo => 'to do';
+
+  @override
+  String get homeStatusReady => 'ready';
+
+  @override
+  String get homeStatusIdea => 'idea';
+
+  @override
+  String get homeComposerHint => 'Ask VIDYA, or type what you need…';
+
+  @override
+  String get homeOrbHint => 'Tap the orb to speak, or type below';
+
+  @override
+  String get homeComposerLabel => 'Type what you need';
 }

@@ -1,0 +1,103 @@
+# cloudbuild-riya-bridge.yaml — the Riya voice bridge for Sampark parent calls over Vobiz.
+#
+# Its OWN Cloud Run service, `sahayakai-riya-bridge`. It never touches `sahayakai-telephony`:
+# that service is the production attendance parent-call engine (services/voice-server, see
+# PR #177), and deploy/telephony-service.yaml must not be applied over it.
+#
+# What it runs: sahayakai-agents in telephony-only mode (telephony/router.py + riya.py +
+# sampark_link.py). Sampark places a call on Vobiz; Vobiz streams the audio here; the bridge
+# fetches the call's variables from Sampark (signed context endpoint), talks to the parent with
+# Gemini Live (Vertex AI, runtime service account) and posts one signed post_call event back.
+#
+# Cost: scales to zero and is billed per request (CPU only while a call's WebSocket is open).
+#
+# Submit (from the repo root):
+#   gcloud builds submit sahayakai-agents --project=sahayakai-b4248 \
+#     --config=sahayakai-agents/deploy/cloudbuild-riya-bridge.yaml \
+#     --substitutions=SHORT_SHA=$(git rev-parse --short HEAD),_SAMPARK_WEB_BASE_URL=https://<sampark web>
+#
+# Secrets: the request-signing key MUST be the one the Sampark web service uses
+# (_SIGNING_KEY_SECRET); for staging that is SAMPARK_STAGING_SIGNING_KEY, never the production key.
+
+substitutions:
+  _SERVICE: sahayakai-riya-bridge
+  _REGION: asia-south1
+  _REPO: sahayakai
+  # Images live in the existing Artifact Registry repo (asia-southeast1); the service runs in Mumbai.
+  _AR_REGION: asia-southeast1
+  _SAMPARK_WEB_BASE_URL: ''
+  _SIGNING_KEY_SECRET: SAMPARK_STAGING_SIGNING_KEY
+  _ENV: staging
+  _FIRESTORE_DATABASE: parent-call-test
+  # '1' also serves the token-gated hands-free VIDYA socket (/v1/vidya-voice/stream) from this
+  # public service. Off by default: turning it on widens the public surface by that one route.
+  _PUBLIC_VIDYA_VOICE: '0'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+steps:
+  - id: require-sampark-url
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        case "${_SAMPARK_WEB_BASE_URL}" in
+          https://*) ;;
+          *) echo "refusing: _SAMPARK_WEB_BASE_URL must be an https URL"; exit 1 ;;
+        esac
+        [ "${_SERVICE}" != "sahayakai-telephony" ] || { echo "refusing: never deploy the Riya bridge over the production attendance engine"; exit 1; }
+
+  - id: test
+    name: python:3.12-slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        pip install --quiet --upgrade pip
+        pip install --quiet '.[dev]'
+        pytest tests/unit -q -k "riya or sampark or dedicated_asr or telephony_only" --deselect tests/unit/test_action_flow_ts_parity.py
+    waitFor: [require-sampark-url]
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=${_AR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - .
+    waitFor: [test]
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, '${_AR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA']
+    waitFor: [build]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_AR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --project=${PROJECT_ID}
+      - --service-account=sahayakai-agents-runtime@${PROJECT_ID}.iam.gserviceaccount.com
+      # Vobiz opens the media WebSocket without Google auth; every stream carries a short-lived
+      # token bound to one call, verified in the handler with the request-signing key.
+      - --allow-unauthenticated
+      - --execution-environment=gen2
+      - --cpu=2
+      - --memory=1Gi
+      - --concurrency=4
+      - --timeout=900
+      - --min-instances=0
+      - --max-instances=2
+      - --cpu-boost
+      - --set-secrets=SAHAYAKAI_REQUEST_SIGNING_KEY=${_SIGNING_KEY_SECRET}:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest
+      - --set-env-vars=SAHAYAKAI_TELEPHONY_ONLY=1,SAHAYAKAI_PUBLIC_VIDYA_VOICE=${_PUBLIC_VIDYA_VOICE},SAHAYAKAI_AGENTS_ENV=${_ENV},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_REGION=${_REGION},SAHAYAKAI_PROMPTS_DIR=/srv/prompts,SAHAYAKAI_REQUIRE_APP_CHECK=false,SAHAYAKAI_FIRESTORE_DATABASE=${_FIRESTORE_DATABASE},SAMPARK_WEB_BASE_URL=${_SAMPARK_WEB_BASE_URL},VOBIZ_DISCLOSE_AI=true,VOBIZ_MAX_CALL_SECONDS=600,VOBIZ_MAX_CONCURRENT_CALLS=4
+      - --quiet
+    waitFor: [push]

@@ -10,6 +10,10 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { INJECTION_GUARD, frameUserInput } from '@/ai/prompt-hardening';
+import { isInNativeScript } from '@/lib/native-script';
+
+/** Shorter than this after cleanup is a word, not a message ("ঠিকই", "OK"). */
+const MIN_MESSAGE_CHARS = 5;
 import type { PersonaDef } from '@/ai/data/community-personas';
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
@@ -102,42 +106,73 @@ const personaMessageFlow = ai.defineFlow(
   async (input) => {
     // Plain-text generation — more reliable than schema-bound output for
     // this single-field shape. We do the cleanup ourselves below.
-    const result = await ai.generate({
-      prompt: buildPrompt(input),
-      config: {
-        temperature: 0.85,
-        maxOutputTokens: 220,
-      },
-    });
+    const generate = async (prompt: string) => {
+      const result = await ai.generate({
+        prompt,
+        config: {
+          temperature: 0.85,
+          maxOutputTokens: 220,
+        },
+      });
+      return (result.text ?? '').trim();
+    };
 
-    const raw = (result.text ?? '').trim();
+    // Cleanup: strip surrounding quotes, leading "Name:" if model added it,
+    // and trailing whitespace. Also drop accidental code-fences.
+    const clean = (text: string): string => {
+      let out = text
+        .replace(/^```[a-z]*\n?/gi, '')
+        .replace(/\n?```$/g, '')
+        .trim()
+        .replace(/^"+|"+$/g, '')
+        .replace(/^[“”]+|[“”]+$/g, '')
+        .replace(new RegExp(`^${input.personaName}\\s*:\\s*`, 'i'), '')
+        .trim();
+      // Hard cap — prompt says 180 but the model sometimes overruns. Trim at
+      // the last whitespace before 240 chars so we don't cut mid-word.
+      if (out.length > 240) {
+        const cut = out.slice(0, 240);
+        const lastSpace = cut.lastIndexOf(' ');
+        out = (lastSpace > 100 ? cut.slice(0, lastSpace) : cut).trim() + '…';
+      }
+      return out;
+    };
+
+    // What is wrong with an answer, if anything. The prompt mandates the native script and a
+    // full message, but the model sometimes drifts into English or Latin transliteration (the
+    // live evals caught a Tamil reply with six Tamil letters) or answers with one word (a
+    // Bengali reply of just "ঠিকই"). Either way it is asked once more, saying what was wrong;
+    // a message that is still wrong is not posted.
+    const problem = (text: string): 'script' | 'short' | null => {
+      if (!isInNativeScript(text, input.preferredLanguage)) return 'script';
+      if (clean(text).length < MIN_MESSAGE_CHARS) return 'short';
+      return null;
+    };
+
+    let raw = await generate(buildPrompt(input));
     if (!raw) {
       throw new Error('Persona message generation returned empty output');
     }
 
-    // Cleanup: strip surrounding quotes, leading "Name:" if model added it,
-    // and trailing trailing whitespace. Also drop accidental code-fences.
-    let cleaned = raw
-      .replace(/^```[a-z]*\n?/gi, '')
-      .replace(/\n?```$/g, '')
-      .trim()
-      .replace(/^"+|"+$/g, '')
-      .replace(/^[“”]+|[“”]+$/g, '')
-      .replace(new RegExp(`^${input.personaName}\\s*:\\s*`, 'i'), '')
-      .trim();
-
-    // Hard cap — prompt says 180 but the model sometimes overruns. Trim at
-    // the last whitespace before 240 chars so we don't cut mid-word.
-    if (cleaned.length > 240) {
-      const cut = cleaned.slice(0, 240);
-      const lastSpace = cut.lastIndexOf(' ');
-      cleaned = (lastSpace > 100 ? cut.slice(0, lastSpace) : cut).trim() + '…';
+    const first = problem(raw);
+    if (first) {
+      const why = first === 'script'
+        ? `was not written in ${input.preferredLanguage} script`
+        : 'was too short: one or two words, not a message';
+      raw = await generate(
+        `${buildPrompt(input)}\n\nYour previous answer ${why}. ` +
+          `Write the message again, entirely in ${input.preferredLanguage} script, as one or two full sentences.`,
+      );
+      const second = raw ? problem(raw) : 'short';
+      if (second === 'script') {
+        throw new Error(`Persona message is not in ${input.preferredLanguage} script after one retry`);
+      }
+      if (second === 'short') {
+        throw new Error(`Persona message too short: "${clean(raw)}"`);
+      }
     }
 
-    if (cleaned.length < 5) {
-      throw new Error(`Persona message too short: "${cleaned}"`);
-    }
-
+    const cleaned = clean(raw);
     return { message: cleaned };
   },
 );

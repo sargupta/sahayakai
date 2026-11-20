@@ -29,10 +29,18 @@
     }
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next-3001/types/**/*.ts",
+    ".next-3100/types/**/*.ts",
+    ".next-build/types/**/*.ts",
+    ".next-demo/types/**/*.ts",
+    ".next-film/types/**/*.ts",
+    ".next-sampark-film/types/**/*.ts",
+    ".next-turbo/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-master-film/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

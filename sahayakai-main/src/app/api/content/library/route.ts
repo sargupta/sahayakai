@@ -19,6 +19,8 @@ const SaveToLibrarySchema = z.object({
     type: z.string(),
     title: z.string(),
     data: z.any(),
+    // Stable artifact id (see @/lib/content-id). Optional for legacy callers.
+    id: z.string().max(64).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
         // Service returns { success, id?, error? } with a scrubbed error
         // message (Wave 2b) — pass it through verbatim, 200 either way, so
         // the client wrapper preserves the action's result-object contract.
-        const result = await saveToLibrary(userId, parsed.data.type as any, parsed.data.title, parsed.data.data);
+        const result = await saveToLibrary(userId, parsed.data.type as any, parsed.data.title, parsed.data.data, parsed.data.id);
         return NextResponse.json(result);
     } catch (err) {
         logger.error('POST /api/content/library failed', err, 'CONTENT', { userId });

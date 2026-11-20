@@ -37,6 +37,10 @@ export function EmptyStateDashboard({ reason, principalName, orgName, isDemoData
         ? t('Finish setting up your school to see your dashboard.')
         : t('Your school-wide analytics will appear here once a few teachers are active.');
 
+    const inviteMailto = `mailto:contact@sargvision.com?subject=${encodeURIComponent(
+        `Add teachers to ${orgName ?? 'our school'} on SahayakAI`,
+    )}`;
+
     return (
         <div className="min-h-[calc(100vh-4rem)] w-full max-w-5xl mx-auto px-4 py-6 sm:py-8">
             <div className="flex items-start justify-between gap-4 mb-8">
@@ -53,8 +57,8 @@ export function EmptyStateDashboard({ reason, principalName, orgName, isDemoData
                     </p>
                 </div>
                 {isDemoData && (
-                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-900 bg-amber-100 border border-amber-300 rounded-full px-3 py-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 border border-primary/30 rounded-full px-3 py-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                         {t('Demo data')}
                     </div>
                 )}
@@ -73,10 +77,12 @@ export function EmptyStateDashboard({ reason, principalName, orgName, isDemoData
                     </CardHeader>
                     <CardContent>
                         <Button asChild variant="outline" size="sm" className="rounded-xl gap-1">
-                            <Link href="/organization/invite">
+                            {/* Teachers are added to a school by the SahayakAI team today (there is
+                                no self-serve invite page), so this opens a request to them. */}
+                            <a href={inviteMailto}>
                                 {t('Invite teachers')}
                                 <ArrowRight className="h-3.5 w-3.5" />
-                            </Link>
+                            </a>
                         </Button>
                     </CardContent>
                 </Card>
