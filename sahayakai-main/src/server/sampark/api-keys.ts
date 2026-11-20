@@ -64,6 +64,14 @@ export interface ApiKeyDeps {
     getDb: () => Promise<ApiKeyDb>;
 }
 
+/**
+ * The keys live in the app's default database, beside the /api/mcp auth that reads them
+ * (src/lib/mcp/auth.ts): they are platform credentials, not Sampark data. Named literally so the
+ * Sampark database gate can see which collection this module opens; checked against the constant.
+ */
+const _KEYS_COLLECTION: typeof MCP_API_KEYS_COLLECTION = 'mcp_api_keys';
+void _KEYS_COLLECTION;
+
 const defaultDeps: ApiKeyDeps = { getDb: async () => (await getDb()) as unknown as ApiKeyDb };
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? v : null);
@@ -87,7 +95,7 @@ export function toIntegrationApiKey(keyId: string, raw: unknown): IntegrationApi
 
 export async function listApiKeys(orgId: string, deps: ApiKeyDeps = defaultDeps): Promise<IntegrationApiKey[]> {
     const db = await deps.getDb();
-    const snap = await db.collection(MCP_API_KEYS_COLLECTION).where('orgId', '==', orgId).limit(MAX_LISTED).get();
+    const snap = await db.collection('mcp_api_keys').where('orgId', '==', orgId).limit(MAX_LISTED).get();
     return snap.docs
         .map((d) => toIntegrationApiKey(d.id, d.data()))
         .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
@@ -112,7 +120,7 @@ export async function createApiKey(
     const { apiKey, keyId, record } = mintApiKey({ orgId, label: input.label, scopes: input.scopes, createdBy: uid, pepper, now });
     const db = await deps.getDb();
     // create() fails if the id exists, so a (vanishingly unlikely) id collision never overwrites a key.
-    await db.collection(MCP_API_KEYS_COLLECTION).doc(keyId).create({ ...record });
+    await db.collection('mcp_api_keys').doc(keyId).create({ ...record });
     await ctx.repo.appendAudit(orgId, {
         at: now.toISOString(),
         actor: uid,
@@ -132,7 +140,7 @@ export async function revokeApiKey(
     deps: ApiKeyDeps = defaultDeps,
 ): Promise<IntegrationApiKey> {
     const db = await deps.getDb();
-    const ref = db.collection(MCP_API_KEYS_COLLECTION).doc(keyId);
+    const ref = db.collection('mcp_api_keys').doc(keyId);
     const snap = await ref.get();
     const record = (snap.exists ? snap.data() : null) as Partial<McpApiKeyRecord> | null;
     if (!record || record.orgId !== orgId) throw notFound('API_KEY_NOT_FOUND', 'No such key for this school');
