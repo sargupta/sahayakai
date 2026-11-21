@@ -20,6 +20,16 @@ import { useLanguage } from "@/context/language-context";
 import { istDate } from "@/lib/sampark/demo/seed-planning";
 import { useDemo } from "./use-demo";
 
+/**
+ * Whose sections and name the sidebar shows. On the role picker nobody is signed
+ * in yet, even if the browser still holds the last role: showing "Principal"
+ * there while someone picks a teacher account is the bug this guards.
+ */
+export function demoNavRole<R extends string>(pathname: string, role: R | null | undefined): R | null {
+    const onPicker = pathname === "/demo" || pathname === "/demo/";
+    return onPicker ? null : role ?? null;
+}
+
 function initials(name: string): string {
     const words = name.trim().split(/\s+/).filter(Boolean);
     return (words.length > 1 ? words[0][0] + words[1][0] : (words[0] ?? "").slice(0, 2)).toUpperCase();
@@ -42,6 +52,7 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
     const [collapsed, toggleCollapsed] = useCollapsedNav("sampark.demo.sidebar.folded");
 
     const under = (p: string) => current === p || current.startsWith(`${p}/`);
+    const navRole = demoNavRole(current, view?.role);
     const calls = view?.visibleCalls ?? [];
     const callbacks = view?.visibleCallbacks ?? [];
     const openComplaints = calls.filter((c) => c.complaintStatus === "open").length;
@@ -54,7 +65,7 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
     const badge = (n: number, label: string, tone: "accent" | "danger" = "accent") => (n > 0 ? { text: String(n), label: fmt(t(label), { count: n }), tone } : null);
 
     const sections: NavSection[] =
-        view?.role === "admin"
+        navRole === "admin"
             ? [
                   {
                       key: "workspace",
@@ -88,7 +99,7 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
                       items: [{ key: "followups", label: t("Complaints & follow-ups"), shortLabel: t("Follow-ups"), icon: MessageSquareWarning, href: href("/demo/admin/follow-ups"), active: under("/demo/admin/follow-ups"), badge: badge(openFollowUps, "{count} open", openComplaints > 0 ? "danger" : "accent") }],
                   },
               ]
-            : view?.role === "teacher"
+            : navRole === "teacher"
               ? [
                     {
                         key: "workspace",
@@ -118,9 +129,9 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
                 ]
               : [];
 
-    const lead = view?.role
+    const lead = view && navRole
         ? (mode: "full" | "rail") => {
-              const roleLabel = view.role === "admin" ? t(view.school.admin.title) : t("Class teacher");
+              const roleLabel = navRole === "admin" ? t(view.school.admin.title) : t("Class teacher");
               const avatar = (
                   <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-row bg-milk-400 font-display text-tile font-semibold text-ink-900">
                       {initials(view.actorName)}
