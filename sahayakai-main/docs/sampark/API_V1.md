@@ -116,5 +116,9 @@ phone or school field; and no prefix under `/api/sampark/` is public in the midd
 has its own tree (`/api/sampark-api/`) because `/api/sampark/v1/...` would be read by Next.js as
 the private `[orgId]` routes with `orgId = "v1"`.
 
-Not covered yet: a Test-mode (real provider) call through the API, and the route handlers run
-end to end over HTTP (the handlers are checked by source and their parts by unit tests).
+`src/__tests__/sampark/server/api-v1-routes.test.ts` runs the three handlers themselves against
+the real calling service on in-memory repositories (Practice mode): 201 then 200 for a repeated
+idempotency key, 404 with the flag off, 401, 403, 400 for a phone number, school or scenario in
+the body, 409, 429 and 503, each with a check that nothing was placed.
+
+Not covered yet: a Test-mode (real provider) call through the API. That needs staging.
