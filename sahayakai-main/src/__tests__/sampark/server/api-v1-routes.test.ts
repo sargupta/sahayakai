@@ -18,10 +18,9 @@ const runtime: { deps: ApiV1Deps | null; riya: RiyaDeps | null } = { deps: null,
 
 jest.mock('@/server/sampark/api-v1-runtime', () => ({
     apiV1Deps: {
-        getDb: () => runtime.deps!.getDb(),
+        authenticate: (headers: Headers) => runtime.deps!.authenticate(headers),
         rateLimit: (keyId: string, kind: 'place' | 'read') => runtime.deps!.rateLimit(keyId, kind),
         get env() { return runtime.deps!.env; },
-        now: () => new Date('2026-10-07T05:30:00Z'),
     },
 }));
 jest.mock('@/server/sampark/http', () => ({ ...jest.requireActual('@/server/sampark/http'), samparkContext: async () => ({}) }));
@@ -30,12 +29,12 @@ jest.mock('@/server/sampark/conversation', () => ({ ...jest.requireActual('@/ser
 import crypto from 'node:crypto';
 
 import { mintApiKey } from '@/lib/mcp/api-keys';
-import { resetLastUsedThrottleForTests } from '@/lib/mcp/auth';
+import { authenticateMcpRequest, resetLastUsedThrottleForTests, type McpAuthDb } from '@/lib/mcp/auth';
 import { createMemoryConversationRepo } from '@/lib/sampark/conversation/repo';
 import { RIYA_PURPOSES } from '@/lib/sampark/conversation/riya-purposes';
 import { encryptPhone, hashPhone } from '@/lib/sampark/phone';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
-import { apiActor } from '@/server/sampark/api-v1';
+import { apiActor, SAMPARK_API_SCOPE } from '@/server/sampark/api-v1';
 import { previewRiyaCall } from '@/server/sampark/conversation';
 import { GET as readCall } from '@/app/api/sampark-api/v1/calls/[callId]/route';
 import { POST as previewCall } from '@/app/api/sampark-api/v1/calls/preview/route';
@@ -79,13 +78,16 @@ beforeEach(async () => {
     runtime.deps = {
         env: { ...FLAGS },
         rateLimit: limiter,
-        getDb: async () => ({
-            collection: (name: string) => ({
-                doc: (id: string) => ({
-                    get: async () => (name === 'organizations' ? { exists: id === ORG, data: () => ({}) } : { exists: id in records, data: () => records[id] }),
-                    update: async () => undefined,
+        authenticate: (headers) => authenticateMcpRequest(headers, SAMPARK_API_SCOPE, {
+            now: () => NOW,
+            getDb: async () => ({
+                collection: (name: string) => ({
+                    doc: (id: string) => ({
+                        get: async () => (name === 'organizations' ? { exists: id === ORG, data: () => ({}) } : { exists: id in records, data: () => records[id] }),
+                        update: async () => undefined,
+                    }),
                 }),
-            }),
+            }) as unknown as McpAuthDb,
         }),
     };
 });

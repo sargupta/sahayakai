@@ -19,7 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { mintApiKey } from '@/lib/mcp/api-keys';
-import { resetLastUsedThrottleForTests } from '@/lib/mcp/auth';
+import { authenticateMcpRequest, resetLastUsedThrottleForTests, type McpAuthDb } from '@/lib/mcp/auth';
 import { createMemoryConversationRepo } from '@/lib/sampark/conversation/repo';
 import { RIYA_PURPOSES } from '@/lib/sampark/conversation/riya-purposes';
 import type { ConversationCallView } from '@/lib/sampark/conversation/types';
@@ -27,7 +27,7 @@ import { encryptPhone, hashPhone } from '@/lib/sampark/phone';
 import type { AuditEntry } from '@/lib/sampark/ports';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
 import {
-    API_ACTOR_PREFIX, API_RATE_LIMITS, apiActor, ApiPreviewSchema, ApiStartSchema, apiV1Enabled, enforceApiRateLimit, getApiCall, guardApiV1,
+    API_ACTOR_PREFIX, API_RATE_LIMITS, apiActor, SAMPARK_API_SCOPE, ApiPreviewSchema, ApiStartSchema, apiV1Enabled, enforceApiRateLimit, getApiCall, guardApiV1,
     rateLimitWaitSeconds, toApiCall, toApiPreview, type ApiV1Deps, type RateLimitStore,
 } from '@/server/sampark/api-v1';
 import { getRiyaCall, previewRiyaCall, startRiyaCall, type RiyaDeps } from '@/server/sampark/conversation';
@@ -70,8 +70,12 @@ function mint(scopes: string[], orgId = ORG) {
 const request = (apiKey?: string, extra: Record<string, string> = {}) =>
     ({ headers: new Map(Object.entries({ ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}), ...extra })) as unknown as Headers });
 
+/** The real key check (as api-v1-runtime wires it), over a fake key database. */
+const authWith = (getDb: () => Promise<unknown>): ApiV1Deps['authenticate'] =>
+    (headers) => authenticateMcpRequest(headers, SAMPARK_API_SCOPE, { getDb: getDb as () => Promise<McpAuthDb>, now: () => WED_11_IST });
+
 function depsFor(records: Record<string, Record<string, unknown>>, over: Partial<ApiV1Deps> = {}): ApiV1Deps {
-    return { getDb: async () => keyDb(records).db, rateLimit: async () => undefined, now: () => WED_11_IST, env: { ...FLAGS }, ...over };
+    return { authenticate: authWith(async () => keyDb(records).db), rateLimit: async () => undefined, env: { ...FLAGS }, ...over };
 }
 
 const saved = { ...process.env };
@@ -88,7 +92,7 @@ describe('guardApiV1: the shell', () => {
         const k = mint(['sampark']);
         const getDb = jest.fn(async () => keyDb({ [k.keyId]: { ...k.record } }).db);
         for (const off of Object.keys(FLAGS)) {
-            const g = await guardApiV1(request(k.apiKey), depsFor({}, { getDb, env: { ...FLAGS, [off]: 'false' } }), 'place');
+            const g = await guardApiV1(request(k.apiKey), depsFor({}, { authenticate: authWith(getDb), env: { ...FLAGS, [off]: 'false' } }), 'place');
             expect('response' in g && g.response.status).toBe(404);
         }
         expect(getDb).not.toHaveBeenCalled();
@@ -323,7 +327,7 @@ describe('reading a call', () => {
 });
 
 describe('what leaves in a response', () => {
-    const SECRETS = { phone: GUARDIAN_PHONE, agentId: 'agent_secretagent00000000000000000', phoneId: 'phnum_secretphone0000000000000', conv: 'conv_secret123', sip: 'sip_secret456' };
+    const SECRETS = { phone: GUARDIAN_PHONE, agentId: 'agent_fakesecretagent000000000000', phoneId: 'phnum_fakesecretphone00000000', conv: 'conv_secret123', sip: 'sip_secret456' };
 
     it('toApiCall carries only its named fields — no number, provider ids, variables, announcement or transcript', async () => {
         const w = await world();

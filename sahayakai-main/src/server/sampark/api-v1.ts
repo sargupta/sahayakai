@@ -9,7 +9,7 @@
  *
  *   1. SAMPARK_ENABLED, SAMPARK_ELEVENLABS_ENABLED and SAMPARK_API_V1_ENABLED all 'true',
  *      else 404 (first, before auth: a deployment with the API off reveals nothing).
- *   2. An API key with the `sampark` scope (src/lib/mcp/auth.ts): 401 / 403 / 503.
+ *   2. An API key with the `sampark` scope (src/lib/mcp/auth.ts, wired in api-v1-runtime.ts): 401 / 403 / 503.
  *      The school comes ONLY from the key record. There is no orgId and no phone number
  *      anywhere in a request.
  *   3. A per-key rate limit (separate budgets for placing and reading): 429. If the limiter
@@ -29,7 +29,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { logger } from '@/lib/logger';
-import { authenticateMcpRequest, type McpAuthDb, type McpPrincipal } from '@/lib/mcp/auth';
+import type { McpPrincipal } from '@/lib/mcp/auth';
 import { McpCapabilityError } from '@/lib/mcp/errors';
 import type { ConversationCallView } from '@/lib/sampark/conversation/types';
 import { riyaEnabled, RiyaPreviewSchema, RiyaStartSchema, type RiyaPreview, type RiyaRefusal } from '@/server/sampark/conversation';
@@ -51,14 +51,18 @@ export function apiActor(principal: Pick<McpPrincipal, 'keyId'>): string {
 }
 
 export interface ApiV1Deps {
-    getDb: () => Promise<McpAuthDb>;
+    /**
+     * Verify the request's API key and require the `sampark` scope (authenticateMcpRequest with
+     * SAMPARK_API_SCOPE). Throws McpCapabilityError: authentication, authorization or not_configured.
+     * This module never opens a database itself; the routes' real dependencies are in api-v1-runtime.ts.
+     */
+    authenticate: (headers: Headers) => Promise<McpPrincipal>;
     /**
      * Throws `Rate limit exceeded. Please wait N minutes.` when the key is over its limit for
      * this kind of request. Any other error means the limiter itself failed, and the request
      * is refused (503): it must NOT swallow its own failures.
      */
     rateLimit: (keyId: string, kind: ApiRequestKind) => Promise<void>;
-    now?: () => Date;
     env?: Env;
 }
 
@@ -117,7 +121,7 @@ export async function guardApiV1(req: { headers: Headers }, deps: ApiV1Deps, kin
 
     let principal: McpPrincipal;
     try {
-        principal = await authenticateMcpRequest(req.headers, SAMPARK_API_SCOPE, { getDb: deps.getDb, now: deps.now });
+        principal = await deps.authenticate(req.headers);
     } catch (err) {
         if (err instanceof McpCapabilityError && AUTH_STATUS[err.category]) {
             const status = AUTH_STATUS[err.category] as number;
