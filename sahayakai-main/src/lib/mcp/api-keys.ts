@@ -30,8 +30,12 @@ export const API_KEY_PREFIX = 'sk_sahayak_';
 const KEY_RE = /^sk_sahayak_([0-9a-f]{16})_([A-Za-z0-9_-]{43})$/;
 export const MCP_API_KEYS_COLLECTION = 'mcp_api_keys';
 
-/** Capabilities a key can be granted. One entry per public MCP server. */
-export const MCP_SCOPES = ['lesson-planner', 'exam-paper', 'quiz', 'calling'] as const;
+/**
+ * Capabilities a key can be granted. One entry per public MCP server, plus `sampark`:
+ * the Sampark Calling API (/api/sampark-api/v1/*, src/server/sampark/api-v1.ts), which is REST,
+ * not MCP, but authenticates with the same keys.
+ */
+export const MCP_SCOPES = ['lesson-planner', 'exam-paper', 'quiz', 'calling', 'sampark'] as const;
 export type McpScope = (typeof MCP_SCOPES)[number];
 
 export interface McpApiKeyRecord {

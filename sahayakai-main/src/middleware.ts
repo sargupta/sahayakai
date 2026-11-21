@@ -314,6 +314,7 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/sampark-demo/') ||  // SamparkAI demo agent turns + summaries — fictional school only; 404 unless SAMPARK_DEMO_ENABLED, rate-limited in-handler (src/server/sampark/demo.ts)
         pathname === '/api/vidya-voice/public-session' ||  // Landing-page VIDYA voice for anon visitors — flag + per-IP limit in-handler; sidecar scopes the token to a tool-free demo session
         pathname.startsWith('/api/mcp/') ||  // Public MCP servers for external schools / AI agents — NOT Firebase users: every request is authenticated in-handler by a scoped, hashed API key bound to one organisation (src/lib/mcp/auth.ts); never reads x-user-id
+        pathname.startsWith('/api/sampark-api/v1/') ||  // Sampark Calling API for the school's own systems and SARGVISION products — NOT Firebase users: flag-gated (SAMPARK_API_V1_ENABLED) and authenticated in-handler by a hashed API key with the `sampark` scope, bound to one organisation (src/server/sampark/api-v1.ts); never reads x-user-id. Its own tree, so it cannot collide with /api/sampark/[orgId]/*, which stays private.
         pathname.startsWith('/api/demo-call');  // "Hear the Call" lead magnet — anon by design; gated in-handler (flag + Turnstile + transactional caps; twiml/status verify Twilio signatures). Spec: docs/PARENT_CALL_DEMO_SPEC.md
 
     if (isPublicApi) {
