@@ -41,7 +41,7 @@ const PRODUCT_CONTEXT = 'sampark';
 // Copies of src/lib/sampark/conversation/riya-purposes.ts (RIYA_VARIABLES, RIYA_OPENING_TEMPLATE);
 // riya-agent-sync.test.ts fails if they drift.
 export const SAHAYAK_VARIABLES = ['school_name', 'call_purpose', 'student_name', 'class_name', 'section_name', 'event_name', 'event_date', 'event_time', 'holiday_dates', 'exam_schedule', 'absence_date', 'closure_date', 'closure_reason', 'transport_information', 'academic_update', 'behaviour_summary', 'assignment_details', 'achievement_details', 'followup_details'];
-export const OPENING_TEMPLATE = "Hello, I'm Riya, an AI assistant calling on behalf of {{school_name}} with a school-related update. This conversation is transcribed by our service providers. Is this a good time to talk?";
+export const OPENING_TEMPLATE = "Hello, this is Riya calling from {{school_name}} with an important update. This call may be recorded. Is this a good time to talk?";
 /** Word sequence, ignoring case, punctuation and the agent's pause dots ("Hello..... this"). */
 export const words = (s) => String(s ?? '').toLowerCase().replace(/\{\{\s*(\w+)\s*\}\}/g, ' var_$1 ').replace(/[^a-z0-9_]+/g, ' ').trim();
 
@@ -229,7 +229,12 @@ function checks(src, dst, phone, phoneId, liveSource) {
     add('12b agent access (auth)', dst.auth.enable_auth ? 'PASS' : 'FAIL', `enable_auth=${dst.auth.enable_auth}`);
     add('12c post-call webhook', dst.webhooks?.post_call_webhook_id ? 'PASS' : 'FAIL', `webhook ${short(dst.webhooks?.post_call_webhook_id)}, events ${JSON.stringify(dst.webhooks?.events ?? [])}, audio ${dst.webhooks?.send_audio}`);
     add('12d call limits', (dst.callLimits?.daily_limit ?? 1e9) <= 1000 && (dst.callLimits?.agent_concurrency_limit ?? -1) > 0 ? 'PASS' : 'FAIL', JSON.stringify(dst.callLimits));
-    add('12e AI disclosure in first message', /\bAI\b/.test(dst.firstMessage ?? '') ? 'PASS' : 'FAIL', 'the first message must say Riya is an AI assistant');
+    // Decision D1 (23 Nov 2026): the opening says Riya is calling from the school and that the call may
+    // be recorded; it does not volunteer AI. Honesty when asked is enforced in the prompt (12e-2 in the
+    // workflow tests); the opening must never claim to be a person.
+    add('12e opening: calling from the school, recording notice, no claim to be human',
+        /calling from/i.test(dst.firstMessage ?? '') && /may be recorded/i.test(dst.firstMessage ?? '') && !/\b(real person|human|not an? (AI|bot|robot))\b/i.test(dst.firstMessage ?? '') ? 'PASS' : 'FAIL',
+        'the first message must say who is calling from which school and that the call may be recorded, and must not claim to be a person');
     add('12f client overrides locked', !JSON.stringify(dst.overrides ?? {}).match(/"(prompt|llm)":true/) ? 'PASS' : 'FAIL', 'prompt and LLM may not be overridden by a caller');
     // The unified agent lets Athithi Vani calls override the greeting and voice; Sahayak sends no override.
     const greetingOpen = JSON.stringify(dst.overrides ?? {}).match(/"(first_message|voice_id)":true/);

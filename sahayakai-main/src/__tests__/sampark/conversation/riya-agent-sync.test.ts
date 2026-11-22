@@ -35,8 +35,11 @@ describe('verify-riya-clone.mjs stays in step with the app', () => {
     it('the preview opening only uses a variable Sahayak sends, and fills it', () => {
         const used = [...RIYA_OPENING_TEMPLATE.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]);
         expect(used.every((v) => (RIYA_VARIABLES as readonly string[]).includes(v))).toBe(true);
-        expect(riyaOpening('Hillview Demo School')).toBe("Hello, I'm Riya, an AI assistant calling on behalf of Hillview Demo School with a school-related update. This conversation is transcribed by our service providers. Is this a good time to talk?");
-        // AI disclosure is in the opening itself (verifier 12e), so the preview shows it before anything else.
-        expect(RIYA_OPENING_TEMPLATE).toMatch(/\ban AI assistant\b/);
+        expect(riyaOpening('Hillview Demo School')).toBe("Hello, this is Riya calling from Hillview Demo School with an important update. This call may be recorded. Is this a good time to talk?");
+        // Decision D1 (23 Nov 2026, verifier 12e): the opening names the school and the recording, does
+        // not volunteer AI, and never claims to be a person; honesty when asked lives in the prompt.
+        expect(RIYA_OPENING_TEMPLATE).toMatch(/calling from \{\{school_name\}\}/);
+        expect(RIYA_OPENING_TEMPLATE).toMatch(/may be recorded/);
+        expect(RIYA_OPENING_TEMPLATE).not.toMatch(/\b(real person|human)\b/i);
     });
 });
