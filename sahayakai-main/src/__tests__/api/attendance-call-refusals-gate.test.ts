@@ -27,7 +27,7 @@ import path from 'path';
 import { NextResponse } from 'next/server';
 
 import { createFakeDb, lastJsonBody, type Store } from '../helpers/fake-attendance-db';
-import { phoneSuppressionId } from '@/lib/call-suppression';
+import { legacyPhoneSuppressionId } from '@/lib/call-suppression';
 
 const PHONE = '+919800000103'; // made-up, +9198000001xx test range
 const OTHER_PHONE = '+919800000104';
@@ -145,7 +145,7 @@ type Refusal = {
 const REFUSALS: Refusal[] = [
     { name: 'outside calling hours (19:20 IST)', providers: ['twilio', 'vobiz', 'exotel'], arrange: () => { (global as any).__gateNow = ist(19, 20); }, status: 409, category: 'outside_calling_hours' },
     { name: 'outside calling hours (09:30 IST)', providers: ['twilio', 'vobiz', 'exotel'], arrange: () => { (global as any).__gateNow = ist(9, 30); }, status: 409, category: 'outside_calling_hours' },
-    { name: 'parent opted out', providers: ['twilio', 'vobiz', 'exotel'], arrange: () => { store.call_suppressions = { [phoneSuppressionId(PHONE)]: { reason: 'opt_out' } }; }, status: 409, category: 'parent_opted_out' },
+    { name: 'parent opted out', providers: ['twilio', 'vobiz', 'exotel'], arrange: () => { store.call_suppressions = { [legacyPhoneSuppressionId(PHONE)]: { reason: 'opt_out' } }; }, status: 409, category: 'parent_opted_out' },
     { name: 'do-not-call lookup failed', providers: ['twilio', 'vobiz', 'exotel'], arrange: suppressionLookupFails, status: 503, category: 'suppression_check_failed' },
     { name: 'destination not on the server allow-list', providers: ['twilio', 'vobiz', 'exotel'], arrange: () => { process.env.CALL_ALLOWED_DESTINATIONS = '+919800000999'; }, status: 403, category: 'destination_not_allowed' },
     { name: 'Twilio not configured', providers: ['twilio'], arrange: () => { delete process.env.TWILIO_AUTH_TOKEN; }, status: 503, category: 'provider_unconfigured' },

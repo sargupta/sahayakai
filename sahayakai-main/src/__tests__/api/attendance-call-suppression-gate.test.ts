@@ -111,7 +111,7 @@ describe('call-suppression gate (static)', () => {
 
 import { NextResponse } from 'next/server';
 import { createFakeDb, lastJsonBody, type Store } from '../helpers/fake-attendance-db';
-import { phoneSuppressionId } from '@/lib/call-suppression';
+import { legacyPhoneSuppressionId, keyedPhoneSuppressionId } from '@/lib/call-suppression';
 
 // Made-up number from the +9198000001xx test range.
 const PHONE = '+919800000102';
@@ -201,15 +201,30 @@ describe.each(Object.keys(PROVIDERS))('call route behaviour with provider=%s', (
     });
 
     it('opted-out parent: 409 PARENT_OPTED_OUT and no provider is contacted', async () => {
-        store.call_suppressions = { [phoneSuppressionId(PHONE)]: { reason: 'opt_out' } };
+        store.call_suppressions = { [legacyPhoneSuppressionId(PHONE)]: { reason: 'opt_out' } };
         const res = await POST(req({ outreachId: 'o1', parentLanguage: 'Hindi' }));
         expect(res.status).toBe(409);
         expect(lastJsonBody(jsonSpy).code).toBe('PARENT_OPTED_OUT');
         expect(contacted()).toBe(0);
     });
 
+    it('opted-out parent under the new keyed id: 409 and no provider is contacted', async () => {
+        const saved = process.env.SAMPARK_PHONE_PEPPER;
+        process.env.SAMPARK_PHONE_PEPPER = 'gate-test-pepper';
+        try {
+            store.call_suppressions = { [keyedPhoneSuppressionId(PHONE, 'gate-test-pepper')]: { reason: 'opt_out' } };
+            const res = await POST(req({ outreachId: 'o1', parentLanguage: 'Hindi' }));
+            expect(res.status).toBe(409);
+            expect(lastJsonBody(jsonSpy).code).toBe('PARENT_OPTED_OUT');
+            expect(contacted()).toBe(0);
+        } finally {
+            if (saved === undefined) delete process.env.SAMPARK_PHONE_PEPPER;
+            else process.env.SAMPARK_PHONE_PEPPER = saved;
+        }
+    });
+
     it('suppression also covers a sibling outreach sharing the same number', async () => {
-        store.call_suppressions = { [phoneSuppressionId(PHONE)]: { reason: 'opt_out' } };
+        store.call_suppressions = { [legacyPhoneSuppressionId(PHONE)]: { reason: 'opt_out' } };
         store.parent_outreach.o2 = { teacherUid: 'teacher-A', parentPhone: PHONE, classId: 'c1', studentId: 'sibling' };
         const res = await POST(req({ outreachId: 'o2', parentLanguage: 'Hindi' }));
         expect(res.status).toBe(409);
@@ -225,7 +240,7 @@ describe('outreach route refuses opted-out parents before creating a doc', () =>
         store = {
             classes: { c1: { teacherUid: 'teacher-A' } },
             'classes/c1/students': { s1: { parentPhone: PHONE } },
-            call_suppressions: { [phoneSuppressionId(PHONE)]: { reason: 'opt_out' } },
+            call_suppressions: { [legacyPhoneSuppressionId(PHONE)]: { reason: 'opt_out' } },
         };
         (global as any).__fakeDb = createFakeDb(store);
         const { POST } = await import('@/app/api/attendance/outreach/route');

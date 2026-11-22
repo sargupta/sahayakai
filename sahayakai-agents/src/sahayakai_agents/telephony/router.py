@@ -1468,7 +1468,8 @@ async def _persist_opt_out(bridge: _Bridge) -> bool:
     """Record that this parent asked not to be called again.
 
     Two writes: `optedOut`/`optedOutAt` on the outreach doc (what the teacher's
-    UI reads) and a durable `call_suppressions/{sha256(E.164)}` record that
+    UI reads) and a durable `call_suppressions/{id}` record (id keyed with
+    SAMPARK_PHONE_PEPPER; see suppression.py) that
     survives new outreach docs and covers siblings sharing the number. The web
     routes refuse with 409 PARENT_OPTED_OUT when that record exists.
 
