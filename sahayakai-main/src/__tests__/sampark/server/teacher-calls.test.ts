@@ -191,9 +191,9 @@ describe('scoping and filtering', () => {
         expect(toTeacherCallEntry('x', { deliveryMethod: 'twilio_call' })).toBeNull(); // no createdAt
         expect(toTeacherCallEntry('x', { deliveryMethod: 'twilio_call', createdAt: 'not a date' })).toBeNull();
         expect(toTeacherCallEntry('x', { deliveryMethod: 'twilio_call', createdAt: '2026-10-05T05:30:00Z', reason: 'debt', callStatus: 'weird', parentPhone: 12345, className: 7, callDurationSeconds: -3 }))
-            .toEqual({ id: 'x', source: 'teacher', createdAt: '2026-10-05T05:30:00.000Z', phoneLast4: '', className: null, reason: 'other', outcome: 'unknown', durationSeconds: null, teacherUid: '', teacherName: null });
+            .toEqual({ id: 'x', source: 'teacher', createdAt: '2026-10-05T05:30:00.000Z', phoneLast4: null, className: null, reason: 'other', outcome: 'unknown', durationSeconds: null, teacherUid: null, teacherName: null });
         expect(phoneLast4('+91 98000-00720')).toBe('0720');
-        expect(phoneLast4('12')).toBe('');
+        expect(phoneLast4('12')).toBeNull();
     });
 });
 
