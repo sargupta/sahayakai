@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useLanguage } from "@/context/language-context";
-import { LANGUAGES, type Language } from "@/types";
+import {
+  LANGUAGES,
+  LANGUAGE_NATIVE_LABELS,
+  LANGUAGE_SHORT_LABELS,
+  type Language,
+} from "@/types";
 import { Check, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,37 +21,12 @@ import { cn } from "@/lib/utils";
  *
  * Rationale: teachers switching between Hindi/Kannada/Tamil/etc. should not
  * have to navigate to Settings. One tap, always visible, script-native.
+ *
+ * Below `sm` the pill drops its globe icon and becomes a 36px square so the
+ * header fits a 320px phone (the glyph alone still reads as "language").
+ * The glyph and native-name tables are shared language metadata in
+ * `@/types` (LANGUAGE_SHORT_LABELS / LANGUAGE_NATIVE_LABELS).
  */
-
-// Short glyph for each language — shown in the pill itself
-const LANG_GLYPH: Record<Language, string> = {
-  English: "EN",
-  Hindi: "हि",
-  Kannada: "ಕ",
-  Tamil: "த",
-  Telugu: "తె",
-  Marathi: "म",
-  Bengali: "বা",
-  Gujarati: "ગુ",
-  Punjabi: "ਪੰ",
-  Malayalam: "മ",
-  Odia: "ଓ",
-};
-
-// Native script name — shown in the picker dialog
-const LANG_NATIVE: Record<Language, string> = {
-  English: "English",
-  Hindi: "हिन्दी",
-  Kannada: "ಕನ್ನಡ",
-  Tamil: "தமிழ்",
-  Telugu: "తెలుగు",
-  Marathi: "मराठी",
-  Bengali: "বাংলা",
-  Gujarati: "ગુજરાતી",
-  Punjabi: "ਪੰਜਾਬੀ",
-  Malayalam: "മലയാളം",
-  Odia: "ଓଡ଼ିଆ",
-};
 
 export function LanguagePill() {
   const { language, setLanguage, t } = useLanguage();
@@ -64,13 +44,13 @@ export function LanguagePill() {
         onClick={() => setOpen(true)}
         aria-label={t("Change language")}
         className={cn(
-          "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3 h-9 rounded-pill",
+          "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap h-9 min-w-9 px-2 sm:px-3 rounded-pill",
           "bg-primary/10 text-primary font-medium text-sm",
           "hover:bg-primary/15 transition-colors duration-micro ease-out-quart",
         )}
       >
-        <Globe className="h-3.5 w-3.5" aria-hidden="true" />
-        <span className="tracking-tight">{LANG_GLYPH[language]}</span>
+        <Globe className="hidden h-3.5 w-3.5 sm:block" aria-hidden="true" />
+        <span className="tracking-tight">{LANGUAGE_SHORT_LABELS[language]}</span>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md rounded-surface-md shadow-floating">
@@ -98,7 +78,7 @@ export function LanguagePill() {
                 >
                   <div className="flex flex-col min-w-0">
                     <span className="type-body font-semibold truncate">
-                      {LANG_NATIVE[lang]}
+                      {LANGUAGE_NATIVE_LABELS[lang]}
                     </span>
                     <span className="type-caption text-muted-foreground normal-case tracking-normal">
                       {lang}

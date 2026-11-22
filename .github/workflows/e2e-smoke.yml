@@ -90,9 +90,11 @@ jobs:
 
       - name: Run @smoke suite
         # Playwright's webServer block boots `next start` on :3000 and waits
-        # for it before the specs run. Path-target the smoke file AND grep
+        # for it before the specs run. Path-target the smoke files AND grep
         # @smoke so only public-route smoke tests execute.
-        run: npm run qa:e2e -- qa/e2e/smoke.spec.ts --grep @smoke
+        # phone-overflow.spec.ts is the class gate for "the app chrome is
+        # wider than a phone, so every page scrolls sideways" (320–640px).
+        run: npm run qa:e2e -- qa/e2e/smoke.spec.ts qa/e2e/phone-overflow.spec.ts --grep @smoke
 
       - name: Upload Playwright report
         if: always()
