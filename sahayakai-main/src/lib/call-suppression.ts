@@ -19,9 +19,6 @@ import { NextResponse } from 'next/server';
  * The raw number is never a doc id.
  */
 
-import { createHash } from 'crypto';
-import { NextResponse } from 'next/server';
-
 export const SUPPRESSION_COLLECTION = 'call_suppressions';
 export const PARENT_OPTED_OUT_CODE = 'PARENT_OPTED_OUT';
 
