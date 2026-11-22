@@ -36,13 +36,20 @@ function mockColl(path: string): any {
         where: (field: string, op: string, values: string[]) => {
             if (op !== 'in' || values.length > 30) throw new Error(`bad query ${field} ${op} ${values.length}`);
             mockInQueries.push(values);
-            return {
+            let since: string | null = null;
+            const q: any = {
+                where: (f: string, o: string, v: string) => {
+                    if (f !== 'createdAt' || o !== '>=') throw new Error(`bad range ${f} ${o}`);
+                    since = v;
+                    return q;
+                },
                 orderBy: (_f: string, _dir: string) => ({
                     limit: (n: number) => ({
                         get: async () => ({
                             docs: mockChildren(path)
                                 // a "leaky" query also returns records it should not, to prove the post-filter
                                 .filter((k) => mockLeakyQuery.on || values.includes(mockDocs.get(k)![field]))
+                                .filter((k) => since === null || String(mockDocs.get(k)!.createdAt) >= since)
                                 .sort((a, b) => String(mockDocs.get(b)!.createdAt).localeCompare(String(mockDocs.get(a)!.createdAt)))
                                 .slice(0, n)
                                 .map(mockSnap),
@@ -50,6 +57,7 @@ function mockColl(path: string): any {
                     }),
                 }),
             };
+            return q;
         },
     };
 }
@@ -118,10 +126,10 @@ beforeEach(() => {
 // ── route harness ───────────────────────────────────────────────────────────
 const jsonSpy = jest.spyOn(NextResponse, 'json');
 type Handler = (req: unknown, ctx: { params: Promise<Record<string, string>> }) => Promise<unknown>;
-async function get(opts: { uid?: string | null; orgId?: string; limit?: string } = {}) {
+async function get(opts: { uid?: string | null; orgId?: string; limit?: string; days?: string } = {}) {
     const { GET } = (await import('@/app/api/sampark/[orgId]/teacher-calls/route')) as unknown as { GET: Handler };
     const uid = opts.uid === undefined ? ADMIN : opts.uid;
-    const sp = new URLSearchParams(opts.limit ? { limit: opts.limit } : {});
+    const sp = new URLSearchParams({ ...(opts.limit ? { limit: opts.limit } : {}), ...(opts.days ? { days: opts.days } : {}) });
     const req = { headers: { get: (k: string) => (k.toLowerCase() === 'x-user-id' ? uid : null) }, nextUrl: { searchParams: sp } };
     jsonSpy.mockClear();
     await GET(req, { params: Promise.resolve({ orgId: opts.orgId ?? ORG }) });
@@ -255,5 +263,44 @@ describe('teacher identity on each call', () => {
         expect(toTeacherCallEntry('t1', base)).toMatchObject({ teacherUid: 'teacher-a', teacherName: null });
         expect(toTeacherCallEntry('t2', { ...base, teacherName: '   ' })!.teacherName).toBeNull();
         expect(toTeacherCallEntry('t3', { ...base, teacherName: 'x'.repeat(200) })!.teacherName).toHaveLength(80);
+    });
+});
+
+describe('the outcome goes through the reconciled reader (standing law 1)', () => {
+    const NOW = Date.parse('2026-11-22T12:00:00.000Z');
+    const base = { deliveryMethod: 'twilio_call', createdAt: '2026-11-22T10:00:00.000Z', teacherUid: 't1', parentPhone: '+919800000101' };
+
+    it('a call the carrier completed but whose engine never came up is failed, not reached', () => {
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'completed', engineFailure: true }, NOW)!.outcome).toBe('failed');
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'completed' }, NOW)!.outcome).toBe('completed');
+    });
+
+    it('an initiated call that never connected stops saying calling after 15 minutes', () => {
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'initiated' }, NOW)!.outcome).toBe('failed');
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'initiated', createdAt: '2026-11-22T11:55:00.000Z' }, NOW)!.outcome).toBe('initiated');
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'ringing', createdAt: '2026-11-22T11:55:00.000Z' }, NOW)!.outcome).toBe('initiated');
+    });
+
+    it('class gate: the module never reads callStatus except through reconcileCallStatus', () => {
+        const fs = require('node:fs');
+        const path = require('node:path');
+        const src = fs.readFileSync(path.resolve(__dirname, '../../../server/sampark/teacher-calls.ts'), 'utf8');
+        expect(src).toContain('reconcileCallStatus(');
+        expect(src.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/\.callStatus\b/);
+    });
+});
+
+describe('the days window is read by the query, not after the limit', () => {
+    it('a busy week keeps its first days: old calls outside the window never take a limit slot', async () => {
+        const now = Date.parse('2026-11-22T12:00:00.000Z');
+        const inWeek = outreach('teacher-a', { createdAt: '2026-11-16T12:00:00.000Z' });     // 6 days ago
+        outreach('teacher-a', { createdAt: '2026-11-10T12:00:00.000Z' });                    // 12 days ago
+        const calls = await listTeacherCalls(ORG, { limit: 1, days: 7 }, undefined, now);
+        expect(calls.map((c) => c.id)).toEqual([inWeek]);
+    });
+
+    it('the route takes days 1-31 and refuses anything else', async () => {
+        for (const bad of ['0', '32', 'x']) expect((await get({ days: bad })).status).toBe(400);
+        expect((await get({ days: '7' })).status).toBe(200);
     });
 });

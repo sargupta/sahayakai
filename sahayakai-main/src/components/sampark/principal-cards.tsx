@@ -25,6 +25,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { SectionCard } from "@/components/layout";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/context/language-context";
 import { ApiError } from "@/lib/api/client";
 import { listCallbacks, type CallbackView } from "@/lib/api/sampark-callbacks";
@@ -126,14 +127,31 @@ function CardLink({ href, children }: { href: string; children: React.ReactNode 
     );
 }
 
+/** A card's body while its data is missing: the error with a retry, or a placeholder while it
+ *  loads. Never "No calls yet", which would read as "nobody called" (review of #214). */
+function NotLoaded({ error, onRetry }: { error?: Error | null; onRetry?: () => void }) {
+    if (error) return <ErrorPanel error={error} onRetry={onRetry} />;
+    return (
+        <div aria-busy="true" className="space-y-3">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-5 w-1/2" />
+            <Skeleton className="h-5 w-2/3" />
+        </div>
+    );
+}
+
 export function WhyTeachersCalledCard({
     teacherCalls,
+    error,
+    onRetry,
     base,
     nowMs,
     className,
 }: {
     /** The school's teacher calls, newest first (any window; this card keeps the last 7 days). */
     teacherCalls: readonly TeacherCallEntry[] | undefined;
+    error?: Error | null;
+    onRetry?: () => void;
     base: string;
     nowMs: number;
     className?: string;
@@ -150,7 +168,9 @@ export function WhyTeachersCalledCard({
             className={className}
             action={<CardLink href={`${base}/calls`}>{t("See calls")}</CardLink>}
         >
-            {total === 0 ? (
+            {!teacherCalls ? (
+                <NotLoaded error={error} onRetry={onRetry} />
+            ) : total === 0 ? (
                 <p className="rounded-surface-md border border-dashed border-border p-6 text-center type-body text-muted-foreground">{t("No calls yet")}</p>
             ) : (
                 <ul className="space-y-3">
@@ -196,8 +216,8 @@ export function CallbacksTodayCard({ orgId, base, className }: { orgId: string; 
             className={className}
             action={<CardLink href={`${base}/calendar`}>{t("Calendar")}</CardLink>}
         >
-            {query.error && !query.data ? (
-                <ErrorPanel error={query.error} onRetry={query.reload} />
+            {!query.data ? (
+                <NotLoaded error={query.error} onRetry={query.reload} />
             ) : rows.length === 0 ? (
                 <p className="rounded-surface-md border border-dashed border-border p-6 text-center type-body text-muted-foreground">{t("No callbacks today.")}</p>
             ) : (
@@ -222,11 +242,15 @@ export function CallbacksTodayCard({ orgId, base, className }: { orgId: string; 
 
 export function TeachersThisWeekCard({
     teacherCalls,
+    error,
+    onRetry,
     base,
     nowMs,
     className,
 }: {
     teacherCalls: readonly TeacherCallEntry[] | undefined;
+    error?: Error | null;
+    onRetry?: () => void;
     base: string;
     nowMs: number;
     className?: string;
@@ -241,7 +265,9 @@ export function TeachersThisWeekCard({
             className={className}
             action={<CardLink href={`${base}/calls`}>{t("See calls")}</CardLink>}
         >
-            {rows.length === 0 ? (
+            {!teacherCalls ? (
+                <NotLoaded error={error} onRetry={onRetry} />
+            ) : rows.length === 0 ? (
                 <p className="rounded-surface-md border border-dashed border-border p-6 text-center type-body text-muted-foreground">{t("No calls yet")}</p>
             ) : (
                 <div className="overflow-x-auto">
@@ -256,9 +282,9 @@ export function TeachersThisWeekCard({
                         <tbody>
                             {rows.map((r) => (
                                 <tr key={r.teacherUid} className="border-t border-border">
-                                    <td className="py-2.5 font-semibold text-foreground break-words">{r.teacherName ?? t("Teacher")}</td>
-                                    <td className="py-2.5 text-right tabular-nums text-foreground">{r.calls}</td>
-                                    <td className="py-2.5 text-right tabular-nums text-foreground">{r.reached}</td>
+                                    <td className="py-2 font-semibold text-foreground break-words">{r.teacherName ?? t("Teacher")}</td>
+                                    <td className="py-2 text-right tabular-nums text-foreground">{r.calls}</td>
+                                    <td className="py-2 text-right tabular-nums text-foreground">{r.reached}</td>
                                 </tr>
                             ))}
                         </tbody>

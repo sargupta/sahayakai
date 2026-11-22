@@ -1,10 +1,11 @@
 /**
- * GET /api/sampark/[orgId]/teacher-calls?limit= — calls the school's teachers placed from
+ * GET /api/sampark/[orgId]/teacher-calls?limit=&days= — calls the school's teachers placed from
  * the attendance app, for the one calls view (integration brief Step 1B). Read-only.
  *
- * Input:  limit 1–500 (default 100).
- * Output: { calls: TeacherCallEntry[] } newest first — time, class, reason, outcome,
- *         duration and the last four digits only. Never the number or the message.
+ * Input:  limit 1–500 (default 100); days 1–31 (optional: only that many recent days).
+ * Output: { calls: TeacherCallEntry[] } newest first — time, class, reason, outcome (through the
+ *         reconciled reader), duration, the last four digits, and the teacher's uid and name
+ *         (admin-only route). Never the full number or the message.
  * Auth:   x-user-id (401) + requireOrgAdmin (403).
  * Flags:  SAMPARK_ENABLED==='true' else 404 (checked first).
  * Cost:   1 members read + ⌈teachers/30⌉ indexed queries (teacherUid in, createdAt desc).
@@ -22,7 +23,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ orgId: string }> }) {
     const guard = await guardOrgRoute(req, (await params).orgId);
     if ('response' in guard) return guard.response;
-    const query = TeacherCallQuerySchema.safeParse({ limit: req.nextUrl.searchParams.get('limit') || undefined });
+    const sp = req.nextUrl.searchParams;
+    const query = TeacherCallQuerySchema.safeParse({ limit: sp.get('limit') || undefined, days: sp.get('days') || undefined });
     if (!query.success) return invalidRequest(query.error);
     try {
         return NextResponse.json({ calls: await listTeacherCalls(guard.orgId, query.data) });
