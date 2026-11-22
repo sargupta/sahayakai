@@ -11,7 +11,7 @@
 
 import { getDb } from '@/lib/firebase-admin';
 import { authenticateMcpRequest, type McpAuthDb } from '@/lib/mcp/auth';
-import { enforceApiRateLimit, SAMPARK_API_SCOPE, type ApiV1Deps, type RateLimitStore } from '@/server/sampark/api-v1';
+import { enforceApiRateLimit, SAMPARK_API_SCOPE, type ApiV1Deps, type DailyCapEntry, type DailyCapStore, type RateLimitStore } from '@/server/sampark/api-v1';
 
 const firestoreStore: RateLimitStore = {
     async transact(bucket, update) {
@@ -25,7 +25,20 @@ const firestoreStore: RateLimitStore = {
     },
 };
 
+const dailyCapStore: DailyCapStore = {
+    async transact(bucket, update) {
+        const db = await getDb();
+        const ref = db.collection('rate_limits').doc(bucket);
+        await db.runTransaction(async (tx) => {
+            const snap = await tx.get(ref);
+            const stored: unknown = snap.exists ? snap.data()?.calls : [];
+            tx.set(ref, { calls: update(Array.isArray(stored) ? (stored as DailyCapEntry[]) : []) }, { merge: true });
+        });
+    },
+};
+
 export const apiV1Deps: ApiV1Deps = {
     authenticate: (headers) => authenticateMcpRequest(headers, SAMPARK_API_SCOPE, { getDb: getDb as unknown as () => Promise<McpAuthDb> }),
     rateLimit: (keyId, kind) => enforceApiRateLimit(firestoreStore, keyId, kind, Date.now()),
+    dailyCap: dailyCapStore,
 };

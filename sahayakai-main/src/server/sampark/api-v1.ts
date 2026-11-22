@@ -33,7 +33,7 @@ import type { McpPrincipal } from '@/lib/mcp/auth';
 import { McpCapabilityError } from '@/lib/mcp/errors';
 import type { ConversationCallView } from '@/lib/sampark/conversation/types';
 import { riyaEnabled, RiyaPreviewSchema, RiyaStartSchema, type RiyaPreview, type RiyaRefusal } from '@/server/sampark/conversation';
-import { notFound, SamparkServiceError } from '@/server/sampark/errors';
+import { conflict, notFound, SamparkServiceError } from '@/server/sampark/errors';
 import { invalidRequest } from '@/server/sampark/http';
 
 type Env = Record<string, string | undefined>;
@@ -63,6 +63,8 @@ export interface ApiV1Deps {
      * is refused (503): it must NOT swallow its own failures.
      */
     rateLimit: (keyId: string, kind: ApiRequestKind) => Promise<void>;
+    /** The per-key daily call budget's store (see reserveDailyCall). */
+    dailyCap: DailyCapStore;
     env?: Env;
 }
 
@@ -96,6 +98,61 @@ export async function enforceApiRateLimit(store: RateLimitStore, keyId: string, 
         }
         return [...live, nowMs];
     });
+}
+
+// ── Daily call budget per API key ───────────────────────────────────────────
+
+/** Default number of calls one API key may place in any 24 hours. */
+export const API_KEY_DAILY_CAP_DEFAULT = 20;
+/** The most an operator may raise it to without a code change. */
+export const API_KEY_DAILY_CAP_MAX = 200;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** SAMPARK_API_KEY_DAILY_CAP: a whole number; above the max it is the max (logged), below 1 or not a number it is the default. */
+export function apiKeyDailyCap(env: Env = process.env): number {
+    const raw = env.SAMPARK_API_KEY_DAILY_CAP;
+    if (raw === undefined || !/^\d{1,6}$/.test(raw.trim())) return API_KEY_DAILY_CAP_DEFAULT;
+    const n = Number(raw.trim());
+    if (n < 1) return API_KEY_DAILY_CAP_DEFAULT;
+    if (n > API_KEY_DAILY_CAP_MAX) {
+        logger.warn('SAMPARK_API_KEY_DAILY_CAP is above the maximum; using the maximum', 'SAMPARK_API_V1', { requested: n, max: API_KEY_DAILY_CAP_MAX });
+        return API_KEY_DAILY_CAP_MAX;
+    }
+    return n;
+}
+
+/** One reserved call: the request's idempotency key and when it was reserved. */
+export interface DailyCapEntry { key: string; at: number }
+
+/** One document of reservations per API key, updated atomically. A store error must propagate. */
+export interface DailyCapStore {
+    transact(bucket: string, update: (entries: DailyCapEntry[]) => DailyCapEntry[]): Promise<void>;
+}
+
+/**
+ * Reserve one call against the API key's rolling 24-hour budget, BEFORE the call is started.
+ *
+ * - Keyed by the request's idempotency key: two requests with the same key share one slot.
+ * - Atomic (one transaction), so two requests at once cannot both take the last slot.
+ * - Over budget: throws a 409 `API_KEY_DAILY_CAP_REACHED`; nothing is started.
+ * - A slot is NEVER given back, not even when the call is then refused. Giving slots back let a
+ *   second request with the same key free the slot of a call still being placed (found in
+ *   review). A refused request therefore uses the key's own budget: it can only over-count.
+ * - A retry of a call that already exists is not reserved again: the route looks for the call
+ *   first, so a retry is never refused by this budget, even days later.
+ * - In addition to the school's own limits (Test-mode daily cap, one call in flight), never
+ *   instead of them.
+ */
+export async function reserveDailyCall(store: DailyCapStore, keyId: string, idempotencyKey: string, nowMs: number, cap: number): Promise<void> {
+    let over = false;
+    await store.transact(`sampark_api_daily_${keyId}`, (entries) => {
+        over = false; // the store may run this more than once (a transaction retried on contention)
+        const live = entries.filter((e) => e && typeof e.key === 'string' && typeof e.at === 'number' && e.at > nowMs - DAY_MS);
+        if (live.some((e) => e.key === idempotencyKey)) return live;
+        if (live.length >= cap) { over = true; return live; }
+        return [...live, { key: idempotencyKey, at: nowMs }];
+    });
+    if (over) throw conflict('API_KEY_DAILY_CAP_REACHED', `This API key has placed its ${cap} calls for the last 24 hours`);
 }
 
 export type ApiV1Guard = { principal: McpPrincipal; actor: string } | { response: NextResponse };
@@ -280,3 +337,9 @@ export function apiErrorResponse(err: unknown, context: string): NextResponse {
 }
 
 export const apiJson = json;
+
+/** A dependency the API cannot run safely without is down: refuse, and log why. */
+export function apiUnavailable(err: unknown): NextResponse {
+    logger.error('Sampark API dependency unavailable', err, 'SAMPARK_API_V1');
+    return json(503, { error: 'NOT_CONFIGURED', message: 'The Sampark API is not available right now.' });
+}

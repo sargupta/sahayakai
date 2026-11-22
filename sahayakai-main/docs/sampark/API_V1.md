@@ -55,10 +55,11 @@ without being named.
 | 401 | `UNAUTHENTICATED` | No key, or a bad, unknown or revoked one (all read the same). |
 | 403 | `SCOPE_REQUIRED` | A real key without the `sampark` scope. |
 | 429 | `RATE_LIMITED` | Too many requests for this key; see `retry-after`. |
-| 503 | `NOT_CONFIGURED` | Keys cannot be checked, or the rate limiter's store is down. The API has its own limiter that fails closed; it does not use the app's shared one, which fails open. |
+| 503 | `NOT_CONFIGURED` | Keys cannot be checked, or the rate limiter's or the daily call budget's store is down. The API has its own limiter that fails closed; it does not use the app's shared one, which fails open. |
 | 400 | `INVALID_REQUEST` | The body is not the schema, or the call id is malformed. |
 | 404 | `RECIPIENT_NOT_FOUND` | No such guardian or student in this school. |
 | 404 | `CALL_NOT_FOUND` | Unknown id, another school's call, or a call staff placed from the console. |
+| 409 | `API_KEY_DAILY_CAP_REACHED` | This key has used its daily call budget (see Rate limits). |
 | 409 | the console's codes | `GATE_BLOCKED`, `OUTSIDE_CALLING_HOURS`, `SCHOOL_PAUSED`, `UNRESOLVED_PREVIOUS_CALL`, `ANNOUNCEMENT_CHANGED`, `RIYA_CALL_IN_PROGRESS`, `TEST_CALL_CAP_REACHED`, `IDEMPOTENCY_KEY_REUSED`, `LIVE_MODE_NOT_AVAILABLE`, … |
 
 A call with state `unknown` has no confirmed outcome. It is never redialled by a machine, and
@@ -73,7 +74,13 @@ budget for placing a call. These are request limits only. What bounds real diall
 the calling service itself: Live mode is refused, Test mode rings only the allow-listed test
 phone, at most `SAMPARK_RIYA_TEST_DAILY_CAP` real calls a day per school, one call in flight
 per school. An integration shares that daily cap and that single slot with the school's staff.
-**Before Live mode is ever allowed through the API it needs its own per-key daily cap.**
+Each API key also has its own daily call budget: `SAMPARK_API_KEY_DAILY_CAP` new call requests
+(default 20; above 200 it is 200) in any 24 hours, refused with `409 API_KEY_DAILY_CAP_REACHED`.
+A slot is reserved atomically before the calling service runs, keyed by the request's
+idempotency key. A slot is never given back, so a request the service then refuses (outside
+hours, a gate refusal) still uses one: an integration should preview first. A retry of a call
+that already exists reserves nothing, so it is never refused by this budget. If the budget
+cannot be checked, no call starts (503).
 
 ## Who the caller is
 
@@ -103,7 +110,8 @@ by default, so it now includes `sampark`, for the organisation `local-dev-org`.
 2. **No outcome webhooks.** A caller polls `GET /calls/{id}`. Signed outcome events come next.
 3. **The teacher "Contact" button** (`/api/attendance/call`) and the MCP `initiate_parent_call`
    tool are still their own paths. Moving them onto this API is the migration, done last.
-4. **Calls view source.** `CallSource` has `integration` reserved; the Calls view does not yet
+4. **Spend.** No per-school minute budget yet; the per-key daily cap bounds an integration's calls, not their length.
+5. **Calls view source.** `CallSource` has `integration` reserved; the Calls view does not yet
    label API calls. They are identifiable by `createdBy`.
 
 ## Tests

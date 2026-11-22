@@ -29,6 +29,7 @@ import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
 import {
     API_ACTOR_PREFIX, API_RATE_LIMITS, apiActor, SAMPARK_API_SCOPE, ApiPreviewSchema, ApiStartSchema, apiV1Enabled, enforceApiRateLimit, getApiCall, guardApiV1,
     rateLimitWaitSeconds, toApiCall, toApiPreview, type ApiV1Deps, type RateLimitStore,
+    API_KEY_DAILY_CAP_DEFAULT, API_KEY_DAILY_CAP_MAX, apiKeyDailyCap, reserveDailyCall, type DailyCapEntry, type DailyCapStore,
 } from '@/server/sampark/api-v1';
 import { getRiyaCall, previewRiyaCall, startRiyaCall, type RiyaDeps } from '@/server/sampark/conversation';
 import { SamparkServiceError } from '@/server/sampark/errors';
@@ -75,7 +76,7 @@ const authWith = (getDb: () => Promise<unknown>): ApiV1Deps['authenticate'] =>
     (headers) => authenticateMcpRequest(headers, SAMPARK_API_SCOPE, { getDb: getDb as () => Promise<McpAuthDb>, now: () => WED_11_IST });
 
 function depsFor(records: Record<string, Record<string, unknown>>, over: Partial<ApiV1Deps> = {}): ApiV1Deps {
-    return { authenticate: authWith(async () => keyDb(records).db), rateLimit: async () => undefined, env: { ...FLAGS }, ...over };
+    return { authenticate: authWith(async () => keyDb(records).db), rateLimit: async () => undefined, dailyCap: memoryCapStore(), env: { ...FLAGS }, ...over };
 }
 
 const saved = { ...process.env };
@@ -86,6 +87,20 @@ beforeEach(() => {
 afterEach(() => {
     process.env = { ...saved };
 });
+
+/** In-memory store with real transaction semantics: each update runs alone, in order. */
+function memoryCapStore(): DailyCapStore & { buckets: Map<string, DailyCapEntry[]> } {
+    const buckets = new Map<string, DailyCapEntry[]>();
+    let queue: Promise<unknown> = Promise.resolve();
+    return {
+        buckets,
+        transact: (bucket, update) => {
+            const run = queue.then(async () => { await Promise.resolve(); buckets.set(bucket, update(buckets.get(bucket) ?? [])); });
+            queue = run.catch(() => undefined);
+            return run;
+        },
+    };
+}
 
 describe('guardApiV1: the shell', () => {
     it('404 while any of the three flags is off, before the key is even looked at', async () => {
@@ -197,6 +212,70 @@ describe('enforceApiRateLimit: the API\'s own limiter', () => {
         const k = mint(['sampark']);
         const g = await guardApiV1(request(k.apiKey), depsFor({ [k.keyId]: { ...k.record } }, { rateLimit: (keyId, kind) => enforceApiRateLimit(broken, keyId, kind, T0) }), 'place');
         expect('response' in g && g.response.status).toBe(503);
+    });
+});
+
+describe('reserveDailyCall: the per-key daily call budget', () => {
+    const T0 = WED_11_IST.getTime();
+    const DAY = 24 * 60 * 60 * 1000;
+
+    it('reads its cap from the environment within bounds, else the default', () => {
+        expect(apiKeyDailyCap({})).toBe(API_KEY_DAILY_CAP_DEFAULT);
+        expect(apiKeyDailyCap({ SAMPARK_API_KEY_DAILY_CAP: '5' })).toBe(5);
+        for (const bad of ['0', '-1', 'ten', '5.5', '']) {
+            expect(apiKeyDailyCap({ SAMPARK_API_KEY_DAILY_CAP: bad })).toBe(API_KEY_DAILY_CAP_DEFAULT);
+        }
+        // Above the maximum it is the maximum, never the (smaller) default.
+        expect(apiKeyDailyCap({ SAMPARK_API_KEY_DAILY_CAP: String(API_KEY_DAILY_CAP_MAX + 1) })).toBe(API_KEY_DAILY_CAP_MAX);
+        expect(apiKeyDailyCap({ SAMPARK_API_KEY_DAILY_CAP: '500' })).toBe(API_KEY_DAILY_CAP_MAX);
+    });
+
+    it('allows `cap` distinct calls in 24 hours, refuses the next with a 409, and frees a slot 24 hours later', async () => {
+        const store = memoryCapStore();
+        for (let i = 0; i < 3; i++) await reserveDailyCall(store, 'k1', `req-${i}`, T0 + i, 3);
+        expect(await code(reserveDailyCall(store, 'k1', 'req-3', T0 + 10, 3))).toBe('API_KEY_DAILY_CAP_REACHED');
+        await expect(reserveDailyCall(store, 'k1', 'req-3', T0 + DAY + 1, 3)).resolves.toBeUndefined();
+    });
+
+    it('a retry of the same request never uses a second slot, even at the cap', async () => {
+        const store = memoryCapStore();
+        await reserveDailyCall(store, 'k1', 'req-a', T0, 1);
+        await expect(reserveDailyCall(store, 'k1', 'req-a', T0 + 5, 1)).resolves.toBeUndefined();
+        expect(store.buckets.get('sampark_api_daily_k1')).toHaveLength(1);
+    });
+
+    it('requests at the same moment cannot both take the last slot', async () => {
+        const store = memoryCapStore();
+        const results = await Promise.allSettled(Array.from({ length: 10 }, (_, i) => reserveDailyCall(store, 'k1', `race-${i}`, T0, 4)));
+        expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(4);
+        expect(store.buckets.get('sampark_api_daily_k1')).toHaveLength(4);
+    });
+
+    it('keys never share a budget', async () => {
+        const store = memoryCapStore();
+        await reserveDailyCall(store, 'k1', 'r', T0, 1);
+        await expect(reserveDailyCall(store, 'k2', 'r', T0, 1)).resolves.toBeUndefined();
+    });
+
+    it('a failing store refuses the reservation (no call can start without it)', async () => {
+        const broken: DailyCapStore = { transact: async () => { throw new Error('UNAVAILABLE'); } };
+        await expect(reserveDailyCall(broken, 'k1', 'r', T0, 5)).rejects.toThrow('UNAVAILABLE');
+    });
+
+    it('is right when the store runs the update twice, as a Firestore transaction does on contention', async () => {
+        // Attempt 1 sees the bucket full (another request just committed), attempt 2 sees the truth.
+        const entries: DailyCapEntry[] = [{ key: 'old', at: T0 - DAY - 1 }];
+        let attempt = 0;
+        const retrying: DailyCapStore = {
+            transact: async (_bucket, update) => {
+                attempt++;
+                update([...entries, { key: 'other', at: T0 }]); // first run: discarded, as on a conflict
+                entries.splice(0, entries.length, ...update(entries)); // retry: committed
+            },
+        };
+        await expect(reserveDailyCall(retrying, 'k1', 'mine', T0, 1)).resolves.toBeUndefined();
+        expect(attempt).toBe(1);
+        expect(entries.map((e) => e.key)).toEqual(['mine']);
     });
 });
 

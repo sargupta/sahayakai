@@ -11,7 +11,7 @@
 
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 
-import type { ApiV1Deps } from '@/server/sampark/api-v1';
+import type { ApiV1Deps, DailyCapEntry } from '@/server/sampark/api-v1';
 import type { RiyaDeps } from '@/server/sampark/conversation';
 
 const runtime: { deps: ApiV1Deps | null; riya: RiyaDeps | null } = { deps: null, riya: null };
@@ -20,6 +20,7 @@ jest.mock('@/server/sampark/api-v1-runtime', () => ({
     apiV1Deps: {
         authenticate: (headers: Headers) => runtime.deps!.authenticate(headers),
         rateLimit: (keyId: string, kind: 'place' | 'read') => runtime.deps!.rateLimit(keyId, kind),
+        get dailyCap() { return runtime.deps!.dailyCap; },
         get env() { return runtime.deps!.env; },
     },
 }));
@@ -75,7 +76,9 @@ beforeEach(async () => {
     runtime.riya = { repo, calls, clock: testClock(NOW), env: { SAMPARK_ENABLED: 'true', SAMPARK_ELEVENLABS_ENABLED: 'true', SAMPARK_RIYA_PURPOSES: RIYA_PURPOSES.join(',') } };
     const records: Record<string, unknown> = { [key.keyId]: { ...key.record }, [plannerKey.keyId]: { ...plannerKey.record } };
     limiter = jest.fn(async () => undefined);
+    const capBuckets = new Map<string, DailyCapEntry[]>();
     runtime.deps = {
+        dailyCap: { transact: async (bucket, update) => { capBuckets.set(bucket, update(capBuckets.get(bucket) ?? [])); } },
         env: { ...FLAGS },
         rateLimit: limiter,
         authenticate: (headers) => authenticateMcpRequest(headers, SAMPARK_API_SCOPE, {
@@ -145,6 +148,51 @@ describe('POST /api/sampark-api/v1/calls', () => {
         expect((await startCall(http(key.apiKey, body))).status).toBe(429);
         limiter.mockRejectedValueOnce(new Error('UNAVAILABLE'));
         expect((await startCall(http(key.apiKey, body))).status).toBe(503);
+        expect((await calls.listCalls(ORG, 10)).length).toBe(0);
+    });
+});
+
+describe('POST /api/sampark-api/v1/calls: the per-key daily budget', () => {
+    it('refuses with 409 once the key has made its daily requests; a refused request uses a slot too', async () => {
+        runtime.deps!.env = { ...FLAGS, SAMPARK_API_KEY_DAILY_CAP: '2' };
+        // Slots are never given back (a second request with the same key could otherwise free a
+        // slot still in use), so this refusal (unknown family) uses one.
+        expect((await startCall(http(key.apiKey, await startBody({ guardianId: 'nobody' })))).status).toBe(404);
+        expect((await startCall(http(key.apiKey, await startBody()))).status).toBe(201);
+        expect((await startCall(http(key.apiKey, await startBody()))).status).toBe(409);
+        expect((await calls.listCalls(ORG, 10)).length).toBe(1);
+    });
+
+    it('two requests with the same key, one refused, cannot free the other\'s slot', async () => {
+        runtime.deps!.env = { ...FLAGS, SAMPARK_API_KEY_DAILY_CAP: '1' };
+        const good = await startBody();
+        const bad = { ...good, guardianId: 'nobody' };
+        const [a, b] = await Promise.all([startCall(http(key.apiKey, good)), startCall(http(key.apiKey, bad))]);
+        expect([a.status, b.status].sort()).toEqual(expect.arrayContaining([201]));
+        // Whatever the order, the slot stays used: a new call is refused.
+        expect((await startCall(http(key.apiKey, await startBody()))).status).toBe(409);
+        expect((await calls.listCalls(ORG, 10)).length).toBe(1);
+    });
+
+    it('a retry of an existing call reserves nothing: it is answered even when the budget store is down', async () => {
+        const body = await startBody();
+        expect((await startCall(http(key.apiKey, body))).status).toBe(201);
+        runtime.deps!.dailyCap = { transact: async () => { throw new Error('UNAVAILABLE'); } };
+        expect((await startCall(http(key.apiKey, body))).status).toBe(200);
+        expect((await calls.listCalls(ORG, 10)).length).toBe(1);
+    });
+
+    it('a retry of a placed call is still 200 when the key is at its cap', async () => {
+        runtime.deps!.env = { ...FLAGS, SAMPARK_API_KEY_DAILY_CAP: '1' };
+        const body = await startBody();
+        expect((await startCall(http(key.apiKey, body))).status).toBe(201);
+        expect((await startCall(http(key.apiKey, body))).status).toBe(200);
+        expect((await calls.listCalls(ORG, 10)).length).toBe(1);
+    });
+
+    it('a broken budget store means no call (503), never an unmetered one', async () => {
+        runtime.deps!.dailyCap = { transact: async () => { throw new Error('UNAVAILABLE'); } };
+        expect((await startCall(http(key.apiKey, await startBody()))).status).toBe(503);
         expect((await calls.listCalls(ORG, 10)).length).toBe(0);
     });
 });
