@@ -16,18 +16,51 @@ import pytest
 
 from sahayakai_agents.telephony import router as telephony
 from sahayakai_agents.telephony.suppression import (
+    KEYED,
+    LEGACY,
+    PEPPER_ENV,
     SUPPRESSION_COLLECTION,
+    keyed_phone_suppression_id,
+    legacy_phone_suppression_id,
     phone_suppression_id,
+    phone_suppression_ids,
 )
 
-# Shared fixture: the TS test asserts the identical digest.
+# Shared fixtures: the TS test asserts the identical digests.
 FIXTURE_PHONE = "+919800000101"
 FIXTURE_DIGEST = "1775163af1a0b1e46b138f7908ca90c7faa36273ae53b36a40640bba2b0ba8bd"
+FIXTURE_PEPPER = "test-pepper-not-a-secret"
+FIXTURE_KEYED_DIGEST = "9960b183c2a155b03dfad2caddfd303b611cb1f67265828fb07fc862934cc409"
 
 
-def test_hash_matches_shared_fixture() -> None:
-    assert phone_suppression_id(FIXTURE_PHONE) == hashlib.sha256(FIXTURE_PHONE.encode()).hexdigest()
-    assert phone_suppression_id(FIXTURE_PHONE) == FIXTURE_DIGEST
+@pytest.fixture(autouse=True)
+def _pepper(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(PEPPER_ENV, FIXTURE_PEPPER)
+
+
+def test_hashes_match_shared_fixtures() -> None:
+    assert legacy_phone_suppression_id(FIXTURE_PHONE) == hashlib.sha256(FIXTURE_PHONE.encode()).hexdigest()
+    assert legacy_phone_suppression_id(FIXTURE_PHONE) == FIXTURE_DIGEST
+    assert keyed_phone_suppression_id(FIXTURE_PHONE, FIXTURE_PEPPER) == FIXTURE_KEYED_DIGEST
+    assert phone_suppression_id(FIXTURE_PHONE) == (FIXTURE_KEYED_DIGEST, KEYED)
+
+
+def test_the_keyed_id_cannot_be_rebuilt_without_the_pepper() -> None:
+    # The old id falls to hashing every Indian mobile number; the keyed one does not.
+    assert phone_suppression_id(FIXTURE_PHONE)[0] != legacy_phone_suppression_id(FIXTURE_PHONE)
+    assert keyed_phone_suppression_id(FIXTURE_PHONE, "another-pepper") != FIXTURE_KEYED_DIGEST
+
+
+def test_lookup_ids_cover_entries_written_before_the_change() -> None:
+    assert phone_suppression_ids(FIXTURE_PHONE) == [FIXTURE_KEYED_DIGEST, FIXTURE_DIGEST]
+
+
+def test_without_a_pepper_the_opt_out_is_still_saved_under_the_old_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv(PEPPER_ENV)
+    assert phone_suppression_id(FIXTURE_PHONE) == (FIXTURE_DIGEST, LEGACY)
+    assert phone_suppression_ids(FIXTURE_PHONE) == [FIXTURE_DIGEST]
 
 
 def _fake_client(outreach: dict | None):
@@ -73,9 +106,11 @@ async def test_writes_flag_and_suppression_without_raw_phone_in_id() -> None:
     flag = docs[("parent_outreach", "out1")].update.call_args.args[0]
     assert flag["optedOut"] is True and flag["optedOutAt"]
 
-    key = (SUPPRESSION_COLLECTION, FIXTURE_DIGEST)
+    key = (SUPPRESSION_COLLECTION, FIXTURE_KEYED_DIGEST)
     assert key in docs
+    assert (SUPPRESSION_COLLECTION, FIXTURE_DIGEST) not in docs
     record = docs[key].set.call_args.args[0]
+    assert record["hash"] == KEYED
     assert record["teacherUid"] == "t1"
     assert record["classId"] == "c1"
     assert record["studentId"] == "s1"

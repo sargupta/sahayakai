@@ -44,12 +44,16 @@ describe('web ↔ voice engine contract', () => {
     it('the do-not-call key is the digest the engine writes', () => {
         const fixture = readJson(path.join(ENGINE, 'tests', 'fixtures', 'suppression_digest.json'));
         const modulePath = path.join(APP_ROOT, 'src', 'lib', 'call-suppression.ts');
-        const digestOf: (e164: string) => string = existsSync(modulePath)
-            ? require('@/lib/call-suppression').phoneSuppressionId
+        // New opt-outs are keyed with the phone pepper; the engine's plain digest is the old form,
+        // which every lookup still checks, so an opt-out written under it is found.
+        const mod = existsSync(modulePath) ? require('@/lib/call-suppression') : null;
+        const digestOf: (e164: string) => string = mod
+            ? mod.legacyPhoneSuppressionId
             : (e164: string) => createHash('sha256').update(e164.trim(), 'utf8').digest('hex');
         expect(fixture.cases.length).toBeGreaterThan(0);
         for (const c of fixture.cases) {
             expect(digestOf(c.phone)).toBe(c.digest);
+            if (mod) expect(mod.phoneSuppressionIds(c.phone)).toContain(c.digest);
         }
     });
 

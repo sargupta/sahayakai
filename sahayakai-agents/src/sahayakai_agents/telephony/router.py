@@ -87,7 +87,7 @@ from .school_data import (
     SchoolDataTools,
     tool_declarations,
 )
-from .suppression import SUPPRESSION_COLLECTION, phone_suppression_id
+from .suppression import LEGACY, SUPPRESSION_COLLECTION, phone_suppression_id
 from .tokens import VobizDomain, token_minted_at, verify_vobiz_token
 from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
 
@@ -1494,12 +1494,15 @@ async def _persist_opt_out(bridge: _Bridge) -> bool:
         if not isinstance(phone, str) or not phone.strip():
             log.error("telephony.opt_out_no_phone", outreach_id=bridge.outreach_id)
             return False
-        suppression = client.collection(SUPPRESSION_COLLECTION).document(
-            phone_suppression_id(phone)
-        )
+        doc_id, hash_form = phone_suppression_id(phone)
+        if hash_form == LEGACY:
+            # Saved anyway: a lost "no" is worse than a weaker hash. Set SAMPARK_PHONE_PEPPER.
+            log.error("telephony.opt_out_unkeyed_hash", outreach_id=bridge.outreach_id)
+        suppression = client.collection(SUPPRESSION_COLLECTION).document(doc_id)
         await asyncio.to_thread(
             suppression.set,
             {
+                "hash": hash_form,
                 "teacherUid": data.get("teacherUid"),
                 "classId": data.get("classId"),
                 "studentId": data.get("studentId"),

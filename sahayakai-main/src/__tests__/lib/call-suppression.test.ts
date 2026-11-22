@@ -6,7 +6,9 @@
  */
 
 import {
-    phoneSuppressionId,
+    keyedPhoneSuppressionId,
+    legacyPhoneSuppressionId,
+    phoneSuppressionIds,
     isParentOptedOut,
     refuseIfParentOptedOut,
     SUPPRESSION_COLLECTION,
@@ -17,14 +19,33 @@ import { createFakeDb, lastJsonBody } from '../helpers/fake-attendance-db';
 // A made-up number from the +9198000001xx test range, never a real family's.
 const FIXTURE_PHONE = '+919800000101';
 const FIXTURE_DIGEST = '1775163af1a0b1e46b138f7908ca90c7faa36273ae53b36a40640bba2b0ba8bd';
+const FIXTURE_PEPPER = 'test-pepper-not-a-secret';
+const FIXTURE_KEYED_DIGEST = '9960b183c2a155b03dfad2caddfd303b611cb1f67265828fb07fc862934cc409';
 
-describe('phoneSuppressionId', () => {
-    it('matches the digest the Python bridge computes for the same number', () => {
-        expect(phoneSuppressionId(FIXTURE_PHONE)).toBe(FIXTURE_DIGEST);
+const savedPepper = process.env.SAMPARK_PHONE_PEPPER;
+beforeEach(() => { process.env.SAMPARK_PHONE_PEPPER = FIXTURE_PEPPER; });
+afterAll(() => {
+    if (savedPepper === undefined) delete process.env.SAMPARK_PHONE_PEPPER;
+    else process.env.SAMPARK_PHONE_PEPPER = savedPepper;
+});
+
+describe('suppression ids', () => {
+    it('match the digests the Python bridge computes for the same number', () => {
+        expect(legacyPhoneSuppressionId(FIXTURE_PHONE)).toBe(FIXTURE_DIGEST);
+        expect(keyedPhoneSuppressionId(FIXTURE_PHONE, FIXTURE_PEPPER)).toBe(FIXTURE_KEYED_DIGEST);
     });
 
-    it('never contains the raw number', () => {
-        expect(phoneSuppressionId(FIXTURE_PHONE)).not.toContain('9800000101');
+    it('look up the keyed id first, then the old one, so entries from before the change still count', () => {
+        expect(phoneSuppressionIds(FIXTURE_PHONE)).toEqual([FIXTURE_KEYED_DIGEST, FIXTURE_DIGEST]);
+    });
+
+    it('fall back to the old id alone when no pepper is configured', () => {
+        delete process.env.SAMPARK_PHONE_PEPPER;
+        expect(phoneSuppressionIds(FIXTURE_PHONE)).toEqual([FIXTURE_DIGEST]);
+    });
+
+    it('never contain the raw number', () => {
+        for (const id of phoneSuppressionIds(FIXTURE_PHONE)) expect(id).not.toContain('9800000101');
     });
 });
 
@@ -46,6 +67,14 @@ describe('refuseIfParentOptedOut', () => {
         const body = lastJsonBody(jsonSpy);
         expect(body.code).toBe('PARENT_OPTED_OUT');
         expect(body.error).toMatch(/asked not to be called/i);
+    });
+
+    it('refuses a number opted out under the new keyed id', async () => {
+        const db = createFakeDb({
+            [SUPPRESSION_COLLECTION]: { [FIXTURE_KEYED_DIGEST]: { reason: 'opt_out' } },
+        });
+        expect(await isParentOptedOut(db, FIXTURE_PHONE)).toBe(true);
+        expect((await refuseIfParentOptedOut(db, FIXTURE_PHONE))?.status).toBe(409);
     });
 
     it('fails closed (503, no dial) when the lookup errors', async () => {

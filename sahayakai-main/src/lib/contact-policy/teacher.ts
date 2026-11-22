@@ -8,11 +8,16 @@
  * teacher cannot step outside their school's opt-out list by editing their profile. A teacher
  * with no verified school calls as a standalone teacher: no school opt-out list, but the hours
  * and the per-number cap still apply.
+ *
+ * A school's pause (H3, the console's "pause all calls") stops teacher calls too: a teacher's call
+ * is routine, and both pause scopes stop routine calls. Before this, the Contact button kept
+ * dialling parents of a paused school (found by the independent review, 22 Nov 2026).
  */
 
 import 'server-only';
 
 import { getSamparkRepo } from '@/lib/sampark/repo/factory';
+import type { SamparkSchool } from '@/types/sampark';
 import {
     checkContact,
     clearanceFor,
@@ -53,10 +58,29 @@ export async function clearTeacherCall(params: {
     parentPhone: string;
     at: Date;
     store?: ContactPolicyStore;
+    /** Where the school's pause is read; Sampark's repo unless a test passes its own. */
+    schools?: { getSchool(orgId: string): Promise<Pick<SamparkSchool, 'pause'> | null> };
 }): Promise<TeacherCallClearance & { orgId: string | null }> {
     let orgId: string | null = null;
     try {
         orgId = await teacherSchool(params.db, params.uid);
+        if (orgId) {
+            const schools = params.schools ?? (await getSamparkRepo());
+            const school = await schools.getSchool(orgId);
+            if (school?.pause) {
+                return {
+                    ok: false,
+                    orgId,
+                    decision: {
+                        allowed: false,
+                        reason: 'school_paused',
+                        message: 'The school has paused its calls, so this call was not placed.',
+                        nextAllowedAt: null,
+                        phoneHash: null,
+                    },
+                };
+            }
+        }
         const store = params.store ?? (await getSamparkRepo());
         const input = { orgId, phone: { e164: params.parentPhone }, kind: 'routine' as const, at: params.at };
         const decision = await checkContact(input, store);
