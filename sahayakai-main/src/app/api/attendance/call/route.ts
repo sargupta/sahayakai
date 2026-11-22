@@ -390,6 +390,8 @@ function contactRefusal(
             return { category, response: NextResponse.json({ error: decision.message, code: 'OPTED_OUT', nextAllowedAt: next, retryable: false }, { status: 409 }) };
         case 'frequency_cap':
             return { category, response: NextResponse.json({ error: decision.message, code: 'FREQUENCY_CAP', nextAllowedAt: next, retryable: false }, { status: 409 }) };
+        case 'school_paused':
+            return { category, response: NextResponse.json({ error: decision.message, code: 'SCHOOL_PAUSED', nextAllowedAt: null, retryable: false }, { status: 409 }) };
         default:
             return { category, response: NextResponse.json({ error: decision.message, code: 'CONTACT_POLICY_UNAVAILABLE', nextAllowedAt: null, retryable: true }, { status: 503 }) };
     }

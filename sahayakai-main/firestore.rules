@@ -420,7 +420,8 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Do-not-call list: call_suppressions/{sha256(E.164)}. Written by the
+    // Do-not-call list: call_suppressions/{id}, id = sha256(E.164|SAMPARK_PHONE_PEPPER)
+    // (older entries: sha256(E.164); both are looked up). Written by the
     // telephony engine that hears a parent ask not to be called again
     // (sahayakai-agents `_persist_opt_out`); read by /api/attendance/call and
     // /api/attendance/outreach before any dial (src/lib/call-suppression.ts).

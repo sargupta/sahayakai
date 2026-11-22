@@ -40,7 +40,7 @@ import type { Suppression } from '@/types/sampark';
 export type ContactKind = 'routine' | 'emergency';
 /** What started the call. Sampark's campaign calls are recorded in its own call log. */
 export type ContactSource = 'campaign' | 'teacher' | 'integration';
-export type ContactDenial = 'opted_out' | 'frequency_cap' | 'outside_hours' | 'policy_unavailable';
+export type ContactDenial = 'opted_out' | 'frequency_cap' | 'outside_hours' | 'policy_unavailable' | 'school_paused';
 
 /** One placed call, in the shared ledger. No number: the keyed hash only. */
 export interface ContactRecord {
