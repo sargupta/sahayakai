@@ -99,7 +99,7 @@ def test_route_order_matches_the_export() -> None:
 
 def test_first_message_is_riyas_and_resolves_school() -> None:
     first = call().first_message()
-    assert first.startswith("Hello, I'm Riya, an AI assistant calling on behalf of Sahayak Demo School")
+    assert first.startswith("Hello, this is Riya calling from Sahayak Demo School")
     assert first.endswith("Is this a good time to talk?") and "{{" not in first
 
 

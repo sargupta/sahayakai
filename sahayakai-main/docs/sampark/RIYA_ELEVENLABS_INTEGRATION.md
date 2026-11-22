@@ -177,7 +177,7 @@ Two notes on these results:
 **Proposed ElevenLabs changes.** These need your authorisation; nothing has been changed.
 
 1. **Disclosure.**
-   - Set the first message to: "Hello, this is Riya, an AI assistant calling on behalf of {{school_name}}, with an important update. Is this a good time to talk?"
+   - Set the first message to (decision D1, 23 Nov 2026): "Hello, this is Riya calling from {{school_name}} with an important update. This call may be recorded. Is this a good time to talk?" It must match `RIYA_OPENING_TEMPLATE` word for word (verifier check 5d).
    - Replace the prompt line "Do not volunteer that you are an AI" with "You have already said you are an AI assistant; never claim to be human."
    - Update each node's opening line to match.
 2. **Privacy.**

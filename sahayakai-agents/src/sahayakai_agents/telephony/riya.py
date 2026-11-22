@@ -720,7 +720,7 @@ class RiyaCall:
         student = (self.variables.get("student_name") or "").strip()
         child = f"the parent or guardian of {student}" if student else "the parent or guardian"
         return (
-            f"I'm Riya, an AI assistant calling from {school}. Before I share the details, "
+            f"This is Riya, calling from {school}. Before I share the details, "
             f"could you confirm if I'm speaking with {child}?"
         )
 
