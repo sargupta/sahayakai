@@ -80,10 +80,10 @@ export function teacherCallOutcome(raw: Record<string, unknown>, nowMs: number =
 
 const str = (v: unknown, max = 120): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, max) : null);
 
-/** Last four digits of a stored number; '' when there are not four digits to show. */
-export function phoneLast4(raw: unknown): string {
+/** Last four digits of a stored number; null when there are not four digits to show. */
+export function phoneLast4(raw: unknown): string | null {
     const digits = typeof raw === 'string' ? raw.replace(/\D/g, '') : '';
-    return digits.length >= 4 ? digits.slice(-4) : '';
+    return digits.length >= 4 ? digits.slice(-4) : null;
 }
 
 /** The only shape a teacher call leaves the server in. */
@@ -101,12 +101,12 @@ export function toTeacherCallEntry(id: string, raw: unknown, nowMs: number = Dat
         id,
         source: 'teacher',
         createdAt: new Date(createdAt).toISOString(),
-        phoneLast4: phoneLast4(r.parentPhone),
+        phoneLast4: phoneLast4(r.parentPhone) || null,
         className: str(r.className),
         reason,
         outcome,
         durationSeconds: duration,
-        teacherUid: str(r.teacherUid, 128) ?? '',
+        teacherUid: str(r.teacherUid, 128),
         teacherName: str(r.teacherName, 80),
     };
 }

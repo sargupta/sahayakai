@@ -1474,49 +1474,56 @@ async def _persist_opt_out(bridge: _Bridge) -> bool:
     routes refuse with 409 PARENT_OPTED_OUT when that record exists.
 
     Never fatal, but loud: a lost opt-out means a parent who was told "it has
-    been noted" gets called again. Returns True when the suppression record was
-    written.
+    been noted" gets called again. Retries once on transient failure.
+    Returns True when the suppression record was written.
     """
     if sampark_link.is_sampark(bridge.outreach_id):
         return True  # reported as stop_requested in the post-call event
-    try:
-        from google.cloud import firestore
 
-        client = firestore.Client(
-            project=get_settings().gcp_project,
-            database=get_settings().firestore_database,
-        )
-        ref = client.collection("parent_outreach").document(bridge.outreach_id)
-        snap = await asyncio.to_thread(ref.get)
-        data = (snap.to_dict() if snap.exists else None) or {}
-        now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-        await asyncio.to_thread(ref.update, {"optedOut": True, "optedOutAt": now, "updatedAt": now})
-        phone = data.get("parentPhone")
-        if not isinstance(phone, str) or not phone.strip():
-            log.error("telephony.opt_out_no_phone", outreach_id=bridge.outreach_id)
-            return False
-        doc_id, hash_form = phone_suppression_id(phone)
-        if hash_form == LEGACY:
-            # Saved anyway: a lost "no" is worse than a weaker hash. Set SAMPARK_PHONE_PEPPER.
-            log.error("telephony.opt_out_unkeyed_hash", outreach_id=bridge.outreach_id)
-        suppression = client.collection(SUPPRESSION_COLLECTION).document(doc_id)
-        await asyncio.to_thread(
-            suppression.set,
-            {
-                "hash": hash_form,
-                "teacherUid": data.get("teacherUid"),
-                "classId": data.get("classId"),
-                "studentId": data.get("studentId"),
-                "outreachId": bridge.outreach_id,
-                "reason": "opt_out",
-                "createdAt": now,
-            },
-        )
-        log.info("telephony.opt_out_saved", outreach_id=bridge.outreach_id)
-        return True
-    except Exception as exc:  # noqa: BLE001
-        log.error("telephony.opt_out_lost", outreach_id=bridge.outreach_id, error=str(exc))
-        return False
+    last_exc: Exception | None = None
+    for attempt in (1, 2):
+        try:
+            from google.cloud import firestore
+
+            client = firestore.Client(
+                project=get_settings().gcp_project,
+                database=get_settings().firestore_database,
+            )
+            ref = client.collection("parent_outreach").document(bridge.outreach_id)
+            snap = await asyncio.to_thread(ref.get)
+            data = (snap.to_dict() if snap.exists else None) or {}
+            now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            await asyncio.to_thread(ref.update, {"optedOut": True, "optedOutAt": now, "updatedAt": now})
+            phone = data.get("parentPhone")
+            if not isinstance(phone, str) or not phone.strip():
+                log.error("telephony.opt_out_no_phone", outreach_id=bridge.outreach_id)
+                return False
+            doc_id, hash_form = phone_suppression_id(phone)
+            if hash_form == LEGACY:
+                # Saved anyway: a lost "no" is worse than a weaker hash. Set SAMPARK_PHONE_PEPPER.
+                log.error("telephony.opt_out_unkeyed_hash", outreach_id=bridge.outreach_id)
+            suppression = client.collection(SUPPRESSION_COLLECTION).document(doc_id)
+            await asyncio.to_thread(
+                suppression.set,
+                {
+                    "hash": hash_form,
+                    "teacherUid": data.get("teacherUid"),
+                    "classId": data.get("classId"),
+                    "studentId": data.get("studentId"),
+                    "outreachId": bridge.outreach_id,
+                    "reason": "opt_out",
+                    "createdAt": now,
+                },
+            )
+            log.info("telephony.opt_out_saved", outreach_id=bridge.outreach_id, attempt=attempt)
+            return True
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            log.warning("telephony.opt_out_retry", outreach_id=bridge.outreach_id, attempt=attempt, error=str(exc))
+            if attempt < 2:
+                await asyncio.sleep(0.5 * attempt)
+    log.error("telephony.opt_out_lost", outreach_id=bridge.outreach_id, error=str(last_exc) if last_exc else "unknown")
+    return False
 
 
 async def _persist_transcript(bridge: _Bridge) -> None:
@@ -4494,7 +4501,13 @@ async def _settle_call(bridge: _Bridge, engine_error: str | None, started: float
     # Now the record, with the parent already gone. The opt-out goes
     # first: it is the one write whose loss re-dials someone who said no.
     if bridge.opted_out:
-        await _persist_opt_out(bridge)
+        saved = await _persist_opt_out(bridge)
+        if not saved:
+            log.error(
+                "telephony.opt_out_not_persisted",
+                outreach_id=bridge.outreach_id,
+                detail="parent said stop but the suppression record was not written",
+            )
     if engine_error is not None:
         await _persist_engine_failure(bridge, engine_error)
     await _persist_transcript(bridge)
