@@ -128,7 +128,7 @@ function CardLink({ href, children }: { href: string; children: React.ReactNode 
 }
 
 /** A card's body while its data is missing: the error with a retry, or a placeholder while it
- *  loads. Never "No calls yet", which would read as "nobody called" (review of #214). */
+ *  loads. Never "No calls yet", which would read as "nobody called" (review of #214). */ // design-token-allow: "#214" is a PR reference in a comment, not a color
 function NotLoaded({ error, onRetry }: { error?: Error | null; onRetry?: () => void }) {
     if (error) return <ErrorPanel error={error} onRetry={onRetry} />;
     return (
