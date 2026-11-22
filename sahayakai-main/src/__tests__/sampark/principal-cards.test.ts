@@ -5,7 +5,7 @@
  * shows what is due today plus every proposal waiting for a person.
  */
 
-import { callbacksForToday, isSwitchedOff, istDayStart, teacherReasonsThisWeek } from '@/components/sampark/principal-cards';
+import { callbacksForToday, isSwitchedOff, istDayStart, teacherReasonsThisWeek, teachersThisWeek } from '@/components/sampark/principal-cards';
 import { ApiError } from '@/lib/api/client';
 import type { CallbackView } from '@/lib/api/sampark-callbacks';
 import type { TeacherCallEntry, TeacherCallReason } from '@/types/sampark';
@@ -13,10 +13,11 @@ import type { TeacherCallEntry, TeacherCallReason } from '@/types/sampark';
 const NOW = Date.parse('2026-11-21T10:00:00+05:30');
 const DAY = 86_400_000;
 
-function call(id: string, reason: TeacherCallReason, agoMs: number): TeacherCallEntry {
+function call(id: string, reason: TeacherCallReason, agoMs: number, who: Partial<TeacherCallEntry> = {}): TeacherCallEntry {
     return {
         id, source: 'teacher', createdAt: new Date(NOW - agoMs).toISOString(),
         phoneLast4: '0720', className: 'Class 7B', reason, outcome: 'completed', durationSeconds: 40,
+        teacherUid: 'teacher-a', teacherName: 'Anjali Rai', ...who,
     };
 }
 
@@ -94,5 +95,47 @@ describe('isSwitchedOff', () => {
         expect(isSwitchedOff(new ApiError(500, 'boom'))).toBe(false);
         expect(isSwitchedOff(new Error('network'))).toBe(false);
         expect(isSwitchedOff(null)).toBe(false);
+    });
+});
+
+describe('teachersThisWeek', () => {
+    const rao = { teacherUid: 'teacher-b', teacherName: 'Mrs Rao' };
+
+    it('counts calls and reached per teacher over 7 days, most calls first', () => {
+        const rows = teachersThisWeek(
+            [
+                call('a1', 'consecutive_absences', 1 * DAY),
+                call('b1', 'poor_performance', 1 * DAY, { ...rao, outcome: 'no_answer' }),
+                call('b2', 'poor_performance', 2 * DAY, rao),
+                call('b3', 'positive_feedback', 3 * DAY, rao),
+                call('b-old', 'positive_feedback', 8 * DAY, rao),
+            ],
+            NOW,
+        );
+        expect(rows).toEqual([
+            { teacherUid: 'teacher-b', teacherName: 'Mrs Rao', calls: 3, reached: 2 },
+            { teacherUid: 'teacher-a', teacherName: 'Anjali Rai', calls: 1, reached: 1 },
+        ]);
+    });
+
+    it('groups by teacher id, not name; skips calls with no teacher id; keeps the latest name', () => {
+        const rows = teachersThisWeek(
+            [
+                call('n1', 'other', 1 * DAY, { teacherUid: 'teacher-c', teacherName: 'Priya Thapa' }),
+                call('n2', 'other', 2 * DAY, { teacherUid: 'teacher-c', teacherName: 'Priya T.' }),
+                call('same-name', 'other', 1 * DAY, { teacherUid: 'teacher-d', teacherName: 'Priya Thapa' }),
+                call('none', 'other', 1 * DAY, { teacherUid: '', teacherName: 'Ghost' }),
+            ],
+            NOW,
+        );
+        expect(rows.map((r) => [r.teacherUid, r.teacherName, r.calls])).toEqual([
+            ['teacher-c', 'Priya Thapa', 2],
+            ['teacher-d', 'Priya Thapa', 1],
+        ]);
+    });
+
+    it('a teacher without a recorded name sorts after named teachers', () => {
+        const rows = teachersThisWeek([call('x', 'other', DAY, { teacherUid: 't-x', teacherName: null }), call('y', 'other', DAY)], NOW);
+        expect(rows.map((r) => r.teacherUid)).toEqual(['teacher-a', 't-x']);
     });
 });

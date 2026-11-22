@@ -12,10 +12,11 @@
  * Read-only: neither card starts, moves or confirms anything. Links go to the
  * calendar and the calls screen, where those actions already live.
  *
+ *   TeachersThisWeekCard  — parent calls per teacher in the last 7 days, and how
+ *                           many reached the parent (teacher names: school
+ *                           admins only, founder decision 21 Nov 2026).
+ *
  * Deliberately NOT carried over yet (see "Sampark: what to build next"):
- *   - Teachers this week: the teacher-calls projection keeps teacher names and
- *     uids off the wire (CLASS GATE in teacher-calls.test.ts); showing them
- *     is a decision, not a refactor.
  *   - Upset parents / open complaints / needs your attention: no complaint
  *     record exists in Sampark yet.
  */
@@ -56,6 +57,31 @@ export function teacherReasonsThisWeek(calls: readonly TeacherCallEntry[], nowMs
     const other = counts.get("other") ?? 0;
     if (other > 0) rows.push({ reason: "other", count: other });
     return rows;
+}
+
+export interface TeacherWeekRow {
+    teacherUid: string;
+    teacherName: string | null;
+    calls: number;
+    reached: number;
+}
+
+/** Teacher calls in the 7 days up to `nowMs`, per teacher: most calls first, then by name. */
+export function teachersThisWeek(calls: readonly TeacherCallEntry[], nowMs: number): TeacherWeekRow[] {
+    const rows = new Map<string, TeacherWeekRow>();
+    for (const c of calls) {
+        const at = Date.parse(c.createdAt);
+        if (!c.teacherUid || Number.isNaN(at) || at > nowMs || nowMs - at >= WEEK_MS) continue;
+        const row = rows.get(c.teacherUid) ?? { teacherUid: c.teacherUid, teacherName: null, calls: 0, reached: 0 };
+        row.calls += 1;
+        if (c.outcome === "completed") row.reached += 1;
+        // Calls arrive newest first, so the first name seen is the teacher's latest.
+        row.teacherName = row.teacherName ?? c.teacherName;
+        rows.set(c.teacherUid, row);
+    }
+    return [...rows.values()].sort(
+        (a, b) => b.calls - a.calls || (a.teacherName ?? "\uffff").localeCompare(b.teacherName ?? "\uffff") || a.teacherUid.localeCompare(b.teacherUid),
+    );
 }
 
 /** IST midnight of `day` (YYYY-MM-DD) as an instant. */
@@ -189,6 +215,55 @@ export function CallbacksTodayCard({ orgId, base, className }: { orgId: string; 
                         </li>
                     ))}
                 </ul>
+            )}
+        </SectionCard>
+    );
+}
+
+export function TeachersThisWeekCard({
+    teacherCalls,
+    base,
+    nowMs,
+    className,
+}: {
+    teacherCalls: readonly TeacherCallEntry[] | undefined;
+    base: string;
+    nowMs: number;
+    className?: string;
+}) {
+    const { t } = useLanguage();
+    const rows = teachersThisWeek(teacherCalls ?? [], nowMs);
+
+    return (
+        <SectionCard
+            title={t("Teachers this week")}
+            description={t("Parent calls per teacher, and what came back.")}
+            className={className}
+            action={<CardLink href={`${base}/calls`}>{t("See calls")}</CardLink>}
+        >
+            {rows.length === 0 ? (
+                <p className="rounded-surface-md border border-dashed border-border p-6 text-center type-body text-muted-foreground">{t("No calls yet")}</p>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[320px] type-body">
+                        <thead>
+                            <tr className="text-left text-xs text-muted-foreground">
+                                <th scope="col" className="py-2 font-medium">{t("Teacher")}</th>
+                                <th scope="col" className="py-2 text-right font-medium">{t("Calls")}</th>
+                                <th scope="col" className="py-2 text-right font-medium">{t("Reached")}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map((r) => (
+                                <tr key={r.teacherUid} className="border-t border-border">
+                                    <td className="py-2.5 font-semibold text-foreground break-words">{r.teacherName ?? t("Teacher")}</td>
+                                    <td className="py-2.5 text-right tabular-nums text-foreground">{r.calls}</td>
+                                    <td className="py-2.5 text-right tabular-nums text-foreground">{r.reached}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </SectionCard>
     );

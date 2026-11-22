@@ -762,6 +762,13 @@ export interface TeacherCallEntry {
     reason: TeacherCallReason;
     outcome: TeacherCallOutcome;
     durationSeconds: number | null;
+    /**
+     * The teacher who placed it (a member of the school) and their name as the attendance
+     * app recorded it (server-trusted, from the teacher's profile; null when absent).
+     * School admins only: the route is behind requireOrgAdmin. Founder decision, 21 Nov 2026.
+     */
+    teacherUid: string;
+    teacherName: string | null;
 }
 
 // ── Integrations (MCP API keys) ─────────────────────────────────────────────

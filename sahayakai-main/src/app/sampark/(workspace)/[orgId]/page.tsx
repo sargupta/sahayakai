@@ -25,7 +25,7 @@ import {
     TodayKpis,
     nextSteps,
 } from "@/components/sampark/today-cards";
-import { CallbacksTodayCard, WhyTeachersCalledCard } from "@/components/sampark/principal-cards";
+import { CallbacksTodayCard, TeachersThisWeekCard, WhyTeachersCalledCard } from "@/components/sampark/principal-cards";
 
 /** How often Today re-reads the overview. The overview reads up to 1000 calls and every family, so it stays at 30 s. */
 const OVERVIEW_POLL_MS = 30_000;
@@ -39,7 +39,7 @@ const TEACHER_WEEK_POLL_MS = 5 * 60_000;
  * (with 7-day sparklines), the current mode's calls by hour, by language and as
  * a live feed, families and consent, rehearsals, what is coming up, and the
  * school records. Every number is from one GET overview, polled. From the
- * principal monitor design: callbacks due today and why teachers called this week.
+ * principal monitor design: teachers this week, why they called, and callbacks due today.
  */
 export default function SamparkTodayPage() {
     const { t } = useLanguage();
@@ -110,9 +110,13 @@ export default function SamparkTodayPage() {
                 <FamiliesCard overview={o} steps={steps} className="xl:col-span-2" />
             </div>
 
+            <div className="grid gap-4 xl:grid-cols-5">
+                <TeachersThisWeekCard teacherCalls={teacherWeek.data} base={base} nowMs={now.getTime()} className="xl:col-span-3" />
+                <WhyTeachersCalledCard teacherCalls={teacherWeek.data} base={base} nowMs={now.getTime()} className="xl:col-span-2" />
+            </div>
+
             <div className="grid gap-4 lg:grid-cols-2">
                 <CallbacksTodayCard orgId={orgId} base={base} />
-                <WhyTeachersCalledCard teacherCalls={teacherWeek.data} base={base} nowMs={now.getTime()} />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">

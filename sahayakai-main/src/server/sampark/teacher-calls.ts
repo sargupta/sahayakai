@@ -14,7 +14,10 @@
  * Projection: this screen is seen by more staff than the teacher who wrote the
  * message, so each record is rebuilt field by field from an allow-list. The
  * full phone number, the generated message, the spoken script, the teacher's
- * note, transcripts and provider ids never leave this module. Malformed or
+ * note, transcripts and provider ids never leave this module. The teacher's
+ * uid and name do, for the principal's "Teachers this week": the route is
+ * admin-only, and showing teacher names to school admins was decided on
+ * 21 Nov 2026. Malformed or
  * legacy records degrade to safe defaults instead of failing the screen.
  */
 
@@ -85,6 +88,8 @@ export function toTeacherCallEntry(id: string, raw: unknown): TeacherCallEntry |
         reason,
         outcome,
         durationSeconds: duration,
+        teacherUid: str(r.teacherUid, 128) ?? '',
+        teacherName: str(r.teacherName, 80),
     };
 }
 
