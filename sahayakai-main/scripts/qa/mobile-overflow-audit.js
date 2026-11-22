@@ -22,11 +22,18 @@ function mobileOverflowAudit(win = window) {
             const c = (typeof el.className === 'string' ? el.className : '').split(/\s+/).filter(Boolean).slice(0, 10).join('.');
             return `${el.tagName.toLowerCase()}${c ? '.' + c : ''} "${(el.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40)}"`;
         };
+        // A clipping container excuses its content only when its own edge is INSIDE the screen
+        // (a carousel window, a truncated label). A screen-wide overflow-hidden section that
+        // clips at the screen edge hides real bugs: on 2026-11-16 the SamparkAI hero was 444px
+        // on a 390px phone and its overflow-hidden cut the headline off without any sideways
+        // scroll. Intentional full-bleed clipping (a marquee) opts out with data-overflow-ok.
+        // The CI gate for public pages is qa/e2e/phone-overflow.spec.ts.
         const contained = (el) => {
             for (let p = el.parentElement; p && p !== d.body; p = p.parentElement) {
+                if (p.hasAttribute('data-overflow-ok')) return true;
                 const s = win.getComputedStyle(p);
                 if (/(auto|scroll)/.test(s.overflowX)) return true;
-                if (/(hidden|clip)/.test(s.overflowX) && p.tagName !== 'MAIN' && p.getBoundingClientRect().right <= cw + 2) return true;
+                if (/(hidden|clip)/.test(s.overflowX) && p.tagName !== 'MAIN' && p.getBoundingClientRect().right < cw - 2) return true;
             }
             return false;
         };
