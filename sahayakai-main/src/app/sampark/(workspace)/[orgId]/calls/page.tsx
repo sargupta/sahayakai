@@ -90,7 +90,7 @@ function TeacherFamily({ call }: { call: TeacherCallEntry }) {
             {call.className && <p className="text-muted-foreground break-words">{call.className}</p>}
             <p className="text-xs leading-normal text-muted-foreground">
                 <span aria-hidden="true">{maskedPhone(call.phoneLast4)}</span>
-                <span className="sr-only">{fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 })}</span>
+                <span className="sr-only">{fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 ?? "" })}</span>
             </p>
         </div>
     );

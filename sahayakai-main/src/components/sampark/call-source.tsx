@@ -64,7 +64,7 @@ export function TeacherOutcomePill({ call }: { call: Pick<TeacherCallEntry, "out
 }
 
 /** "••••••0720" — the masked form the school-wide views show. */
-export function maskedPhone(last4: string): string {
+export function maskedPhone(last4: string | null): string {
     return last4 ? `••••••${last4}` : "—";
 }
 
