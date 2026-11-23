@@ -164,6 +164,20 @@ export function evaluateGate(input: GateInput): GateVerdict {
     if (consentStatus === 'denied') return block('consent_denied');
     const consentBypassed = spec.emergency && school.emergencyBypassConsent === true;
     if (consentStatus !== 'granted' && !consentBypassed) return block('no_consent');
+    if (consentBypassed) {
+        // Audit trail: emergency consent bypass reached a family without recorded consent.
+        // Plan §2 D4 / §15.5: only for emergency closures, never to override a denied consent.
+        console.info(JSON.stringify({
+            event: 'consent_bypass_audit',
+            orgId: school.orgId,
+            purpose: spec.id,
+            consentGroup: spec.consentGroup,
+            consentStatus,
+            guardianId: guardian.id,
+            phoneHash: guardian.phoneHash,
+            at: input.now.toISOString(),
+        }));
+    }
 
     // 13. Language
     const language = resolveLanguage(guardian, preferences, school);

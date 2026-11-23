@@ -25,16 +25,23 @@ import {
     TodayKpis,
     nextSteps,
 } from "@/components/sampark/today-cards";
+import { CallbacksTodayCard, TeachersThisWeekCard, WhyTeachersCalledCard } from "@/components/sampark/principal-cards";
 
 /** How often Today re-reads the overview. The overview reads up to 1000 calls and every family, so it stays at 30 s. */
 const OVERVIEW_POLL_MS = 30_000;
 const TEACHER_FEED_LIMIT = 8;
+/** "Why teachers called" and "Teachers this week" read the last 7 days, by the query itself, so a busy
+ *  week is not cut to the newest calls; at most 500 a poll, less often (each read is ⌈teachers/30⌉ queries). */
+const TEACHER_WEEK_DAYS = 7;
+const TEACHER_WEEK_LIMIT = 500;
+const TEACHER_WEEK_POLL_MS = 5 * 60_000;
 
 /**
  * Today: the campaign calling now, the calling window, real calls to families
  * (with 7-day sparklines), the current mode's calls by hour, by language and as
  * a live feed, families and consent, rehearsals, what is coming up, and the
- * school records. Every number is from one GET overview, polled.
+ * school records. Every number is from one GET overview, polled. From the
+ * principal monitor design: teachers this week, why they called, and callbacks due today.
  */
 export default function SamparkTodayPage() {
     const { t } = useLanguage();
@@ -45,6 +52,7 @@ export default function SamparkTodayPage() {
     const query = useSamparkQuery((signal) => getOverview(orgId, { signal }), [orgId], { pollMs: OVERVIEW_POLL_MS });
     // Teachers' Contact calls join the Recent feed, labelled. If they fail to load, the feed shows campaign calls only.
     const teacherCalls = useSamparkQuery((signal) => listTeacherCalls(orgId, { limit: TEACHER_FEED_LIMIT }, { signal }), [orgId], { pollMs: OVERVIEW_POLL_MS });
+    const teacherWeek = useSamparkQuery((signal) => listTeacherCalls(orgId, { limit: TEACHER_WEEK_LIMIT, days: TEACHER_WEEK_DAYS }, { signal }), [orgId], { pollMs: TEACHER_WEEK_POLL_MS });
     const o = query.data;
     // The server's clock, not this device's: the window and the current hour follow the server's rules.
     const now = useServerNow(o?.asOf, OVERVIEW_POLL_MS);
@@ -102,6 +110,15 @@ export default function SamparkTodayPage() {
             <div className="grid gap-4 xl:grid-cols-5">
                 <ActivityFeed overview={o} teacherCalls={teacherCalls.data} base={base} className="xl:col-span-3" />
                 <FamiliesCard overview={o} steps={steps} className="xl:col-span-2" />
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-5">
+                <TeachersThisWeekCard teacherCalls={teacherWeek.data} error={teacherWeek.error} onRetry={teacherWeek.reload} base={base} nowMs={now.getTime()} className="xl:col-span-3" />
+                <WhyTeachersCalledCard teacherCalls={teacherWeek.data} error={teacherWeek.error} onRetry={teacherWeek.reload} base={base} nowMs={now.getTime()} className="xl:col-span-2" />
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+                <CallbacksTodayCard orgId={orgId} base={base} />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">

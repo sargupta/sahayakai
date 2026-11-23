@@ -527,7 +527,7 @@ function TeacherFeedItem({ call }: { call: TeacherCallEntry }) {
                     <p className="type-body font-semibold text-foreground break-words">
                         {call.className ?? t("Class not recorded")}{" "}
                         <span aria-hidden="true" className="font-normal text-muted-foreground">· {maskedPhone(call.phoneLast4)}</span>
-                        <span className="sr-only">{fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 })}</span>
+                        <span className="sr-only">{fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 ?? "" })}</span>
                     </p>
                     <p className="text-xs leading-normal text-muted-foreground">{teacherReasonLabel(t, call.reason)}</p>
                 </div>

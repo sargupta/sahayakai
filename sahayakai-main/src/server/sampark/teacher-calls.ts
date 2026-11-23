@@ -14,12 +14,16 @@
  * Projection: this screen is seen by more staff than the teacher who wrote the
  * message, so each record is rebuilt field by field from an allow-list. The
  * full phone number, the generated message, the spoken script, the teacher's
- * note, transcripts and provider ids never leave this module. Malformed or
+ * note, transcripts and provider ids never leave this module. The teacher's
+ * uid and name do, for the principal's "Teachers this week": the route is
+ * admin-only, and showing teacher names to school admins was decided on
+ * 21 Nov 2026. Malformed or
  * legacy records degrade to safe defaults instead of failing the screen.
  */
 
 import { z } from 'zod';
 
+import { reconcileCallStatus } from '@/lib/attendance/reconcile-call-status';
 import { getDb } from '@/lib/firebase-admin';
 import type { TeacherCallEntry, TeacherCallOutcome, TeacherCallReason } from '@/types/sampark';
 
@@ -29,6 +33,9 @@ export const IN_QUERY_CHUNK = 30;
 
 export const TeacherCallQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(500).default(100),
+    /** Only calls from the last `days` days (1-31), read by the query itself, so a busy week is
+     *  not cut to the newest `limit` calls before the window is applied. */
+    days: z.coerce.number().int().min(1).max(31).optional(),
 });
 export type TeacherCallQuery = z.infer<typeof TeacherCallQuerySchema>;
 
@@ -36,11 +43,15 @@ export type TeacherCallQuery = z.infer<typeof TeacherCallQuerySchema>;
 export interface TeacherCallsDb {
     collection(name: string): {
         doc(id: string): { collection(name: string): { get(): Promise<{ docs: { id: string }[] }> } };
-        where(field: string, op: 'in', values: string[]): {
-            orderBy(field: string, dir: 'desc'): {
-                limit(n: number): { get(): Promise<{ docs: { id: string; data(): unknown }[] }> };
-            };
-        };
+        where(field: string, op: 'in', values: string[]): TeacherCallsQuery;
+    };
+}
+
+/** The `teacherUid in [...]` query: optionally narrowed to `createdAt >= since`, then ordered. */
+export interface TeacherCallsQuery {
+    where(field: 'createdAt', op: '>=', value: string): TeacherCallsQuery;
+    orderBy(field: string, dir: 'desc'): {
+        limit(n: number): { get(): Promise<{ docs: { id: string; data(): unknown }[] }> };
     };
 }
 
@@ -57,22 +68,32 @@ const defaultDeps: TeacherCallsDeps = { getDb: async () => (await getDb()) as un
 const REASONS: readonly TeacherCallReason[] = ['consecutive_absences', 'poor_performance', 'behavioral_concern', 'positive_feedback'];
 const OUTCOMES: readonly TeacherCallOutcome[] = ['initiated', 'completed', 'failed', 'no_answer', 'busy'];
 
+/** The outcome a consumer shows, through the reconciled reader (CLAUDE.md standing law 1): a call
+ *  the carrier called completed but whose conversation engine never came up is `failed`, and an
+ *  `initiated` call that never connected stops saying "Calling…" after 15 minutes. A call still
+ *  ringing or under way reads as `initiated`. */
+export function teacherCallOutcome(raw: Record<string, unknown>, nowMs: number = Date.now()): TeacherCallOutcome {
+    const status = reconcileCallStatus(raw, nowMs);
+    if (status === 'ringing' || status === 'in_progress') return 'initiated';
+    return OUTCOMES.includes(status as TeacherCallOutcome) ? (status as TeacherCallOutcome) : 'unknown';
+}
+
 const str = (v: unknown, max = 120): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, max) : null);
 
-/** Last four digits of a stored number; '' when there are not four digits to show. */
-export function phoneLast4(raw: unknown): string {
+/** Last four digits of a stored number; null when there are not four digits to show. */
+export function phoneLast4(raw: unknown): string | null {
     const digits = typeof raw === 'string' ? raw.replace(/\D/g, '') : '';
-    return digits.length >= 4 ? digits.slice(-4) : '';
+    return digits.length >= 4 ? digits.slice(-4) : null;
 }
 
 /** The only shape a teacher call leaves the server in. */
-export function toTeacherCallEntry(id: string, raw: unknown): TeacherCallEntry | null {
+export function toTeacherCallEntry(id: string, raw: unknown, nowMs: number = Date.now()): TeacherCallEntry | null {
     const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
     if (r.deliveryMethod !== 'twilio_call') return null;
     const createdAt = str(r.createdAt, 40);
     if (!createdAt || Number.isNaN(Date.parse(createdAt))) return null;
     const reason = REASONS.includes(r.reason as TeacherCallReason) ? (r.reason as TeacherCallReason) : 'other';
-    const outcome = OUTCOMES.includes(r.callStatus as TeacherCallOutcome) ? (r.callStatus as TeacherCallOutcome) : 'unknown';
+    const outcome = teacherCallOutcome(r, nowMs);
     const duration = typeof r.callDurationSeconds === 'number' && Number.isFinite(r.callDurationSeconds) && r.callDurationSeconds >= 0
         ? Math.round(r.callDurationSeconds)
         : null;
@@ -80,11 +101,13 @@ export function toTeacherCallEntry(id: string, raw: unknown): TeacherCallEntry |
         id,
         source: 'teacher',
         createdAt: new Date(createdAt).toISOString(),
-        phoneLast4: phoneLast4(r.parentPhone),
+        phoneLast4: phoneLast4(r.parentPhone) || null,
         className: str(r.className),
         reason,
         outcome,
         durationSeconds: duration,
+        teacherUid: str(r.teacherUid, 128),
+        teacherName: str(r.teacherName, 80),
     };
 }
 
@@ -93,17 +116,25 @@ async function schoolTeacherUids(db: TeacherCallsDb, orgId: string): Promise<str
     return [...new Set(members.docs.map((d) => d.id).filter((id) => typeof id === 'string' && id !== ''))];
 }
 
-/** The school's teacher calls, newest first, at most `limit`. */
-export async function listTeacherCalls(orgId: string, query: TeacherCallQuery, deps: TeacherCallsDeps = defaultDeps): Promise<TeacherCallEntry[]> {
+/** The school's teacher calls, newest first, at most `limit`, from the last `days` days if given. */
+export async function listTeacherCalls(
+    orgId: string,
+    query: TeacherCallQuery,
+    deps: TeacherCallsDeps = defaultDeps,
+    nowMs: number = Date.now(),
+): Promise<TeacherCallEntry[]> {
     const db = await deps.getDb();
     const uids = await schoolTeacherUids(db, orgId);
     const chunks: string[][] = [];
     for (let i = 0; i < uids.length; i += IN_QUERY_CHUNK) chunks.push(uids.slice(i, i + IN_QUERY_CHUNK));
 
+    // createdAt is an ISO-8601 UTC string (outreach route), so a string range is a time range.
+    const since = query.days ? new Date(nowMs - query.days * 86_400_000).toISOString() : null;
     const snaps = await Promise.all(
-        chunks.map((chunk) =>
-            db.collection('parent_outreach').where('teacherUid', 'in', chunk).orderBy('createdAt', 'desc').limit(query.limit).get(),
-        ),
+        chunks.map((chunk) => {
+            const q = db.collection('parent_outreach').where('teacherUid', 'in', chunk);
+            return (since ? q.where('createdAt', '>=', since) : q).orderBy('createdAt', 'desc').limit(query.limit).get();
+        }),
     );
     const allowed = new Set(uids);
     const seen = new Set<string>();
@@ -114,7 +145,8 @@ export async function listTeacherCalls(orgId: string, query: TeacherCallQuery, d
             const data = doc.data() as { teacherUid?: unknown } | undefined;
             // Belt and braces: never trust the query alone for tenant scoping.
             if (!data || typeof data.teacherUid !== 'string' || !allowed.has(data.teacherUid)) continue;
-            const entry = toTeacherCallEntry(doc.id, data);
+            const entry = toTeacherCallEntry(doc.id, data, nowMs);
+            if (entry && since && entry.createdAt < since) continue;
             if (!entry) continue;
             seen.add(doc.id);
             out.push(entry);

@@ -36,13 +36,20 @@ function mockColl(path: string): any {
         where: (field: string, op: string, values: string[]) => {
             if (op !== 'in' || values.length > 30) throw new Error(`bad query ${field} ${op} ${values.length}`);
             mockInQueries.push(values);
-            return {
+            let since: string | null = null;
+            const q: any = {
+                where: (f: string, o: string, v: string) => {
+                    if (f !== 'createdAt' || o !== '>=') throw new Error(`bad range ${f} ${o}`);
+                    since = v;
+                    return q;
+                },
                 orderBy: (_f: string, _dir: string) => ({
                     limit: (n: number) => ({
                         get: async () => ({
                             docs: mockChildren(path)
                                 // a "leaky" query also returns records it should not, to prove the post-filter
                                 .filter((k) => mockLeakyQuery.on || values.includes(mockDocs.get(k)![field]))
+                                .filter((k) => since === null || String(mockDocs.get(k)!.createdAt) >= since)
                                 .sort((a, b) => String(mockDocs.get(b)!.createdAt).localeCompare(String(mockDocs.get(a)!.createdAt)))
                                 .slice(0, n)
                                 .map(mockSnap),
@@ -50,6 +57,7 @@ function mockColl(path: string): any {
                     }),
                 }),
             };
+            return q;
         },
     };
 }
@@ -66,7 +74,9 @@ import { ADMIN, ORG } from './_helpers';
 
 const OTHER_ORG = 'other-school';
 const PLANTED_PHONES = ['+919800000720', '+919800000111', '+919800000222', '+919800000333'];
-const PLANTED_TEXT = ['Namaste, Ravi has been absent since Monday', 'Mrs Rao spoke to', 'CA_secret_sid', 'teacher private note'];
+const PLANTED_TEXT = ['Namaste, Ravi has been absent since Monday', 'CA_secret_sid', 'teacher private note'];
+/** Shown to school admins on purpose (founder decision, 21 Nov 2026): the principal's "Teachers this week". */
+const TEACHER_NAME = 'Mrs Rao';
 
 let seq = 0;
 function outreach(teacherUid: string, overrides: Record<string, unknown> = {}) {
@@ -81,13 +91,13 @@ function outreach(teacherUid: string, overrides: Record<string, unknown> = {}) {
         parentPhone: PLANTED_PHONES[seq % PLANTED_PHONES.length],
         parentLanguage: 'Hindi',
         reason: 'consecutive_absences',
-        teacherNote: PLANTED_TEXT[3],
+        teacherNote: PLANTED_TEXT[2],
         generatedMessage: PLANTED_TEXT[0],
         spokenScript: `${PLANTED_TEXT[0]} — call ${PLANTED_PHONES[0]}`,
         deliveryMethod: 'twilio_call',
         callStatus: 'completed',
-        callSid: PLANTED_TEXT[2],
-        teacherName: PLANTED_TEXT[1],
+        callSid: PLANTED_TEXT[1],
+        teacherName: TEACHER_NAME,
         transcript: [{ role: 'parent', text: `my other number is ${PLANTED_PHONES[1]}` }],
         callDurationSeconds: 41.6,
         // fields the outreach flow does not write today
@@ -116,10 +126,10 @@ beforeEach(() => {
 // ── route harness ───────────────────────────────────────────────────────────
 const jsonSpy = jest.spyOn(NextResponse, 'json');
 type Handler = (req: unknown, ctx: { params: Promise<Record<string, string>> }) => Promise<unknown>;
-async function get(opts: { uid?: string | null; orgId?: string; limit?: string } = {}) {
+async function get(opts: { uid?: string | null; orgId?: string; limit?: string; days?: string } = {}) {
     const { GET } = (await import('@/app/api/sampark/[orgId]/teacher-calls/route')) as unknown as { GET: Handler };
     const uid = opts.uid === undefined ? ADMIN : opts.uid;
-    const sp = new URLSearchParams(opts.limit ? { limit: opts.limit } : {});
+    const sp = new URLSearchParams({ ...(opts.limit ? { limit: opts.limit } : {}), ...(opts.days ? { days: opts.days } : {}) });
     const req = { headers: { get: (k: string) => (k.toLowerCase() === 'x-user-id' ? uid : null) }, nextUrl: { searchParams: sp } };
     jsonSpy.mockClear();
     await GET(req, { params: Promise.resolve({ orgId: opts.orgId ?? ORG }) });
@@ -127,7 +137,7 @@ async function get(opts: { uid?: string | null; orgId?: string; limit?: string }
     return { status: (last[1] as { status?: number } | undefined)?.status ?? 200, body: last[0] as any };
 }
 
-const ENTRY_KEYS = ['className', 'createdAt', 'durationSeconds', 'id', 'outcome', 'phoneLast4', 'reason', 'source'];
+const ENTRY_KEYS = ['className', 'createdAt', 'durationSeconds', 'id', 'outcome', 'phoneLast4', 'reason', 'source', 'teacherName', 'teacherUid'];
 
 describe('scoping and filtering', () => {
     it('lists only the school\'s teachers\' phone calls, newest first, labelled teacher', async () => {
@@ -143,6 +153,7 @@ describe('scoping and filtering', () => {
         expect(res.body.calls[0]).toEqual({
             id: b1, source: 'teacher', createdAt: mockDocs.get(`parent_outreach/${b1}`)!.createdAt, phoneLast4: phoneLast4(mockDocs.get(`parent_outreach/${b1}`)!.parentPhone),
             className: 'Class 7B', reason: 'positive_feedback', outcome: 'no_answer', durationSeconds: 42,
+            teacherUid: 'teacher-b', teacherName: TEACHER_NAME,
         });
     });
 
@@ -180,9 +191,9 @@ describe('scoping and filtering', () => {
         expect(toTeacherCallEntry('x', { deliveryMethod: 'twilio_call' })).toBeNull(); // no createdAt
         expect(toTeacherCallEntry('x', { deliveryMethod: 'twilio_call', createdAt: 'not a date' })).toBeNull();
         expect(toTeacherCallEntry('x', { deliveryMethod: 'twilio_call', createdAt: '2026-10-05T05:30:00Z', reason: 'debt', callStatus: 'weird', parentPhone: 12345, className: 7, callDurationSeconds: -3 }))
-            .toEqual({ id: 'x', source: 'teacher', createdAt: '2026-10-05T05:30:00.000Z', phoneLast4: '', className: null, reason: 'other', outcome: 'unknown', durationSeconds: null });
+            .toEqual({ id: 'x', source: 'teacher', createdAt: '2026-10-05T05:30:00.000Z', phoneLast4: null, className: null, reason: 'other', outcome: 'unknown', durationSeconds: null, teacherUid: null, teacherName: null });
         expect(phoneLast4('+91 98000-00720')).toBe('0720');
-        expect(phoneLast4('12')).toBe('');
+        expect(phoneLast4('12')).toBeNull();
     });
 });
 
@@ -208,7 +219,7 @@ describe('GET /api/sampark/[orgId]/teacher-calls — guard', () => {
     });
 });
 
-describe('CLASS GATE: no full phone number or message reaches the browser', () => {
+describe('CLASS GATE: no full phone number or message reaches the browser (teacher name and id do, for admins)', () => {
     it('the response carries no 5-digit run of any planted number, none of the planted text, and only allow-listed keys', async () => {
         for (let i = 0; i < 6; i++) outreach(i % 2 ? 'teacher-a' : 'teacher-b', { callStatus: ['initiated', 'completed', 'failed', 'no_answer', 'busy', 'manual'][i] });
         const res = await get();
@@ -223,8 +234,13 @@ describe('CLASS GATE: no full phone number or message reaches the browser', () =
             const d = phone.replace(/\D/g, '');
             for (let i = 0; i + 5 <= d.length; i++) expect(digitRuns).not.toContain(d.slice(i, i + 5));
         }
-        for (const text of [...PLANTED_TEXT, 'Synthetic Student', 'teacher-a', 'teacher-b', 'transcript', 'generatedMessage', 'spokenScript']) {
+        for (const text of [...PLANTED_TEXT, 'Synthetic Student', 'transcript', 'generatedMessage', 'spokenScript']) {
             expect(wire).not.toContain(text);
+        }
+        // Allowed on purpose: who placed the call, for the principal's per-teacher view (admin-only route).
+        for (const entry of res.body.calls) {
+            expect(['teacher-a', 'teacher-b']).toContain(entry.teacherUid);
+            expect(entry.teacherName).toBe(TEACHER_NAME);
         }
     });
 
@@ -238,5 +254,53 @@ describe('CLASS GATE: no full phone number or message reaches the browser', () =
         const recent = { id: 'r1', createdAt: '2026-10-05T05:00:00Z' } as RecentCall;
         const yesterday = { ...teacher, id: 't0', createdAt: '2026-10-04T06:00:00Z' };
         expect(feedRows([recent], [teacher, yesterday], '2026-10-05').map((r) => [r.source, r.call.id])).toEqual([['teacher', 't1'], ['campaign', 'r1']]);
+    });
+});
+
+describe('teacher identity on each call', () => {
+    it('a missing or blank teacher name is null, never a placeholder; the uid comes from the record', () => {
+        const base = { deliveryMethod: 'twilio_call', createdAt: '2026-10-05T06:00:00Z', teacherUid: 'teacher-a', parentPhone: '+919800000720' };
+        expect(toTeacherCallEntry('t1', base)).toMatchObject({ teacherUid: 'teacher-a', teacherName: null });
+        expect(toTeacherCallEntry('t2', { ...base, teacherName: '   ' })!.teacherName).toBeNull();
+        expect(toTeacherCallEntry('t3', { ...base, teacherName: 'x'.repeat(200) })!.teacherName).toHaveLength(80);
+    });
+});
+
+describe('the outcome goes through the reconciled reader (standing law 1)', () => {
+    const NOW = Date.parse('2026-11-22T12:00:00.000Z');
+    const base = { deliveryMethod: 'twilio_call', createdAt: '2026-11-22T10:00:00.000Z', teacherUid: 't1', parentPhone: '+919800000101' };
+
+    it('a call the carrier completed but whose engine never came up is failed, not reached', () => {
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'completed', engineFailure: true }, NOW)!.outcome).toBe('failed');
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'completed' }, NOW)!.outcome).toBe('completed');
+    });
+
+    it('an initiated call that never connected stops saying calling after 15 minutes', () => {
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'initiated' }, NOW)!.outcome).toBe('failed');
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'initiated', createdAt: '2026-11-22T11:55:00.000Z' }, NOW)!.outcome).toBe('initiated');
+        expect(toTeacherCallEntry('x', { ...base, callStatus: 'ringing', createdAt: '2026-11-22T11:55:00.000Z' }, NOW)!.outcome).toBe('initiated');
+    });
+
+    it('class gate: the module never reads callStatus except through reconcileCallStatus', () => {
+        const fs = require('node:fs');
+        const path = require('node:path');
+        const src = fs.readFileSync(path.resolve(__dirname, '../../../server/sampark/teacher-calls.ts'), 'utf8');
+        expect(src).toContain('reconcileCallStatus(');
+        expect(src.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/\.callStatus\b/);
+    });
+});
+
+describe('the days window is read by the query, not after the limit', () => {
+    it('a busy week keeps its first days: old calls outside the window never take a limit slot', async () => {
+        const now = Date.parse('2026-11-22T12:00:00.000Z');
+        const inWeek = outreach('teacher-a', { createdAt: '2026-11-16T12:00:00.000Z' });     // 6 days ago
+        outreach('teacher-a', { createdAt: '2026-11-10T12:00:00.000Z' });                    // 12 days ago
+        const calls = await listTeacherCalls(ORG, { limit: 1, days: 7 }, undefined, now);
+        expect(calls.map((c) => c.id)).toEqual([inWeek]);
+    });
+
+    it('the route takes days 1-31 and refuses anything else', async () => {
+        for (const bad of ['0', '32', 'x']) expect((await get({ days: bad })).status).toBe(400);
+        expect((await get({ days: '7' })).status).toBe(200);
     });
 });

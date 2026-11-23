@@ -447,6 +447,7 @@ export type BlockReason =
     | 'synthetic_number_not_allowed'
     | 'purpose_not_available'
     | 'school_not_enabled'
+    | 'school_paused'
     // Hardening sprint, 7 Oct 2026 (EDGE_CASES.md §3)
     | 'student_inactive'          // H6: every child on the intent has left the school
     | 'not_guardian_of_record'    // H6: the guardian is no longer of record for any child on the intent
@@ -757,11 +758,18 @@ export interface TeacherCallEntry {
     id: string;
     source: 'teacher';
     createdAt: string;
-    phoneLast4: string;
+    phoneLast4: string | null;
     className: string | null;
     reason: TeacherCallReason;
     outcome: TeacherCallOutcome;
     durationSeconds: number | null;
+    /**
+     * The teacher who placed it (a member of the school) and their name as the attendance
+     * app recorded it (server-trusted, from the teacher's profile; null when absent).
+     * School admins only: the route is behind requireOrgAdmin. Founder decision, 21 Nov 2026.
+     */
+    teacherUid: string | null;
+    teacherName: string | null;
 }
 
 // ── Integrations (MCP API keys) ─────────────────────────────────────────────

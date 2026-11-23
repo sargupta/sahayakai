@@ -25,6 +25,7 @@ import {
     type ContactDecision,
     type ContactPolicyStore,
 } from '@/lib/contact-policy';
+import type { SchoolPause } from '@/types/sampark';
 
 export interface TeacherSchoolDb {
     collection(name: string): {
@@ -82,7 +83,17 @@ export async function clearTeacherCall(params: {
             }
         }
         const store = params.store ?? (await getSamparkRepo());
-        const input = { orgId, phone: { e164: params.parentPhone }, kind: 'routine' as const, at: params.at };
+
+        // Load the school's pause so teacher calls are blocked while the school is paused.
+        let schoolPause: SchoolPause | null = null;
+        if (orgId) {
+            const schoolDoc = await params.db.collection('sampark_schools').doc(orgId).get();
+            if (schoolDoc.exists) {
+                schoolPause = (schoolDoc.data() as { pause?: SchoolPause | null } | undefined)?.pause ?? null;
+            }
+        }
+
+        const input = { orgId, schoolPause, phone: { e164: params.parentPhone }, kind: 'routine' as const, at: params.at };
         const decision = await checkContact(input, store);
         const clearance = clearanceFor(input, decision);
         if (clearance) return { ok: true, clearance, orgId };

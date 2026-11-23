@@ -196,6 +196,7 @@ export function blockReasonLabel(t: Translate, reason: BlockReason): string {
         case 'synthetic_number_not_allowed': return t("A test number, reachable only in Practice mode");
         case 'purpose_not_available': return t("This kind of call is not available yet");
         case 'school_not_enabled': return t("School calls are not switched on for this school");
+        case 'school_paused': return t("The school has paused calls; only emergency closures go out while paused");
         case 'student_inactive': return t("The child has left the school");
         case 'not_guardian_of_record': return t("No longer the child's guardian in the school records");
         case 'custody_restricted': return t("A custody restriction on the child: the office informs this parent by hand");

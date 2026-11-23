@@ -319,9 +319,9 @@ export async function listCalls(orgId: string, query: ListCallsQuery = {}, opts:
     return res.calls;
 }
 
-/** GET /api/sampark/[orgId]/teacher-calls?limit= — teachers' Contact calls, last four digits only. */
-export async function listTeacherCalls(orgId: string, query: { limit?: number } = {}, opts: Opts = {}): Promise<TeacherCallEntry[]> {
-    const res = await apiFetch<{ calls: TeacherCallEntry[] }>(orgPath(orgId, `/teacher-calls${qs({ limit: query.limit })}`), { signal: opts.signal });
+/** GET /api/sampark/[orgId]/teacher-calls?limit=&days= — teachers' Contact calls, last four digits only. */
+export async function listTeacherCalls(orgId: string, query: { limit?: number; days?: number } = {}, opts: Opts = {}): Promise<TeacherCallEntry[]> {
+    const res = await apiFetch<{ calls: TeacherCallEntry[] }>(orgPath(orgId, `/teacher-calls${qs({ limit: query.limit, days: query.days })}`), { signal: opts.signal });
     return res.calls;
 }
 

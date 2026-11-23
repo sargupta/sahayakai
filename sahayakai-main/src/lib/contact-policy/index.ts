@@ -34,13 +34,13 @@ import { EMERGENCY_END_HOUR, EMERGENCY_START_HOUR } from '@/lib/sampark/policy/w
 import { ROUTINE_END_CEILING_HOUR, ROUTINE_START_FLOOR_HOUR } from '@/lib/sampark/policy/routine-hours';
 import { FREQUENCY_CAP, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
 import { hashPhone, normalizeIndianPhone } from '@/lib/sampark/phone';
-import type { Suppression } from '@/types/sampark';
+import type { SchoolPause, Suppression } from '@/types/sampark';
 
 /** Routine: everything except an emergency closure. Only Sampark's D4 is 'emergency'. */
 export type ContactKind = 'routine' | 'emergency';
 /** What started the call. Sampark's campaign calls are recorded in its own call log. */
 export type ContactSource = 'campaign' | 'teacher' | 'integration';
-export type ContactDenial = 'opted_out' | 'frequency_cap' | 'outside_hours' | 'policy_unavailable' | 'school_paused';
+export type ContactDenial = 'opted_out' | 'school_paused' | 'frequency_cap' | 'outside_hours' | 'policy_unavailable';
 
 /** One placed call, in the shared ledger. No number: the keyed hash only. */
 export interface ContactRecord {
@@ -68,6 +68,8 @@ export interface ContactPolicyStore {
 export interface ContactCheckInput {
     /** The school the call is made for; null for a teacher who belongs to none. */
     orgId: string | null;
+    /** The school's active pause (if any). 'all' stops every call; 'routine' lets emergency closures (D4) continue. */
+    schoolPause?: SchoolPause | null;
     /** The number that will ring, or its keyed hash when the caller only holds the hash (Sampark). */
     phone: { e164: string } | { hash: string };
     kind: ContactKind;
@@ -149,6 +151,14 @@ export async function checkContact(input: ContactCheckInput, store: ContactPolic
         // Gate rule 4: the school's opt-out list.
         if (input.orgId && suppressionBlocks(await store.getSuppression(input.orgId, phoneHash), input.kind)) {
             return deny('opted_out', 'This family asked the school to stop these calls, so this call was not placed.');
+        }
+
+        // Gate rule 4b: a school-level pause. 'all' stops every call; 'routine' lets emergency closures (D4) continue.
+        if (input.orgId && input.schoolPause) {
+            const blocked = input.schoolPause.scope === 'all' || (input.schoolPause.scope === 'routine' && input.kind === 'routine');
+            if (blocked) {
+                return deny('school_paused', `The school paused calls (${input.schoolPause.reason}), so this call was not placed.`);
+            }
         }
 
         // Gate rule 14: the frequency cap, routine calls only, every path counted.

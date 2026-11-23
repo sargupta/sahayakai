@@ -1,0 +1,70 @@
+name: sahayakai-quality-gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: quality-gates-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: sahayakai-main
+
+      - name: Gate 1 — i18n ratchet (no new missing keys, maxKeys may only go down)
+        run: node scripts/ci/check-i18n-ratchet.mjs
+        working-directory: sahayakai-main
+
+      - name: Gate 2 — design-token budget (maxHits may only go down)
+        run: node scripts/ci/check-design-tokens.mjs
+        working-directory: sahayakai-main
+
+      - name: Gate 3 — first-load budget
+        run: node scripts/ci/check-first-load-budget.mjs
+        working-directory: sahayakai-main
+
+      - name: Gate 4 — schema drift
+        run: node scripts/ci/check-schema-drift.mjs
+        working-directory: sahayakai-main
+
+      - name: Gate 5 — firestore indexes
+        run: node scripts/ci/check-firestore-indexes.mjs
+        working-directory: sahayakai-main
+
+      - name: Gate 6 — service YAML drift
+        run: bash scripts/ci/check-service-yaml-drift.sh
+        working-directory: sahayakai-main
+
+      - name: Gate 7 — App Check env (warn-only unless MODE=strict)
+        run: bash scripts/ci/check-appcheck-env.sh
+        working-directory: sahayakai-main
+        env:
+          MODE: warn
+
+      - name: Gate 8 — no --no-verify bypass in commit messages
+        run: node scripts/ci/check-no-verify-bypass.mjs "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+        working-directory: sahayakai-main
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+      - name: Gate 9 — post-deploy smoke
+        run: node scripts/ci/post-deploy-smoke.mjs
+        working-directory: sahayakai-main

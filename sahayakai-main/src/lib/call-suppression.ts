@@ -5,22 +5,18 @@ import { NextResponse } from 'next/server';
  * Do-not-call suppression.
  *
  * When a parent says on a call that they do not want to be called again, the
- * telephony bridge (`_persist_opt_out`) writes `call_suppressions/{id}`. Every
- * route that can place a parent call MUST run `refuseIfParentOptedOut` before
- * it contacts any provider.
+ * telephony bridge (sahayakai-agents, `_persist_opt_out`) writes
+ * `call_suppressions/{sha256("<E.164>|<SAMPARK_PHONE_PEPPER>")}`. Every route
+ * that can place a parent call MUST run `refuseIfParentOptedOut` before it
+ * contacts any provider.
  *
  * Keyed by phone, not student: siblings share a parent's number, and a new
  * outreach doc must not erase the parent's "no".
  *
- * The id was a plain sha256 of the E.164 number. Indian mobile numbers are only
- * about 10^10 values, so anyone holding the list could recover every number. New
- * entries use the keyed form: sha256 of "<E.164>|<SAMPARK_PHONE_PEPPER>", the
- * same hash as Sampark's own `hashPhone` (`lib/sampark/phone.ts`). Both forms are
- * byte-identical to the bridge's `suppression.py`; a shared fixture pins them.
- *
- * Entries written before the change sit under the plain id, which cannot be
- * turned into the keyed one without the number. So a lookup checks both ids,
- * keyed first, and no recorded "no" is lost.
+ * The id is peppered sha256 of "<E.164>|<SAMPARK_PHONE_PEPPER>" — identical to
+ * `phone_suppression_id` in sahayakai-agents and `hashPhone` in phone.ts.
+ * Falls back to unpeppered sha256 when the pepper is missing (fail-closed).
+ * The raw number is never a doc id.
  */
 
 export const SUPPRESSION_COLLECTION = 'call_suppressions';
@@ -31,31 +27,20 @@ function pepper(): string | null {
     return value ? value : null;
 }
 
-/** The old, unkeyed id. Read only: kept so entries written before the change are still found. */
-export function legacyPhoneSuppressionId(e164: string): string {
-    return createHash('sha256').update(e164.trim(), 'utf8').digest('hex');
-}
-
-/** sha256 hex of "<E.164>|<pepper>", identical to Sampark's `hashPhone`. */
-export function keyedPhoneSuppressionId(e164: string, phonePepper: string): string {
-    return createHash('sha256').update(`${e164.trim()}|${phonePepper}`, 'utf8').digest('hex');
-}
-
-/** Every id an opt-out for this number may sit under: keyed first (when configured), then the old one. */
-export function phoneSuppressionIds(e164: string): string[] {
+export function phoneSuppressionId(e164: string): string {
     const p = pepper();
-    return [...(p ? [keyedPhoneSuppressionId(e164, p)] : []), legacyPhoneSuppressionId(e164)];
+    if (p === null) {
+        return createHash('sha256').update(e164.trim(), 'utf8').digest('hex');
+    }
+    return createHash('sha256').update(`${e164.trim()}|${p}`, 'utf8').digest('hex');
 }
 
 export async function isParentOptedOut(
     db: FirebaseFirestore.Firestore,
     e164: string,
 ): Promise<boolean> {
-    for (const id of phoneSuppressionIds(e164)) {
-        const snap = await db.collection(SUPPRESSION_COLLECTION).doc(id).get();
-        if (snap.exists) return true;
-    }
-    return false;
+    const snap = await db.collection(SUPPRESSION_COLLECTION).doc(phoneSuppressionId(e164)).get();
+    return snap.exists;
 }
 
 /**
