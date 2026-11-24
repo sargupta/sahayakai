@@ -1029,7 +1029,8 @@ async def _play_riya_opener(bridge: _Bridge) -> None:
         bridge.protect_until = queued_at + len(early_audio) / 8000.0
         _tl(bridge, "opener_early")
     with contextlib.suppress(asyncio.TimeoutError):
-        await asyncio.wait_for(bridge.riya_ready.wait(), timeout=4.0)
+        # Context (0.4-2.3 s measured) plus the opener render (<= _OPENER_RENDER_WAIT_S).
+        await asyncio.wait_for(bridge.riya_ready.wait(), timeout=6.0)
     riya = bridge.riya
     if riya is None or riya.is_safe_exit or not _RIYA_OPENER_DIR:
         return
@@ -3267,10 +3268,10 @@ def _riya_line_path(line: str) -> Path:
 
 #: How long the call waits for the opener to render before going on without it
 #: (the model then says the opener itself, as before).
-_OPENER_RENDER_WAIT_S = float(os.environ.get("VOBIZ_RIYA_OPENER_RENDER_WAIT_S", "1.5"))
+_OPENER_RENDER_WAIT_S = float(os.environ.get("VOBIZ_RIYA_OPENER_RENDER_WAIT_S", "1.2"))
 
 
-async def _render_riya_opener(riya: Any) -> None:
+async def _render_riya_opener(riya: Any, outreach_id: str = "") -> None:
     """Render this call's fixed lines into the cache (line_tts.py).
 
     The opener is awaited (bounded) so the Live config can say it was spoken; the
@@ -3280,13 +3281,18 @@ async def _render_riya_opener(riya: Any) -> None:
 
     if riya is None or riya.is_safe_exit or not line_tts.enabled(_RIYA_OPENER_DIR):
         return
+    # The school's remembered opener plays at pick-up, before the record arrives
+    # (_play_riya_opener, early branch). Then the parent HAS been greeted: the model
+    # must be told so, whatever happens to this render, or it greets them again.
+    if _opener_audio(_org_opener_text(_org_of(outreach_id))) is not None:
+        riya.opener_from_cache = True
     try:
         opener = riya.first_message()
         rest = [(t, _riya_line_path(t)) for t in riya.fixed_lines() if t and t != opener]
         if opener:
             with contextlib.suppress(asyncio.TimeoutError):
                 await asyncio.wait_for(
-                    asyncio.shield(line_tts.ensure_line(opener, _riya_line_path(opener))),
+                    asyncio.shield(line_tts.ensure_line(opener, _riya_line_path(opener), priority=True)),
                     timeout=_OPENER_RENDER_WAIT_S,
                 )
         line_tts.ensure_lines_later(rest)
@@ -4088,7 +4094,7 @@ async def _prepare_live_session(
     if riya is not None:
         # Riya's fixed lines must be in the cache BEFORE her Live config is built: the
         # config tells the model whether the opener was already spoken (line_tts.py).
-        opener_task = asyncio.create_task(_render_riya_opener(riya))
+        opener_task = asyncio.create_task(_render_riya_opener(riya, outreach_id))
         client = await riya_client if riya_client is not None else await _genai_client(r_location)
         await opener_task
         log.info(

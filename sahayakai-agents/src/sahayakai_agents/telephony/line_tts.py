@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import io
 import os
 import time
@@ -42,8 +43,14 @@ log = structlog.get_logger(__name__)
 
 TTS_URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
 DEFAULT_VOICE = "en-IN-Chirp3-HD-Aoede"
-#: Concurrent synthesis requests per process (a call has ~15 fixed lines).
-_MAX_PARALLEL = 4
+#: Concurrent BACKGROUND renders per process (a call has ~15 fixed lines). Openers
+#: never wait behind them: they are the one line a call is waiting for.
+_MAX_PARALLEL = 3
+#: After a failed render, skip TTS for this long: a broken or hanging endpoint must
+#: not cost every following call its opener wait.
+_COOLDOWN_S = 60.0
+#: Keep the per-instance cache bounded (/tmp is memory on Cloud Run).
+_MAX_FILES = 2000
 #: Trim the synthesiser's own lead/tail silence down to a natural margin.
 _LEAD_MS = 60
 _TAIL_MS = 120
@@ -53,10 +60,27 @@ _inflight: dict[Path, asyncio.Future[bool]] = {}
 _sem: asyncio.Semaphore | None = None
 _token: tuple[str, float] = ("", 0.0)
 _background: set[asyncio.Task[Any]] = set()
+_down_until = 0.0
+_client: Any = None
+_writes = 0
 
 
 def enabled(cache_dir: str) -> bool:
     return bool(cache_dir) and os.environ.get("VOBIZ_RIYA_LINE_TTS", "").strip() == "1"
+
+
+def cooling_down() -> bool:
+    return time.monotonic() < _down_until
+
+
+def _shared_client() -> Any:
+    """One HTTP client per process: no new TLS handshake inside an opener's wait."""
+    global _client
+    import httpx
+
+    if _client is None or _client.is_closed:
+        _client = httpx.AsyncClient(timeout=10.0)
+    return _client
 
 
 def voice_name() -> str:
@@ -131,8 +155,7 @@ def trim_silence(ulaw: bytes) -> bytes:
 
 async def synthesize(text: str, voice: str | None = None, *, client: Any = None) -> bytes | None:
     """`text` spoken in the call voice, as mu-law 8 kHz. None on any failure."""
-    import httpx
-
+    global _down_until
     voice = voice or voice_name()
     body = {
         "input": {"text": text},
@@ -143,11 +166,8 @@ async def synthesize(text: str, voice: str | None = None, *, client: Any = None)
         # No x-goog-user-project: the runtime service account bills its own project, and
         # that header would need serviceusage.services.use, which it may not hold.
         headers = {"Authorization": f"Bearer {await _access_token()}"}
-        if client is not None:
-            r = await client.post(TTS_URL, json=body, headers=headers, timeout=10.0)
-        else:
-            async with httpx.AsyncClient() as c:
-                r = await c.post(TTS_URL, json=body, headers=headers, timeout=10.0)
+        c = client if client is not None else _shared_client()
+        r = await c.post(TTS_URL, json=body, headers=headers, timeout=10.0)
         r.raise_for_status()
         # Off the event loop: lines render while a call is live, and the outbound pacer
         # must not be delayed by converting and trimming seconds of audio.
@@ -155,23 +175,44 @@ async def synthesize(text: str, voice: str | None = None, *, client: Any = None)
         audio = await asyncio.to_thread(wav_to_ulaw, wav)
         return audio or None
     except Exception as exc:  # noqa: BLE001
+        _down_until = time.monotonic() + _COOLDOWN_S
         log.warning("telephony.line_tts_failed", error=str(exc)[:200], chars=len(text))
         return None
 
 
 def _write_atomic(path: Path, data: bytes) -> None:
+    global _writes
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(f".{os.getpid()}.tmp")
     tmp.write_bytes(data)
     os.replace(tmp, path)
+    _writes += 1
+    if _writes % 100 == 0:
+        _prune(path.parent)
 
 
-async def ensure_line(text: str, path: Path, *, client: Any = None) -> bool:
-    """`path` holds `text` rendered. True if it does (already, or now). Never raises."""
+def _prune(folder: Path) -> None:
+    """Drop the oldest renders beyond _MAX_FILES (they are re-rendered on demand)."""
+    try:
+        files = sorted(folder.glob("*.ulaw"), key=lambda f: f.stat().st_mtime)
+        for f in files[: max(0, len(files) - _MAX_FILES)]:
+            f.unlink(missing_ok=True)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("telephony.line_cache_prune_failed", error=str(exc)[:160])
+
+
+async def ensure_line(
+    text: str, path: Path, *, client: Any = None, priority: bool = False
+) -> bool:
+    """`path` holds `text` rendered. True if it does (already, or now). Never raises.
+
+    `priority` (the opener): skips the background queue."""
     if not text:
         return False
     if path.is_file():
         return True
+    if cooling_down():
+        return False
     pending = _inflight.get(path)
     if pending is not None:
         return await asyncio.shield(pending)
@@ -179,7 +220,9 @@ async def ensure_line(text: str, path: Path, *, client: Any = None) -> bool:
     _inflight[path] = fut
     ok = False
     try:
-        async with _semaphore():
+        async with contextlib.AsyncExitStack() as stack:
+            if not priority:
+                await stack.enter_async_context(_semaphore())
             t0 = time.monotonic()
             audio = await synthesize(text, client=client)
             if audio:

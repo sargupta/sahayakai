@@ -72,6 +72,7 @@ def _no_auth(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(L, "_access_token", tok)
     monkeypatch.setattr(L, "_sem", None)
+    monkeypatch.setattr(L, "_down_until", 0.0)
     L._inflight.clear()
 
 
@@ -223,3 +224,112 @@ def test_class_gate_deployed_bridge_has_the_line_cache() -> None:
     pairs = dict(kv.split("=", 1) for kv in env.group(1).split(","))
     assert pairs.get("VOBIZ_RIYA_LINE_TTS") == "1"
     assert pairs.get("VOBIZ_RIYA_OPENER_DIR", "").startswith("/tmp/")
+
+
+# ---- review follow-ups (PR #228) -------------------------------------------------------
+
+
+def _bridge(riya: R.RiyaCall, outreach_id: str = "sampark~school-x~call1"):
+    from types import SimpleNamespace
+
+    ready = asyncio.Event()
+    ready.set()
+    return SimpleNamespace(outreach_id=outreach_id, riya_ready=ready, riya=riya, opener_queued_at=0.0,
+                           protect_until=0.0, timeline=[], call_started=0.0)
+
+
+def test_class_gate_playback_never_greets_twice(tmp_path, monkeypatch) -> None:
+    """Drives the real `_play_riya_opener`: the model was told to say the opener and the
+    rendered file landed late; the bridge must queue NOTHING."""
+    monkeypatch.setattr(RT, "_RIYA_OPENER_DIR", str(tmp_path))
+    riya = _call()
+    riya.opener_from_cache = False
+    path = RT._riya_line_path(riya.first_message())
+    path.write_bytes(b"\x7f" * 800)  # landed late
+    queued: list[bytes] = []
+    monkeypatch.setattr(RT, "_queue_ulaw", lambda b, a: queued.append(a))
+    monkeypatch.setattr(RT, "_flush_ulaw", lambda b: None)
+    asyncio.run(RT._play_riya_opener(_bridge(riya)))
+    assert queued == []
+
+
+def test_playback_plays_the_cached_opener_when_decided(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(RT, "_RIYA_OPENER_DIR", str(tmp_path))
+    riya = _call()
+    riya.opener_from_cache = True
+    RT._riya_line_path(riya.first_message()).write_bytes(b"\x7f" * 800)
+    queued: list[bytes] = []
+    monkeypatch.setattr(RT, "_queue_ulaw", lambda b, a: queued.append(a))
+    monkeypatch.setattr(RT, "_flush_ulaw", lambda b: None)
+    monkeypatch.setattr(RT, "_record_turn", lambda *a, **k: None)
+    monkeypatch.setattr(RT, "_tl", lambda *a, **k: None)
+    b = _bridge(riya)
+    b.dialogue = type("D", (), {"on_agent_turn": lambda self, *a, **k: None})()
+    asyncio.run(RT._play_riya_opener(b))
+    assert queued == [b"\x7f" * 800]
+
+
+def test_an_early_org_opener_counts_as_spoken(tmp_path, monkeypatch) -> None:
+    """The school's remembered opener plays at pick-up: the model must never be told to
+    greet again, even if this call's own render fails."""
+    monkeypatch.setattr(RT, "_RIYA_OPENER_DIR", str(tmp_path))
+    monkeypatch.setenv("VOBIZ_RIYA_LINE_TTS", "1")
+
+    async def fail(text, voice=None, *, client=None):
+        return None
+
+    monkeypatch.setattr(L, "synthesize", fail)
+    old = "Hello, this is Riya calling from Sargvision Old Name with an important update."
+    RT._riya_line_path(old).write_bytes(b"\x7f" * 800)
+    RT._remember_org_opener("school-x", old)
+    riya = _call()
+    asyncio.run(RT._render_riya_opener(riya, "sampark~school-x~call1"))
+    assert riya.opener_from_cache is True
+    assert "has ALREADY been spoken" in _instruction(riya)
+
+
+def test_the_opener_never_waits_behind_background_renders(tmp_path) -> None:
+    client = _FakeClient(delay=0.5)
+
+    async def go() -> float:
+        bg = [(f"line {i}", tmp_path / f"{i}.ulaw") for i in range(9)]
+        L.ensure_lines_later(bg)
+        await asyncio.sleep(0.05)  # the background queue is full
+        t0 = asyncio.get_running_loop().time()
+        ok = await L.ensure_line("opener", tmp_path / "o.ulaw", client=client, priority=True)
+        assert ok
+        took = asyncio.get_running_loop().time() - t0
+        await asyncio.gather(*list(L._background))
+        return took
+
+    import sahayakai_agents.telephony.line_tts as mod
+
+    orig = mod.synthesize
+
+    async def synth(text, voice=None, *, client=None):  # background uses the slow client too
+        return await orig(text, voice, client=client or _FakeClient(delay=0.5))
+
+    mod.synthesize = synth
+    try:
+        assert asyncio.run(go()) < 0.9  # not 3 x 0.5 s behind the queue
+    finally:
+        mod.synthesize = orig
+
+
+def test_a_failure_pauses_tts_for_following_calls(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(L, "_down_until", 0.0)
+    bad = _FakeClient(status=500)
+    assert asyncio.run(L.ensure_line("a", tmp_path / "a.ulaw", client=bad)) is False
+    good = _FakeClient()
+    assert asyncio.run(L.ensure_line("b", tmp_path / "b.ulaw", client=good)) is False
+    assert good.calls == []  # not even tried during the pause
+    monkeypatch.setattr(L, "_down_until", 0.0)
+    assert asyncio.run(L.ensure_line("b", tmp_path / "b.ulaw", client=good)) is True
+
+
+def test_the_cache_is_bounded(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(L, "_MAX_FILES", 5)
+    for i in range(8):
+        (tmp_path / f"{i}.ulaw").write_bytes(b"x")
+    L._prune(tmp_path)
+    assert len(list(tmp_path.glob("*.ulaw"))) == 5
