@@ -90,6 +90,8 @@ jest.mock('@/lib/firebase-admin', () => ({
 
 jest.mock('firebase-admin/auth', () => ({
     getAuth: () => ({
+        // mergeCustomClaims reads the existing claims before writing.
+        getUser: async () => ({ customClaims: {} }),
         setCustomUserClaims: setCustomUserClaimsMock,
         generateSignInWithEmailLink: jest.fn().mockResolvedValue('https://link'),
     }),

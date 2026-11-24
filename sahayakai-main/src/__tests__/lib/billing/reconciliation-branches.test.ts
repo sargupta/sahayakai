@@ -87,7 +87,8 @@ jest.mock('@/lib/firebase-admin', () => ({
 }));
 
 jest.mock('firebase-admin/auth', () => ({
-    getAuth: () => ({ setCustomUserClaims: setCustomUserClaimsMock }),
+    // mergeCustomClaims reads the existing claims before writing.
+    getAuth: () => ({ getUser: async () => ({ customClaims: {} }), setCustomUserClaims: setCustomUserClaimsMock }),
 }));
 jest.mock('@/lib/secrets', () => ({ getSecret: (...args: any[]) => getSecretMock(...args) }));
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn() } }));

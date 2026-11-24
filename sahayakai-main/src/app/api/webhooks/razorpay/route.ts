@@ -275,7 +275,14 @@ export async function POST(request: Request) {
                 // will still show old plan until claim is set + token refreshed.
                 try {
                     const { getAuth } = await import('firebase-admin/auth');
-                    await getAuth().setCustomUserClaims(userId, { planType });
+                    // Merge, never replace: a bare setCustomUserClaims would drop
+                    // the access-gate claim and lock a paying teacher out.
+                    const { mergeCustomClaims, grantPaidAccess } = await import('@/lib/access/access-admin');
+                    await mergeCustomClaims(userId, { planType }, getAuth());
+                    // A verified payment entitles the payer under the access
+                    // gate (docs/ACCESS_GATE_DESIGN.md). Inside this try so a
+                    // failure marks the event failed and it is retried.
+                    await grantPaidAccess(userId, 'razorpay subscription activated');
                 } catch (claimErr) {
                     console.error(`[Webhook] Custom claim failed for ${userId}:`, claimErr);
                     throw new Error(`CLAIM_SET_FAILED: ${userId}`);
@@ -423,7 +430,9 @@ export async function POST(request: Request) {
 
                     try {
                         const { getAuth } = await import('firebase-admin/auth');
-                        await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+                        const { mergeCustomClaims, revokePaidAccess } = await import('@/lib/access/access-admin');
+                        await mergeCustomClaims(userId, { planType: 'free' }, getAuth());
+                        await revokePaidAccess(userId, 'razorpay subscription ended');
                     } catch (claimErr) {
                         console.error(`[Webhook] Downgrade claim failed for ${userId}:`, claimErr);
                         throw new Error(`CLAIM_SET_FAILED: ${userId}`);

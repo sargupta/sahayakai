@@ -2,9 +2,14 @@
 
 import { Calendar, Sparkles } from "lucide-react";
 import { AnimatedHeadline } from "./animated-headline";
+import Link from "next/link";
 import { LandingVoiceOrb } from "./landing-voice-orb";
 import { useLanguage } from "@/context/language-context";
 import { isPublicVoiceOrbEnabled } from "@/lib/vidya-live/public-voice";
+import { useAccessMode } from "./use-access-mode";
+
+const PRIMARY_CTA_CLASS =
+  "inline-flex items-center justify-center gap-2 text-sm font-medium px-[22px] py-[13px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer";
 
 type Props = {
   titleIndex: number;
@@ -13,6 +18,7 @@ type Props = {
 
 export function LandingHero({ titleIndex, onAuthClick }: Props) {
   const { t } = useLanguage();
+  const gated = useAccessMode() === "enforce";
   // The public VIDYA orb needs a server route and sidecar that production does
   // not run yet; until the build flag is on, the hero offers no voice control
   // and the signed-out home keeps its floating mic (app-shell.tsx). Read
@@ -54,14 +60,19 @@ export function LandingHero({ titleIndex, onAuthClick }: Props) {
 
         {/* CTA pair */}
         <div className="flex flex-col sm:flex-row gap-3 mt-7 justify-center w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={onAuthClick}
-            className="inline-flex items-center justify-center gap-2 text-sm font-medium px-[22px] py-[13px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer"
-          >
-            <Sparkles className="w-[15px] h-[15px]" strokeWidth={2.2} />
-            {t("Start free")}
-          </button>
+          {gated ? (
+            /* Access gate enforced: new accounts apply for their school
+               instead of signing straight in (docs/ACCESS_GATE_DESIGN.md). */
+            <Link href="/request-access" className={PRIMARY_CTA_CLASS}>
+              <Sparkles className="w-[15px] h-[15px]" strokeWidth={2.2} />
+              {t("Request access")}
+            </Link>
+          ) : (
+            <button type="button" onClick={onAuthClick} className={PRIMARY_CTA_CLASS}>
+              <Sparkles className="w-[15px] h-[15px]" strokeWidth={2.2} />
+              {t("Start free")}
+            </button>
+          )}
           <a
             href="https://calendly.com/contact-sargvision/30min"
             target="_blank"

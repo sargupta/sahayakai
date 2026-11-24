@@ -37,7 +37,9 @@ async function main() {
     });
 
     // Set custom claim
-    await auth.setCustomUserClaims(uid, { planType: 'pro', sarkar: true });
+    // Merge with existing claims (access gate, organisation, onboarding).
+    const existingClaims = (await auth.getUser(uid)).customClaims ?? {};
+    await auth.setCustomUserClaims(uid, { ...existingClaims, planType: 'pro', sarkar: true });
 
     console.log(`Approved Sarkar status for ${uid}. User now has Pro access (government-subsidized).`);
 }

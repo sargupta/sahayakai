@@ -1,7 +1,12 @@
 "use client";
 
 import { useLanguage } from "@/context/language-context";
+import Link from "next/link";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
+import { useAccessMode } from "./use-access-mode";
+
+const NAV_CTA_CLASS =
+  "inline-flex items-center text-[13px] bg-[#0b0b0f] text-white px-[18px] py-[9px] rounded-full font-medium hover:bg-[#1c1c21] transition-colors cursor-pointer";
 
 type Props = {
   onAuthClick: () => void;
@@ -9,6 +14,7 @@ type Props = {
 
 export function LandingNav({ onAuthClick }: Props) {
   const { t } = useLanguage();
+  const gated = useAccessMode() === "enforce";
 
   return (
     <nav className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-11 py-[22px] bg-white/70 backdrop-blur-md border-b border-black/5">
@@ -44,13 +50,17 @@ export function LandingNav({ onAuthClick }: Props) {
         >
           {t("Log in")}
         </button>
-        <button
-          type="button"
-          onClick={onAuthClick}
-          className="inline-flex items-center text-[13px] bg-[#0b0b0f] text-white px-[18px] py-[9px] rounded-full font-medium hover:bg-[#1c1c21] transition-colors cursor-pointer"
-        >
-          {t("Start free")}
-        </button>
+        {gated ? (
+          /* Access gate enforced (docs/ACCESS_GATE_DESIGN.md). "Log in"
+             above stays for existing accounts. */
+          <Link href="/request-access" className={NAV_CTA_CLASS}>
+            {t("Request access")}
+          </Link>
+        ) : (
+          <button type="button" onClick={onAuthClick} className={NAV_CTA_CLASS}>
+            {t("Start free")}
+          </button>
+        )}
       </div>
     </nav>
   );
