@@ -3720,5 +3720,6 @@
   "Calls run on SahayakAI's own voice bridge: Plivo phone line with Gemini Live.": "કૉલ સહાયકAI ના પોતાના વૉઇસ બ્રિજ પર ચાલે છે: Plivo ફોન લાઇન અને Gemini Live.",
   "Calls run on SahayakAI's own voice bridge: Exotel phone line with Gemini Live.": "કૉલ સહાયકAI ના પોતાના વૉઇસ બ્રિજ પર ચાલે છે: Exotel ફોન લાઇન અને Gemini Live.",
   "Pick the calling provider for this visit. SamparkAI looks and works the same with any of them; only the service that holds Riya's calls changes. You can switch at any time from inside SamparkAI.": "આ મુલાકાત માટે કૉલિંગ સેવા પસંદ કરો. બધામાં સંપર્કAI સરખું દેખાય અને કામ કરે છે; ફક્ત રિયાના કૉલ ચલાવતી સેવા બદલાય છે. સંપર્કAI માંથી ગમે ત્યારે બદલી શકો છો.",
-  "Real class-wide calls run on Vobiz only. Another provider is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.": "આખા વર્ગના ખરા કૉલ ફક્ત Vobiz પર ચાલે છે. બીજી સેવા પસંદ કરેલી છે, તેથી આખા વર્ગનો કોઈ ખરો કૉલ થતો નથી, અને તમારી પસંદગી વિના કૉલ ક્યારેય Vobiz પર ખસેડાતા નથી."
+  "Real class-wide calls run on Vobiz only. Another provider is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.": "આખા વર્ગના ખરા કૉલ ફક્ત Vobiz પર ચાલે છે. બીજી સેવા પસંદ કરેલી છે, તેથી આખા વર્ગનો કોઈ ખરો કૉલ થતો નથી, અને તમારી પસંદગી વિના કૉલ ક્યારેય Vobiz પર ખસેડાતા નથી.",
+  "The school has paused calls; only emergency closures go out while paused": "શાળાએ કૉલ થોભાવ્યા છે; થોભાવેલા હોય ત્યારે ફક્ત કટોકટી બંધની જાણ જ જાય છે"
 }
