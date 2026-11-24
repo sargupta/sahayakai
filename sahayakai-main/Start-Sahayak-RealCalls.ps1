@@ -98,7 +98,9 @@ New-Item -ItemType Directory -Force -Path $OpenerDir | Out-Null
 $bridgeEnv['VOBIZ_RIYA_OPENER_DIR'] = $OpenerDir
 # Indian English accent, and a little more patience before a parent's turn ends (fewer 'sorry, can you repeat').
 $bridgeEnv['VOBIZ_RIYA_LANGUAGE_CODE'] = 'en-IN'
-$bridgeEnv['VOBIZ_RIYA_VAD_SILENCE_MS'] = '700'
+$bridgeEnv['VOBIZ_RIYA_VAD_SILENCE_MS'] = '500'
+# Build the Vertex + Firestore clients at bridge start, not on the first call (4.2 s of dead air).
+$bridgeEnv['VOBIZ_RIYA_PREWARM'] = '1'
 Start-Bg 'vobiz-bridge' $Python @('..\sahayakai-agents\scripts\run_local_voice.py', '--port', '8091') (Join-Path $State 'vobiz-bridge.log') $bridgeEnv | Out-Null
 Start-Bg 'webhook-gateway' $Node @('scripts/sampark/webhook-gateway.mjs', '--app', '3000', '--app-gate', '3010', '--bridge', '8091', '--bridge-gate', '8092') (Join-Path $State 'webhook-gateway.log') @{} | Out-Null
 $ok = $false

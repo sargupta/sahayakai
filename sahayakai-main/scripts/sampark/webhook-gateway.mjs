@@ -31,7 +31,7 @@ const BRIDGE_GATE = opt('bridge-gate', 8092);
 
 export const APP_ALLOWED = [/^\/api\/webhooks\/vobiz-riya(\/|\?|$)/, /^\/api\/webhooks\/plivo-riya(\/|\?|$)/, /^\/api\/webhooks\/exotel-riya(\/|\?|$)/, /^\/api\/webhooks\/sampark-voice(\/|\?|$)/, /^\/api\/webhooks\/elevenlabs-riya(\/|\?|$)/];
 // One token-gated media socket per carrier (Vobiz, Plivo, Exotel); nothing else on the bridge.
-export const BRIDGE_ALLOWED = [/^\/telephony\/vobiz\/stream(\?|$)/, /^\/telephony\/plivo\/stream(\?|$)/, /^\/telephony\/exotel\/stream(\?|$)/];
+export const BRIDGE_ALLOWED = [/^\/telephony\/vobiz\/stream(\?|$)/, /^\/telephony\/plivo\/stream(\?|$)/, /^\/telephony\/exotel\/stream(\?|$)/, /^\/readyz$/];
 export const allowed = (rules, url) => rules.some((r) => r.test(url ?? ''));
 
 const log = (s) => process.stdout.write(`${new Date().toISOString()} ${s}\n`);
