@@ -32,6 +32,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { listGuardians, type GuardianRow } from "@/lib/api/sampark";
+import { isBridgeCarrier, isRealProvider, type RealConversationProvider } from "@/lib/sampark/conversation/types";
+import { PROVIDER_LABEL } from "@/lib/sampark/provider-choice";
+
+/** Brand names in the call history (not translated). */
+const PROVIDER_NAME: Record<RealConversationProvider, string> = { elevenlabs: "ElevenLabs", vobiz: "Vobiz", plivo: "Plivo", exotel: "Exotel" };
 import {
     getRiya,
     getRiyaCall,
@@ -517,8 +522,7 @@ function CallRow({ orgId, call, onChange, callback = null }: { orgId: string; ca
                         {f.dateTime(call.createdAt)} · {fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 })}
                         {call.destination === "test_phone" && <> · {t("Test phone")}</>}
                         {call.provider === "simulated" && <> · {t("Simulated")}</>}
-                        {call.provider === "elevenlabs" && <> · {"ElevenLabs"}</>}
-                        {call.provider === "vobiz" && <> · {"Vobiz"}</>}
+                        {isRealProvider(call.provider) && <> · {PROVIDER_NAME[call.provider]}</>}
                         {call.durationSeconds !== null && <> · {fmt(t("{seconds} s"), { seconds: Math.round(call.durationSeconds) })}</>}
                     </p>
                 </div>
@@ -734,8 +738,9 @@ export function RiyaCallPanel({ fixedFamily, outreach }: { fixedFamily?: RiyaFix
         }
     };
 
-    // ElevenLabs or Vobiz: the same confirmation, checks and history for both.
-    const realCall = availability.provider === "elevenlabs" || availability.provider === "vobiz";
+    // ElevenLabs, Vobiz, Plivo or Exotel: the same confirmation, checks and history for all of them.
+    const realProvider = isRealProvider(availability.provider) ? availability.provider : null;
+    const realCall = realProvider !== null;
     // A real call still ringing, or one whose outcome nobody has checked, blocks the next one.
     const callInProgress = calls.some((c) => c.provider !== "simulated" && (c.state === "initiating" || c.state === "initiated" || (c.state === "unknown" && !c.reviewedAt)));
     const realReady = !realCall || (webhook === "ok" && preview?.nonProductionDatabase === true && Boolean(preview?.destinationE164) && !callInProgress);
@@ -745,8 +750,8 @@ export function RiyaCallPanel({ fixedFamily, outreach }: { fixedFamily?: RiyaFix
         if (!realCall) return;
         setWebhook("checking");
         try {
-            // The result endpoint of the provider that will run this call.
-            const res = await fetch(availability.provider === "vobiz" ? "/api/webhooks/vobiz-riya/event" : "/api/webhooks/elevenlabs-riya", { method: "GET", cache: "no-store" });
+            // The result endpoint of the provider that will run this call (the bridge carriers share one).
+            const res = await fetch(isBridgeCarrier(availability.provider) ? "/api/webhooks/vobiz-riya/event" : "/api/webhooks/elevenlabs-riya", { method: "GET", cache: "no-store" });
             setWebhook(res.ok ? "ok" : "failed");
         } catch {
             setWebhook("failed");
@@ -782,8 +787,8 @@ export function RiyaCallPanel({ fixedFamily, outreach }: { fixedFamily?: RiyaFix
                 description={t("Riya is an AI assistant that calls one parent about one school notice. She says she is an AI if asked, never shares a child's details before the listener confirms they are the parent or guardian, and only says the facts you enter here.")}
             >
                 <p className="text-sm text-foreground">{availability.rosterMode ? t("Local test roster: each call rings the chosen contact's own number, only if it is on this machine's allow-list.") : modeBannerText(t, availability.mode, availability.destinationLast4)}</p>
-                {(availability.provider === "vobiz" || availability.provider === "elevenlabs") && (
-                    <p className="text-sm font-medium text-foreground">{fmt(t("Real-call mode is on: {provider} places this call and a real phone rings."), { provider: availability.provider === "vobiz" ? "Vobiz Calls" : "ElevenLabs Calls" })}</p>
+                {realProvider && (
+                    <p className="text-sm font-medium text-foreground">{fmt(t("Real-call mode is on: {provider} places this call and a real phone rings."), { provider: PROVIDER_LABEL[realProvider] })}</p>
                 )}
                 {availability.localAfterHoursUntil && (
                     <p className="text-sm font-medium text-destructive">{fmt(t("Local after-hours test window is open until {time}. Real calls can ring outside school calling hours."), { time: f.dateTime(availability.localAfterHoursUntil) })}</p>

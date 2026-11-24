@@ -51,6 +51,14 @@ substitutions:
   # 'true' lets staging call through the original agent when no clone exists (founder decision,
   # 2026-11-16, staging only). Leave 'false' wherever a clone is available.
   _ELEVENLABS_ALLOW_SOURCE_AGENT: 'false'
+  # Plivo / Exotel (the other two bridge carriers). Each runs only when its ids are passed; leave
+  # empty for a deploy that keeps exactly today's providers. Secrets created by hand first:
+  # PLIVO_AUTH_ID, PLIVO_AUTH_TOKEN (Plivo); EXOTEL_API_KEY, EXOTEL_API_TOKEN (Exotel). The bridge
+  # also needs the Plivo pair (cloudbuild-riya-bridge.yaml, _PLIVO_SECRETS=true).
+  _PLIVO_FROM_NUMBER: ''
+  _EXOTEL_ACCOUNT_SID: ''
+  _EXOTEL_SUBDOMAIN: ''
+  _EXOTEL_CALLER_ID: ''
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -126,3 +134,34 @@ steps:
           --update-secrets=ELEVENLABS_API_KEY=RIYA_ELEVENLABS_API_KEY:latest,ELEVENLABS_WEBHOOK_SECRET=RIYA_ELEVENLABS_WEBHOOK_SECRET:latest \
           --update-env-vars=ELEVENLABS_AGENT_ID=${_ELEVENLABS_AGENT_ID},ELEVENLABS_AGENT_PHONE_NUMBER_ID=${_ELEVENLABS_PHONE_NUMBER_ID},ELEVENLABS_SOURCE_AGENT_ID=${_ELEVENLABS_SOURCE_AGENT_ID},ELEVENLABS_ALLOW_SOURCE_AGENT=${_ELEVENLABS_ALLOW_SOURCE_AGENT}
     waitFor: [deploy]
+
+  # Plivo Calls (Riya on the same bridge). Only when _PLIVO_FROM_NUMBER is passed.
+  - id: plivo
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ -z "${_PLIVO_FROM_NUMBER}" ]; then echo "Plivo not requested"; exit 0; fi
+        gcloud run services update ${_SERVICE} --region=${_REGION} --project=$PROJECT_ID --quiet \
+          --update-secrets=PLIVO_AUTH_ID=PLIVO_AUTH_ID:latest,PLIVO_AUTH_TOKEN=PLIVO_AUTH_TOKEN:latest \
+          --update-env-vars=SAMPARK_PLIVO_RIYA_ENABLED=true,PLIVO_FROM_NUMBER=${_PLIVO_FROM_NUMBER},RIYA_BRIDGE_BASE_URL=${_BRIDGE_URL}
+    waitFor: [elevenlabs]
+
+  # Exotel Calls (Riya on the same bridge). Only when all three Exotel ids are passed.
+  - id: exotel
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ -z "${_EXOTEL_ACCOUNT_SID}" ]; then echo "Exotel not requested"; exit 0; fi
+        for v in "_EXOTEL_SUBDOMAIN=${_EXOTEL_SUBDOMAIN}" "_EXOTEL_CALLER_ID=${_EXOTEL_CALLER_ID}"; do
+          [ -n "$${v#*=}" ] || { echo "missing substitution $${v%%=*}"; exit 1; }
+        done
+        gcloud run services update ${_SERVICE} --region=${_REGION} --project=$PROJECT_ID --quiet \
+          --update-secrets=EXOTEL_API_KEY=EXOTEL_API_KEY:latest,EXOTEL_API_TOKEN=EXOTEL_API_TOKEN:latest \
+          --update-env-vars=SAMPARK_EXOTEL_RIYA_ENABLED=true,EXOTEL_ACCOUNT_SID=${_EXOTEL_ACCOUNT_SID},EXOTEL_SUBDOMAIN=${_EXOTEL_SUBDOMAIN},EXOTEL_CALLER_ID=${_EXOTEL_CALLER_ID},RIYA_BRIDGE_BASE_URL=${_BRIDGE_URL}
+    waitFor: [plivo]

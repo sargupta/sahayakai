@@ -34,6 +34,10 @@ from sahayakai_agents.telephony.flow import (
     is_optout,
 )
 
+# Every test here runs in CI (ci-agents.yml selects unit/integration/behavioral); before
+# 2026-11-24 this file had no marker, so none of it ran on a pull request.
+pytestmark = pytest.mark.unit
+
 
 class TestGoodbye:
     @pytest.mark.parametrize(
@@ -771,3 +775,12 @@ class TestTheGoodbyeIsSpokenBeforeTheLineDrops:
         # If the model never speaks, the grace period must still end the call:
         # a silent open line is worse than a missing goodbye.
         assert telephony._CLOSING_GRACE_SECONDS <= 15
+
+
+def test_romanized_hindi_and_bengali_opt_outs_are_detected() -> None:
+    # Class gate: speech recognition often writes Hindi and Bengali in Latin letters. A parent's
+    # "no more calls" must be caught in that form too, but a request to be called must not be.
+    for said in ["call mat karo", "aap phone mat kijiye", "please call na karein", "ar phone korben na", "aar call korben na"]:
+        assert is_optout(said), said
+    for said in ["phir se call karna", "shaam ko phone kijiye", "phone korben na please", "haan, call karo"]:
+        assert not is_optout(said), said

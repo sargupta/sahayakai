@@ -58,6 +58,12 @@ _BASE_ENV = {
 #: Probes that are safe to expose: they carry no schema and no data.
 HEALTH = {"/healthz", "/readyz"}
 SOCKET = "/telephony/vobiz/stream"
+#: One token-gated media socket per phone carrier. Each verifies its OWN stream-token domain
+#: (vobiz-call / plivo-call / exotel-call), so a token for one never opens another; adding a
+#: carrier here is a deliberate, reviewed widening of the public surface.
+#: Exotel drops the URL query string, so its socket authenticates from Exotel's first frames
+#: (custom parameters) before anything billable starts; still one route, still token-gated.
+CARRIER_SOCKETS = {SOCKET, "/telephony/plivo/stream", "/telephony/exotel/stream"}
 VIDYA_SOCKET = "/v1/vidya-voice/stream"
 
 
@@ -74,9 +80,9 @@ def _routes(**extra: str) -> list[str]:
 class TestPublicSurface:
     def test_exposes_only_health_and_the_token_gated_socket(self) -> None:
         routes = set(_routes(SAHAYAKAI_TELEPHONY_ONLY="1"))
-        assert routes == HEALTH | {SOCKET}, (
+        assert routes == HEALTH | CARRIER_SOCKETS, (
             "the public telephony service must expose nothing beyond the health "
-            f"probes and the media socket; found {sorted(routes - HEALTH - {SOCKET})}"
+            f"probes and the carrier media sockets; found {sorted(routes - HEALTH - CARRIER_SOCKETS)}"
         )
 
     def test_public_vidya_voice_adds_only_its_token_gated_socket(self) -> None:
@@ -84,12 +90,12 @@ class TestPublicSurface:
         # may carry it — but only the socket. The router's `/start-session` POST
         # has no token gate and must never ride along.
         routes = set(_routes(SAHAYAKAI_TELEPHONY_ONLY="1", SAHAYAKAI_PUBLIC_VIDYA_VOICE="1"))
-        assert routes == HEALTH | {SOCKET, VIDYA_SOCKET}, sorted(routes)
+        assert routes == HEALTH | CARRIER_SOCKETS | {VIDYA_SOCKET}, sorted(routes)
 
     def test_public_vidya_voice_is_off_unless_explicitly_on(self) -> None:
         for value in ("", "0", "false", "no", "off"):
             routes = set(_routes(SAHAYAKAI_TELEPHONY_ONLY="1", SAHAYAKAI_PUBLIC_VIDYA_VOICE=value))
-            assert routes == HEALTH | {SOCKET}
+            assert routes == HEALTH | CARRIER_SOCKETS
 
     def test_public_vidya_voice_does_not_narrow_the_agent_service(self) -> None:
         # Without the telephony-only flag it must change nothing.
@@ -116,7 +122,7 @@ class TestPublicSurface:
         for value in ("0", "false", "no", "off", ""):
             assert any(r.startswith("/v1/") for r in _routes(SAHAYAKAI_TELEPHONY_ONLY=value))
         for value in ("1", "true", "TRUE", "yes", "on"):
-            assert set(_routes(SAHAYAKAI_TELEPHONY_ONLY=value)) == HEALTH | {SOCKET}
+            assert set(_routes(SAHAYAKAI_TELEPHONY_ONLY=value)) == HEALTH | CARRIER_SOCKETS
 
 
 _INVARIANT_PROBE = """

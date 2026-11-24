@@ -7,9 +7,9 @@
  * (`auth-token=dev-token` → the seeded school admin), so anyone with the tunnel URL could start
  * real calls. This gateway is what gets tunnelled instead. It forwards ONLY:
  *
- *   :APP_GATE  → 127.0.0.1:APP     /api/webhooks/vobiz-riya/*, /api/webhooks/sampark-voice/*,
+ *   :APP_GATE  → 127.0.0.1:APP     /api/webhooks/{vobiz,plivo,exotel}-riya/*, /api/webhooks/sampark-voice/*,
  *                                  /api/webhooks/elevenlabs-riya   (Cookie headers stripped)
- *   :BRIDGE_GATE → 127.0.0.1:BRIDGE  /telephony/vobiz/stream (WebSocket upgrade and HTTP)
+ *   :BRIDGE_GATE → 127.0.0.1:BRIDGE  /telephony/{vobiz,plivo,exotel}/stream (WebSocket upgrade and HTTP)
  *
  * Everything else answers 404. Each forwarded webhook is still verified by the app itself
  * (purpose-scoped HMAC tokens for Vobiz, signatures for ElevenLabs).
@@ -29,8 +29,9 @@ const APP_GATE = opt('app-gate', 3010);
 const BRIDGE = opt('bridge', 8091);
 const BRIDGE_GATE = opt('bridge-gate', 8092);
 
-export const APP_ALLOWED = [/^\/api\/webhooks\/vobiz-riya(\/|\?|$)/, /^\/api\/webhooks\/sampark-voice(\/|\?|$)/, /^\/api\/webhooks\/elevenlabs-riya(\/|\?|$)/];
-export const BRIDGE_ALLOWED = [/^\/telephony\/vobiz\/stream(\?|$)/];
+export const APP_ALLOWED = [/^\/api\/webhooks\/vobiz-riya(\/|\?|$)/, /^\/api\/webhooks\/plivo-riya(\/|\?|$)/, /^\/api\/webhooks\/exotel-riya(\/|\?|$)/, /^\/api\/webhooks\/sampark-voice(\/|\?|$)/, /^\/api\/webhooks\/elevenlabs-riya(\/|\?|$)/];
+// One token-gated media socket per carrier (Vobiz, Plivo, Exotel); nothing else on the bridge.
+export const BRIDGE_ALLOWED = [/^\/telephony\/vobiz\/stream(\?|$)/, /^\/telephony\/plivo\/stream(\?|$)/, /^\/telephony\/exotel\/stream(\?|$)/, /^\/readyz$/];
 export const allowed = (rules, url) => rules.some((r) => r.test(url ?? ''));
 
 const log = (s) => process.stdout.write(`${new Date().toISOString()} ${s}\n`);
@@ -70,6 +71,14 @@ function gate(name, listenPort, targetPort, rules, { stripCookies }) {
         const close = () => { socket.destroy(); upstream.destroy(); };
         upstream.on('error', close);
         socket.on('error', close);
+        // Diagnostics only: bytes each way per media socket (never contents), so "the carrier sent
+        // nothing" and "the bridge sent nothing" can be told apart from one log line.
+        const opened = Date.now();
+        let fromCarrier = 0;
+        let toCarrier = 0;
+        socket.on('data', (d) => { fromCarrier += d.length; });
+        upstream.on('data', (d) => { toCarrier += d.length; });
+        socket.once('close', () => log(`${name} ⇄ WS closed ${String(req.url).split('?')[0]} after ${((Date.now() - opened) / 1000).toFixed(1)}s: ${fromCarrier} bytes from carrier, ${toCarrier} bytes to carrier`));
         log(`${name} ⇄ WS ${String(req.url).split('?')[0]}`);
     });
     server.listen(listenPort, '127.0.0.1', () => log(`${name} gateway :${listenPort} → 127.0.0.1:${targetPort} (allow-listed paths only)`));

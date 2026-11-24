@@ -165,6 +165,9 @@ _GOODBYE = _compile(
 # Do-not-call. Takes priority over everything else, including a question.
 _OPTOUT = _compile(
     r"(do ?n[o']?t call|don'?t call|stop calling|remove my number|unsubscribe|no more calls)",
+    # Romanized Hindi and Bengali, as speech recognition often writes them.
+    # Not "phir se call" (also "please call again"), not a bare "phone korben na" ("won't you call?").
+    r"\b((call|phone|fon) (mat|na) (karo|kariye|kijiye|karna|karein|karen)|(ar|aar) (call|phone|fon) (korben|koro|korbe) na)\b",
     r"(फोन मत कर|कॉल मत कर|मत बुलाओ|परेशान मत|नंबर हटा)",
     r"(ফোন কর(বেন না|ো না)|কল কর(বেন না|ো না)|বিরক্ত কর|নাম্বার (বাদ|মুছ))",
     r"(फोन करू नका|कॉल करू नका|त्रास देऊ नका)",

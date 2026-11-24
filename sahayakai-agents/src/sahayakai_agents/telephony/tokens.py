@@ -43,6 +43,10 @@ class VobizDomain(StrEnum):
     ANSWER = "vobiz-answer"
     STREAM = "vobiz-call"
     STATUS = "vobiz-status"
+    #: Opens one Plivo media stream (minted by sahayakai-main plivo-riya answer webhook).
+    PLIVO_STREAM = "plivo-call"
+    #: Opens one Exotel media stream (minted at dial time; Exotel takes the URL with the call).
+    EXOTEL_STREAM = "exotel-call"
 
 
 #: Lifetime of a STREAM token as minted by the web answer webhook. MUST equal

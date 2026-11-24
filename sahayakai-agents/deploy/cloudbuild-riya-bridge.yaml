@@ -32,6 +32,10 @@ substitutions:
   # '1' also serves the token-gated hands-free VIDYA socket (/v1/vidya-voice/stream) from this
   # public service. Off by default: turning it on widens the public surface by that one route.
   _PUBLIC_VIDYA_VOICE: '0'
+  # 'true' binds PLIVO_AUTH_ID / PLIVO_AUTH_TOKEN (secrets of the same names, created by hand first)
+  # so the bridge can hang Plivo calls up over Plivo's REST API. Exotel needs no secret here:
+  # closing the stream ends an Exotel call. Off by default = Vobiz-only, exactly as before.
+  _PLIVO_SECRETS: 'false'
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -101,3 +105,16 @@ steps:
       - --set-env-vars=SAHAYAKAI_TELEPHONY_ONLY=1,SAHAYAKAI_PUBLIC_VIDYA_VOICE=${_PUBLIC_VIDYA_VOICE},SAHAYAKAI_AGENTS_ENV=${_ENV},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_REGION=${_REGION},SAHAYAKAI_PROMPTS_DIR=/srv/prompts,SAHAYAKAI_REQUIRE_APP_CHECK=false,SAHAYAKAI_FIRESTORE_DATABASE=${_FIRESTORE_DATABASE},SAMPARK_WEB_BASE_URL=${_SAMPARK_WEB_BASE_URL},VOBIZ_DISCLOSE_AI=true,VOBIZ_MAX_CALL_SECONDS=600,VOBIZ_MAX_CONCURRENT_CALLS=4
       - --quiet
     waitFor: [push]
+
+  # Plivo hangup credentials, only when asked (binding a secret that does not exist fails a deploy).
+  - id: plivo
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ "${_PLIVO_SECRETS}" != "true" ]; then echo "Plivo secrets not requested: Vobiz/Exotel only"; exit 0; fi
+        gcloud run services update ${_SERVICE} --region=${_REGION} --project=$PROJECT_ID --quiet \
+          --update-secrets=PLIVO_AUTH_ID=PLIVO_AUTH_ID:latest,PLIVO_AUTH_TOKEN=PLIVO_AUTH_TOKEN:latest
+    waitFor: [deploy]

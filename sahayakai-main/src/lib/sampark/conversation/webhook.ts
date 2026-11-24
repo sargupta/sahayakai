@@ -227,7 +227,14 @@ export function parseRiyaWebhook(rawBody: string): RiyaWebhookEvent | null {
  * marks the call for the office, exactly as an unconfirmed keypad 9 does.
  */
 const STOP_PHRASES = [
+    // "Stop this call" stays in: a parent often means "stop calling me" by it, and an unclear stop
+    // must fail toward the office review (a pending suppression), never toward ignoring it. The
+    // bridge (riya.py _STOP) treats it the same way. A tester who says it is reversed by the office.
     /\bstop (calling|these calls|this call|the calls)\b/i,
+    // Romanized Hindi and Bengali, as speech recognition often writes them. Not "phir se call" (it
+    // also means "please call again") and not a bare "phone korben na" (also "won't you call?").
+    /\b(call|phone|fon) (mat|na) (karo|kariye|kijiye|karna|karein|karen)\b/i,
+    /\b(ar|aar) (call|phone|fon) (korben|koro|korbe) na\b/i,
     /\bdon'?t call (me|us|again|this number)\b/i,
     /\bdo not call (me|us|again|this number)\b/i,
     /\bnever call\b/i,

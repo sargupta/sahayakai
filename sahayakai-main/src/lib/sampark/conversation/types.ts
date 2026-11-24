@@ -21,15 +21,46 @@ import type { CallDestination, ParentLanguage, PurposeId, SamparkMode } from '@/
 
 import type { RiyaPurpose, RiyaVariables } from './riya-purposes';
 
-export type ConversationProviderKind = 'simulated' | 'elevenlabs' | 'vobiz';
+export type ConversationProviderKind = 'simulated' | 'elevenlabs' | 'vobiz' | 'plivo' | 'exotel';
 
-/** The two real backends a school can choose between (Settings → Calling provider). Same UI, gates and records. */
-export type RealConversationProvider = 'elevenlabs' | 'vobiz';
-export const REAL_CONVERSATION_PROVIDERS: readonly RealConversationProvider[] = ['elevenlabs', 'vobiz'];
+/**
+ * The real backends a person can choose at the SamparkAI entry. Same UI, gates and records.
+ *
+ * Two different kinds of thing sit behind this one choice, and the code keeps them apart:
+ *   - `elevenlabs`: a HOSTED voice agent with its own telephony (its number is a Vobiz SIP trunk).
+ *   - `vobiz` | `plivo` | `exotel`: phone CARRIERS. Each places the call itself and streams the
+ *     audio both ways to SahayakAI's own Riya bridge (sahayakai-agents, Gemini Live). Riya's
+ *     workflow, context and post-call result are the same for all three; only the carrier leg
+ *     (dial, answer, status, media frames, hangup) differs. See `BRIDGE_CARRIERS`.
+ */
+export type RealConversationProvider = 'elevenlabs' | 'vobiz' | 'plivo' | 'exotel';
+export const REAL_CONVERSATION_PROVIDERS: readonly RealConversationProvider[] = ['elevenlabs', 'vobiz', 'plivo', 'exotel'];
 
 /** A real provider rings a real phone over a real carrier: every real-call rule (caps, gates, callbacks) applies. */
 export function isRealProvider(p: ConversationProviderKind | null | undefined): p is RealConversationProvider {
-    return p === 'elevenlabs' || p === 'vobiz';
+    return p === 'elevenlabs' || p === 'vobiz' || p === 'plivo' || p === 'exotel';
+}
+
+/** The carriers whose calls run Riya on SahayakAI's own bridge (not a hosted agent). */
+export type BridgeCarrier = 'vobiz' | 'plivo' | 'exotel';
+export const BRIDGE_CARRIERS: readonly BridgeCarrier[] = ['vobiz', 'plivo', 'exotel'];
+
+export function isBridgeCarrier(p: ConversationProviderKind | null | undefined): p is BridgeCarrier {
+    return p === 'vobiz' || p === 'plivo' || p === 'exotel';
+}
+
+/**
+ * Conversation id recorded for a bridge-carrier call: the carrier's own call id, namespaced by
+ * carrier so ids from different carriers (or ElevenLabs) can never collide in the link collection.
+ */
+export function bridgeConversationId(carrier: BridgeCarrier, carrierCallId: string): string {
+    return `${carrier}:${carrierCallId}`;
+}
+
+/** The carrier call id inside a bridge conversation id, when it belongs to `carrier`. */
+export function carrierCallIdOf(carrier: BridgeCarrier, conversationId: string | null | undefined): string | null {
+    const prefix = `${carrier}:`;
+    return conversationId?.startsWith(prefix) ? conversationId.slice(prefix.length) : null;
 }
 
 export type ConversationCallState =

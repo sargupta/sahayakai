@@ -11,7 +11,7 @@ import { logger } from '@/lib/logger';
 import { MAX_WEBHOOK_BYTES } from '@/lib/sampark/conversation/webhook';
 import { riyaDeps } from '@/server/sampark/conversation';
 import { samparkContext } from '@/server/sampark/http';
-import { handleVobizRiyaEvent } from '@/server/sampark/vobiz-riya';
+import { anyBridgeCarrierEnabled, handleVobizRiyaEvent } from '@/server/sampark/vobiz-riya';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,10 +30,12 @@ export async function POST(req: NextRequest) {
     }
 }
 
-/** Health: the console checks this before a real Vobiz call (signature check configured, feature on). */
+/**
+ * Health: the console checks this before a real call on any bridge carrier (Vobiz, Plivo, Exotel —
+ * they share this result leg): signature check configured, feature on.
+ */
 export async function GET() {
-    const on = process.env.SAMPARK_ENABLED === 'true' && process.env.SAMPARK_ELEVENLABS_ENABLED === 'true' && process.env.SAMPARK_VOBIZ_RIYA_ENABLED === 'true';
-    if (!on) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!anyBridgeCarrierEnabled(process.env)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     const ready = Boolean(process.env.SAHAYAKAI_REQUEST_SIGNING_KEY?.trim());
     return NextResponse.json({ ok: ready, signatureCheck: ready }, { status: ready ? 200 : 503, headers: { 'cache-control': 'no-store' } });
 }
