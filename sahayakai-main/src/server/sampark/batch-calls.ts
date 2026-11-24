@@ -360,7 +360,7 @@ const BLOCKER_TEXT: Record<BatchBlocker, string> = {
     NOT_BATCHABLE: 'This workflow talks about one child; it stays an individual call',
     REASON_NOT_AVAILABLE: 'Riya has no approved wording for this reason yet',
     PURPOSE_MISMATCH: 'The details do not match the chosen reason',
-    BATCH_PROVIDER_NOT_SUPPORTED: 'Class-wide calls run on Vobiz. ElevenLabs is selected, so no real batch is placed (and calls are never moved to Vobiz silently)',
+    BATCH_PROVIDER_NOT_SUPPORTED: 'Class-wide real calls run on Vobiz only. Another provider is selected, so no real batch is placed (and calls are never moved to Vobiz silently)',
     BATCH_NEEDS_OWN_NUMBERS: 'Real class-wide calls need each family’s own permitted number; this school’s Test mode rings one test phone',
     REAL_BATCH_DISABLED: 'Real class-wide calls are switched off on this deployment (SAMPARK_BATCH_REAL_CALLS)',
     NO_ELIGIBLE_RECIPIENTS: 'No family in this class can be called for this announcement',
@@ -454,7 +454,10 @@ async function evaluateBatch(deps: BatchDeps, orgId: string, input: z.infer<type
     }
 
     if (campaignRefusals.length) block('CAMPAIGN_REFUSED');
-    if (provider === 'elevenlabs') block('BATCH_PROVIDER_NOT_SUPPORTED');
+    // Real class-wide batches are proven on Vobiz only (its concurrency limits are what
+    // SAMPARK_VOBIZ_MAX_CONCURRENT_CALLS encodes). ElevenLabs, Plivo and Exotel place single calls;
+    // their batches stay refused until each carrier's account limits are verified and configured.
+    if (isRealProvider(provider) && provider !== 'vobiz') block('BATCH_PROVIDER_NOT_SUPPORTED');
     if (isRealProvider(provider) && !rosterMode) block('BATCH_NEEDS_OWN_NUMBERS');
     if (isRealProvider(provider) && !realBatchCallsEnabled(env)) block('REAL_BATCH_DISABLED');
     if (eligible.length > BATCH_MAX_RECIPIENTS) block('TOO_MANY_RECIPIENTS');

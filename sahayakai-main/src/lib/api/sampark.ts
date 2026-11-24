@@ -12,6 +12,7 @@
  * console plays it from an object URL (see components/sampark/use-authed-audio).
  */
 import { apiFetch, ApiError, authHeaderFor } from '@/lib/api/client';
+import type { ProviderChoice } from '@/lib/sampark/provider-choice';
 import type {
     BlockReason,
     Campaign,
@@ -187,8 +188,8 @@ export function setMode(orgId: string, mode: SamparkMode): Promise<SamparkSchool
 }
 
 export interface ProviderChoiceState {
-    choice: 'elevenlabs' | 'vobiz' | null;
-    options: { id: 'elevenlabs' | 'vobiz'; available: boolean }[];
+    choice: ProviderChoice | null;
+    options: { id: ProviderChoice; available: boolean }[];
 }
 
 /** GET /api/sampark/provider — this session's calling-provider choice and what the deployment offers. */
@@ -197,8 +198,8 @@ export function getProviderChoice(opts: Opts = {}): Promise<ProviderChoiceState>
 }
 
 /** POST /api/sampark/provider — choose the provider for this session (server-side cookie). */
-export function chooseProvider(provider: 'elevenlabs' | 'vobiz'): Promise<{ choice: 'elevenlabs' | 'vobiz' }> {
-    return apiFetch<{ choice: 'elevenlabs' | 'vobiz' }>(`${BASE}/provider`, { method: 'POST', body: { provider } });
+export function chooseProvider(provider: ProviderChoice): Promise<{ choice: ProviderChoice }> {
+    return apiFetch<{ choice: ProviderChoice }>(`${BASE}/provider`, { method: 'POST', body: { provider } });
 }
 
 

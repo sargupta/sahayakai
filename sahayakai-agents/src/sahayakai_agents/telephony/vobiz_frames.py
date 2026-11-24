@@ -65,6 +65,9 @@ class InboundFrame:
     media_format: str | None = None
     #: Checkpoint name, for PLAYED.
     name: str | None = None
+    #: The carrier's call id when the START frame carries one (Plivo `start.callId`,
+    #: Exotel `start.call_sid`). Lets the bridge learn it when the URL did not.
+    call_id: str | None = None
 
 
 def parse_inbound(raw: str | bytes) -> InboundFrame:  # noqa: PLR0911 — one return per frame shape; the enumeration is the parser
@@ -90,10 +93,12 @@ def parse_inbound(raw: str | bytes) -> InboundFrame:  # noqa: PLR0911 — one re
             media_format=json.dumps(fmt, sort_keys=True)
             if isinstance(fmt, dict)
             else (str(fmt) if fmt else None),
+            call_id=str(start.get("callId") or "") or None,
         )
     if event == "clearedAudio":
         return InboundFrame(InboundKind.CLEARED, stream_id=stream_id)
-    if event == "playedStream":
+    # Plivo documents the checkpoint reply as both "playedStream" and "played".
+    if event in ("playedStream", "played"):
         return InboundFrame(
             InboundKind.PLAYED, stream_id=stream_id, name=str(data.get("name") or "")
         )

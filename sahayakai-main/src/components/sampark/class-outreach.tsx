@@ -140,6 +140,8 @@ function capacityNote(t: Translate, c: BatchCampaignView): string | null {
 function providerText(t: Translate, p: BatchPreview["provider"]): string {
     if (p === "vobiz") return t("Vobiz (real calls)");
     if (p === "elevenlabs") return t("ElevenLabs (real calls)");
+    if (p === "plivo") return t("Plivo (real calls)");
+    if (p === "exotel") return t("Exotel (real calls)");
     if (p === "simulated") return t("Practice (simulated, nothing rings)");
     return t("Not available");
 }

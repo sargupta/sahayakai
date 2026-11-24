@@ -36,6 +36,7 @@
 import { z } from 'zod';
 
 import { logger } from '@/lib/logger';
+import { REAL_CONVERSATION_PROVIDERS, type RealConversationProvider } from '@/lib/sampark/conversation/types';
 import { unionHolidays } from '@/lib/sampark/crm/import';
 import { assertCrmUrlSafe, CrmUrlError } from '@/lib/sampark/crm/rest-source';
 import { classifyPhone, encryptPhone, hashPhone, normalizeIndianPhone, phoneLast4 } from '@/lib/sampark/phone';
@@ -155,7 +156,7 @@ export const EnableSchoolSchema = z.object({ displayName: z.string().trim().min(
 export const ModeSchema = z.object({ mode: z.enum(['practice', 'test', 'live']) }).strict();
 
 /** Settings → Calling provider: which backend runs Riya's real (Test-mode) calls. */
-export const ConversationProviderSchema = z.object({ provider: z.enum(['elevenlabs', 'vobiz']) }).strict();
+export const ConversationProviderSchema = z.object({ provider: z.enum(REAL_CONVERSATION_PROVIDERS as unknown as [RealConversationProvider, ...RealConversationProvider[]]) }).strict();
 
 /**
  * Choose the backend for Riya's real calls. Admin-only (route guard); audited; asking for the
@@ -163,9 +164,10 @@ export const ConversationProviderSchema = z.object({ provider: z.enum(['elevenla
  * call still goes through the same gates, test-phone rule, caps and records, and a provider that
  * is not configured is reported as a blocker at preview time (riyaAvailability), never dialled.
  */
-export async function setConversationProvider(ctx: SamparkCtx, orgId: string, uid: string, provider: 'elevenlabs' | 'vobiz'): Promise<SamparkSchool> {
+export async function setConversationProvider(ctx: SamparkCtx, orgId: string, uid: string, provider: RealConversationProvider): Promise<SamparkSchool> {
     const school = await getSchoolOrThrow(ctx, orgId);
-    const current = school.conversationProvider === 'vobiz' ? 'vobiz' : 'elevenlabs';
+    const saved = school.conversationProvider;
+    const current: RealConversationProvider = saved && (REAL_CONVERSATION_PROVIDERS as readonly string[]).includes(saved) ? saved : 'elevenlabs';
     if (current === provider) return school;
     const now = ctx.clock.now().toISOString();
     const next: SamparkSchool = { ...school, conversationProvider: provider, updatedAt: now };
