@@ -6,7 +6,7 @@ import { LanguageSwitcher } from "@/components/marketing/language-switcher";
 import { useAccessMode } from "./use-access-mode";
 
 const NAV_CTA_CLASS =
-  "inline-flex items-center text-[13px] bg-[#0b0b0f] text-white px-[18px] py-[9px] rounded-full font-medium hover:bg-[#1c1c21] transition-colors cursor-pointer";
+  "inline-flex items-center text-tile bg-ink-900 text-white px-[18px] py-[9px] rounded-full font-medium hover:bg-ink-800 transition-colors cursor-pointer";
 
 type Props = {
   onAuthClick: () => void;
