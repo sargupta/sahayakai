@@ -533,6 +533,9 @@ class RiyaCall:
     #: Guardian question re-asked by the bridge (who-is-calling, privacy block,
     #: or a "yes" that did not follow a fully heard guardian question).
     reasks: int = 0
+    #: Decided once, when the Live config is built: the bridge plays the cached opener
+    #: (True) or the model says it (False). None until decided (router._opener_decided).
+    opener_from_cache: bool | None = None
     #: PTM: the parent cannot attend; Riya must ask once for a better time.
     cannot_attend: bool = False
     preferred_time_asked: bool = False

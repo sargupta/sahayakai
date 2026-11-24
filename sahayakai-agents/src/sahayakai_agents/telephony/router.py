@@ -1040,6 +1040,10 @@ async def _play_riya_opener(bridge: _Bridge) -> None:
         _remember_org_opener(org, riya.first_message())
         audio, now, said = early_audio, queued_at, early_text
     else:
+        if getattr(riya, "opener_from_cache", None) is False:
+            # The model was told to say the opener itself: never play it as well.
+            log.info("telephony.riya_opener_missing", outreach_id=bridge.outreach_id)
+            return
         audio = _opener_audio(riya.first_message())
         if audio is None:
             log.info("telephony.riya_opener_missing", outreach_id=bridge.outreach_id)
@@ -3256,6 +3260,40 @@ def _riya_awaiting(bridge: _Bridge) -> bool:
     return len(bridge.parent_said) > bridge.riya_parent_count
 
 
+def _riya_line_path(line: str) -> Path:
+    model, _, voice = _riya_live_settings()
+    return Path(_RIYA_OPENER_DIR) / f"{riya_opener_key(line, voice, model)}.ulaw"
+
+
+#: How long the call waits for the opener to render before going on without it
+#: (the model then says the opener itself, as before).
+_OPENER_RENDER_WAIT_S = float(os.environ.get("VOBIZ_RIYA_OPENER_RENDER_WAIT_S", "1.5"))
+
+
+async def _render_riya_opener(riya: Any) -> None:
+    """Render this call's fixed lines into the cache (line_tts.py).
+
+    The opener is awaited (bounded) so the Live config can say it was spoken; the
+    other fixed lines render in the background and are picked up as they land.
+    Never raises; with line TTS off this does nothing."""
+    from . import line_tts
+
+    if riya is None or riya.is_safe_exit or not line_tts.enabled(_RIYA_OPENER_DIR):
+        return
+    try:
+        opener = riya.first_message()
+        rest = [(t, _riya_line_path(t)) for t in riya.fixed_lines() if t and t != opener]
+        if opener:
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(
+                    asyncio.shield(line_tts.ensure_line(opener, _riya_line_path(opener))),
+                    timeout=_OPENER_RENDER_WAIT_S,
+                )
+        line_tts.ensure_lines_later(rest)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("telephony.riya_lines_render_failed", error=str(exc)[:160])
+
+
 def _riya_cached(line: str) -> bytes | None:
     """`line` pre-rendered in the call's own voice, if it is in the cache."""
     if not _RIYA_OPENER_DIR or not line:
@@ -4048,7 +4086,11 @@ async def _prepare_live_session(
     if riya is None and riya_client is not None:
         riya_client.cancel()
     if riya is not None:
+        # Riya's fixed lines must be in the cache BEFORE her Live config is built: the
+        # config tells the model whether the opener was already spoken (line_tts.py).
+        opener_task = asyncio.create_task(_render_riya_opener(riya))
         client = await riya_client if riya_client is not None else await _genai_client(r_location)
+        await opener_task
         log.info(
             "telephony.warmup",
             outreach_id=outreach_id,
@@ -4311,6 +4353,19 @@ def _riya_vad_config() -> Any:
     )
 
 
+def _opener_decided(riya: Any) -> bool:
+    """Decide ONCE whether the bridge plays the cached opener (True) or the model says it.
+
+    The Live instruction and `_play_riya_opener` must agree: an opener that lands in the
+    cache after the instruction told the model to say it would otherwise be played too,
+    and the parent would be greeted twice."""
+    decided = getattr(riya, "opener_from_cache", None)
+    if decided is None:
+        decided = _riya_cached(riya.first_message()) is not None
+        riya.opener_from_cache = decided
+    return bool(decided)
+
+
 def _riya_live_config(riya: RiyaCall, voice: str) -> Any:
     """Live session for Riya: her instruction (locked), her two system tools."""
     from google.genai import types as genai_types
@@ -4318,7 +4373,7 @@ def _riya_live_config(riya: RiyaCall, voice: str) -> Any:
     return genai_types.LiveConnectConfig(
         response_modalities=[genai_types.Modality.AUDIO],
         system_instruction=genai_types.Content(
-            parts=[genai_types.Part(text=riya.instruction(opener_spoken=_riya_cached(riya.first_message()) is not None))]
+            parts=[genai_types.Part(text=riya.instruction(opener_spoken=_opener_decided(riya)))]
         ),
         speech_config=genai_types.SpeechConfig(
             # VOBIZ_RIYA_LANGUAGE_CODE (e.g. en-IN): Riya's accent. Unset = model default.
