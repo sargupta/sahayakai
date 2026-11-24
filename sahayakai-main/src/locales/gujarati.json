@@ -2537,5 +2537,13 @@
   "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "તમારું બ્રાઉઝર આ PDF બતાવી શક્યું નથી. બીજું બ્રાઉઝર અજમાવો, અથવા પાનાંના ફોટા અપલોડ કરો.",
   "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "આ PDF ખોલી શકાઈ નથી — તે ખરાબ હોઈ શકે છે. ફરી સેવ કરો, અથવા પાનાં છબીઓ તરીકે અપલોડ કરો.",
   "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "આ પાનાં કુલ {{size}} MB છે — એક સ્કેનમાં વધુમાં વધુ {{limit}} MB અપલોડ કરી શકાય છે. એક-બે પાનાં દૂર કરો, અથવા નાના ફોટા વાપરીને ફરી પ્રયાસ કરો.",
-  "Page notices": "પાનાં વિશેની સૂચનાઓ"
+  "Page notices": "પાનાં વિશેની સૂચનાઓ",
+  "Plivo calling is not set up on this deployment.": "આ ડિપ્લોયમેન્ટ પર Plivo કૉલિંગ સેટ કરાયું નથી.",
+  "Exotel calling is not set up on this deployment.": "આ ડિપ્લોયમેન્ટ પર Exotel કૉલિંગ સેટ કરાયું નથી.",
+  "Plivo (real calls)": "Plivo (ખરા કૉલ)",
+  "Exotel (real calls)": "Exotel (ખરા કૉલ)",
+  "Calls run on SahayakAI's own voice bridge: Plivo phone line with Gemini Live.": "કૉલ સહાયકAI ના પોતાના વૉઇસ બ્રિજ પર ચાલે છે: Plivo ફોન લાઇન અને Gemini Live.",
+  "Calls run on SahayakAI's own voice bridge: Exotel phone line with Gemini Live.": "કૉલ સહાયકAI ના પોતાના વૉઇસ બ્રિજ પર ચાલે છે: Exotel ફોન લાઇન અને Gemini Live.",
+  "Pick the calling provider for this visit. SamparkAI looks and works the same with any of them; only the service that holds Riya's calls changes. You can switch at any time from inside SamparkAI.": "આ મુલાકાત માટે કૉલિંગ સેવા પસંદ કરો. બધામાં સંપર્કAI સરખું દેખાય અને કામ કરે છે; ફક્ત રિયાના કૉલ ચલાવતી સેવા બદલાય છે. સંપર્કAI માંથી ગમે ત્યારે બદલી શકો છો.",
+  "Real class-wide calls run on Vobiz only. Another provider is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.": "આખા વર્ગના ખરા કૉલ ફક્ત Vobiz પર ચાલે છે. બીજી સેવા પસંદ કરેલી છે, તેથી આખા વર્ગનો કોઈ ખરો કૉલ થતો નથી, અને તમારી પસંદગી વિના કૉલ ક્યારેય Vobiz પર ખસેડાતા નથી."
 }

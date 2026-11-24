@@ -32,6 +32,13 @@
  *                      (temporary tunnels: Vobiz must reach both), SAHAYAKAI_REQUEST_SIGNING_KEY in this
  *                      shell (shared with the bridge), and the Vobiz credentials file (VOBIZ_CRED_FILE,
  *                      default E:\sargvision\VOBIZCRED.txt; never printed). Real clock; cap 2/day per contact (--test-cap N, 1-5).
+ *   --plivo-call       with --vobiz-call: also offer "Plivo Calls" (same bridge, tunnels, allow-list and
+ *                      caps). Credentials from PLIVO_CRED_FILE (default E:\sargvision\PLIVOCRED.txt:
+ *                      PLIVO_AUTH_ID, PLIVO_AUTH_TOKEN, PLIVO_FROM_NUMBER; never printed). Missing or
+ *                      unfilled → the Plivo card says "Not set up"; nothing else changes.
+ *   --exotel-call      with --vobiz-call: also offer "Exotel Calls". Credentials from EXOTEL_CRED_FILE
+ *                      (default E:\sargvision\EXOTELCRED.txt: EXOTEL_API_KEY, EXOTEL_API_TOKEN,
+ *                      EXOTEL_ACCOUNT_SID, EXOTEL_SUBDOMAIN, EXOTEL_CALLER_ID). Same fallback.
  *   --batch-real       with --vobiz-call only: allow REAL class-wide batch calls (Class-Wide Outreach).
  *                      Off by default, so a batch is refused unless this is given. Rolling scheduler:
  *                      up to 3 calls at once (lowered to the Vobiz account limit, read live at start),
@@ -330,6 +337,9 @@ const WARM_PATHS = [
     '/api/sampark/sargvision-local/riya/warm-up', '/api/sampark/sargvision-local/riya/warm-up/reconcile',
     '/api/sampark/sargvision-local/guardians?limit=500', '/api/sampark/sargvision-local/campaigns',
     '/api/sampark/sargvision-local/calls', '/api/sampark/sargvision-local/callbacks', '/api/webhooks/elevenlabs-riya',
+    // The bridge carriers' legs (compiled before the first call, so it is not the slow one).
+    '/api/webhooks/vobiz-riya/context', '/api/webhooks/vobiz-riya/event', '/api/webhooks/plivo-riya/answer',
+    '/api/webhooks/plivo-riya/status', '/api/webhooks/exotel-riya/status', '/sampark/choose-provider', '/api/sampark/provider',
     // The SahayakAI teacher tools people click first in a demo (pages only; no generation runs).
     '/lesson-plan', '/quiz-generator', '/rubric-generator', '/worksheet-wizard', '/exam-paper', '/instant-answer',
     '/teacher-training', '/virtual-field-trip', '/visual-aid-designer', '/my-library', '/community', '/messages',
@@ -668,6 +678,59 @@ async function main() {
         if (has('batch-real')) say('   CLASS-WIDE BATCH: real batch calls ON (rolling: up to 3 at once, a new call at most every 60 s, allow-listed contacts only, confirmation required).');
         say(`   VOBIZ CALL MODE: Sargvision class, provider Vobiz Calls; allow-listed: ${allowIds.join(', ')} (numbers not shown); cap ${testCap()}/day per contact. Credentials read from file (not shown).`);
         say(`   Vobiz calls back on ${appEnv.SAMPARK_PUBLIC_BASE_URL}; media stream to ${appEnv.VOBIZ_STREAM_BASE_URL}.`);
+    }
+    // Plivo and Exotel: the same bridge, tunnels, signing key, roster allow-list and caps as Vobiz
+    // (so they ride on --vobiz-call). Credentials come from operator files outside the repository,
+    // read here and passed only to the app process. A missing or unfilled file leaves that provider
+    // "Not set up" on the chooser; it never stops the run.
+    const readCredFile = (file) => {
+        const out = {};
+        if (!existsSync(file)) return out;
+        for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+            const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*[=:]\s*(.*)$/);
+            if (m) out[m[1]] = m[2].trim().replace(/^["']|["']$/g, '');
+        }
+        return out;
+    };
+    const filled = (cred, keys) => keys.filter((k) => !cred[k] || /^<.*>$/.test(cred[k]) || /PUT_|YOUR_/i.test(cred[k]));
+    if (has('plivo-call')) {
+        if (!has('vobiz-call')) fail('--plivo-call rides on --vobiz-call (same bridge, tunnels and allow-list).');
+        const file = process.env.PLIVO_CRED_FILE?.trim() || 'E:\\sargvision\\PLIVOCRED.txt';
+        const cred = readCredFile(file);
+        const missing = filled(cred, ['PLIVO_AUTH_ID', 'PLIVO_AUTH_TOKEN', 'PLIVO_FROM_NUMBER']);
+        if (missing.length) {
+            say(`   PLIVO: not set up (${missing.join(', ')} missing in ${file}); the Plivo card shows "Not set up".`);
+        } else {
+            Object.assign(appEnv, {
+                PLIVO_AUTH_ID: cred.PLIVO_AUTH_ID,
+                PLIVO_AUTH_TOKEN: cred.PLIVO_AUTH_TOKEN,
+                PLIVO_FROM_NUMBER: cred.PLIVO_FROM_NUMBER,
+                SAMPARK_PLIVO_RIYA_ENABLED: 'true',
+                ...(cred.SAMPARK_PLIVO_SIGNATURE_MODE ? { SAMPARK_PLIVO_SIGNATURE_MODE: cred.SAMPARK_PLIVO_SIGNATURE_MODE } : {}),
+            });
+            say(`   PLIVO CALL MODE: same Sargvision allow-list and caps; caller id ending ${cred.PLIVO_FROM_NUMBER.slice(-4)}. Credentials read from file (not shown).`);
+        }
+    }
+    if (has('exotel-call')) {
+        if (!has('vobiz-call')) fail('--exotel-call rides on --vobiz-call (same bridge, tunnels and allow-list).');
+        const file = process.env.EXOTEL_CRED_FILE?.trim() || 'E:\\sargvision\\EXOTELCRED.txt';
+        const cred = readCredFile(file);
+        // Exotel's dashboard calls it "SID"; accept either name.
+        if (!cred.EXOTEL_ACCOUNT_SID && cred.EXOTEL_SID) cred.EXOTEL_ACCOUNT_SID = cred.EXOTEL_SID;
+        const missing = filled(cred, ['EXOTEL_API_KEY', 'EXOTEL_API_TOKEN', 'EXOTEL_ACCOUNT_SID', 'EXOTEL_SUBDOMAIN', 'EXOTEL_CALLER_ID']);
+        if (missing.length) {
+            say(`   EXOTEL: not set up (${missing.join(', ')} missing in ${file}); the Exotel card shows "Not set up".`);
+        } else {
+            Object.assign(appEnv, {
+                EXOTEL_API_KEY: cred.EXOTEL_API_KEY,
+                EXOTEL_API_TOKEN: cred.EXOTEL_API_TOKEN,
+                EXOTEL_ACCOUNT_SID: cred.EXOTEL_ACCOUNT_SID,
+                EXOTEL_SUBDOMAIN: cred.EXOTEL_SUBDOMAIN,
+                EXOTEL_CALLER_ID: cred.EXOTEL_CALLER_ID,
+                SAMPARK_EXOTEL_RIYA_ENABLED: 'true',
+            });
+            say(`   EXOTEL CALL MODE: same Sargvision allow-list and caps; region ${cred.EXOTEL_SUBDOMAIN}, ExoPhone ending ${cred.EXOTEL_CALLER_ID.slice(-4)}. Credentials read from file (not shown).`);
+        }
     }
     if (has('real-call') || has('vobiz-call')) {
         // The Sargvision TEST class (team numbers, consent recorded) may be called any day, any hour:

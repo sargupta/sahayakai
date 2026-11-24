@@ -227,7 +227,9 @@ export function parseRiyaWebhook(rawBody: string): RiyaWebhookEvent | null {
  * marks the call for the office, exactly as an unconfirmed keypad 9 does.
  */
 const STOP_PHRASES = [
-    /\bstop (calling|these calls|this call|the calls)\b/i,
+    // Not "stop this call": that asks to hang up NOW, not to never be called again (a tester
+    // saying it on 2026-11-24 blocked their own number from all future calls).
+    /\bstop (calling|these calls|the calls)\b/i,
     /\bdon'?t call (me|us|again|this number)\b/i,
     /\bdo not call (me|us|again|this number)\b/i,
     /\bnever call\b/i,

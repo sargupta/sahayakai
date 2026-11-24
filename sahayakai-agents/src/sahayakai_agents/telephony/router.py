@@ -89,7 +89,9 @@ from .school_data import (
 )
 from .suppression import SUPPRESSION_COLLECTION, phone_suppression_id
 from .tokens import VobizDomain, token_minted_at, verify_vobiz_token
-from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
+from .carriers import CARRIERS, Carrier, CarrierCodec, hangup_call, new_codec
+from .exotel_frames import parse_exotel_inbound
+from .vobiz_frames import InboundFrame, InboundKind, build_play_audio, parse_inbound
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -415,13 +417,18 @@ def reset_telephony_guards() -> None:
     _BURNED.clear()
 
 
-async def _admit(ws: WebSocket) -> str | None:
+async def _admit(
+    ws: WebSocket, domain: VobizDomain = VobizDomain.STREAM, token: str | None = None
+) -> str | None:
     """Decide whether to carry this call. Every rejection precedes `accept()`.
 
-    Returns the outreach id, or None having already closed the socket.
+    `domain` is the carrier's own stream-token domain: a Vobiz token never opens a Plivo or
+    Exotel socket, and vice versa. `token` comes from the URL path for carriers that drop the
+    query string (Exotel); otherwise from `?t=`. Returns the outreach id, or None having already
+    closed the socket.
     """
-    token = ws.query_params.get("t")
-    outreach_id = verify_vobiz_token(VobizDomain.STREAM, token)
+    token = token if token is not None else ws.query_params.get("t")
+    outreach_id = verify_vobiz_token(domain, token)
     if outreach_id is None:
         await ws.close(code=_CLOSE_BAD_TOKEN)
         log.warning("telephony.rejected", reason="bad_token")
@@ -563,6 +570,39 @@ async def _hangup(call_uuid: str) -> None:
         log.warning("telephony.hangup_failed", error=str(exc))
 
 
+async def _carrier_frame(ws: WebSocket) -> str:
+    """The next carrier message as text, whether the carrier sent a text or a BINARY frame.
+
+    `receive_text()` silently turns a binary frame into nothing the parser can read, so a carrier
+    that sends its JSON as binary frames (the real Plivo call of 2026-11-24 parsed zero frames in
+    7.8 s: no start, no media, so Riya never had a stream to speak into) looked like silence.
+    Raises WebSocketDisconnect when the carrier hangs up, exactly like `receive_text()`.
+    """
+    if not callable(getattr(ws, "receive", None)):
+        return await ws.receive_text()  # test doubles that model only text frames
+    message = await ws.receive()
+    if message.get("type") == "websocket.disconnect":
+        raise WebSocketDisconnect(message.get("code", 1000))
+    text = message.get("text")
+    if text is not None:
+        return text
+    data = message.get("bytes") or b""
+    return data.decode("utf-8", "replace")
+
+
+def _note_first_frame(bridge: Any, raw: str) -> None:
+    """Log the shape of the first carrier message of a call (event name and size; never audio)."""
+    if getattr(bridge, "first_frame_logged", False):
+        return
+    bridge.first_frame_logged = True
+    event = None
+    with contextlib.suppress(Exception):
+        data = json.loads(raw)
+        event = data.get("event") if isinstance(data, dict) else type(data).__name__
+    log.info("telephony.first_frame", outreach_id=bridge.outreach_id, carrier=bridge.carrier.name,
+             size=len(raw), frame_event=event or "unparsed")
+
+
 class InboundStats:
     """Aggregates of the parent's audio for one call. Never audio, never words.
 
@@ -616,10 +656,15 @@ class InboundStats:
 class _Bridge:
     """Mutable state for one call. Small enough to read in one sitting."""
 
-    def __init__(self, ws: WebSocket, outreach_id: str, call_uuid: str) -> None:  # noqa: PLR0915 — one line per piece of call state
+    def __init__(  # noqa: PLR0915 — one line per piece of call state
+        self, ws: WebSocket, outreach_id: str, call_uuid: str, carrier: Carrier | None = None
+    ) -> None:
         self.ws = ws
         self.outreach_id = outreach_id
         self.call_uuid = call_uuid
+        #: Which phone carrier this call is on; decides frames and hangup, nothing else.
+        self.carrier: Carrier = carrier or CARRIERS["vobiz"]
+        self.codec: CarrierCodec = new_codec(self.carrier)
         self.stream_id: str | None = None
         self.stop = False
         #: Bumped on every interruption. Frames queued under an older generation
@@ -874,14 +919,22 @@ async def _greet_and_drain(bridge: _Bridge, language: str) -> None:
     greeted = False
     while True:
         try:
-            raw = await bridge.ws.receive_text()
-        except Exception:  # noqa: BLE001 — the caller owns the socket's lifetime
+            raw = await _carrier_frame(bridge.ws)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — the caller owns the socket's lifetime
+            if not isinstance(exc, WebSocketDisconnect):
+                log.warning("telephony.greeter_read_error", outreach_id=bridge.outreach_id,
+                            carrier=bridge.carrier.name, error_type=type(exc).__name__)
             return
-        frame = parse_inbound(raw)
+        _note_first_frame(bridge, raw)
+        frame = bridge.codec.parse(raw)
         if frame.kind is InboundKind.MEDIA and frame.audio and bridge.asr is not None:
             bridge.asr.feed(frame.audio)
         if frame.media_format:
             bridge.media_format = frame.media_format
+        if frame.call_id and not bridge.call_uuid:
+            bridge.call_uuid = frame.call_id[:64]
         if frame.stream_id and not bridge.stream_id:
             bridge.stream_id = frame.stream_id
         if not greeted and bridge.stream_id and language == _RIYA_GREETER:
@@ -1216,16 +1269,19 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
 
     while not bridge.stop:
         try:
-            raw = await asyncio.wait_for(bridge.ws.receive_text(), timeout=_IDLE_SECONDS)
+            raw = await asyncio.wait_for(_carrier_frame(bridge.ws), timeout=_IDLE_SECONDS)
         except TimeoutError:
             return "idle_timeout"
         except (WebSocketDisconnect, RuntimeError):
             return "carrier_disconnect"
 
-        frame = parse_inbound(raw)
+        _note_first_frame(bridge, raw)
+        frame = bridge.codec.parse(raw)
         if frame.kind is InboundKind.START:
             bridge.stream_id = frame.stream_id
             bridge.media_format = frame.media_format or bridge.media_format
+            if frame.call_id and not bridge.call_uuid:
+                bridge.call_uuid = frame.call_id[:64]
             log.info(
                 "telephony.stream_start",
                 outreach_id=bridge.outreach_id,
@@ -3789,14 +3845,16 @@ async def _barge_in_tick(bridge: _Bridge) -> bool:
     try:
         if bridge.clear_pending:
             bridge.clear_pending = False
-            await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
+            await bridge.ws.send_text(bridge.codec.clear(bridge.stream_id))
             bridge.clear_sent_at = time.monotonic()
         if bridge.verdict_hold_until and time.monotonic() > bridge.verdict_hold_until:
             # No transcript came: it was noise, not the parent. Carry on.
             bridge.verdict_hold_until = 0.0
         if bridge.barge.paused or bridge.verdict_hold_until:
             _measure_stop(bridge)
-            await bridge.ws.send_text(build_play_audio(bridge.stream_id, _SILENCE_FRAME))
+            msg = bridge.codec.play(bridge.stream_id, _SILENCE_FRAME)
+            if msg is not None:
+                await bridge.ws.send_text(msg)
     except Exception:  # noqa: BLE001 — the carrier is gone; the handler decides what that means
         bridge.stop = True
         return False
@@ -3903,10 +3961,17 @@ async def _pace_outbound(bridge: _Bridge) -> None:
             comfort_ticks_remaining -= 1
             chunk = _SILENCE_FRAME
 
-        if chunk is not None and bridge.stream_id:
+        if bridge.stream_id:
             try:
-                await bridge.ws.send_text(build_play_audio(bridge.stream_id, chunk))
-                bridge.bytes_down += len(chunk)
+                if chunk is not None:
+                    msg = bridge.codec.play(bridge.stream_id, chunk)
+                    bridge.bytes_down += len(chunk)
+                else:
+                    # Nothing to play this tick: a carrier that batches audio (Exotel) sends
+                    # the tail it is holding, so the end of a sentence is never stuck.
+                    msg = bridge.codec.flush(bridge.stream_id)
+                if msg is not None:
+                    await bridge.ws.send_text(msg)
             except Exception:  # noqa: BLE001 — the carrier is gone; the handler decides what that means
                 bridge.stop = True
                 return
@@ -3946,15 +4011,28 @@ async def _prepare_live_session(
     from google.genai import types as genai_types
 
     t_accept = time.monotonic()
-    context, scope = await _load_context(outreach_id, language)
-    riya = await _load_riya(outreach_id)
+    # The context, the Riya record and the Vertex client are independent: fetch them together.
+    r_model, r_location, r_voice = _riya_live_settings()
+    # A Sampark call is always Riya, so its client can be built while the context loads.
+    riya_client = (
+        asyncio.create_task(_genai_client(r_location)) if sampark_link.is_sampark(outreach_id) else None
+    )
+    try:
+        (context, scope), riya = await asyncio.gather(
+            _load_context(outreach_id, language), _load_riya(outreach_id)
+        )
+    except BaseException:
+        if riya_client is not None:
+            riya_client.cancel()
+        raise
     t_context = time.monotonic()
     lookups = school_data_tools_enabled() and scope is not None
 
     settings = get_settings()
+    if riya is None and riya_client is not None:
+        riya_client.cancel()
     if riya is not None:
-        r_model, r_location, r_voice = _riya_live_settings()
-        client = await _genai_client(r_location)
+        client = await riya_client if riya_client is not None else await _genai_client(r_location)
         log.info(
             "telephony.warmup",
             outreach_id=outreach_id,
@@ -4133,8 +4211,12 @@ def _prewarm_riya_clients() -> None:
     threading.Thread(target=warm, daemon=True, name="riya-prewarm").start()
 
 
-if os.environ.get("SAHAYAKAI_TELEPHONY_ONLY", "").strip().lower() in ("1", "true", "yes") and (
-    os.environ.get("VOBIZ_RIYA_PREWARM", "1") != "0"
+#: Prewarm on the telephony-only deploy by default; anywhere else (the local bridge) only when
+#: VOBIZ_RIYA_PREWARM=1. Without it the FIRST local call built the Vertex client inline: 4.2 s of
+#: dead air after the opener (2026-11-24, Exotel).
+if os.environ.get("VOBIZ_RIYA_PREWARM", "").strip() == "1" or (
+    os.environ.get("SAHAYAKAI_TELEPHONY_ONLY", "").strip().lower() in ("1", "true", "yes")
+    and os.environ.get("VOBIZ_RIYA_PREWARM", "1") != "0"
 ):
     _prewarm_riya_clients()
 
@@ -4196,11 +4278,17 @@ def _riya_vad_config() -> Any:
     from google.genai import types as genai_types
 
     silence = os.environ.get("VOBIZ_RIYA_VAD_SILENCE_MS", "").strip()
+    # VOBIZ_RIYA_VAD_END_SENSITIVITY=HIGH ends the parent's turn sooner (faster replies).
+    end = os.environ.get("VOBIZ_RIYA_VAD_END_SENSITIVITY", "").strip().upper()
+    end_sensitivity = (
+        getattr(genai_types.EndSensitivity, f"END_SENSITIVITY_{end}", None) if end in ("HIGH", "LOW") else None
+    )
     # HIGH start sensitivity: a 1-second "I'm busy." over a phone line was not
     # treated as speech at the default, and Riya waited in silence.
     return genai_types.RealtimeInputConfig(
         automatic_activity_detection=genai_types.AutomaticActivityDetection(
             start_of_speech_sensitivity=genai_types.StartSensitivity.START_SENSITIVITY_HIGH,
+            end_of_speech_sensitivity=end_sensitivity,
             silence_duration_ms=int(silence) if silence.isdigit() else None,
             prefix_padding_ms=int(os.environ.get("VOBIZ_RIYA_VAD_PREFIX_MS", "200")),
         )
@@ -4217,6 +4305,8 @@ def _riya_live_config(riya: RiyaCall, voice: str) -> Any:
             parts=[genai_types.Part(text=riya.instruction(opener_spoken=_riya_cached(riya.first_message()) is not None))]
         ),
         speech_config=genai_types.SpeechConfig(
+            # VOBIZ_RIYA_LANGUAGE_CODE (e.g. en-IN): Riya's accent. Unset = model default.
+            language_code=os.environ.get("VOBIZ_RIYA_LANGUAGE_CODE", "").strip() or None,
             voice_config=genai_types.VoiceConfig(
                 prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(voice_name=voice)
             )
@@ -4409,8 +4499,8 @@ async def _drain_carrier(bridge: _Bridge) -> None:
     """While the model reconnects: keep reading the carrier (recogniser + voice detector), so the
     parent's words are neither lost to chirp_2 nor replayed into the new session late."""
     while True:
-        raw = await bridge.ws.receive_text()
-        frame = parse_inbound(raw)
+        raw = await _carrier_frame(bridge.ws)
+        frame = bridge.codec.parse(raw)
         if frame.kind is InboundKind.STOP:
             raise RuntimeError("carrier stopped during reconnect")
         if frame.kind is InboundKind.MEDIA and frame.audio:
@@ -4475,7 +4565,16 @@ async def _settle_call(bridge: _Bridge, engine_error: str | None, started: float
     # open and silent for 5.3 seconds after the goodbye while Firestore
     # was written and a summary was generated. From the parent's side
     # that is a call that would not end.
-    await _hangup(bridge.call_uuid)
+    if bridge.carrier.name == "vobiz":
+        await _hangup(bridge.call_uuid)
+    elif bridge.carrier.name == "exotel":
+        # Exotel has no hangup verb for this leg: closing the stream ends the call. Do it NOW,
+        # not after the bookkeeping below (that left a parent holding a silent line ~30 s after
+        # Riya's goodbye in the 2026-11-24 rehearsal).
+        with contextlib.suppress(Exception):
+            await bridge.ws.close(code=1000)
+    else:
+        await hangup_call(bridge.carrier, bridge.call_uuid)
 
     # A lookup still running has nobody to answer; a turn still being spoken
     # when the call ended belongs in the transcript.
@@ -4662,14 +4761,116 @@ async def _capture_inbound(ws: WebSocket, outreach_id: str) -> None:
 
 @telephony_router.websocket("/telephony/vobiz/stream")
 async def vobiz_stream(ws: WebSocket) -> None:
-    """One phone call, bridged to one Live session."""
-    outreach_id = await _admit(ws)
+    """One Vobiz phone call, bridged to one Live session."""
+    outreach_id = await _admit(ws)  # the Vobiz stream domain (the default), unchanged
     if outreach_id is None:
         return
     if outreach_id.startswith("capture~"):
         await _capture_inbound(ws, outreach_id)
         return
+    await _serve_call(ws, outreach_id, CARRIERS["vobiz"])
 
+
+@telephony_router.websocket("/telephony/plivo/stream")
+async def plivo_stream(ws: WebSocket) -> None:
+    """One Plivo phone call (Plivo <Stream>, same frames as Vobiz), bridged to one Live session."""
+    outreach_id = await _admit(ws, CARRIERS["plivo"].stream_domain)
+    if outreach_id is None:
+        return
+    await _serve_call(ws, outreach_id, CARRIERS["plivo"])
+
+
+#: A Sampark stream token, wherever Exotel puts it (raw or percent-encoded once).
+_EXOTEL_TOKEN_RE = re.compile(
+    r"sampark~[A-Za-z0-9_-]{1,128}~[a-f0-9]{32}\.\d{1,12}\.[A-Za-z0-9_-]{20,100}"
+)
+#: How long an Exotel socket may stay open, unauthenticated, waiting for its start frame.
+_EXOTEL_AUTH_SECONDS = 8.0
+
+
+def exotel_token_from_frame(raw: str) -> str | None:
+    """The stream token Exotel echoes back in `connected` / `start` (custom parameters).
+
+    Exotel strips the query string from the stream URL and delivers its pairs as custom
+    parameters in the first frames (observed on a real call, 2026-11-24: the socket arrived as bare
+    /telephony/exotel/stream). Where exactly they sit has varied across Exotel's own docs
+    (`start.custom_parameters` as an object, `CustomParameters` as a string), so the token is found
+    by its shape anywhere in the frame; its HMAC, not its position, is what authorises the call.
+    """
+    from urllib.parse import unquote
+
+    for text in (raw, unquote(raw)):
+        m = _EXOTEL_TOKEN_RE.search(text)
+        if m:
+            return m.group(0)
+    return None
+
+
+@telephony_router.websocket("/telephony/exotel/stream")
+async def exotel_stream(ws: WebSocket) -> None:
+    """One Exotel phone call (AgentStream, PCM16 frames), bridged to one Live session.
+
+    Exotel drops the URL's query string, so the token cannot be checked before `accept()` the way
+    Vobiz and Plivo are. Instead the socket is accepted, the first frames are read (nothing
+    billable happens: no Live session, no context read, no capacity taken) until the token shows up
+    in Exotel's custom parameters, and only a valid, unspent token for the Exotel domain admits
+    the call. Anything else is closed within `_EXOTEL_AUTH_SECONDS`.
+    """
+    carrier = CARRIERS["exotel"]
+    await ws.accept()
+    start_frame = None
+    token = ws.query_params.get("t")  # in case Exotel ever keeps the query string
+    deadline = time.monotonic() + _EXOTEL_AUTH_SECONDS
+    try:
+        while start_frame is None or token is None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            raw = await asyncio.wait_for(_carrier_frame(ws), timeout=remaining)
+            token = token or exotel_token_from_frame(raw)
+            frame = parse_exotel_inbound(raw)
+            if frame.kind is InboundKind.START:
+                start_frame = frame
+            elif frame.kind is InboundKind.STOP:
+                break
+    except (TimeoutError, WebSocketDisconnect, RuntimeError):
+        pass
+    outreach_id = verify_vobiz_token(carrier.stream_domain, token)
+    if outreach_id is None or start_frame is None or not _burn(token or ""):
+        why = "bad_token" if outreach_id is None else "no_start_or_replayed"
+        log.warning("telephony.rejected", reason=why, carrier="exotel")
+        with contextlib.suppress(Exception):
+            await ws.close(code=_CLOSE_BAD_TOKEN)
+        return
+    if _SESSION_SEM.locked():
+        log.warning(
+            "telephony.rejected", reason="at_capacity", outreach_id=outreach_id, carrier="exotel"
+        )
+        with contextlib.suppress(Exception):
+            await ws.close(code=_CLOSE_AT_CAPACITY)
+        return
+    _log_admit_latency(outreach_id, token)
+    await _serve_call(
+        ws, outreach_id, carrier, accepted=True, preface=start_frame,
+        params={"cuid": start_frame.call_id or "", "lang": "English", "agent": "riya"},
+    )
+
+
+async def _serve_call(  # noqa: PLR0912, PLR0915 — the call's whole lifecycle, in order
+    ws: WebSocket,
+    outreach_id: str,
+    carrier: Carrier,
+    *,
+    accepted: bool = False,
+    preface: InboundFrame | None = None,
+    params: dict[str, str] | None = None,
+) -> None:
+    """One admitted phone call on `carrier`, bridged to one Live session.
+
+    `params` replaces the URL query (cuid / lang / agent) for carriers that drop it; `preface` is
+    a START frame already read during admission (Exotel), applied before the pumps start.
+    """
+    q = params if params is not None else ws.query_params
     await _SESSION_SEM.acquire()
     started = time.monotonic()
     reason = "unknown"
@@ -4679,13 +4880,20 @@ async def vobiz_stream(ws: WebSocket) -> None:
     live_connected = False
     engine_error: str | None = None
     try:
-        await ws.accept()
+        if not accepted:
+            await ws.accept()
         bridge = _Bridge(
             ws,
             outreach_id,
-            call_uuid=ws.query_params.get("cuid", ""),
+            call_uuid=q.get("cuid", ""),
+            carrier=carrier,
         )
-        language = ws.query_params.get("lang", "English")
+        if preface is not None:
+            bridge.stream_id = preface.stream_id
+            bridge.media_format = preface.media_format or bridge.media_format
+            if preface.call_id and not bridge.call_uuid:
+                bridge.call_uuid = preface.call_id[:64]
+        language = q.get("lang", "English")
 
         # The pacer and the greeting start FIRST, before anything that blocks.
         # The recorded opener exists to cover the Live warm-up, so queueing it
@@ -4693,7 +4901,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
         # silence anyway and then be greeted twice.
         pacer = asyncio.create_task(_pace_outbound(bridge))
         greeter_language = (
-            _RIYA_GREETER if ws.query_params.get("agent") == "riya" else language
+            _RIYA_GREETER if q.get("agent") == "riya" else language
         )
         greeter = asyncio.create_task(_greet_and_drain(bridge, greeter_language))
 
@@ -4778,6 +4986,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
         log.info(
             "telephony.call_closed",
             outreach_id=outreach_id,
+            carrier=carrier.name,
             reason=reason,
             seconds=round(time.monotonic() - started, 1),
             bytes_up=bridge.bytes_up if bridge else 0,

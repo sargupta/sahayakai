@@ -47,15 +47,17 @@ function ChooserContent() {
     const description: Record<ProviderChoice, string> = {
         elevenlabs: t("Calls run on the existing ElevenLabs voice agent."),
         vobiz: t("Calls run on SahayakAI's own voice bridge: Vobiz phone line with Gemini Live."),
+        plivo: t("Calls run on SahayakAI's own voice bridge: Plivo phone line with Gemini Live."),
+        exotel: t("Calls run on SahayakAI's own voice bridge: Exotel phone line with Gemini Live."),
     };
 
     return (
         <PageShell
             title={t("Choose how SamparkAI places calls")}
-            description={t("Pick the calling provider for this visit. SamparkAI looks and works the same with either; only the service that holds Riya's calls changes. You can switch at any time from inside SamparkAI.")}
+            description={t("Pick the calling provider for this visit. SamparkAI looks and works the same with any of them; only the service that holds Riya's calls changes. You can switch at any time from inside SamparkAI.")}
         >
             {state.error && <ErrorPanel error={state.error} onRetry={state.reload} />}
-            {!state.data && !state.error && <LoadingBlock rows={2} />}
+            {!state.data && !state.error && <LoadingBlock rows={4} />}
             {state.data && (
                 <SectionCard icon={PhoneCall} title={t("Calling provider")}>
                     <ul aria-label={t("Calling provider")} className="grid gap-4 md:grid-cols-2">
@@ -103,7 +105,7 @@ export default function ChooseProviderPage() {
                 title={t("School calls")}
                 description={t("Sign in with your school administrator account to manage calls to parents.")}
             >
-                <Suspense fallback={<LoadingBlock rows={2} />}>
+                <Suspense fallback={<LoadingBlock rows={4} />}>
                     <ChooserContent />
                 </Suspense>
             </SamparkAuthGate>
