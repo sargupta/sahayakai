@@ -3,6 +3,8 @@ import { agentRouterFlow } from '@/ai/flows/agent-definitions';
 import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
+import { reservePlanQuota } from '@/lib/plan-guard';
+import { checkServerRateLimit } from '@/lib/server-safety';
 import { getSection } from '@/lib/vidya/app-manifest';
 import { toolRequested } from '@/lib/intent/tool-request';
 
@@ -78,6 +80,33 @@ export async function POST(request: Request) {
         const userId = request.headers.get('x-user-id');
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
+        }
+
+        // Usage gating (2026-11-24). This route was the one AI endpoint with
+        // no cap at all. It is the dashboard prompt box's router: one small
+        // classification call per submit, which then either hands back a URL
+        // (the destination tool enforces its own plan quota when the teacher
+        // actually generates) or answers inline.
+        //
+        // Two-part gate, chosen so routing itself never eats a teacher's
+        // monthly allowance:
+        //   1. the shared per-user request-rate limiter bounds the
+        //      classification call (same limiter as /api/tts; fails open on
+        //      infrastructure errors);
+        //   2. the inline-answer branch below reserves `instant-answer` quota,
+        //      because it IS an instant answer. Without that, a free account
+        //      could bypass the /api/ai/instant-answer daily limit simply by
+        //      asking through this route.
+        try {
+            await checkServerRateLimit(userId);
+        } catch (rateErr) {
+            return NextResponse.json(
+                {
+                    error: rateErr instanceof Error ? rateErr.message : 'Rate limit exceeded.',
+                    code: 'RATE_LIMITED',
+                },
+                { status: 429 },
+            );
         }
 
         const body = await request.json();
@@ -214,12 +243,31 @@ export async function POST(request: Request) {
                 // `/api/ai/instant-answer`. Previously this branch
                 // called `instantAnswer` directly and bypassed the
                 // dispatcher entirely.
-                const answer = await dispatchInstantAnswer({
-                    question: prompt,
-                    language: answerLanguage,
-                    userId: userId,
-                });
-                result = { action: 'ANSWER', content: answer.answer, videoUrl: answer.videoSuggestionUrl };
+                const gate = await reservePlanQuota(request, 'instant-answer');
+                if (!gate.ok) {
+                    // The dashboard surfaces `error` verbatim, so put the
+                    // human-readable message there and keep the plan-guard
+                    // code (DAILY_LIMIT_REACHED / PLAN_UPGRADE_REQUIRED / ...)
+                    // in `code`; the remaining fields match the plan-guard
+                    // 403/429 contract.
+                    const { error: code, message, ...rest } = gate.body;
+                    return NextResponse.json(
+                        { ...rest, error: typeof message === 'string' ? message : String(code), code },
+                        { status: gate.status },
+                    );
+                }
+                try {
+                    const answer = await dispatchInstantAnswer({
+                        question: prompt,
+                        language: answerLanguage,
+                        userId: userId,
+                    });
+                    result = { action: 'ANSWER', content: answer.answer, videoUrl: answer.videoSuggestionUrl };
+                } catch (answerErr) {
+                    // Never charge quota for an answer that was not delivered.
+                    await gate.rollback();
+                    throw answerErr;
+                }
                 break;
             }
         }

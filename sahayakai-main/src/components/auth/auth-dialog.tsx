@@ -12,6 +12,8 @@ import { signInWithGoogle } from "@/lib/sign-in-with-google";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { GoogleGIcon } from "./google-g-icon";
+import { isAccessFlowPage, syncAccess } from "@/lib/api/client";
+import { getAccessStatus } from "@/lib/api/access";
 
 /**
  * Auth dialog — signed-out modal for Google sign-in.
@@ -22,6 +24,20 @@ import { GoogleGIcon } from "./google-g-icon";
  * G mark + dark text). No gradients, no decorative blur blobs, no mixed
  * icon colours — enterprise buyers expect restraint.
  */
+/**
+ * True only when the gate is enforced AND the server says this account is
+ * not entitled. Any failure answers false, which keeps the pre-gate flow.
+ */
+async function mustRequestAccess(): Promise<boolean> {
+    try {
+        await syncAccess();
+        const status = await getAccessStatus();
+        return status.mode === "enforce" && !status.entitled;
+    } catch {
+        return false;
+    }
+}
+
 export function AuthDialog() {
     const { isAuthModalOpen, closeAuthModal } = useAuth();
     const { toast } = useToast();
@@ -41,12 +57,29 @@ export function AuthDialog() {
 
             const user = result.user;
 
+            // Access-gate flow pages (/access, /request-access, /join/<code>)
+            // handle the signed-in state themselves. Sending a brand-new
+            // account to /onboarding from here would drop the school
+            // invitation or request form it came for.
+            if (isAccessFlowPage(window.location.pathname)) {
+                closeAuthModal();
+                return;
+            }
+
             // Desktop popup path — run the same profile-check inline.
             try {
                 const response = await fetch(`/api/auth/profile-check?uid=${user.uid}`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.exists === false) {
+                        // Access gate enforced and this new account is not
+                        // approved: its destination is /access, so the
+                        // "finish your profile" prompt would be wrong.
+                        if (await mustRequestAccess()) {
+                            closeAuthModal();
+                            router.push("/access");
+                            return;
+                        }
                         toast({
                             title: t("Profile setup required"),
                             description: t("Finish your profile to continue."),

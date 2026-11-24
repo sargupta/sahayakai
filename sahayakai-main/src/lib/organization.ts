@@ -1,5 +1,7 @@
 import 'server-only';
 import { FieldValue } from 'firebase-admin/firestore';
+import { baseAccessState, mergeCustomClaims, resolveAccess, setAccessState } from '@/lib/access/access-admin';
+import type { AccessState } from '@/lib/access/access-state';
 
 /**
  * Organization management for B2B school billing.
@@ -7,11 +9,34 @@ import { FieldValue } from 'firebase-admin/firestore';
  * Schema:
  *   organizations/{orgId}
  *     - name, type, adminUserId, plan, subscriptionId, totalSeats, usedSeats
+ *     - status: 'pilot' | 'active' | 'expired' (absent = 'active'), pilotEndsAt
+ *     - verification: how the school's identity was checked before provisioning
  *   organizations/{orgId}/members/{userId}
- *     - role: 'admin' | 'teacher', joinedAt, invitedBy
+ *     - role: 'admin' | 'teacher', joinedAt, invitedBy, termsVersion, termsAcceptedAt
  *   organizations/{orgId}/invites/{inviteId}
  *     - phone, role, status, createdAt, expiresAt
+ *   organizations/{orgId}/joinLinks/{linkId}
+ *     - tokenHash, createdBy, createdAt, expiresAt, maxUses, uses, revoked
+ *       (see src/lib/access/join-links.ts)
+ *
+ * Access gate: membership of an organisation is what entitles a teacher to
+ * use the product (docs/ACCESS_GATE_DESIGN.md). Every claim write here goes
+ * through `mergeCustomClaims`; a bare `setCustomUserClaims` replaces the whole
+ * claim set and would drop the `access` claim.
  */
+
+export type OrganizationStatus = 'pilot' | 'active' | 'expired';
+
+/** How SahayakAI verified that the organisation is a real school. */
+export interface OrganizationVerification {
+    board?: string;
+    affiliationNumber?: string;
+    /** e.g. "CBSE affiliation list + call to listed landline". */
+    method?: string;
+    note?: string;
+    verifiedBy: string;
+    verifiedAt: Date;
+}
 
 export interface Organization {
     id: string;
@@ -22,6 +47,11 @@ export interface Organization {
     subscriptionId?: string;
     totalSeats: number;
     usedSeats: number;
+    /** Absent on organisations created before the access gate; treat as 'active'. */
+    status?: OrganizationStatus;
+    /** End of the evaluation window. Set while (and after) status is 'pilot'. */
+    pilotEndsAt?: Date;
+    verification?: OrganizationVerification;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -31,6 +61,8 @@ export interface OrgMember {
     role: 'admin' | 'teacher';
     joinedAt: Date;
     invitedBy: string;
+    termsVersion?: string;
+    termsAcceptedAt?: Date;
 }
 
 export interface OrgInvite {
@@ -45,6 +77,74 @@ export interface OrgInvite {
 async function getDb() {
     const { getDb: _getDb } = await import('./firebase-admin');
     return _getDb();
+}
+
+function asDate(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    if (typeof value === 'object' && typeof (value as { toDate?: unknown }).toDate === 'function') {
+        return (value as { toDate: () => Date }).toDate();
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+}
+
+/** Effective status of an organisation document (absent status = 'active'). */
+export function organizationStatus(org: { status?: unknown }): OrganizationStatus {
+    return org.status === 'pilot' || org.status === 'expired' ? org.status : 'active';
+}
+
+/**
+ * The access state membership of this organisation confers right now, or
+ * null when it confers none (expired, or a pilot whose window has closed).
+ */
+export function accessGrantForOrganization(
+    org: { status?: unknown; pilotEndsAt?: unknown },
+    now: Date = new Date(),
+): { state: Extract<AccessState, 'pilot' | 'active'>; expiresAt: Date | null } | null {
+    const status = organizationStatus(org);
+    if (status === 'active') return { state: 'active', expiresAt: null };
+    if (status === 'pilot') {
+        const end = asDate(org.pilotEndsAt);
+        if (end && end.getTime() > now.getTime()) return { state: 'pilot', expiresAt: end };
+    }
+    return null;
+}
+
+/**
+ * Return an account to what it is entitled to without any organisation:
+ * free plan, no org claims, and the base access state (`legacy` if the
+ * account predates the gate, otherwise `pending`). Used when a member is
+ * removed and when a pilot ends.
+ *
+ * `keepOrgClaims` leaves orgId/orgRole in place (pilot expiry keeps the
+ * membership so the school can be extended or converted later).
+ */
+export async function returnMemberToBaseAccess(
+    userId: string,
+    options: { actor: string; reason: string; orgId?: string; keepOrgClaims?: boolean },
+): Promise<AccessState> {
+    await mergeCustomClaims(
+        userId,
+        options.keepOrgClaims
+            ? { planType: 'free' }
+            : { planType: 'free', orgId: null, orgRole: null },
+    );
+    // An administrator's block outlives membership changes: a school admin
+    // removing a blocked teacher must not hand them back legacy access.
+    const current = await resolveAccess(userId);
+    if (current.state === 'blocked') return 'blocked';
+
+    const base = await baseAccessState(userId);
+    await setAccessState(userId, base.state, {
+        actor: options.actor,
+        reason: options.reason,
+        orgId: options.orgId,
+    });
+    return base.state;
 }
 
 /**
@@ -89,6 +189,7 @@ export async function createOrganization(params: {
         plan: params.plan,
         totalSeats: params.totalSeats,
         usedSeats: 1, // admin is the first seat
+        status: 'active',
         createdAt: new Date(),
         updatedAt: new Date(),
     };
@@ -199,12 +300,18 @@ export async function createOrganization(params: {
     }
 
     if (planGranted) {
-        // Set custom claim (profile already updated inside the ledger transaction)
-        const { getAuth } = await import('firebase-admin/auth');
-        await getAuth().setCustomUserClaims(params.adminUserId, {
+        // Set custom claims (profile already updated inside the ledger
+        // transaction). Merged, so `access` and other claims survive.
+        await mergeCustomClaims(params.adminUserId, {
             planType: params.plan,
             orgId: orgRef.id,
             orgRole: 'admin',
+        });
+        // A verified payment makes the school a paying customer: entitle the admin.
+        await setAccessState(params.adminUserId, 'active', {
+            actor: 'system:org-payment',
+            reason: `organization ${orgRef.id} created with verified payment`,
+            orgId: orgRef.id,
         });
     } else {
         // Link the user to the org without flipping plan — the webhook will
@@ -289,12 +396,21 @@ export async function acceptInvite(orgId: string, inviteId: string, userId: stri
         updatedAt: new Date(),
     });
 
-    const { getAuth } = await import('firebase-admin/auth');
-    await getAuth().setCustomUserClaims(userId, {
+    await mergeCustomClaims(userId, {
         planType: org.plan,
         orgId,
         orgRole: 'teacher',
     });
+
+    const grant = accessGrantForOrganization(org);
+    if (grant) {
+        await setAccessState(userId, grant.state, {
+            expiresAt: grant.expiresAt,
+            actor: 'system:org-invite',
+            reason: `accepted invite ${inviteId} to organization ${orgId}`,
+            orgId,
+        });
+    }
 }
 
 /** Remove a teacher from the organization. */
@@ -339,10 +455,16 @@ export async function removeTeacher(orgId: string, userId: string): Promise<void
         return belongsToOrg;
     });
 
-    // Reset custom claims only when we actually downgraded this user's profile.
+    // Reset claims and access only when we actually downgraded this user's
+    // profile. The org claims are removed explicitly (merge semantics), and
+    // access falls back to the account's base state: `legacy` if it predates
+    // the gate, otherwise `pending`.
     if (removed) {
-        const { getAuth } = await import('firebase-admin/auth');
-        await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+        await returnMemberToBaseAccess(userId, {
+            actor: 'system:org-remove',
+            reason: `removed from organization ${orgId}`,
+            orgId,
+        });
     }
 }
 

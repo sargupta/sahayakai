@@ -130,11 +130,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const { profile } = await getProfileData(user.uid);
-                if (profile?.preferredLanguage) {
-                    setLanguageState(profile.preferredLanguage as Language);
-                    syncHtmlLang(profile.preferredLanguage as Language);
-                    try { localStorage.setItem('sahayakai-lang', profile.preferredLanguage); } catch {}
+                try {
+                    const { profile } = await getProfileData(user.uid);
+                    if (profile?.preferredLanguage) {
+                        setLanguageState(profile.preferredLanguage as Language);
+                        syncHtmlLang(profile.preferredLanguage as Language);
+                        try { localStorage.setItem('sahayakai-lang', profile.preferredLanguage); } catch {}
+                    }
+                } catch {
+                    // Profile unavailable (offline, or an account the access
+                    // gate has not approved yet). Keep the cached or default
+                    // language; never leave an unhandled rejection.
                 }
             }
             setAuthResolved(true);

@@ -45,7 +45,13 @@ const GlobalVoiceInterface = dynamic(() => import("@/components/global-voice-int
   loading: () => null,
 });
 
-const MARKETING_PATHS = ["/for-schools", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about"];
+const MARKETING_PATHS = [
+  "/for-schools", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about",
+  // Access-gate flow (docs/ACCESS_GATE_DESIGN.md): these pages are shown to
+  // accounts that are NOT entitled yet, so they must render without the app
+  // chrome (sidebar, VIDYA orb, global hooks) whose API calls would all 403.
+  "/access", "/request-access", "/join",
+];
 
 function isMarketingPath(pathname: string | null): boolean {
   if (!pathname) return false;

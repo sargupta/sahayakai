@@ -404,7 +404,10 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
               // Sync custom claim so middleware/JWT match Firestore.
               try {
                 const { getAuth } = await import('firebase-admin/auth');
-                await getAuth().setCustomUserClaims(userId, { planType: expectedPlan });
+                // Merge, never replace (keeps access / org / onboarding claims).
+                const { mergeCustomClaims, grantPaidAccess } = await import('@/lib/access/access-admin');
+                await mergeCustomClaims(userId, { planType: expectedPlan }, getAuth());
+                await grantPaidAccess(userId, 'billing reconciliation: active subscription');
               } catch (claimErr: any) {
                 errors.push(`Failed to set claim on auto-fix D1 for ${userId}: ${claimErr.message}`);
               }
@@ -449,7 +452,9 @@ export async function runReconciliation(): Promise<ReconciliationResult> {
             });
             try {
               const { getAuth } = await import('firebase-admin/auth');
-              await getAuth().setCustomUserClaims(userId, { planType: 'free' });
+              const { mergeCustomClaims, revokePaidAccess } = await import('@/lib/access/access-admin');
+              await mergeCustomClaims(userId, { planType: 'free' }, getAuth());
+              await revokePaidAccess(userId, 'billing reconciliation: subscription ended');
             } catch (claimErr: any) {
               errors.push(`Failed to set claim on auto-fix D2 for ${userId}: ${claimErr.message}`);
             }

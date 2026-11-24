@@ -12,6 +12,41 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    // --- Access gate (docs/ACCESS_GATE_DESIGN.md) ---
+    // The middleware gates every /api/* call, but the client SDK talks to
+    // Firestore directly. Without the check below, an account that is signed
+    // in but NOT approved (pending / blocked / expired pilot) could still read
+    // shared product data straight from the database.
+    //
+    // Kill switch: the claim check only applies while the Admin-SDK-only doc
+    // system_config/access_gate has `enforce == true`. Missing doc or
+    // enforce != true means "any signed-in user", i.e. the pre-gate behaviour,
+    // so deploying these rules changes nothing until the doc is flipped
+    // (after the claim backfill; see docs/ACCESS_GATE_RUNBOOK.md).
+    function accessGateEnforced() {
+      return exists(/databases/$(database)/documents/system_config/access_gate)
+        && get(/databases/$(database)/documents/system_config/access_gate).data.enforce == true;
+    }
+
+    // Mirrors evaluateAccess() in src/lib/access/access-state.ts:
+    //   - entitled states are legacy / pilot / active;
+    //   - a missing `access` claim is NOT entitled (fail closed);
+    //   - a pilot MUST carry `accessExp`;
+    //   - when `accessExp` (epoch seconds) is present it must be in the future.
+    function hasEntitledClaim() {
+      return ('access' in request.auth.token)
+        && request.auth.token.access in ['legacy', 'pilot', 'active']
+        && (request.auth.token.access != 'pilot' || ('accessExp' in request.auth.token))
+        && (!('accessExp' in request.auth.token)
+            || request.auth.token.accessExp > request.time.toMillis() / 1000);
+    }
+
+    // Signed in AND allowed to use the product. Use this (not isSignedIn())
+    // for any rule that exposes shared / community / product data.
+    function hasAccess() {
+      return isSignedIn() && (!accessGateEnforced() || hasEntitledClaim());
+    }
+
     // Check if caller is an admin of the given org
     function isOrgAdmin(orgId) {
       return isSignedIn()
@@ -20,7 +55,9 @@ service cloud.firestore {
 
     // Check if caller is a member of the given group (via members subcollection)
     function isGroupMember(groupId) {
-      return isSignedIn()
+      // hasAccess(): a member whose access was withdrawn or whose pilot
+      // expired loses group reads together with the rest of the product.
+      return hasAccess()
         && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
     }
 
@@ -47,7 +84,11 @@ service cloud.firestore {
         // server-issued / immutable identity
         'referralCode', 'email', 'emailVerified', 'uid', 'createdAt',
         // push tokens (written only by the dedicated FCM action)
-        'fcmTokens'
+        'fcmTokens',
+        // access gate — source of truth for the `access` custom claim; a
+        // client that could write these could approve itself
+        'accessState', 'accessExpiresAt', 'accessUpdatedAt', 'accessUpdatedBy',
+        'planSource'
       ];
     }
 
@@ -98,7 +139,8 @@ service cloud.firestore {
     // --- Community Library ---
     // Public read; writes only via trusted backend (Server SDK / Admin SDK)
     match /community/{communityContentId} {
-      allow read: if true;
+      // Was world-readable; nothing in the app reads it from the client.
+      allow read: if hasAccess();
       allow write: if false;
     }
 
@@ -116,8 +158,10 @@ service cloud.firestore {
 
     // --- Direct Messages & Group Conversations ---
 
+    // Access gate: messaging is a product surface, so every rule here needs
+    // hasAccess() on top of the participant check.
     match /conversations/{convId} {
-      allow read: if isSignedIn()
+      allow read: if hasAccess()
         && request.auth.uid in resource.data.participantIds;
 
       // Server-only (POST /api/messages/*). A client write could set
@@ -127,7 +171,7 @@ service cloud.firestore {
       allow create, update, delete: if false;
 
       match /messages/{msgId} {
-        allow read: if isSignedIn()
+        allow read: if hasAccess()
           && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
 
         // Server-only (POST /api/messages/send): the route checks blocks, rate
@@ -139,7 +183,7 @@ service cloud.firestore {
         // message text, sender, or attachments (previously any participant
         // could overwrite ANY message's content, enabling impersonation).
         // Message content is authored on create and never client-mutable after.
-        allow update: if isSignedIn()
+        allow update: if hasAccess()
           && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['readBy', 'deliveredTo', 'readAt', 'deliveredAt', 'lastReadAt']);
@@ -148,9 +192,10 @@ service cloud.firestore {
       }
     }
 
-    // --- Community Chat (broadcast — all signed-in users) ---
+    // --- Community Chat (broadcast — all entitled users) ---
+    // Access gate: hasAccess(), not isSignedIn().
     match /community_chat/{messageId} {
-      allow read: if isSignedIn();
+      allow read: if hasAccess();
       // Server-only (POST /api/community/chat): a client create could set any
       // authorName/authorPhotoURL (impersonation) and an unbounded text.
       allow create, update, delete: if false;
@@ -158,7 +203,9 @@ service cloud.firestore {
 
     // --- Connection Requests ---
     match /connection_requests/{reqId} {
-      allow create: if isSignedIn()
+      // Access gate: only entitled accounts may reach out to teachers. Read /
+      // delete of the caller's OWN requests stay on isSignedIn().
+      allow create: if hasAccess()
         && request.resource.data.fromUid == request.auth.uid
         && request.resource.data.fromUid != request.resource.data.toUid;
 
@@ -181,7 +228,8 @@ service cloud.firestore {
     // The primary write path is POST /api/moderation/report (Admin SDK,
     // rate-limited); this rule keeps a direct client create equally strict.
     match /reports/{reportId} {
-      allow create: if isSignedIn()
+      // Access gate: a non-entitled account can see no reportable content.
+      allow create: if hasAccess()
         && request.resource.data.reporterId == request.auth.uid
         && request.resource.data.status == 'open'
         && request.resource.data.targetType in ['message', 'post', 'profile', 'resource']
@@ -216,7 +264,7 @@ service cloud.firestore {
     // needed for the Discover Groups surface. Only members can read posts/chat
     // inside the group (see nested matches below). All writes go through server.
     match /groups/{groupId} {
-      allow read: if isSignedIn();
+      allow read: if hasAccess();  // access gate (was: any signed-in user)
       allow write: if false;
 
       // --- Group Posts ---
@@ -252,11 +300,11 @@ service cloud.firestore {
     // The community feed reads here. Authenticated users can read; writes flow
     // through createPostAction (Admin SDK).
     match /posts/{postId} {
-      allow read: if isSignedIn();
+      allow read: if hasAccess();  // access gate (was: any signed-in user)
       allow write: if false;
 
       match /likes/{likerId} {
-        allow read, write: if isOwner(likerId);
+        allow read, write: if hasAccess() && isOwner(likerId);
       }
     }
 
@@ -264,15 +312,15 @@ service cloud.firestore {
     // Public for signed-in users (community discovery). Writes via
     // publishContentToLibraryAction / scheduled jobs (Admin SDK).
     match /library_resources/{resourceId} {
-      allow read: if isSignedIn();
+      allow read: if hasAccess();  // access gate (was: any signed-in user)
       allow write: if false;
 
-      // Likes / Saves subcollections — owner-only
+      // Likes / Saves subcollections — owner-only, entitled accounts only
       match /likes/{likerId} {
-        allow read, write: if isOwner(likerId);
+        allow read, write: if hasAccess() && isOwner(likerId);
       }
       match /saves/{saverId} {
-        allow read, write: if isOwner(saverId);
+        allow read, write: if hasAccess() && isOwner(saverId);
       }
     }
 
@@ -302,6 +350,14 @@ service cloud.firestore {
       match /members/{memberId} {
         allow read: if isOwner(memberId) || isOrgAdmin(orgId);
         allow write: if false;
+      }
+
+      // --- Organization Join Links (access gate) ---
+      // Only a sha256 of the join code is stored, but uses / expiry / seat
+      // caps are still operator state. Created, redeemed and revoked through
+      // /api/organizations/** (Admin SDK) only.
+      match /joinLinks/{linkId} {
+        allow read, write: if false;
       }
     }
 
@@ -333,7 +389,7 @@ service cloud.firestore {
     // Feature limits per plan. Readable by any authenticated user.
     // Written only via Admin SDK or Firebase console.
     match /config/plans {
-      allow read: if isSignedIn();
+      allow read: if hasAccess();  // access gate (was: any signed-in user)
       allow write: if false;
     }
 
@@ -362,6 +418,10 @@ service cloud.firestore {
     // Split: doc IDs starting with `public_` are client-readable
     // (e.g. `public_maintenance_banner` for the user-visible banner);
     // everything else (including `feature_flags`) is Admin-SDK-only.
+    //
+    // `system_config/access_gate` (the rules kill switch read by
+    // accessGateEnforced() above) is deliberately NOT `public_`: rules-side
+    // get()/exists() bypass these read rules, so no client ever needs it.
     match /system_config/{docId} {
       allow read: if isSignedIn() && docId.matches('^public_.*');
       allow write: if false;
@@ -439,24 +499,55 @@ service cloud.firestore {
     // TTL policies on `expireAt` (deploy separately) reap idle docs.
     // =============================================
     match /presence/{uid} {
-      // Any signed-in user may see who is online (contacts/conversations).
-      allow read: if isSignedIn();
-      // Only the owner writes their own presence.
+      // Any entitled user may see who is online (contacts/conversations).
+      // Access gate: hasAccess(), not isSignedIn().
+      allow read: if hasAccess();
+      // Only the owner writes their own presence. Deliberately NOT gated:
+      // it is the caller's own doc, and gating it would add a config read to
+      // every heartbeat and throw in the client for a pending account.
       allow write: if isOwner(uid);
     }
 
     match /typing_status/{conversationId} {
       // Participants only: the doc id is the DM id (sorted uid pair), so an
       // open read let anyone confirm that two users are messaging.
-      allow read: if isSignedIn()
+      allow read: if hasAccess()
         && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
       // A caller may only add/refresh their OWN uid key (plus the expireAt
       // housekeeping field) — never assert that someone else is typing.
-      allow write: if isSignedIn()
+      allow write: if hasAccess()
         && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds
         && request.resource.data.diff(
              resource == null ? {} : resource.data
            ).affectedKeys().hasOnly([request.auth.uid, 'expireAt']);
+    }
+
+    // =============================================
+    // ACCESS GATE COLLECTIONS (docs/ACCESS_GATE_DESIGN.md)
+    // =============================================
+    // All Admin-SDK-only. A client that could write any of these could
+    // approve itself, forge a school quote, erase the audit trail, or clear
+    // an anomaly flag; a client that could read them would see other
+    // schools' contact details. Explicit deny for auditability.
+
+    // One access request per account, reviewed by a SahayakAI admin.
+    match /access_requests/{uid} {
+      allow read, write: if false;
+    }
+
+    // Public school quote form (POST /api/access/quote).
+    match /quote_requests/{quoteId} {
+      allow read, write: if false;
+    }
+
+    // Append-only record of every access-state change.
+    match /access_audit/{auditId} {
+      allow read, write: if false;
+    }
+
+    // Anomaly flags raised by the nightly access-expiry job.
+    match /access_flags/{uid} {
+      allow read, write: if false;
     }
 
     // =============================================

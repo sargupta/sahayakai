@@ -56,7 +56,9 @@ async function main() {
     });
 
     // Set Firebase custom claim so middleware reads it from JWT
-    await auth.setCustomUserClaims(uid, { planType: plan });
+    // Merge with existing claims (access gate, organisation, onboarding).
+    const existingClaims = (await auth.getUser(uid)).customClaims ?? {};
+    await auth.setCustomUserClaims(uid, { ...existingClaims, planType: plan });
 
     console.log(`Set plan for ${uid} to ${plan}`);
     console.log('User must re-authenticate (or wait for token refresh) to pick up new claim.');

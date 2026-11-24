@@ -5,6 +5,7 @@ import { aggregateOrgAnalytics, type OrgMemberSummary } from '@/lib/analytics/or
 import type { TeacherAnalytics } from '@/lib/analytics/impact-score';
 import { DashboardClient } from './dashboard-client';
 import { EmptyStateDashboard } from './components/empty-state';
+import { InviteTeachers } from './components/invite-teachers';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,14 +100,23 @@ export default async function OrganizationDashboardPage() {
     // 6. Empty state (new org with no teachers or no data yet)
     if (analytics.emptyState.showEmptyState) {
         return (
-            <EmptyStateDashboard
-                reason={analytics.emptyState.reason ?? 'too-little-data'}
-                principalName={profile?.displayName}
-                orgName={analytics.org.name}
-                isDemoData={analytics.org.isDemoData}
-            />
+            <>
+                <EmptyStateDashboard
+                    reason={analytics.emptyState.reason ?? 'too-little-data'}
+                    principalName={profile?.displayName}
+                    orgName={analytics.org.name}
+                    isDemoData={analytics.org.isDemoData}
+                />
+                {/* orgId is the server-resolved org this caller administers. */}
+                <InviteTeachers orgId={orgId} />
+            </>
         );
     }
 
-    return <DashboardClient data={analytics} />;
+    return (
+        <>
+            <DashboardClient data={analytics} />
+            <InviteTeachers orgId={orgId} />
+        </>
+    );
 }
