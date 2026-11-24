@@ -9,6 +9,7 @@
  *   EXOTEL_CALLER_ID    — Verified Exotel phone number (E.164)
  *   EXOTEL_APP_ID       — Exotel app ID for the call flow
  *
+ * Uses Exotel v1 REST API (v2 is not supported on this account).
  * Docs: https://developer.exotel.com/docs/voice-api
  */
 
@@ -45,7 +46,7 @@ function readConfig(): ExotelConfig | null {
     return { sid, apiKey, apiToken, subdomain, callerId, appId };
 }
 
-/** Place an outbound call through Exotel. */
+/** Place an outbound call through Exotel (v1 API). */
 export async function placeExotelCall(
     to: string,
     opts: { url?: string; statusCallback?: string; timeout?: number } = {}
@@ -61,46 +62,47 @@ export async function placeExotelCall(
     }
 
     const auth = Buffer.from(`${cfg.apiKey}:${cfg.apiToken}`).toString('base64');
-    const url = `https://${cfg.subdomain}/v2/accounts/${cfg.sid}/calls`;
+    const url = `https://${cfg.subdomain}/v1/Accounts/${cfg.sid}/Calls/connect`;
+
+    const params = new URLSearchParams();
+    params.set('From', cfg.callerId);
+    params.set('To', to);
+    params.set('CallerId', cfg.callerId);
+    params.set('Url', opts.url ?? `https://${cfg.subdomain}/v1/Accounts/${cfg.sid}/Apps/${cfg.appId}/Exoml`);
+    if (opts.statusCallback) params.set('StatusCallback', opts.statusCallback);
+    params.set('TimeLimit', String(opts.timeout ?? 30));
 
     try {
         const res = await fetch(url, {
             method: 'POST',
             headers: {
                 Authorization: `Basic ${auth}`,
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: JSON.stringify({
-                from: cfg.callerId,
-                to,
-                caller_id: cfg.callerId,
-                url: opts.url ?? `https://${cfg.subdomain}/v2/accounts/${cfg.sid}/apps/${cfg.appId}/exoml`,
-                status_callback: opts.statusCallback,
-                time_limit: opts.timeout ?? 30,
-            }),
+            body: params.toString(),
         });
 
-        const data = (await res.json().catch(() => ({}))) as {
-            call_sid?: string;
-            status?: string;
-            error?: string;
-            message?: string;
-            code?: string | number;
-        };
+        const text = await res.text();
 
         if (!res.ok) {
+            // Exotel v1 returns TwilioResponse XML on error; extract message crudely.
+            const msg = text.match(/<Message>(.*?)<\/Message>/)?.[1] ?? text.slice(0, 200);
             return {
                 ok: false,
-                code: String(data?.code ?? 'EXOTEL_ERROR'),
-                message: data?.message ?? data?.error ?? 'Exotel call failed',
+                code: 'EXOTEL_ERROR',
+                message: msg,
                 status: res.status,
             };
         }
 
+        // Parse Call Sid from XML response.
+        const callSidMatch = text.match(/<Sid>(.*?)<\/Sid>/);
+        const statusMatch = text.match(/<Status>(.*?)<\/Status>/);
+
         return {
             ok: true,
-            callSid: data.call_sid ?? `exotel-${Date.now()}`,
-            status: data.status ?? 'initiated',
+            callSid: callSidMatch?.[1] ?? `exotel-${Date.now()}`,
+            status: statusMatch?.[1] ?? 'initiated',
         };
     } catch (error) {
         return {
