@@ -260,9 +260,18 @@ describe('parseRiyaWebhook', () => {
         expect(transcriptRequestsStop([{ role: 'agent', message: "Don't call me a bot", timeInCallSecs: 1 }])).toBe(false);
         expect(transcriptRequestsStop([{ role: 'user', message: 'Yes I will come', timeInCallSecs: 1 }])).toBe(false);
     });
-    it('treats ending THIS call as hanging up, never as an opt-out from all calls', () => {
-        // Class gate: a request to end the current call must not block the number for good.
+    it('an unclear stop fails toward office review, never toward ignoring it', () => {
+        // Class gate: "stop this call" is often "stop calling me". It goes to the office as a pending
+        // suppression (reversible), the same as the bridge's riya.py _STOP; it is never dropped.
         for (const said of ['Stop this call', 'Please stop this call now', 'ok stop this call bye']) {
+            expect(transcriptRequestsStop([{ role: 'user', message: said, timeInCallSecs: 1 }])).toBe(true);
+        }
+        // Romanized Hindi and Bengali opt-outs, as speech recognition writes them.
+        for (const said of ['call mat karo', 'Aap phone mat kijiye', 'please call na karein', 'ar phone korben na', 'aar call korben na']) {
+            expect(transcriptRequestsStop([{ role: 'user', message: said, timeInCallSecs: 1 }])).toBe(true);
+        }
+        // ...but not requests to be called.
+        for (const said of ['phir se call karna', 'shaam ko phone kijiye', 'phone korben na please']) {
             expect(transcriptRequestsStop([{ role: 'user', message: said, timeInCallSecs: 1 }])).toBe(false);
         }
         for (const said of ['Stop these calls', 'Stop calling this number', "Don't call me again", 'Do not call this number']) {

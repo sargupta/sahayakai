@@ -158,6 +158,13 @@ export async function handleVobizRiyaContext(deps: RiyaDeps, token: string | nul
     const found = await bridgeCallFor(deps, env, await verifyVobizToken(SAMPARK_VOBIZ_DOMAINS.CONTEXT, token));
     const call = found?.call;
     if (!call || isTerminalConversationState(call.state) || !call.variables) return { status: 404, body: { ok: false } };
+    // Every carrier (Vobiz, Plivo, Exotel) fetches context here before Riya speaks. Exotel has no
+    // answer-time hook, so a school paused while the phone rang is caught here: no context, no speech.
+    const school = await deps.repo.getSchool(call.orgId);
+    if (!school || pauseStopsPurpose(school.pause, call.purpose)) {
+        logger.info('Riya context refused: school paused', LOG, { orgId: call.orgId });
+        return { status: 404, body: { ok: false } };
+    }
     const vars: Record<string, string> = {};
     for (const [k, v] of Object.entries(call.variables)) vars[k] = typeof v === 'string' ? v : '';
     return {

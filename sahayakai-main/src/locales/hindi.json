@@ -3732,5 +3732,5 @@
   "Calls run on SahayakAI's own voice bridge: Exotel phone line with Gemini Live.": "कॉल सहायकAI के अपने वॉइस ब्रिज पर चलती हैं: Exotel फ़ोन लाइन और Gemini Live।",
   "Pick the calling provider for this visit. SamparkAI looks and works the same with any of them; only the service that holds Riya's calls changes. You can switch at any time from inside SamparkAI.": "इस बार के लिए कॉलिंग सेवा चुनें। सभी में सम्पर्कAI एक जैसा दिखता और काम करता है; सिर्फ़ रिया की कॉल चलाने वाली सेवा बदलती है। आप सम्पर्कAI के अंदर से कभी भी बदल सकते हैं।",
   "Real class-wide calls run on Vobiz only. Another provider is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.": "पूरी कक्षा की असली कॉल सिर्फ़ Vobiz पर चलती हैं। कोई दूसरी सेवा चुनी गई है, इसलिए पूरी कक्षा की कोई असली कॉल नहीं की जाती, और आपकी पसंद के बिना कॉल कभी Vobiz पर नहीं ले जाई जातीं।",
-  "The school has paused calls; only emergency closures go out while paused": "स्कूल ने कॉल रोक दी हैं; रुकी रहने के दौरान केवल आपातकालीन छुट्टी की सूचना ही जाती है"
+  "The school has paused calls; only emergency closures go out while paused": "स्कूल ने कॉल रोक दिए हैं; रोके जाने के दौरान केवल आपातकालीन बंदी के कॉल जाते हैं"
 }
