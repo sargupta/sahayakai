@@ -40,6 +40,10 @@ substitutions:
   _BRIDGE_URL: https://sahayakai-riya-bridge-640589855975.asia-south1.run.app
   _TEST_NUMBERS: ''
   _DAILY_CAP: '3'
+  # Folder that holds the Dockerfile, relative to the build's source root. '.' for the manual
+  # `gcloud builds submit sahayakai-main ...` above (the upload IS sahayakai-main); the Cloud Build
+  # trigger `sampark-staging-deploy` clones the whole repo and sets _SRC_DIR=sahayakai-main.
+  _SRC_DIR: '.'
   # Firebase uids allowed to use hands-free VIDYA (comma-separated). Production mode refuses
   # the `*` wildcard, so an empty list means nobody. Pass several with gcloud's alternate
   # delimiter: --substitutions=^@^SHORT_SHA=abc1234@_TEST_NUMBERS=+91...@_VIDYA_UIDS=uid1,uid2
@@ -67,6 +71,7 @@ options:
 steps:
   - id: build
     name: gcr.io/cloud-builders/docker
+    dir: ${_SRC_DIR}
     args:
       - build
       - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REGISTRY}/${_SERVICE}:$SHORT_SHA
