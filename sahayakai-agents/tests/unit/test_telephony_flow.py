@@ -34,6 +34,10 @@ from sahayakai_agents.telephony.flow import (
     is_optout,
 )
 
+# Every test here runs in CI (ci-agents.yml selects unit/integration/behavioral); before
+# 2026-11-24 this file had no marker, so none of it ran on a pull request.
+pytestmark = pytest.mark.unit
+
 
 class TestGoodbye:
     @pytest.mark.parametrize(
