@@ -149,7 +149,10 @@ async def synthesize(text: str, voice: str | None = None, *, client: Any = None)
             async with httpx.AsyncClient() as c:
                 r = await c.post(TTS_URL, json=body, headers=headers, timeout=10.0)
         r.raise_for_status()
-        audio = wav_to_ulaw(base64.b64decode(r.json()["audioContent"]))
+        # Off the event loop: lines render while a call is live, and the outbound pacer
+        # must not be delayed by converting and trimming seconds of audio.
+        wav = base64.b64decode(r.json()["audioContent"])
+        audio = await asyncio.to_thread(wav_to_ulaw, wav)
         return audio or None
     except Exception as exc:  # noqa: BLE001
         log.warning("telephony.line_tts_failed", error=str(exc)[:200], chars=len(text))
@@ -180,7 +183,7 @@ async def ensure_line(text: str, path: Path, *, client: Any = None) -> bool:
             t0 = time.monotonic()
             audio = await synthesize(text, client=client)
             if audio:
-                _write_atomic(path, audio)
+                await asyncio.to_thread(_write_atomic, path, audio)
                 ok = True
                 log.info(
                     "telephony.line_rendered",
