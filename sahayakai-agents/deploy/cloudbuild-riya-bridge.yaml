@@ -36,6 +36,11 @@ substitutions:
   # so the bridge can hang Plivo calls up over Plivo's REST API. Exotel needs no secret here:
   # closing the stream ends an Exotel call. Off by default = Vobiz-only, exactly as before.
   _PLIVO_SECRETS: 'false'
+  # Folder that holds pyproject.toml and the Dockerfile, relative to the build's source root. '.'
+  # for the manual `gcloud builds submit sahayakai-agents ...` above (the upload IS that folder);
+  # the Cloud Build trigger `riya-bridge-deploy` clones the whole repo and sets
+  # _SRC_DIR=sahayakai-agents.
+  _SRC_DIR: '.'
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -57,6 +62,7 @@ steps:
 
   - id: test
     name: python:3.12-slim
+    dir: ${_SRC_DIR}
     entrypoint: bash
     args:
       - -ceu
@@ -68,6 +74,7 @@ steps:
 
   - id: build
     name: gcr.io/cloud-builders/docker
+    dir: ${_SRC_DIR}
     args:
       - build
       - --tag=${_AR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:$SHORT_SHA
