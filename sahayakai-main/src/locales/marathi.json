@@ -3712,5 +3712,13 @@
   "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "तुमचा ब्राउझर ही PDF दाखवू शकला नाही. दुसरा ब्राउझर वापरा, किंवा पानांचे फोटो अपलोड करा.",
   "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "ही PDF उघडता आली नाही — ती खराब असू शकते. पुन्हा सेव्ह करा, किंवा पाने चित्रे म्हणून अपलोड करा.",
   "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "ही पाने एकूण {{size}} MB आहेत — एका स्कॅनमध्ये जास्तीत जास्त {{limit}} MB अपलोड करता येते. एक-दोन पाने काढा, किंवा लहान फोटो वापरा आणि पुन्हा प्रयत्न करा.",
-  "Page notices": "पानांविषयी सूचना"
+  "Page notices": "पानांविषयी सूचना",
+  "Plivo calling is not set up on this deployment.": "या डिप्लॉयमेंटवर Plivo कॉलिंग सेट केलेले नाही.",
+  "Exotel calling is not set up on this deployment.": "या डिप्लॉयमेंटवर Exotel कॉलिंग सेट केलेले नाही.",
+  "Plivo (real calls)": "Plivo (खरे कॉल)",
+  "Exotel (real calls)": "Exotel (खरे कॉल)",
+  "Calls run on SahayakAI's own voice bridge: Plivo phone line with Gemini Live.": "कॉल सहायकAI च्या स्वतःच्या व्हॉइस ब्रिजवर चालतात: Plivo फोन लाइन आणि Gemini Live.",
+  "Calls run on SahayakAI's own voice bridge: Exotel phone line with Gemini Live.": "कॉल सहायकAI च्या स्वतःच्या व्हॉइस ब्रिजवर चालतात: Exotel फोन लाइन आणि Gemini Live.",
+  "Pick the calling provider for this visit. SamparkAI looks and works the same with any of them; only the service that holds Riya's calls changes. You can switch at any time from inside SamparkAI.": "या भेटीसाठी कॉलिंग सेवा निवडा. सर्वांमध्ये संपर्कAI सारखेच दिसते आणि काम करते; फक्त रियाचे कॉल चालवणारी सेवा बदलते. संपर्कAI मधून कधीही बदलू शकता.",
+  "Real class-wide calls run on Vobiz only. Another provider is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.": "संपूर्ण वर्गाचे खरे कॉल फक्त Vobiz वर चालतात. दुसरी सेवा निवडलेली आहे, त्यामुळे संपूर्ण वर्गाचा कोणताही खरा कॉल केला जात नाही, आणि तुमच्या निवडीशिवाय कॉल कधीही Vobiz वर हलवले जात नाहीत."
 }

@@ -50,8 +50,18 @@ export const VOBIZ_DOMAINS = {
     SAMPARK_RIYA_ANSWER: 'sampark-riya-answer',
     /** Sampark Riya over Vobiz: ring/hangup progress for one Sampark call. */
     SAMPARK_RIYA_STATUS: 'sampark-riya-status',
-    /** Sampark Riya over Vobiz: the bridge fetching one call's variables. */
+    /** Sampark Riya on the bridge (any carrier): the bridge fetching one call's variables. */
     SAMPARK_RIYA_CONTEXT: 'sampark-riya-context',
+    /** Sampark Riya over Plivo: call-control XML for one Sampark call. */
+    SAMPARK_RIYA_PLIVO_ANSWER: 'sampark-riya-plivo-answer',
+    /** Sampark Riya over Plivo: ring/hangup progress for one Sampark call. */
+    SAMPARK_RIYA_PLIVO_STATUS: 'sampark-riya-plivo-status',
+    /** Sampark Riya over Exotel: call status for one Sampark call. */
+    SAMPARK_RIYA_EXOTEL_STATUS: 'sampark-riya-exotel-status',
+    /** Authorises opening one billable Plivo media stream on the bridge (verified there). */
+    PLIVO_STREAM: 'plivo-call',
+    /** Authorises opening one billable Exotel media stream on the bridge (verified there). */
+    EXOTEL_STREAM: 'exotel-call',
 } as const;
 
 export type VobizDomain = (typeof VOBIZ_DOMAINS)[keyof typeof VOBIZ_DOMAINS];

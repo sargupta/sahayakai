@@ -3712,5 +3712,13 @@
   "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "உங்கள் உலாவியால் PDF-ஐக் காட்ட முடியவில்லை. வேறு உலாவியை முயற்சிக்கவும், அல்லது பக்கங்களின் புகைப்படங்களைப் பதிவேற்றவும்.",
   "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "இந்த PDF-ஐத் திறக்க முடியவில்லை — அது சேதமடைந்திருக்கலாம். மீண்டும் சேமிக்கவும், அல்லது பக்கங்களைப் படங்களாகப் பதிவேற்றவும்.",
   "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "இந்தப் பக்கங்கள் மொத்தம் {{size}} MB — ஒரு ஸ்கேனில் அதிகபட்சம் {{limit}} MB மட்டுமே பதிவேற்ற முடியும். ஓரிரு பக்கங்களை நீக்கவும், அல்லது சிறிய புகைப்படங்களைப் பயன்படுத்தி மீண்டும் முயற்சிக்கவும்.",
-  "Page notices": "பக்க அறிவிப்புகள்"
+  "Page notices": "பக்க அறிவிப்புகள்",
+  "Plivo calling is not set up on this deployment.": "இந்த நிறுவலில் Plivo அழைப்பு வசதி அமைக்கப்படவில்லை.",
+  "Exotel calling is not set up on this deployment.": "இந்த நிறுவலில் Exotel அழைப்பு வசதி அமைக்கப்படவில்லை.",
+  "Plivo (real calls)": "Plivo (உண்மையான அழைப்புகள்)",
+  "Exotel (real calls)": "Exotel (உண்மையான அழைப்புகள்)",
+  "Calls run on SahayakAI's own voice bridge: Plivo phone line with Gemini Live.": "அழைப்புகள் சகாயக்AI-இன் சொந்த குரல் பாலத்தில் நடக்கும்: Plivo தொலைபேசி இணைப்பு மற்றும் Gemini Live.",
+  "Calls run on SahayakAI's own voice bridge: Exotel phone line with Gemini Live.": "அழைப்புகள் சகாயக்AI-இன் சொந்த குரல் பாலத்தில் நடக்கும்: Exotel தொலைபேசி இணைப்பு மற்றும் Gemini Live.",
+  "Pick the calling provider for this visit. SamparkAI looks and works the same with any of them; only the service that holds Riya's calls changes. You can switch at any time from inside SamparkAI.": "இந்த வருகைக்கான அழைப்பு சேவையைத் தேர்ந்தெடுக்கவும். அனைத்திலும் சம்பர்க்AI ஒரே மாதிரி தோன்றும், வேலை செய்யும்; ரியாவின் அழைப்புகளை நடத்தும் சேவை மட்டுமே மாறும். சம்பர்க்AI-க்குள் இருந்து எப்போது வேண்டுமானாலும் மாற்றலாம்.",
+  "Real class-wide calls run on Vobiz only. Another provider is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.": "வகுப்பு முழுவதற்குமான உண்மையான அழைப்புகள் Vobiz-இல் மட்டுமே இயங்கும். வேறொரு சேவை தேர்ந்தெடுக்கப்பட்டுள்ளதால், வகுப்பு முழுவதற்குமான உண்மையான அழைப்பு எதுவும் செய்யப்படாது; உங்கள் தேர்வின்றி அழைப்புகள் ஒருபோதும் Vobiz-க்கு மாற்றப்படாது."
 }

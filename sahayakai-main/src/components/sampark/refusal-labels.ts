@@ -40,6 +40,8 @@ export function riyaBlockerLabel(t: Translate, blocker: RiyaBlockerCode): string
         case "LIVE_DIAL_DISABLED": return t("Real calls are switched off on this deployment.");
         case "ELEVENLABS_UNCONFIGURED": return t("The ElevenLabs voice agent is not set up on this deployment.");
         case "VOBIZ_UNCONFIGURED": return t("Vobiz calling is not set up on this deployment.");
+        case "PLIVO_UNCONFIGURED": return t("Plivo calling is not set up on this deployment.");
+        case "EXOTEL_UNCONFIGURED": return t("Exotel calling is not set up on this deployment.");
         case "NONPROD_DATABASE_REQUIRED": return t("Riya test calls need the separate test database on this deployment.");
         case "DEMO_SCHOOL_PRACTICE_ONLY": return t("This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.");
         case "TEST_PHONE_MISSING": return t("Test mode needs a test phone number for this school.");
@@ -121,7 +123,7 @@ export function batchBlockerLabel(t: Translate, code: BatchBlockerCode): string 
         case "NOT_BATCHABLE": return t("This kind of call is about one child, so it stays an individual call.");
         case "REASON_NOT_AVAILABLE": return t("Riya has no approved wording for this reason yet.");
         case "PURPOSE_MISMATCH": return t("The details do not match the chosen reason.");
-        case "BATCH_PROVIDER_NOT_SUPPORTED": return t("Class-wide calls run on Vobiz. ElevenLabs is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.");
+        case "BATCH_PROVIDER_NOT_SUPPORTED": return t("Real class-wide calls run on Vobiz only. Another provider is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.");
         case "BATCH_NEEDS_OWN_NUMBERS": return t("Real class-wide calls need each family's own permitted number. In this school's Test mode, calls ring only the one test phone.");
         case "REAL_BATCH_DISABLED": return t("Real class-wide calls are switched off on this deployment.");
         case "NO_ELIGIBLE_RECIPIENTS": return t("No family in this class can be called for this announcement.");

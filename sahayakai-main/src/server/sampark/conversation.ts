@@ -50,6 +50,8 @@ import { enabledRiyaPurposes, riyaOpening, riyaPurposeSpec, RiyaPurposeSchema, t
 import { simulateRiyaCall, SimulationScenarioSchema, type SimulationScenario } from '@/lib/sampark/conversation/simulated-provider';
 import { applyRiyaEvent, applyRiyaSnapshot } from '@/lib/sampark/conversation/state';
 import {
+    carrierCallIdOf,
+    isBridgeCarrier,
     isRealProvider,
     isTerminalConversationState,
     REAL_CONVERSATION_PROVIDERS,
@@ -60,6 +62,11 @@ import {
     type RealConversationProvider,
 } from '@/lib/sampark/conversation/types';
 import { readVobizRiyaConfig, startVobizRiyaCall, VOBIZ_RIYA_AGENT_ID, type VobizRiyaConfig } from '@/lib/sampark/conversation/vobiz-provider';
+import { BRIDGE_AGENT_ID } from '@/lib/sampark/conversation/bridge-carrier';
+import { readPlivoRiyaConfig, startPlivoRiyaCall, type PlivoRiyaConfig } from '@/lib/sampark/conversation/plivo-provider';
+import { readExotelRiyaConfig, startExotelRiyaCall, type ExotelRiyaConfig } from '@/lib/sampark/conversation/exotel-provider';
+import { getPlivoCall, plivoRingFailure } from '@/lib/plivo/client';
+import { exotelOutcome, getExotelCall } from '@/lib/exotel/client';
 import { MAX_WEBHOOK_BYTES, parseRiyaWebhook, verifyElevenLabsSignature, type RiyaWebhookEvent } from '@/lib/sampark/conversation/webhook';
 import { hashId } from '@/lib/sampark/intents';
 import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
@@ -171,6 +178,8 @@ export type RiyaBlocker =
     | 'LIVE_DIAL_DISABLED'
     | 'ELEVENLABS_UNCONFIGURED'
     | 'VOBIZ_UNCONFIGURED'
+    | 'PLIVO_UNCONFIGURED'
+    | 'EXOTEL_UNCONFIGURED'
     | 'NONPROD_DATABASE_REQUIRED'
     | 'DEMO_SCHOOL_PRACTICE_ONLY'
     | 'TEST_PHONE_MISSING'
@@ -210,22 +219,35 @@ export interface RiyaAvailability {
  * school's default (missing or anything unexpected = ElevenLabs, the reference).
  */
 export function selectedProvider(school: Pick<SamparkSchool, 'conversationProvider'>, choice?: RealConversationProvider | null): RealConversationProvider {
-    if (choice === 'vobiz' || choice === 'elevenlabs') return choice;
-    return school.conversationProvider === 'vobiz' ? 'vobiz' : 'elevenlabs';
+    if (choice && (REAL_CONVERSATION_PROVIDERS as readonly string[]).includes(choice)) return choice;
+    const saved = school.conversationProvider;
+    return saved && (REAL_CONVERSATION_PROVIDERS as readonly string[]).includes(saved) ? saved : 'elevenlabs';
+}
+
+type ProviderConfig = ElevenLabsConfig | VobizRiyaConfig | PlivoRiyaConfig | ExotelRiyaConfig;
+
+/** Each real provider's configuration reader and its blocker. One place, so a provider cannot be half-added. */
+function readProviderConfig(provider: RealConversationProvider, env: Env): { ok: true; config: ProviderConfig } | { ok: false; problems: string[]; blocker: RiyaBlocker } {
+    const r = provider === 'vobiz' ? readVobizRiyaConfig(env)
+        : provider === 'plivo' ? readPlivoRiyaConfig(env)
+            : provider === 'exotel' ? readExotelRiyaConfig(env)
+                : readElevenLabsConfig(env);
+    if (r.ok) return r;
+    const blocker: RiyaBlocker = provider === 'vobiz' ? 'VOBIZ_UNCONFIGURED'
+        : provider === 'plivo' ? 'PLIVO_UNCONFIGURED'
+            : provider === 'exotel' ? 'EXOTEL_UNCONFIGURED'
+                : 'ELEVENLABS_UNCONFIGURED';
+    return { ok: false, problems: r.problems, blocker };
 }
 
 /** Which providers this deployment can offer at the SamparkAI entry (names of missing settings only). */
 export function providerOptions(env: Env = process.env): { id: RealConversationProvider; available: boolean; problems: string[] }[] {
     if (!riyaEnabled(env)) return REAL_CONVERSATION_PROVIDERS.map((id) => ({ id, available: false, problems: ['SAMPARK_ELEVENLABS_ENABLED'] }));
-    const el = readElevenLabsConfig(env);
-    const vb = readVobizRiyaConfig(env);
-    return [
-        { id: 'elevenlabs', available: el.ok, problems: el.ok ? [] : el.problems },
-        { id: 'vobiz', available: vb.ok, problems: vb.ok ? [] : vb.problems },
-    ];
+    return REAL_CONVERSATION_PROVIDERS.map((id) => {
+        const r = readProviderConfig(id, env);
+        return { id, available: r.ok, problems: r.ok ? [] : r.problems };
+    });
 }
-
-type ProviderConfig = ElevenLabsConfig | VobizRiyaConfig;
 
 function providerFor(school: SamparkSchool, env: Env, choice?: RealConversationProvider | null): { provider: ConversationProviderKind; config: ProviderConfig | null } | { blocker: RiyaBlocker; problems: string[] } {
     if (!riyaEnabled(env)) return { blocker: 'RIYA_DISABLED', problems: [] };
@@ -237,16 +259,8 @@ function providerFor(school: SamparkSchool, env: Env, choice?: RealConversationP
     if (env.SAMPARK_LIVE_DIAL_ENABLED !== 'true') return { blocker: 'LIVE_DIAL_DISABLED', problems: [] };
     // Which backend runs the call is the school's choice; every rule below applies to both.
     const chosen = selectedProvider(school, choice);
-    let cfg: { ok: true; config: ProviderConfig } | { ok: false; problems: string[] };
-    if (chosen === 'vobiz') {
-        const v = readVobizRiyaConfig(env);
-        if (!v.ok) return { blocker: 'VOBIZ_UNCONFIGURED', problems: v.problems };
-        cfg = v;
-    } else {
-        const e = readElevenLabsConfig(env);
-        if (!e.ok) return { blocker: 'ELEVENLABS_UNCONFIGURED', problems: e.problems };
-        cfg = e;
-    }
+    const cfg = readProviderConfig(chosen, env);
+    if (!cfg.ok) return { blocker: cfg.blocker, problems: cfg.problems };
     // The preview/staging service runs with NODE_ENV=production in the PRODUCTION Firestore project, so
     // Sampark's own environment guard lets it read the default database. A real Riya call sends a
     // child's name and school facts to ElevenLabs, so it additionally requires the separate
@@ -392,14 +406,14 @@ export function riyaAvailability(school: SamparkSchool, env: Env = process.env, 
     const p = providerFor(school, env, choice);
     const cfg = readElevenLabsConfig(env);
     const chosen = selectedProvider(school, choice);
-    const vobizCfg = chosen === 'vobiz' ? readVobizRiyaConfig(env) : null;
+    const chosenCfg = readProviderConfig(chosen, env);
     return {
         enabled: riyaEnabled(env),
         mode: school.mode,
         provider: 'provider' in p ? p.provider : null,
         selectedProvider: chosen,
         blocker: 'blocker' in p ? p.blocker : null,
-        configProblems: vobizCfg ? (vobizCfg.ok ? [] : vobizCfg.problems) : cfg.ok ? [] : cfg.problems,
+        configProblems: chosenCfg.ok ? [] : chosenCfg.problems,
         purposes: riyaEnabled(env) ? enabledRiyaPurposes(env) : [],
         agentId: cfg.ok ? maskId(cfg.config.agentId) : null,
         agentPhoneNumberId: cfg.ok ? maskId(cfg.config.agentPhoneNumberId) : null,
@@ -410,8 +424,8 @@ export function riyaAvailability(school: SamparkSchool, env: Env = process.env, 
         recordingConsentRequired: !recordingOffConfirmed(env),
         agentBranchId: cfg.ok ? maskId(cfg.config.branchId ?? null) : null,
         nonProductionDatabase: env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE,
-        // Vobiz results are signed by the bridge with the shared request-signing key.
-        webhookSecretConfigured: chosen === 'vobiz'
+        // Bridge-carrier (Vobiz / Plivo / Exotel) results are signed by the bridge with the shared request-signing key.
+        webhookSecretConfigured: isBridgeCarrier(chosen)
             ? Boolean(env.SAHAYAKAI_REQUEST_SIGNING_KEY?.trim())
             : Boolean(env.ELEVENLABS_WEBHOOK_SECRET?.trim()),
         testWindowOverride: stagingTestWindowOverride(env, school, school.mode === 'test' ? 'test_phone' : null, now),
@@ -428,6 +442,8 @@ const BLOCKER_MESSAGE: Record<RiyaBlocker, string> = {
     LIVE_DIAL_DISABLED: 'Live dialling is disabled for this deployment',
     ELEVENLABS_UNCONFIGURED: 'The Riya agent is not configured for this deployment',
     VOBIZ_UNCONFIGURED: 'Vobiz calling (the SahayakAI voice bridge) is not configured for this deployment',
+    PLIVO_UNCONFIGURED: 'Plivo calling (the SahayakAI voice bridge) is not configured for this deployment',
+    EXOTEL_UNCONFIGURED: 'Exotel calling (the SahayakAI voice bridge) is not configured for this deployment',
     NONPROD_DATABASE_REQUIRED: 'Riya test calls need the separate non-production database on this deployment',
     TEST_PHONE_MISSING: 'Test mode needs a test phone number for this school',
     TEST_PHONE_NOT_ALLOWED: 'The school test phone is not on the list of numbers Riya may call on this deployment',
@@ -737,7 +753,7 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         variables,
         announcement,
         opening: variables ? riyaOpening(variables.school_name) : null,
-        agentId: provider === 'vobiz' ? VOBIZ_RIYA_AGENT_ID : maskId(elevenLabsConfigOf(config)?.agentId),
+        agentId: isBridgeCarrier(provider) ? BRIDGE_AGENT_ID[provider] : maskId(elevenLabsConfigOf(config)?.agentId),
         agentPhoneNumberId: maskId(elevenLabsConfigOf(config)?.agentPhoneNumberId),
         agentBranchId: maskId(elevenLabsConfigOf(config)?.branchId ?? null),
         nonProductionDatabase: env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE,
@@ -911,7 +927,7 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
         leaseUntil: new Date(now.getTime() + INITIATING_LEASE_MS).toISOString(),
         providerConversationId: null,
         providerCallId: null,
-        agentId: provider === 'vobiz' ? VOBIZ_RIYA_AGENT_ID : elevenLabsConfigOf(config)?.agentId ?? null,
+        agentId: isBridgeCarrier(provider) ? BRIDGE_AGENT_ID[provider] : elevenLabsConfigOf(config)?.agentId ?? null,
         agentPhoneNumberId: elevenLabsConfigOf(config)?.agentPhoneNumberId ?? null,
         durationSeconds: null,
         providerStatus: null,
@@ -969,6 +985,12 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
         if (provider === 'vobiz') {
             // Our bridge: Vobiz rings the same number; the bridge fetches the variables by call id.
             result = await startVobizRiyaCall(config as VobizRiyaConfig, { toNumberE164: toNumber, orgId, callId }, deps.http?.fetchImpl);
+        } else if (provider === 'plivo') {
+            // Our bridge over Plivo: same as Vobiz, Plivo's <Stream> on answer.
+            result = await startPlivoRiyaCall(config as PlivoRiyaConfig, { toNumberE164: toNumber, orgId, callId }, deps.http?.fetchImpl);
+        } else if (provider === 'exotel') {
+            // Our bridge over Exotel: the signed stream URL goes with the call (Connect Voice AI).
+            result = await startExotelRiyaCall(config as ExotelRiyaConfig, { toNumberE164: toNumber, orgId, callId }, deps.http?.fetchImpl);
         } else {
             result = await startRiyaOutboundCall(config as ElevenLabsConfig, {
                 toNumberE164: toNumber,
@@ -1327,13 +1349,28 @@ export async function handleRiyaWebhook(deps: RiyaDeps, rawBody: string, signatu
 
 // ── Reads, reconciliation, review ───────────────────────────────────────────
 
-/** Lazily: a call lost in 'initiating' becomes 'unknown'; an expired transcript is deleted. */
+/**
+ * After a Plivo / Exotel call's line has ended, how long the bridge's result may take before the
+ * call is settled without it. The bridge posts its result seconds after hanging up (with retries),
+ * so a call still open after this never reached the bridge (no audio stream): nothing was said.
+ */
+export const BRIDGE_RESULT_GRACE_MS = 90_000;
+
+/**
+ * Lazily: a call lost in 'initiating' becomes 'unknown'; a Plivo / Exotel call whose line ended
+ * with no bridge result settles as failed (it would otherwise block the next call for 13 minutes);
+ * an expired transcript is deleted. A late, authentic bridge result still upgrades a failed call.
+ */
 async function maintain(deps: RiyaDeps, call: ConversationCall): Promise<ConversationCall> {
     const now = deps.clock.now();
     const at = now.toISOString();
     let next: ConversationCall | null = null;
     if (call.state === 'initiating' && new Date(call.leaseUntil).getTime() < now.getTime()) {
         next = { ...call, state: 'unknown', failureReason: 'lost_while_initiating', endedAt: at, updatedAt: at };
+    }
+    if ((call.provider === 'plivo' || call.provider === 'exotel') && call.state === 'initiated' && call.providerStatus === 'carrier_ended'
+        && now.getTime() - Date.parse(call.updatedAt) > BRIDGE_RESULT_GRACE_MS) {
+        next = { ...call, state: 'failed', failureReason: 'no_voice_stream: the line ended and the voice bridge never reported a conversation', endedAt: call.endedAt ?? at, updatedAt: at };
     }
     if (next) {
         const target = next;
@@ -1490,11 +1527,71 @@ async function reconcileVobizRiyaCall(deps: RiyaDeps, call: ConversationCall): P
     return getRiyaCall(deps, call.orgId, call.id);
 }
 
+/**
+ * "Check status" for a Plivo call (read-only), same rules as Vobiz: a call that never connected is
+ * settled as an initiation failure; a connected one only has its carrier end noted (the bridge owns
+ * the conversation's result). Plivo keys finished calls by CallUUID, learnt from the ring callback;
+ * the request uuid from dialling is the fallback.
+ */
+async function reconcilePlivoRiyaCall(deps: RiyaDeps, call: ConversationCall): Promise<RiyaCallDetail> {
+    const env = deps.env ?? process.env;
+    const cfg = readPlivoRiyaConfig(env);
+    if (!cfg.ok) throw conflict('PLIVO_UNCONFIGURED', BLOCKER_MESSAGE.PLIVO_UNCONFIGURED);
+    const requestUuid = carrierCallIdOf('plivo', call.providerConversationId);
+    const uuid = call.providerCallId || requestUuid;
+    if (!uuid || uuid.startsWith('unknown-')) throw conflict('NO_PROVIDER_ID', 'The provider never returned an id for this call; it cannot be looked up');
+    const found = await getPlivoCall(cfg.config.plivo, uuid, deps.http?.fetchImpl);
+    if (found.kind === 'not_found') throw conflict('PROVIDER_NOT_FOUND', 'Plivo has no record of this call (yet)');
+    if (found.kind === 'error') throw conflict('PROVIDER_ERROR', `Plivo could not be reached${found.status ? ` (http ${found.status})` : ' (network)'}`);
+    const r = found.record;
+    if (r.ended && !r.answered) {
+        await applyEvent(deps, call.orgId, call.id, {
+            kind: 'initiation_failure',
+            eventId: `plivo-hangup:${uuid}`,
+            eventTimestamp: Math.floor(deps.clock.now().getTime() / 1000),
+            agentId: BRIDGE_AGENT_ID.plivo,
+            conversationId: call.providerConversationId as string,
+            failureReason: plivoRingFailure(r.hangupCause),
+        });
+    } else if (r.ended) {
+        await noteCarrierEnded(deps, call.orgId, call.id, r.billSeconds > 0 ? r.billSeconds : null);
+    }
+    return getRiyaCall(deps, call.orgId, call.id);
+}
+
+/** "Check status" for an Exotel call (read-only), same rules as Vobiz and Plivo. */
+async function reconcileExotelRiyaCall(deps: RiyaDeps, call: ConversationCall): Promise<RiyaCallDetail> {
+    const env = deps.env ?? process.env;
+    const cfg = readExotelRiyaConfig(env);
+    if (!cfg.ok) throw conflict('EXOTEL_UNCONFIGURED', BLOCKER_MESSAGE.EXOTEL_UNCONFIGURED);
+    const sid = carrierCallIdOf('exotel', call.providerConversationId);
+    if (!sid || sid.startsWith('unknown-')) throw conflict('NO_PROVIDER_ID', 'The provider never returned an id for this call; it cannot be looked up');
+    const found = await getExotelCall(cfg.config.exotel, sid, deps.http?.fetchImpl);
+    if (found.kind === 'not_found') throw conflict('PROVIDER_NOT_FOUND', 'Exotel has no record of this call');
+    if (found.kind === 'error') throw conflict('PROVIDER_ERROR', `Exotel could not be reached${found.status ? ` (http ${found.status})` : ' (network)'}`);
+    const outcome = exotelOutcome(found.record.status);
+    if (outcome === 'answered') {
+        await noteCarrierEnded(deps, call.orgId, call.id, found.record.durationSeconds > 0 ? found.record.durationSeconds : null);
+    } else if (outcome !== 'open') {
+        await applyEvent(deps, call.orgId, call.id, {
+            kind: 'initiation_failure',
+            eventId: `exotel-terminal:${sid}`,
+            eventTimestamp: Math.floor(deps.clock.now().getTime() / 1000),
+            agentId: BRIDGE_AGENT_ID.exotel,
+            conversationId: call.providerConversationId as string,
+            failureReason: outcome,
+        });
+    }
+    return getRiyaCall(deps, call.orgId, call.id);
+}
+
 export async function reconcileRiyaCall(deps: RiyaDeps, orgId: string, callId: string): Promise<RiyaCallDetail> {
     const env = deps.env ?? process.env;
     const call = await deps.calls.getCall(orgId, callId);
     if (!call) throw notFound('CALL_NOT_FOUND', 'Call not found');
     if (call.provider === 'vobiz') return reconcileVobizRiyaCall(deps, call);
+    if (call.provider === 'plivo') return reconcilePlivoRiyaCall(deps, call);
+    if (call.provider === 'exotel') return reconcileExotelRiyaCall(deps, call);
     if (call.provider !== 'elevenlabs') return getRiyaCall(deps, orgId, callId);
     const cfg = readElevenLabsConfig(env);
     if (!cfg.ok) throw conflict('ELEVENLABS_UNCONFIGURED', BLOCKER_MESSAGE.ELEVENLABS_UNCONFIGURED);

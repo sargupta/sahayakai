@@ -3722,5 +3722,13 @@
   "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "ನಿಮ್ಮ ಬ್ರೌಸರ್ ಈ PDF ಅನ್ನು ತೋರಿಸಲಾಗಲಿಲ್ಲ. ಬೇರೆ ಬ್ರೌಸರ್ ಪ್ರಯತ್ನಿಸಿ, ಅಥವಾ ಪುಟಗಳ ಫೋಟೋಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
   "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "ಈ PDF ತೆರೆಯಲಾಗಲಿಲ್ಲ — ಅದು ಹಾಳಾಗಿರಬಹುದು. ಮತ್ತೆ ಉಳಿಸಿ, ಅಥವಾ ಪುಟಗಳನ್ನು ಚಿತ್ರಗಳಾಗಿ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
   "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "ಈ ಪುಟಗಳು ಒಟ್ಟು {{size}} MB — ಒಂದು ಸ್ಕ್ಯಾನ್‌ನಲ್ಲಿ ಗರಿಷ್ಠ {{limit}} MB ಮಾತ್ರ ಅಪ್‌ಲೋಡ್ ಮಾಡಬಹುದು. ಒಂದೆರಡು ಪುಟಗಳನ್ನು ತೆಗೆದುಹಾಕಿ, ಅಥವಾ ಚಿಕ್ಕ ಫೋಟೋಗಳನ್ನು ಬಳಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-  "Page notices": "ಪುಟ ಸೂಚನೆಗಳು"
+  "Page notices": "ಪುಟ ಸೂಚನೆಗಳು",
+  "Plivo calling is not set up on this deployment.": "ಈ ನಿಯೋಜನೆಯಲ್ಲಿ Plivo ಕರೆ ಸೌಲಭ್ಯವನ್ನು ಹೊಂದಿಸಲಾಗಿಲ್ಲ.",
+  "Exotel calling is not set up on this deployment.": "ಈ ನಿಯೋಜನೆಯಲ್ಲಿ Exotel ಕರೆ ಸೌಲಭ್ಯವನ್ನು ಹೊಂದಿಸಲಾಗಿಲ್ಲ.",
+  "Plivo (real calls)": "Plivo (ನಿಜವಾದ ಕರೆಗಳು)",
+  "Exotel (real calls)": "Exotel (ನಿಜವಾದ ಕರೆಗಳು)",
+  "Calls run on SahayakAI's own voice bridge: Plivo phone line with Gemini Live.": "ಕರೆಗಳು ಸಹಾಯಕAI ನ ಸ್ವಂತ ಧ್ವನಿ ಸೇತುವೆಯಲ್ಲಿ ನಡೆಯುತ್ತವೆ: Plivo ಫೋನ್ ಲೈನ್ ಮತ್ತು Gemini Live.",
+  "Calls run on SahayakAI's own voice bridge: Exotel phone line with Gemini Live.": "ಕರೆಗಳು ಸಹಾಯಕAI ನ ಸ್ವಂತ ಧ್ವನಿ ಸೇತುವೆಯಲ್ಲಿ ನಡೆಯುತ್ತವೆ: Exotel ಫೋನ್ ಲೈನ್ ಮತ್ತು Gemini Live.",
+  "Pick the calling provider for this visit. SamparkAI looks and works the same with any of them; only the service that holds Riya's calls changes. You can switch at any time from inside SamparkAI.": "ಈ ಭೇಟಿಗೆ ಕರೆ ಸೇವೆಯನ್ನು ಆರಿಸಿ. ಎಲ್ಲದರಲ್ಲೂ ಸಂಪರ್ಕAI ಒಂದೇ ರೀತಿ ಕಾಣುತ್ತದೆ ಮತ್ತು ಕೆಲಸ ಮಾಡುತ್ತದೆ; ರಿಯಾಳ ಕರೆಗಳನ್ನು ನಡೆಸುವ ಸೇವೆ ಮಾತ್ರ ಬದಲಾಗುತ್ತದೆ. ಸಂಪರ್ಕAI ಒಳಗಿನಿಂದ ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಾಯಿಸಬಹುದು.",
+  "Real class-wide calls run on Vobiz only. Another provider is selected, so no real class-wide call is placed, and calls are never moved to Vobiz without your choice.": "ತರಗತಿಯಾದ್ಯಂತ ನಿಜವಾದ ಕರೆಗಳು Vobiz ನಲ್ಲಿ ಮಾತ್ರ ನಡೆಯುತ್ತವೆ. ಬೇರೆ ಸೇವೆ ಆಯ್ಕೆಯಾಗಿದೆ, ಆದ್ದರಿಂದ ಯಾವುದೇ ನಿಜವಾದ ತರಗತಿಯಾದ್ಯಂತ ಕರೆ ಮಾಡಲಾಗುವುದಿಲ್ಲ, ಮತ್ತು ನಿಮ್ಮ ಆಯ್ಕೆಯಿಲ್ಲದೆ ಕರೆಗಳನ್ನು ಎಂದಿಗೂ Vobiz ಗೆ ಸರಿಸಲಾಗುವುದಿಲ್ಲ."
 }

@@ -21,17 +21,24 @@ describe('webhook gateway allow-list', () => {
     it.each([
         '/api/webhooks/vobiz-riya/answer?t=x',
         '/api/webhooks/vobiz-riya/status?kind=hangup',
+        '/api/webhooks/plivo-riya/answer?t=x',
+        '/api/webhooks/plivo-riya/status?kind=ring&t=x',
+        '/api/webhooks/exotel-riya/status?t=x',
         '/api/webhooks/sampark-voice/answer',
         '/api/webhooks/elevenlabs-riya',
     ])('app forwards %s', (u) => expect(ok(app, u)).toBe(true));
     it.each([
         '/', '/sampark/sargvision-local/riya', '/api/sampark/sargvision-local/riya',
         '/api/sampark/sargvision-local/batch-calls', '/api/webhooks/razorpay', '/api/webhooks/vobiz-riyaX',
+        '/api/webhooks/plivo-riyaX', '/api/webhooks/exotel', '/api/sampark/provider',
         '/api/auth/session', '/_next/static/x.js',
     ])('app refuses %s', (u) => expect(ok(app, u)).toBe(false));
-    it('bridge forwards only the Vobiz stream', () => {
-        expect(ok(bridge, '/telephony/vobiz/stream?t=abc')).toBe(true);
-        for (const u of ['/healthz', '/v1/vidya-voice/stream', '/docs', '/telephony/vobiz/streamX']) expect(ok(bridge, u)).toBe(false);
+    it('bridge forwards only the carrier media streams', () => {
+        for (const c of ['vobiz', 'plivo', 'exotel']) expect(ok(bridge, `/telephony/${c}/stream?t=abc`)).toBe(true);
+        // Exotel drops the query string and opens the bare path (it authenticates from its first frames).
+        expect(ok(bridge, '/telephony/exotel/stream')).toBe(true);
+        for (const u of ['/healthz', '/v1/vidya-voice/stream', '/docs', '/telephony/vobiz/streamX', '/telephony/twilio/stream',
+            '/telephony/exotel/stream/x', '/telephony/exotel/streamX']) expect(ok(bridge, u)).toBe(false);
     });
     it('strips cookies on both gates', () => {
         expect(SRC.match(/stripCookies: true/g)?.length).toBe(2);
