@@ -220,8 +220,6 @@ Every change is also written to the `access_audit` collection.
 - A blocked or expired account keeps working until its current token expires
   (up to one hour) unless the account is also disabled in Firebase Auth.
 - The evaluation terms were drafted in-house and need review by counsel.
-- `public/swagger.html` and `public/api-docs.html` remain in the repository
-  (unreachable in production). Delete them in a follow-up commit.
 - The terms page gained five English-only strings; `scripts/ci/i18n-baseline.json`
   was raised from 58 to 63 for them, with the reason recorded in the file.
 - Cloud Storage rules are unchanged: four paths (`community-voice`,

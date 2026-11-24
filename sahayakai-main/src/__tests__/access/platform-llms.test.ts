@@ -60,3 +60,16 @@ describe.each(FILES)('public/%s', (file) => {
         expect(lower).toContain('private');
     });
 });
+
+// The JSON-LD on every page is read by the same crawlers. It published the
+// superseded Gold / Premium prices and credit counts until 2026-11-24.
+describe('src/components/structured-data.tsx', () => {
+    const source = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'structured-data.tsx'), 'utf8');
+
+    it('publishes no plan price, plan name or credit count', () => {
+        expect(source).not.toMatch(/price:\s*['"]\d/);
+        expect(source).not.toMatch(/(₹|\bRs\.?\s?|\bINR\s)\d/);
+        expect(source).not.toMatch(/\b(Gold|Premium) [Pp]lan\b/);
+        expect(source).not.toMatch(/\d+\s+credits/i);
+    });
+});

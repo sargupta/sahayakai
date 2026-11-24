@@ -79,29 +79,9 @@ export function StructuredData() {
       ratingValue: '4.7',
       ratingCount: '150',
     },
-    offers: [
-      {
-        '@type': 'Offer',
-        name: 'Free Plan',
-        price: '0',
-        priceCurrency: 'INR',
-        description: '50 credits per month for individual teachers',
-      },
-      {
-        '@type': 'Offer',
-        name: 'Gold Plan',
-        price: '149',
-        priceCurrency: 'INR',
-        description: '500 credits per month - ideal for active teachers',
-      },
-      {
-        '@type': 'Offer',
-        name: 'Premium Plan',
-        price: '349',
-        priceCurrency: 'INR',
-        description: '2000 credits per month - for schools and institutions',
-      },
-    ],
+    // No `offers`: pricing is quoted per school (see /school-pricing), so no
+    // plan names, credit counts or prices are published here. Guarded by
+    // src/__tests__/access/platform-llms.test.ts.
     author: {
       '@type': 'Organization',
       name: 'SARGVISION',
@@ -181,10 +161,10 @@ export function StructuredData() {
       },
       {
         '@type': 'Question',
-        name: 'Is SahayakAI free for teachers?',
+        name: 'How much does SahayakAI cost?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'SahayakAI offers a free plan with 50 credits per month for individual teachers. Schools and institutions can access the Gold plan at Rs 149/teacher/month (500 credits) or the Premium plan at Rs 349/teacher/month (2000 credits).',
+          text: 'SahayakAI is provided to schools and institutions. Pricing is quoted per school, based on the number of teachers; an estimate is available at sahayakai.com/school-pricing, and a demonstration can be booked at sahayakai.com/for-schools.',
         },
       },
       {
