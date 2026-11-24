@@ -3824,5 +3824,12 @@
   "A link cannot admit more teachers than your free seats. A higher number is reduced to the seats available.": "ಒಂದು ಲಿಂಕ್ ನಿಮ್ಮ ಖಾಲಿ ಸೀಟುಗಳಿಗಿಂತ ಹೆಚ್ಚು ಶಿಕ್ಷಕರನ್ನು ಸೇರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ಹೆಚ್ಚಿನ ಸಂಖ್ಯೆಯನ್ನು ಲಭ್ಯವಿರುವ ಸೀಟುಗಳಿಗೆ ಇಳಿಸಲಾಗುತ್ತದೆ.",
   "This link admits {max} teachers, the number of free seats.": "ಈ ಲಿಂಕ್ {max} ಶಿಕ್ಷಕರನ್ನು ಸೇರಿಸುತ್ತದೆ, ಇದು ಖಾಲಿ ಸೀಟುಗಳ ಸಂಖ್ಯೆ.",
   "This link admits {max} teachers.": "ಈ ಲಿಂಕ್ {max} ಶಿಕ್ಷಕರನ್ನು ಸೇರಿಸುತ್ತದೆ.",
-  "Enter a number of teachers, and a validity between 1 and 60 days.": "ಶಿಕ್ಷಕರ ಸಂಖ್ಯೆ ಮತ್ತು 1 ರಿಂದ 60 ದಿನಗಳ ನಡುವಿನ ಮಾನ್ಯತೆಯನ್ನು ನಮೂದಿಸಿ."
+  "Enter a number of teachers, and a validity between 1 and 60 days.": "ಶಿಕ್ಷಕರ ಸಂಖ್ಯೆ ಮತ್ತು 1 ರಿಂದ 60 ದಿನಗಳ ನಡುವಿನ ಮಾನ್ಯತೆಯನ್ನು ನಮೂದಿಸಿ.",
+  "What happens next": "ಮುಂದೆ ಏನಾಗುತ್ತದೆ",
+  "You send this form": "ನೀವು ಈ ಫಾರ್ಮ್ ಕಳುಹಿಸುತ್ತೀರಿ",
+  "It takes about two minutes.": "ಇದಕ್ಕೆ ಸುಮಾರು ಎರಡು ನಿಮಿಷ ಬೇಕಾಗುತ್ತದೆ.",
+  "We verify the school": "ನಾವು ಶಾಲೆಯನ್ನು ಪರಿಶೀಲಿಸುತ್ತೇವೆ",
+  "We check the board affiliation and call the school office.": "ನಾವು ಮಂಡಳಿಯ ಸಂಯೋಜನೆಯನ್ನು ಪರಿಶೀಲಿಸಿ, ಶಾಲಾ ಕಚೇರಿಗೆ ಕರೆ ಮಾಡುತ್ತೇವೆ.",
+  "Your pilot opens": "ನಿಮ್ಮ ಪೈಲಟ್ ಆರಂಭವಾಗುತ್ತದೆ",
+  "You invite your teachers with one link.": "ನೀವು ಒಂದೇ ಲಿಂಕ್ ಮೂಲಕ ನಿಮ್ಮ ಶಿಕ್ಷಕರನ್ನು ಆಹ್ವಾನಿಸುತ್ತೀರಿ."
 }

@@ -3814,5 +3814,12 @@
   "A link cannot admit more teachers than your free seats. A higher number is reduced to the seats available.": "காலியாக உள்ள இடங்களை விட அதிக ஆசிரியர்களை ஓர் இணைப்பு சேர்க்க முடியாது. அதிக எண்ணிக்கை கிடைக்கும் இடங்களுக்குக் குறைக்கப்படும்.",
   "This link admits {max} teachers, the number of free seats.": "இந்த இணைப்பு {max} ஆசிரியர்களைச் சேர்க்கும்; அதுவே காலியாக உள்ள இடங்களின் எண்ணிக்கை.",
   "This link admits {max} teachers.": "இந்த இணைப்பு {max} ஆசிரியர்களைச் சேர்க்கும்.",
-  "Enter a number of teachers, and a validity between 1 and 60 days.": "ஆசிரியர்களின் எண்ணிக்கையையும், 1 முதல் 60 நாட்களுக்குள் செல்லுபடிக் காலத்தையும் உள்ளிடவும்."
+  "Enter a number of teachers, and a validity between 1 and 60 days.": "ஆசிரியர்களின் எண்ணிக்கையையும், 1 முதல் 60 நாட்களுக்குள் செல்லுபடிக் காலத்தையும் உள்ளிடவும்.",
+  "What happens next": "அடுத்து என்ன நடக்கும்",
+  "You send this form": "நீங்கள் இந்தப் படிவத்தை அனுப்புகிறீர்கள்",
+  "It takes about two minutes.": "இதற்கு சுமார் இரண்டு நிமிடங்கள் ஆகும்.",
+  "We verify the school": "நாங்கள் பள்ளியைச் சரிபார்க்கிறோம்",
+  "We check the board affiliation and call the school office.": "நாங்கள் வாரிய இணைப்பைச் சரிபார்த்து, பள்ளி அலுவலகத்தை அழைக்கிறோம்.",
+  "Your pilot opens": "உங்கள் முன்னோட்டம் தொடங்குகிறது",
+  "You invite your teachers with one link.": "ஒரே இணைப்பின் மூலம் உங்கள் ஆசிரியர்களை அழைக்கிறீர்கள்."
 }

@@ -3,10 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { auth } from "@/lib/firebase";
@@ -17,7 +13,10 @@ import {
     syncAccessClaim,
     type AccessStatus,
 } from "@/lib/api/access";
-import { AccessCard, AccessShell, InlineError } from "./access-shell";
+import {
+    ACCESS_PRIMARY, ACCESS_SECONDARY, AccessCard, AccessLoading, AccessPill, AccessShell,
+    FIELD_CONTROL, FieldCard, InlineError,
+} from "./access-shell";
 
 type Phase = "loading" | "ready" | "error" | "stuck";
 
@@ -71,10 +70,7 @@ export default function AccessPage() {
     if (authLoading || (user && phase === "loading")) {
         return (
             <AccessShell>
-                <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground" role="status">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    {t("Checking your access")}
-                </div>
+                <AccessLoading label={t("Checking your access")} />
             </AccessShell>
         );
     }
@@ -84,7 +80,7 @@ export default function AccessPage() {
             <AccessShell>
                 <AccessCard title={t("Access to SahayakAI")}>
                     <p>{t("SahayakAI is provided to schools. Sign in to check your access, request access for your school, or join with an invitation from your school.")}</p>
-                    <Button type="button" onClick={openAuthModal}>{t("Sign in")}</Button>
+                    <button type="button" className={ACCESS_PRIMARY} onClick={openAuthModal}>{t("Sign in")}</button>
                 </AccessCard>
             </AccessShell>
         );
@@ -93,10 +89,10 @@ export default function AccessPage() {
     if (phase === "stuck") {
         return (
             <AccessShell>
-                <AccessCard title={t("Access to SahayakAI")}>
+                <AccessCard tone="ended" title={t("Access to SahayakAI")}>
                     <InlineError message={t("We could not refresh your access. Please sign out and sign in again, or contact us.")} />
                     <ContactLine />
-                    <Button type="button" onClick={() => { void load(); }}>{t("Try again")}</Button>
+                    <button type="button" className={ACCESS_PRIMARY} onClick={() => { void load(); }}>{t("Try again")}</button>
                 </AccessCard>
             </AccessShell>
         );
@@ -105,9 +101,9 @@ export default function AccessPage() {
     if (phase === "error" || !status) {
         return (
             <AccessShell>
-                <AccessCard title={t("Access to SahayakAI")}>
+                <AccessCard tone="ended" title={t("Access to SahayakAI")}>
                     <InlineError message={t("We could not check your access. Please try again.")} />
-                    <Button type="button" onClick={() => { void load(); }}>{t("Try again")}</Button>
+                    <button type="button" className={ACCESS_PRIMARY} onClick={() => { void load(); }}>{t("Try again")}</button>
                 </AccessCard>
             </AccessShell>
         );
@@ -131,7 +127,7 @@ function ContactLine() {
     return (
         <p>
             {t("For help, write to")}{" "}
-            <a href="mailto:contact@sargvision.com" className="font-medium text-foreground underline underline-offset-2">
+            <a href="mailto:contact@sargvision.com" className="focus-ring rounded-xs font-semibold text-saffron-600 underline underline-offset-2">
                 contact@sargvision.com
             </a>
         </p>
@@ -141,12 +137,12 @@ function ContactLine() {
 function StatusView({ status, email }: { status: AccessStatus; email: string | null }) {
     const { t } = useLanguage();
     const signedInAs = email ? (
-        <p className="text-xs">{t("Signed in as {email}").replace("{email}", email)}</p>
+        <p className="text-xs text-ink-500">{t("Signed in as {email}").replace("{email}", email)}</p>
     ) : null;
 
     if (status.state === "blocked") {
         return (
-            <AccessCard title={t("Access withdrawn")}>
+            <AccessCard tone="ended" title={t("Access withdrawn")}>
                 <p>{t("Access for this account has been withdrawn.")}</p>
                 <ContactLine />
                 {signedInAs}
@@ -158,7 +154,7 @@ function StatusView({ status, email }: { status: AccessStatus; email: string | n
         // Entitled states that are not entitled any more: the period has ended.
         const ended = formatDate(status.expiresAt);
         return (
-            <AccessCard title={status.state === "pilot" ? t("Your pilot has ended") : t("Your access has ended")}>
+            <AccessCard tone="ended" title={status.state === "pilot" ? t("Your pilot has ended") : t("Your access has ended")}>
                 <p>
                     {ended
                         ? t("Your school's access ended on {date}.").replace("{date}", ended)
@@ -174,7 +170,7 @@ function StatusView({ status, email }: { status: AccessStatus; email: string | n
     if (status.request?.status === "pending") {
         const submitted = formatDate(status.request.createdAt);
         return (
-            <AccessCard title={t("Your request is under review")}>
+            <AccessCard tone="working" pill={<AccessPill tone="info">{t("Under review")}</AccessPill>} title={t("Your request is under review")}>
                 <p>
                     {submitted
                         ? t("We received your request on {date}.").replace("{date}", submitted)
@@ -190,12 +186,10 @@ function StatusView({ status, email }: { status: AccessStatus; email: string | n
     if (status.request?.status === "approved") {
         // Approved earlier, pending again: the approved period has lapsed.
         return (
-            <AccessCard title={t("Your access has ended")}>
+            <AccessCard tone="ended" title={t("Your access has ended")}>
                 <p>{t("The access period approved for this account has ended.")}</p>
                 <p>{t("You can submit a new request for your school. If it is not accepted, please write to us.")}</p>
-                <Button asChild>
-                    <Link href="/request-access?renew=1">{t("Submit a new request")}</Link>
-                </Button>
+                <Link href="/request-access?renew=1" className={ACCESS_PRIMARY}>{t("Submit a new request")}</Link>
                 <ContactLine />
                 <JoinCodeField />
                 {signedInAs}
@@ -205,7 +199,7 @@ function StatusView({ status, email }: { status: AccessStatus; email: string | n
 
     if (status.request?.status === "rejected") {
         return (
-            <AccessCard title={t("Request not approved")}>
+            <AccessCard tone="ended" title={t("Request not approved")}>
                 <p>{t("We could not approve this request. If you believe this is a mistake, please contact us.")}</p>
                 <ContactLine />
                 <JoinCodeField />
@@ -217,9 +211,7 @@ function StatusView({ status, email }: { status: AccessStatus; email: string | n
     return (
         <AccessCard title={t("Access to SahayakAI")}>
             <p>{t("SahayakAI is provided to schools. This account does not have access yet.")}</p>
-            <Button asChild>
-                <Link href="/request-access">{t("Request access for your school")}</Link>
-            </Button>
+            <Link href="/request-access" className={ACCESS_PRIMARY}>{t("Request access for your school")}</Link>
             <JoinCodeField />
             {signedInAs}
         </AccessCard>
@@ -244,21 +236,25 @@ function JoinCodeField() {
     }
 
     return (
-        <form onSubmit={onSubmit} className="space-y-2 border-t border-border pt-4" noValidate>
-            <Label htmlFor="join-code">{t("Have an invitation from your school?")}</Label>
-            <div className="flex flex-col gap-2 sm:flex-row">
-                <Input
-                    id="join-code"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder={t("Paste the invitation link or code")}
-                    autoComplete="off"
-                    aria-invalid={error ? true : undefined}
-                    aria-describedby={error ? "join-code-error" : undefined}
-                />
-                <Button type="submit" variant="outline">{t("Continue")}</Button>
+        <form onSubmit={onSubmit} className="space-y-3 border-t border-line-hairline pt-5" noValidate>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                <div className="flex-1">
+                    <FieldCard id="join-code" label={t("Have an invitation from your school?")} invalid={Boolean(error)}>
+                        <input
+                            id="join-code"
+                            className={FIELD_CONTROL}
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            placeholder={t("Paste the invitation link or code")}
+                            autoComplete="off"
+                            aria-invalid={error ? true : undefined}
+                            aria-describedby={error ? "join-code-error" : undefined}
+                        />
+                    </FieldCard>
+                </div>
+                <button type="submit" className={`${ACCESS_SECONDARY} sm:mt-2`}>{t("Continue")}</button>
             </div>
-            {error ? <p id="join-code-error" role="alert" className="text-sm text-destructive">{error}</p> : null}
+            {error ? <p id="join-code-error" role="alert" className="px-1 text-sm font-medium text-destructive">{error}</p> : null}
         </form>
     );
 }

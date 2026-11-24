@@ -3814,5 +3814,12 @@
   "A link cannot admit more teachers than your free seats. A higher number is reduced to the seats available.": "एक लिंक तुमच्या रिकाम्या जागांपेक्षा जास्त शिक्षकांना सामील करू शकत नाही. जास्त संख्या उपलब्ध जागांइतकी कमी केली जाते.",
   "This link admits {max} teachers, the number of free seats.": "ही लिंक {max} शिक्षकांना सामील करते, जी रिकाम्या जागांची संख्या आहे.",
   "This link admits {max} teachers.": "ही लिंक {max} शिक्षकांना सामील करते.",
-  "Enter a number of teachers, and a validity between 1 and 60 days.": "शिक्षकांची संख्या आणि 1 ते 60 दिवसांमधील वैधता टाका."
+  "Enter a number of teachers, and a validity between 1 and 60 days.": "शिक्षकांची संख्या आणि 1 ते 60 दिवसांमधील वैधता टाका.",
+  "What happens next": "पुढे काय होईल",
+  "You send this form": "तुम्ही हा फॉर्म पाठवता",
+  "It takes about two minutes.": "याला सुमारे दोन मिनिटे लागतात.",
+  "We verify the school": "आम्ही शाळेची पडताळणी करतो",
+  "We check the board affiliation and call the school office.": "आम्ही बोर्ड संलग्नता तपासतो आणि शाळेच्या कार्यालयाला फोन करतो.",
+  "Your pilot opens": "तुमचा पायलट सुरू होतो",
+  "You invite your teachers with one link.": "तुम्ही एका लिंकद्वारे तुमच्या शिक्षकांना आमंत्रित करता."
 }
