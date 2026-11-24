@@ -4027,15 +4027,28 @@ async def _prepare_live_session(
     from google.genai import types as genai_types
 
     t_accept = time.monotonic()
-    context, scope = await _load_context(outreach_id, language)
-    riya = await _load_riya(outreach_id)
+    # The context, the Riya record and the Vertex client are independent: fetch them together.
+    r_model, r_location, r_voice = _riya_live_settings()
+    # A Sampark call is always Riya, so its client can be built while the context loads.
+    riya_client = (
+        asyncio.create_task(_genai_client(r_location)) if sampark_link.is_sampark(outreach_id) else None
+    )
+    try:
+        (context, scope), riya = await asyncio.gather(
+            _load_context(outreach_id, language), _load_riya(outreach_id)
+        )
+    except BaseException:
+        if riya_client is not None:
+            riya_client.cancel()
+        raise
     t_context = time.monotonic()
     lookups = school_data_tools_enabled() and scope is not None
 
     settings = get_settings()
+    if riya is None and riya_client is not None:
+        riya_client.cancel()
     if riya is not None:
-        r_model, r_location, r_voice = _riya_live_settings()
-        client = await _genai_client(r_location)
+        client = await riya_client if riya_client is not None else await _genai_client(r_location)
         log.info(
             "telephony.warmup",
             outreach_id=outreach_id,
@@ -4214,8 +4227,12 @@ def _prewarm_riya_clients() -> None:
     threading.Thread(target=warm, daemon=True, name="riya-prewarm").start()
 
 
-if os.environ.get("SAHAYAKAI_TELEPHONY_ONLY", "").strip().lower() in ("1", "true", "yes") and (
-    os.environ.get("VOBIZ_RIYA_PREWARM", "1") != "0"
+#: Prewarm on the telephony-only deploy by default; anywhere else (the local bridge) only when
+#: VOBIZ_RIYA_PREWARM=1. Without it the FIRST local call built the Vertex client inline: 4.2 s of
+#: dead air after the opener (2026-11-24, Exotel).
+if os.environ.get("VOBIZ_RIYA_PREWARM", "").strip() == "1" or (
+    os.environ.get("SAHAYAKAI_TELEPHONY_ONLY", "").strip().lower() in ("1", "true", "yes")
+    and os.environ.get("VOBIZ_RIYA_PREWARM", "1") != "0"
 ):
     _prewarm_riya_clients()
 
@@ -4277,11 +4294,17 @@ def _riya_vad_config() -> Any:
     from google.genai import types as genai_types
 
     silence = os.environ.get("VOBIZ_RIYA_VAD_SILENCE_MS", "").strip()
+    # VOBIZ_RIYA_VAD_END_SENSITIVITY=HIGH ends the parent's turn sooner (faster replies).
+    end = os.environ.get("VOBIZ_RIYA_VAD_END_SENSITIVITY", "").strip().upper()
+    end_sensitivity = (
+        getattr(genai_types.EndSensitivity, f"END_SENSITIVITY_{end}", None) if end in ("HIGH", "LOW") else None
+    )
     # HIGH start sensitivity: a 1-second "I'm busy." over a phone line was not
     # treated as speech at the default, and Riya waited in silence.
     return genai_types.RealtimeInputConfig(
         automatic_activity_detection=genai_types.AutomaticActivityDetection(
             start_of_speech_sensitivity=genai_types.StartSensitivity.START_SENSITIVITY_HIGH,
+            end_of_speech_sensitivity=end_sensitivity,
             silence_duration_ms=int(silence) if silence.isdigit() else None,
             prefix_padding_ms=int(os.environ.get("VOBIZ_RIYA_VAD_PREFIX_MS", "200")),
         )
