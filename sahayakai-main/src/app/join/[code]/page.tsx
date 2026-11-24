@@ -4,13 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { ApiError } from "@/lib/api/client";
 import { extractJoinCode, getAccessMode, joinOrganization, resolveExitFromAccessFlow, serverErrorCode } from "@/lib/api/access";
-import { AccessCard, AccessShell, InlineError } from "../../access/access-shell";
+import {
+    ACCESS_PRIMARY, ACCESS_SECONDARY, AccessCard, AccessLoading, AccessPill, AccessShell, InlineError,
+} from "../../access/access-shell";
 
 type Phase = "idle" | "joining" | "joined";
 
@@ -73,10 +74,7 @@ export default function JoinPage() {
     if (authLoading) {
         return (
             <AccessShell>
-                <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground" role="status">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    {t("Loading...")}
-                </div>
+                <AccessLoading label={t("Loading...")} />
             </AccessShell>
         );
     }
@@ -84,9 +82,9 @@ export default function JoinPage() {
     if (!code) {
         return (
             <AccessShell>
-                <AccessCard title={t("School invitation")}>
+                <AccessCard tone="ended" title={t("School invitation")}>
                     <InlineError message={t("This invitation is not valid. Please ask your school for a new link.")} />
-                    <Button asChild variant="outline"><Link href="/access">{t("Continue")}</Link></Button>
+                    <Link href="/access" className={ACCESS_SECONDARY}>{t("Continue")}</Link>
                 </AccessCard>
             </AccessShell>
         );
@@ -95,9 +93,9 @@ export default function JoinPage() {
     if (phase === "joined") {
         return (
             <AccessShell>
-                <AccessCard title={t("School invitation")}>
-                    <p className="flex items-start gap-2" role="status">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                <AccessCard tone="ready" title={t("School invitation")}>
+                    <p className="flex items-start gap-2 rounded-tile border border-tint-success-border bg-tint-success px-4 py-3 font-medium text-leaf-700" role="status">
+                        <CheckCircle2 className="mt-0 h-4 w-4 shrink-0" aria-hidden />
                         <span>
                             {stuck
                                 ? t("You have joined {school}.").replace("{school}", orgName)
@@ -107,7 +105,7 @@ export default function JoinPage() {
                     {stuck ? (
                         <>
                             <InlineError message={t("We could not refresh your access. Please sign out and sign in again, or contact us.")} />
-                            <Button asChild variant="outline"><Link href="/access">{t("Continue")}</Link></Button>
+                            <Link href="/access" className={ACCESS_SECONDARY}>{t("Continue")}</Link>
                         </>
                     ) : null}
                 </AccessCard>
@@ -117,33 +115,33 @@ export default function JoinPage() {
 
     return (
         <AccessShell>
-            <AccessCard title={t("School invitation")}>
+            <AccessCard tone="ready" pill={<AccessPill tone="success">{t("School invitation")}</AccessPill>} title={t("Join your school")}>
                 <p>{t("Your school has invited you to use SahayakAI. Joining links this account to your school's licence.")}</p>
                 {!user ? (
                     <>
                         <p>{t("Sign in with the Google account you use for school work, then accept the invitation.")}</p>
-                        <Button type="button" onClick={openAuthModal}>{t("Sign in")}</Button>
+                        <button type="button" className={ACCESS_PRIMARY} onClick={openAuthModal}>{t("Sign in")}</button>
                     </>
                 ) : (
                     <form onSubmit={onJoin} className="space-y-4" noValidate aria-busy={phase === "joining"}>
                         {user.email ? (
-                            <p className="text-xs">{t("Signed in as {email}").replace("{email}", user.email)}</p>
+                            <p className="text-xs text-ink-500">{t("Signed in as {email}").replace("{email}", user.email)}</p>
                         ) : null}
-                        <label className="flex items-start gap-2 text-sm text-foreground">
-                            <input type="checkbox" className="mt-1 h-4 w-4" checked={accept}
+                        <label className="flex min-h-11 items-start gap-3 text-sm text-ink-600">
+                            <input type="checkbox" className="mt-0 h-5 w-5 shrink-0 accent-leaf-500" checked={accept}
                                 onChange={(e) => setAccept(e.target.checked)} required disabled={phase === "joining"} />
                             <span>
                                 {t("I have read and accept the")}{" "}
-                                <Link href="/terms#evaluation" target="_blank" className="font-medium underline underline-offset-2">
+                                <Link href="/terms#evaluation" target="_blank" className="focus-ring rounded-xs font-semibold text-saffron-600 underline underline-offset-2">
                                     {t("evaluation and pilot terms")}
                                 </Link>
                             </span>
                         </label>
                         <InlineError message={error} />
-                        <Button type="submit" disabled={phase === "joining"}>
-                            {phase === "joining" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
+                        <button type="submit" className={`${ACCESS_PRIMARY} w-full`} disabled={phase === "joining"}>
+                            {phase === "joining" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                             {t("Join your school")}
-                        </Button>
+                        </button>
                     </form>
                 )}
             </AccessCard>
