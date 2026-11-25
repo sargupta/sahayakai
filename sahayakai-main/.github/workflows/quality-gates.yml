@@ -68,3 +68,8 @@ jobs:
       - name: Gate 9 — post-deploy smoke
         run: node scripts/ci/post-deploy-smoke.mjs
         working-directory: sahayakai-main
+      - name: Gate 10 — i18n source audit (hard-coded strings, warn-only)
+        run: bash scripts/audit-i18n-source.sh || true
+        working-directory: sahayakai-main
+        env:
+          MODE: warn
