@@ -114,6 +114,19 @@ describe('estimateSchoolSavings', () => {
         expect(r.fteEquivalent).toBeCloseTo(6.47, 2);
     });
 
+    it('scales the hours by the realisation share and never above the methodology', () => {
+        const full = estimateSchoolSavings({ teachers: 50, salaryPerMonth: 30000 });
+        const half = estimateSchoolSavings({ teachers: 50, salaryPerMonth: 30000, realisation: 0.5 });
+        expect(half.hoursPerTeacherPerYear).toBe(205); // half of 410
+        expect(half.hoursReclaimedSchool).toBe(10250);
+        expect(half.sahayakaiCostPerYear).toBe(full.sahayakaiCostPerYear); // the fee does not halve
+        expect(half.valueSchoolPerYear).toBeCloseTo(full.valueSchoolPerYear / 2, 0);
+        // Out-of-range input can never inflate the claim.
+        expect(estimateSchoolSavings({ teachers: 50, salaryPerMonth: 30000, realisation: 3 }).hoursPerTeacherPerYear).toBe(410);
+        expect(estimateSchoolSavings({ teachers: 50, salaryPerMonth: 30000, realisation: -1 }).hoursPerTeacherPerYear).toBe(0);
+        expect(estimateSchoolSavings({ teachers: 50, salaryPerMonth: 30000, realisation: NaN }).hoursPerTeacherPerYear).toBe(410);
+    });
+
     it('clamps bad input to zero (no NaN on the page)', () => {
         expect(estimateSchoolSavings({ teachers: -5, salaryPerMonth: 30000 }).valueSchoolPerYear).toBe(0);
         expect(estimateSchoolSavings({ teachers: 10, salaryPerMonth: NaN }).valuePerTeacherPerYear).toBe(0);

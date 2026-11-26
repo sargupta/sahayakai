@@ -1,9 +1,9 @@
 import { ForSchoolsClient } from './for-schools-client';
 
 export const metadata = {
-    title: 'SahayakAI for Schools: AI teaching assistant with principal dashboard',
+    title: 'SahayakAI for Schools: see the hours and rupees your school gets back',
     description:
-        'The AI tool your teachers actually use. And the dashboard you actually need. Built for Indian schools in 11 languages, voice-first, on any Android phone.',
+        'For principals, trusts and school owners. Enter your teacher count and average salary to estimate the teacher hours and rupees SahayakAI returns each year, with every assumption shown.',
 };
 
 export default function ForSchoolsPage() {

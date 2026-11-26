@@ -97,7 +97,7 @@ export function LandingHero({ titleIndex, onAuthClick }: Props) {
           <ProofStat value="11" label={t("Indian languages")} />
           <ProofStat value={t("CBSE, ICSE")} label={t("and 28 state boards")} />
           <ProofStat value={t("2+ hrs")} label={t("saved daily")} />
-          <ProofStat value={t("~400 hrs/year")} label={t("per teacher")} />
+          <ProofStat value={t("~410 hrs/year")} label={t("per teacher")} />
         </div>
       </div>
     </section>
