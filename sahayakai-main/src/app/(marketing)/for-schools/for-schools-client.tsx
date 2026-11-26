@@ -77,23 +77,28 @@ function getWhatsAppDeepLink(): string {
 
 /* One card language for the whole page: a soft white tile on an off-white
    ground, a hairline edge, and a gentle lift on hover. */
-const TILE = "rounded-[28px] bg-card border border-black/[0.06] shadow-soft overflow-hidden";
+/* Same white card, hairline and warm shadow as the homepage feature cards. */
+const TILE =
+  "rounded-[28px] bg-white border border-black/[0.06] shadow-[0_1px_2px_-1px_hsl(28_30%_30%/0.08),0_10px_24px_-10px_hsl(28_45%_38%/0.16)] overflow-hidden";
 const TILE_LIFT = `${TILE} transition duration-small ease-out-quart hover:-translate-y-1 hover:shadow-elevated`;
-const EYEBROW = "text-tile font-semibold text-ink-500";
+/* The homepage eyebrow: saffron-700 on a saffron-50 capsule with a saffron dot. */
+const EYEBROW =
+  "inline-flex items-center gap-2 text-xs font-medium text-saffron-700 bg-saffron-50 border border-saffron-200 rounded-full px-[14px] py-[6px]";
+const EYEBROW_PLAIN = "text-xs font-semibold uppercase tracking-[0.12em] text-saffron-700";
 const H2 = "font-headline font-bold tracking-tight text-web-h2 text-ink-900";
 const LEAD = "text-base sm:text-web-lead text-ink-600 max-w-[60ch]";
 const SECTION = "container-wide py-14 sm:py-20 flex flex-col items-center gap-9 sm:gap-11";
 const PRIMARY_CTA =
   "inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-saffron text-white shadow-elevated hover:bg-saffron-600 transition-colors";
 const OUTLINE_CTA =
-  "inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-card border border-border text-ink-900 hover:bg-milk-300 transition-colors";
+  "inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-white border border-black/15 text-ink-900 hover:bg-saffron-50 transition-colors";
 
 export function ForSchoolsClient() {
   const { openAuthModal } = useAuth();
   const demoHref = getWhatsAppDeepLink();
 
   return (
-    <div className="flex flex-col min-h-screen bg-milk-200">
+    <div className="flex flex-col min-h-screen bg-milk-50">
       <LandingNav onAuthClick={openAuthModal} />
       <main>
         <Hero demoHref={demoHref} />
@@ -123,7 +128,10 @@ function Heading({ eyebrow, line1, line2, lead, as = "h2" }: { eyebrow: string; 
   const Tag = as;
   return (
     <div className="flex flex-col items-center text-center gap-4 max-w-[860px]">
-      <div className={EYEBROW}>{eyebrow}</div>
+      <div className={EYEBROW}>
+        <span className="w-1.5 h-1.5 rounded-full bg-saffron" aria-hidden />
+        {eyebrow}
+      </div>
       <Tag
         className={
           as === "h1"
@@ -147,7 +155,10 @@ function Heading({ eyebrow, line1, line2, lead, as = "h2" }: { eyebrow: string; 
 function Hero({ demoHref }: { demoHref: string }) {
   const { t } = useLanguage();
   return (
-    <section className="container-wide pt-10 sm:pt-16 pb-14 sm:pb-20 flex flex-col items-center gap-8 sm:gap-10">
+    <section className="relative overflow-hidden">
+      {/* The same warm saffron glow the homepage hero sits on. */}
+      <div className="ambient-glow" aria-hidden />
+      <div className="relative z-10 container-wide pt-10 sm:pt-16 pb-14 sm:pb-20 flex flex-col items-center gap-8 sm:gap-10">
       <Heading
         as="h1"
         eyebrow={t("For teachers, parents and the people who lead schools")}
@@ -165,7 +176,7 @@ function Hero({ demoHref }: { demoHref: string }) {
           {t("Book a 30-minute demo")}
         </ExternalLink>
       </div>
-      <div className="inline-flex items-center gap-2 text-tile font-medium text-leaf-700 bg-card border border-black/[0.06] rounded-full px-4 py-2">
+      <div className="inline-flex items-center gap-2 text-tile font-medium text-leaf-700 bg-white border border-black/[0.06] rounded-full px-4 py-2">
         <span className="w-1.5 h-1.5 rounded-full bg-leaf-500" aria-hidden />
         {t("Built to assist teachers. Never to replace them.")}
       </div>
@@ -176,6 +187,7 @@ function Hero({ demoHref }: { demoHref: string }) {
         height={812}
         className="w-full max-w-[1080px] h-auto rounded-[32px] border border-black/[0.06] shadow-elevated"
       />
+      </div>
     </section>
   );
 }
@@ -209,7 +221,7 @@ function Film() {
               <Play className="h-8 w-8 sm:h-10 sm:w-10 translate-x-0.5" fill="currentColor" aria-hidden />
             </span>
           </span>
-          <span className="absolute left-4 bottom-4 sm:left-6 sm:bottom-6 inline-flex items-center gap-2 rounded-full bg-card/90 backdrop-blur px-4 py-2 text-tile font-semibold text-ink-900">
+          <span className="absolute left-4 bottom-4 sm:left-6 sm:bottom-6 inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-4 py-2 text-tile font-semibold text-ink-900">
             {t("Watch the film")} · {FILM_LENGTH}
           </span>
         </ExternalLink>
@@ -224,7 +236,7 @@ function Belief() {
   return (
     <section className="bg-saffron-50">
       <div className="container-wide py-16 sm:py-24 flex flex-col items-center text-center gap-5">
-        <div className={EYEBROW}>{t("Why we built it")}</div>
+        <div className={EYEBROW_PLAIN}>{t("Why we built it")}</div>
         <p className="font-headline font-bold tracking-tight text-3xl sm:text-5xl leading-[1.1] text-ink-900 max-w-[20ch]">
           {t("A child's future shouldn't be decided by its pincode.")}
         </p>
@@ -280,7 +292,7 @@ function ForTeachers() {
             </div>
           </div>
           <TextTile
-            className="lg:col-span-2 bg-gradient-to-b from-saffron-50 to-card"
+            className="lg:col-span-2 bg-gradient-to-b from-saffron-50 to-white"
             orb
             title={t("You teach. VIDYA drafts.")}
             body={t("Speak once, in your own language. VIDYA drafts the lesson plan, worksheet or quiz.")}
@@ -313,7 +325,7 @@ function ForTheSchool() {
         />
         <div className="w-full max-w-[1080px] grid grid-cols-1 lg:grid-cols-6 gap-5">
           <TextTile
-            className="lg:col-span-3 bg-gradient-to-b from-saffron-50 to-card"
+            className="lg:col-span-3 bg-gradient-to-b from-saffron-50 to-white"
             title={t("Parents in the loop.")}
             body={t("When a child has been away, the school calls to ask if all is well, in the parent's own language.")}
           />
@@ -363,7 +375,7 @@ function Estimate({ demoHref }: { demoHref: string }) {
         <div id="savings" className={`w-full max-w-[1080px] ${TILE}`}>
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="p-6 sm:p-9 flex flex-col gap-5 lg:border-r border-black/[0.06]">
-              <div className={EYEBROW}>{t("Your school, per year")}</div>
+              <div className={EYEBROW_PLAIN}>{t("Your school, per year")}</div>
               <Slider
                 id="fs-teachers"
                 label={t("Teachers")}
@@ -403,7 +415,7 @@ function Estimate({ demoHref }: { demoHref: string }) {
             </dl>
           </div>
 
-          <div className="bg-milk-300 border-y border-black/[0.06] px-6 sm:px-9 py-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="bg-saffron-50 border-y border-saffron-200 px-6 sm:px-9 py-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Answer value={inrCompact(s.netSavingsPerYear, t)} label={t("worth of teaching time, after the fee")} large />
             <Answer value={`₹${s.roiMultiple.toFixed(1)}`} label={t("back for every ₹1 spent")} />
             <Answer
@@ -412,7 +424,7 @@ function Estimate({ demoHref }: { demoHref: string }) {
             />
           </div>
 
-          <p className="px-6 sm:px-9 py-5 text-xs leading-[1.5] text-ink-500">
+          <p className="px-6 sm:px-9 py-5 text-xs leading-[1.5] text-ink-600">
             {t("An estimate from your inputs, not a measured result. Based on {weekly} hours a week across {tools} tools, over {weeks} teaching weeks, valued at salary ÷ {paid} paid hours a month.")
               .replace("{weekly}", SAVINGS_WEEKLY_HOURS.toFixed(1))
               .replace("{tools}", String(SAVINGS_CAPABILITIES.length))
@@ -424,7 +436,7 @@ function Estimate({ demoHref }: { demoHref: string }) {
         {/* How the estimate is built: the nine jobs, itemised */}
         <div id="hours" className={`w-full max-w-[1080px] ${TILE} p-6 sm:p-9 flex flex-col gap-5 scroll-mt-24`}>
           <div className="flex flex-col gap-2">
-            <div className={EYEBROW}>{t("Where the hours go")}</div>
+            <div className={EYEBROW_PLAIN}>{t("Where the hours go")}</div>
             <p className="text-base leading-[1.6] text-ink-600 max-w-[62ch]">
               {t("The estimate is itemised, so you can strike out anything your school will not use. The teacher reviews and approves every output.")}
             </p>
