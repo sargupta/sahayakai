@@ -113,7 +113,6 @@ The **Reuse?** column is a recommendation for the coming page redesigns:
 | OmniOrb | `src/components/omni-orb.tsx` | Floating bottom-right mic orb on app pages | n/a | `app-shell.tsx` (dynamic) | ✅ |
 | VidyaLiveOrb | `src/components/vidya-live-orb.tsx` | Live orb wrapper | n/a | `omni-orb.tsx` | ✅ |
 | VidyaLiveProvider | `src/components/vidya/vidya-live-provider.tsx` | Live session context | n/a | app-shell | ✅ |
-| GlobalVoiceInterface | `src/components/global-voice-interface.tsx` | Voice overlay | n/a | app-shell (marketing) | ✅ |
 | OmniOrbLive · VoiceAssistant · SahayakAvatar · Logo | `src/components/{omni-orb-live,voice-assistant,sahayak-avatar,logo}.tsx` | older voice and brand pieces | n/a | **0 importers** | ⛔ orphaned |
 
 ## 7. SamparkAI console kit: `src/components/sampark/`

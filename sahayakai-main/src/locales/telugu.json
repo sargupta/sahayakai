@@ -1505,7 +1505,7 @@
   "{name} joined SahayakAI from {school}": "{name} {school} నుండి SahayakAI లో చేరారు",
   "{percent}% use {feature}": "{percent}% {feature} ఉపయోగిస్తున్నారు",
   "{{earned}} of {{total}} points": "{{total}} పాయింట్లలో {{earned}}",
-  "~200 hrs/year": "~200 గం./సం.",
+  "~400 hrs/year": "~400 గం./సం.",
   "/ month": "/ నెల",
   "/minute": "/నిమిషం",
   "/month, billed annually": "/నెల, వార్షికంగా బిల్ చేయబడుతుంది",
@@ -2394,7 +2394,7 @@
   "Generate an assessment": "మూల్యాంకనం రూపొందించండి",
   "One professional infrastructure for the entire school day": "మొత్తం పాఠశాల దినానికి ఒక వృత్తిపరమైన వ్యవస్థ",
   "Rubric-based AI grading for homework, papers and worksheets": "హోంవర్క్, పేపర్లు మరియు వర్క్‌షీట్లకు రూబ్రిక్ ఆధారిత AI గ్రేడింగ్",
-  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across 28 state boards.": "SahayakAI భారతీయ ఉపాధ్యాయులకు AI సహ-బోధకుడు — పాఠ ప్రణాళికలు, మూల్యాంకనాలు, తల్లిదండ్రుల అనుసంధానం, 11 భాషలు, 28 రాష్ట్ర బోర్డులలో సమయం ఆదా.",
+  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across CBSE, ICSE and 28 state boards.": "SahayakAI భారతీయ ఉపాధ్యాయులకు AI సహ-బోధకుడు — పాఠ ప్రణాళికలు, మూల్యాంకనాలు, తల్లిదండ్రుల అనుసంధానం, 11 భాషలు, CBSE, ICSE మరియు 28 రాష్ట్ర బోర్డులలో సమయం ఆదా.",
   "Summarise my class": "నా తరగతి సారాంశం",
   "A teacher's day": "ఒక గురువు దినం",
   "Speak a request — VIDYA does the work behind it.": "మాట్లాడండి — మిగతా పని VIDYA స్వయంగా చేస్తుంది.",
@@ -3821,5 +3821,7 @@
   "We verify the school": "మేము పాఠశాలను ధృవీకరిస్తాము",
   "We check the board affiliation and call the school office.": "మేము బోర్డు అనుబంధాన్ని తనిఖీ చేసి, పాఠశాల కార్యాలయానికి ఫోన్ చేస్తాము.",
   "Your pilot opens": "మీ పైలట్ ప్రారంభమవుతుంది",
-  "You invite your teachers with one link.": "మీరు ఒకే లింక్‌తో మీ ఉపాధ్యాయులను ఆహ్వానిస్తారు."
+  "You invite your teachers with one link.": "మీరు ఒకే లింక్‌తో మీ ఉపాధ్యాయులను ఆహ్వానిస్తారు.",
+  "CBSE, ICSE": "CBSE, ICSE",
+  "and 28 state boards": "మరియు 28 రాష్ట్ర బోర్డులు"
 }

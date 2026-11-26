@@ -21,8 +21,8 @@
  *      Dockerfile and `--build-arg=NEXT_PUBLIC_VIDYA_VOICE_PUBLIC=1` in the
  *      cloudbuild.yaml build step.
  *
- * While it is off, the signed-out home page keeps the turn-based floating mic
- * (GlobalVoiceInterface, see app-shell.tsx), which works without the sidecar.
+ * While it is off, the signed-out home page has no voice control. The legacy
+ * turn-based floating mic (GlobalVoiceInterface) was retired on 2026-11-26.
  *
  * Class gate: src/__tests__/deploy/public-voice-orb-gate.test.tsx fails if the
  * build ships the flag on while either region lacks the server switch.

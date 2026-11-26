@@ -1505,7 +1505,7 @@
   "{name} joined SahayakAI from {school}": "{name} {school} ൽ നിന്ന് SahayakAI യിൽ ചേർന്നു",
   "{percent}% use {feature}": "{percent}% {feature} ഉപയോഗിക്കുന്നു",
   "{{earned}} of {{total}} points": "{{total}} പോയിന്റിൽ {{earned}}",
-  "~200 hrs/year": "~200 മണിക്കൂർ/വർഷം",
+  "~400 hrs/year": "~400 മണിക്കൂർ/വർഷം",
   "/ month": "/ മാസം",
   "/minute": "/മിനിറ്റിന്",
   "/month, billed annually": "/മാസം, വാർഷികമായി ബിൽ ചെയ്യുന്നു",
@@ -2394,7 +2394,7 @@
   "Generate an assessment": "വിലയിരുത്തൽ സൃഷ്ടിക്കുക",
   "One professional infrastructure for the entire school day": "മുഴുവൻ സ്കൂൾ ദിവസത്തിനുമുള്ള ഒരു പ്രൊഫഷണൽ സംവിധാനം",
   "Rubric-based AI grading for homework, papers and worksheets": "ഹോംവർക്ക്, പേപ്പർ, വർക്ക്‌ഷീറ്റുകൾ എന്നിവയ്ക്ക് റൂബ്രിക് അധിഷ്ഠിത AI ഗ്രേഡിംഗ്",
-  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across 28 state boards.": "SahayakAI എന്നത് ഇന്ത്യൻ അധ്യാപകർക്കുള്ള AI സഹ-അധ്യാപകനാണ് — പാഠ പദ്ധതികൾ, വിലയിരുത്തൽ, രക്ഷിതാക്കളുമായുള്ള ബന്ധം, 11 ഭാഷകളിലും 28 സംസ്ഥാന ബോർഡുകളിലും സമയം ലാഭിക്കുക.",
+  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across CBSE, ICSE and 28 state boards.": "SahayakAI എന്നത് ഇന്ത്യൻ അധ്യാപകർക്കുള്ള AI സഹ-അധ്യാപകനാണ് — പാഠ പദ്ധതികൾ, വിലയിരുത്തൽ, രക്ഷിതാക്കളുമായുള്ള ബന്ധം, 11 ഭാഷകളിലും CBSE, ICSE ഒപ്പം 28 സംസ്ഥാന ബോർഡുകളിലും സമയം ലാഭിക്കുക.",
   "Summarise my class": "എന്റെ ക്ലാസിന്റെ സംഗ്രഹം",
   "A teacher's day": "ഒരു അധ്യാപകന്റെ ദിനം",
   "Speak a request — VIDYA does the work behind it.": "സംസാരിക്കൂ — ബാക്കി പണി VIDYA തന്നെ ചെയ്യും.",
@@ -3821,5 +3821,7 @@
   "We verify the school": "ഞങ്ങൾ സ്കൂൾ പരിശോധിച്ചുറപ്പിക്കുന്നു",
   "We check the board affiliation and call the school office.": "ഞങ്ങൾ ബോർഡ് അഫിലിയേഷൻ പരിശോധിക്കുകയും സ്കൂൾ ഓഫീസിലേക്ക് വിളിക്കുകയും ചെയ്യുന്നു.",
   "Your pilot opens": "നിങ്ങളുടെ പൈലറ്റ് ആരംഭിക്കുന്നു",
-  "You invite your teachers with one link.": "ഒരൊറ്റ ലിങ്ക് വഴി നിങ്ങൾ അധ്യാപകരെ ക്ഷണിക്കുന്നു."
+  "You invite your teachers with one link.": "ഒരൊറ്റ ലിങ്ക് വഴി നിങ്ങൾ അധ്യാപകരെ ക്ഷണിക്കുന്നു.",
+  "CBSE, ICSE": "CBSE, ICSE",
+  "and 28 state boards": "ഒപ്പം 28 സംസ്ഥാന ബോർഡുകൾ"
 }

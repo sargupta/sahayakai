@@ -1505,7 +1505,7 @@
   "{name} joined SahayakAI from {school}": "{name} {school} ରୁ SahayakAI ରେ ଯୋଗ ଦେଲେ",
   "{percent}% use {feature}": "{percent}% {feature} ବ୍ୟବହାର କରନ୍ତି",
   "{{earned}} of {{total}} points": "{{total}} ମଧ୍ୟରୁ {{earned}} ପଏଣ୍ଟ",
-  "~200 hrs/year": "~୨୦୦ ଘଣ୍ଟା/ବର୍ଷ",
+  "~400 hrs/year": "~୪୦୦ ଘଣ୍ଟା/ବର୍ଷ",
   "/ month": "/ ମାସ",
   "/minute": "/ମିନିଟ୍",
   "/month, billed annually": "/ମାସ, ବାର୍ଷିକ ବିଲ୍ କରାଯାଏ",
@@ -2394,7 +2394,7 @@
   "Generate an assessment": "ମୂଲ୍ୟାୟନ ତିଆରି କରନ୍ତୁ",
   "One professional infrastructure for the entire school day": "ସମ୍ପୂର୍ଣ୍ଣ ସ୍କୁଲ ଦିନ ପାଇଁ ଗୋଟିଏ ବୃତ୍ତିଗତ ବ୍ୟବସ୍ଥା",
   "Rubric-based AI grading for homework, papers and worksheets": "ହୋମୱାର୍କ, ପେପର ଏବଂ ୱାର୍କସିଟ୍ ପାଇଁ ରୁବ୍ରିକ-ଆଧାରିତ AI ଗ୍ରେଡିଂ",
-  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across 28 state boards.": "SahayakAI ହେଉଛି ଭାରତୀୟ ଶିକ୍ଷକଙ୍କ ପାଇଁ AI ସହ-ଶିକ୍ଷକ — ପାଠ ଯୋଜନା, ମୂଲ୍ୟାୟନ, ଅଭିଭାବକ ସଂଯୋଗ ଏବଂ 11 ଭାଷା, 28 ରାଜ୍ୟ ବୋର୍ଡରେ ସମୟ ସଞ୍ଚୟ କରନ୍ତୁ।",
+  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across CBSE, ICSE and 28 state boards.": "SahayakAI ହେଉଛି ଭାରତୀୟ ଶିକ୍ଷକଙ୍କ ପାଇଁ AI ସହ-ଶିକ୍ଷକ — ପାଠ ଯୋଜନା, ମୂଲ୍ୟାୟନ, ଅଭିଭାବକ ସଂଯୋଗ ଏବଂ 11 ଭାଷା, CBSE, ICSE ଏବଂ 28 ରାଜ୍ୟ ବୋର୍ଡରେ ସମୟ ସଞ୍ଚୟ କରନ୍ତୁ।",
   "Summarise my class": "ମୋ ଶ୍ରେଣୀର ସାରାଂଶ",
   "A teacher's day": "ଜଣେ ଶିକ୍ଷକଙ୍କ ଦିନ",
   "Speak a request — VIDYA does the work behind it.": "କୁହନ୍ତୁ — ବାକି କାମ VIDYA ନିଜେ କରିଦେବ।",
@@ -3821,5 +3821,7 @@
   "We verify the school": "ଆମେ ବିଦ୍ୟାଳୟର ଯାଞ୍ଚ କରୁ",
   "We check the board affiliation and call the school office.": "ଆମେ ବୋର୍ଡ ସମ୍ବନ୍ଧନ ଯାଞ୍ଚ କରୁ ଏବଂ ବିଦ୍ୟାଳୟ କାର୍ଯ୍ୟାଳୟକୁ ଫୋନ୍ କରୁ।",
   "Your pilot opens": "ଆପଣଙ୍କ ପାଇଲଟ୍ ଆରମ୍ଭ ହୁଏ",
-  "You invite your teachers with one link.": "ଆପଣ ଗୋଟିଏ ଲିଙ୍କ୍ ଦ୍ୱାରା ନିଜ ଶିକ୍ଷକମାନଙ୍କୁ ଆମନ୍ତ୍ରଣ କରନ୍ତି।"
+  "You invite your teachers with one link.": "ଆପଣ ଗୋଟିଏ ଲିଙ୍କ୍ ଦ୍ୱାରା ନିଜ ଶିକ୍ଷକମାନଙ୍କୁ ଆମନ୍ତ୍ରଣ କରନ୍ତି।",
+  "CBSE, ICSE": "CBSE, ICSE",
+  "and 28 state boards": "ଏବଂ 28ଟି ରାଜ୍ୟ ବୋର୍ଡ"
 }

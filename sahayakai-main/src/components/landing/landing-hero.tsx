@@ -20,9 +20,9 @@ export function LandingHero({ titleIndex, onAuthClick }: Props) {
   const { t } = useLanguage();
   const gated = useAccessMode() === "enforce";
   // The public VIDYA orb needs a server route and sidecar that production does
-  // not run yet; until the build flag is on, the hero offers no voice control
-  // and the signed-out home keeps its floating mic (app-shell.tsx). Read
-  // src/lib/vidya-live/public-voice.ts before turning the flag on.
+  // not run yet; until the build flag is on, the signed-out home offers no
+  // voice control at all (the legacy floating mic was retired 2026-11-26).
+  // Read src/lib/vidya-live/public-voice.ts before turning the flag on.
   const publicVoice = isPublicVoiceOrbEnabled();
 
   return (
@@ -55,7 +55,7 @@ export function LandingHero({ titleIndex, onAuthClick }: Props) {
 
         {/* Subhead */}
         <p className="font-body text-base sm:text-web-lead text-ink-600 leading-[1.6] max-w-[58ch] mt-6 mx-auto">
-          {t("SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across 28 state boards.")}
+          {t("SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across CBSE, ICSE and 28 state boards.")}
         </p>
 
         {/* CTA pair */}
@@ -95,9 +95,9 @@ export function LandingHero({ titleIndex, onAuthClick }: Props) {
         {/* Proof strip — 4 flat stats */}
         <div className="flex gap-6 sm:gap-7 mt-8 text-tile font-medium text-ink-600 justify-center flex-wrap items-center">
           <ProofStat value="11" label={t("Indian languages")} />
-          <ProofStat value="28" label={t("state boards")} />
+          <ProofStat value={t("CBSE, ICSE")} label={t("and 28 state boards")} />
           <ProofStat value={t("2+ hrs")} label={t("saved daily")} />
-          <ProofStat value={t("~200 hrs/year")} label={t("per teacher")} />
+          <ProofStat value={t("~400 hrs/year")} label={t("per teacher")} />
         </div>
       </div>
     </section>
