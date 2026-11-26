@@ -80,7 +80,7 @@ const ROUTES: Route[] = [
   { href: samparkEntryUrl("/workspace"), label: "SamparkAI · School calls", i18nKey: "SamparkAI · School calls", keywords: "school calls parents families ptm event closure notice sampark samparkai", group: "Assess", icon: PhoneCall, sampark: true },
 
   // Engage
-  { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend", group: "Labs", icon: Video },
+  { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend recommendations videos pedagogy storytelling training courses", group: "Engage", icon: Video },
   { href: "/virtual-field-trip", label: "Virtual Field Trip", i18nKey: "Virtual Field Trip", keywords: "virtual field trip explore visit tour places geography", group: "Engage", icon: Globe2 },
   { href: "/teacher-training", label: "AI Coach", i18nKey: "AI Coach", keywords: "ai coach teaching coach teacher training professional development cpd classroom strategies", group: "Engage", icon: GraduationCap },
   { href: "/community", label: "Community", i18nKey: "Community", keywords: "community teachers chat discover", group: "Engage", icon: Library },
