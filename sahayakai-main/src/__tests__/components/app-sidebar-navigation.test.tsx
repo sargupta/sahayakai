@@ -148,6 +148,7 @@ describe('AppSidebar — information architecture', () => {
         expect(hrefs).toContain('/virtual-field-trip');
         expect(hrefs).toContain('/assessment-scanner');
         expect(hrefs).toContain('/video-storyteller');
+        expect(hrefs).toContain('/impact-dashboard');
     });
 
     it('Attendance opens the class registers at /attendance, with SamparkAI off or on', () => {

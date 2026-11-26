@@ -53,7 +53,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
                 {imgError ? (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-card gap-2">
                         <BookOpen className="w-8 h-8 text-primary/30" />
-                        <span className="text-[10px] text-primary/40 font-semibold tracking-wider uppercase text-center px-4">
+                        <span className="text-xs text-primary/40 font-semibold tracking-wider uppercase text-center px-4">
                             {video.channelTitle}
                         </span>
                     </div>
@@ -69,9 +69,9 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
 
                 {/* Official Badge */}
                 {isOfficial && (
-                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow-soft border border-primary/10">
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-card/90 backdrop-blur-md px-2 py-1 rounded-full shadow-soft border border-primary/10">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-tight">{t("Official source")}</span>
+                        <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("Official source")}</span>
                     </div>
                 )}
 
@@ -83,7 +83,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
                 </div>
 
                 {video.duration && (
-                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {video.duration}
                     </div>
@@ -95,16 +95,16 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onSelect }) => {
                     {video.title}
                 </h3>
                 <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
-                    <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-5 h-5 shrink-0 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
                             {video.channelTitle[0]?.toUpperCase()}
                         </div>
-                        <p className="text-[11px] font-medium text-muted-foreground truncate max-w-[100px]">
+                        <p className="text-xs font-medium text-muted-foreground truncate min-w-0">
                             {video.channelTitle}
                         </p>
                     </div>
                     {video.viewCount && (
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
+                        <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
                             <Eye className="w-3 h-3 stroke-[2.5]" />
                             {video.viewCount}
                         </div>

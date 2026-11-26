@@ -111,7 +111,7 @@ function VideoStorytellerPageInner() {
       console.error("Error fetching video recommendations:", error);
       setRecommendations({
         categories: { pedagogy: [], storytelling: [], govtUpdates: [], courses: [], topRecommended: [] },
-        personalizedMessage: "Namaste Adhyapak! Here are some carefully selected videos to help you deliver engaging lessons, stay updated on government policies, and grow as an educator.",
+        personalizedMessage: t("Personalization is loading. Showing recommended Indian educational videos."),
         categorizedVideos: mergeCuratedVideos({}),
       });
       toast({
@@ -164,7 +164,6 @@ function VideoStorytellerPageInner() {
       }
     };
     loadProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, searchParams]);
 
   const handleFilterChange = (newFilters: typeof filters) => {
@@ -230,7 +229,7 @@ function VideoStorytellerPageInner() {
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
             : <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
           }
-          Refresh
+          {t("Refresh")}
         </Button>
       </div>
 
@@ -248,7 +247,7 @@ function VideoStorytellerPageInner() {
 
       {/* AI insight banner */}
       {recommendations && (
-        <div className="flex items-start gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3">
+        <div className="flex items-start gap-3 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3">
           <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="text-sm text-foreground leading-relaxed italic">
             {recommendations.personalizedMessage}
@@ -258,7 +257,7 @@ function VideoStorytellerPageInner() {
 
       {/* Loading state — initial load */}
       {loading && !recommendations && (
-        <div className="flex flex-col items-center justify-center py-24 gap-4 bg-muted/40 rounded-2xl border border-dashed border-border">
+        <div className="flex flex-col items-center justify-center py-24 gap-4 bg-muted/40 rounded-surface-lg border border-dashed border-border">
           <div className="relative">
             <Loader2 className="w-10 h-10 text-primary/30 animate-spin" />
             <Sparkles className="w-4 h-4 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
@@ -299,7 +298,7 @@ function VideoStorytellerPageInner() {
 
       {/* Empty state — not loading, no data, user logged in */}
       {!loading && !recommendations && user && (
-        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-muted/40 rounded-2xl border border-dashed border-border">
+        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-muted/40 rounded-surface-lg border border-dashed border-border">
           <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
             <Video className="w-6 h-6 text-muted-foreground/40" />
           </div>

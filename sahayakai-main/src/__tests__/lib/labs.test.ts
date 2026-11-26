@@ -21,6 +21,7 @@ describe('labs registry', () => {
         ['virtual-field-trip', '/virtual-field-trip'],
         ['assessment-scanner', '/assessment-scanner'],
         ['video-storyteller', '/video-storyteller'],
+        ['impact-dashboard', '/impact-dashboard'],
     ] as const)('keeps %s out of Labs (restored to the main nav)', (id, href) => {
         expect(isLabsRoute(href)).toBe(false);
         expect(isLabsRoute(`${href}/anything`)).toBe(false);

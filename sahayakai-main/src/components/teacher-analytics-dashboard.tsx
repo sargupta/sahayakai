@@ -63,10 +63,11 @@ function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: Ci
     const offset = circumference - (percentage / 100) * circumference;
 
     const colorMap = {
-        green: { stroke: 'stroke-green-500', text: 'text-green-600' },
-        yellow: { stroke: 'stroke-yellow-500', text: 'text-yellow-600' },
-        red: { stroke: 'stroke-red-500', text: 'text-red-600' },
-        blue: { stroke: 'stroke-blue-500', text: 'text-blue-600' },
+        // Status tokens (docs/DESIGN_TOKENS.md) — no raw palette classes.
+        green: { stroke: 'stroke-success', text: 'text-success' },
+        yellow: { stroke: 'stroke-warning', text: 'text-warning' },
+        red: { stroke: 'stroke-destructive', text: 'text-destructive' },
+        blue: { stroke: 'stroke-info', text: 'text-info' },
     };
 
     const { stroke, text } = colorMap[color];
@@ -81,7 +82,7 @@ function CircularProgress({ value, max, label, size = 'md', color = 'blue' }: Ci
                     stroke="currentColor"
                     strokeWidth={strokeWidth}
                     fill="none"
-                    className="text-gray-200 dark:text-gray-700"
+                    className="text-muted"
                 />
                 <circle
                     cx={diameter / 2}
@@ -177,7 +178,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
     // -------------------------------------------------------------------------
     if (isLoading) {
         return (
-            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
+            <div className="w-full bg-card border border-border shadow-soft rounded-surface-lg overflow-hidden">
                 <div className="h-1.5 w-full bg-primary" />
                 <CardHeader>
                     <Skeleton className="h-6 w-48" />
@@ -199,7 +200,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
     // -------------------------------------------------------------------------
     if (error && !healthScore) {
         return (
-            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
+            <div className="w-full bg-card border border-border shadow-soft rounded-surface-lg overflow-hidden">
                 <div className="h-1.5 w-full bg-destructive" />
                 <CardHeader>
                     <div className="flex items-center gap-2">
@@ -228,7 +229,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
     // -------------------------------------------------------------------------
     if (healthScore.is_cold_start || healthScore.level === 'new') {
         return (
-            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
+            <div className="w-full bg-card border border-border shadow-soft rounded-surface-lg overflow-hidden">
                 <div className="h-1.5 w-full bg-primary" />
                 <CardHeader>
                     <div className="flex items-center gap-2">
@@ -306,7 +307,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
     return (
         <div className="space-y-6">
             {/* Overall Health Score */}
-            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden">
+            <div className="w-full bg-card border border-border shadow-soft rounded-surface-lg overflow-hidden">
                 <div className="h-1.5 w-full bg-primary" />
                 <CardHeader>
                     <div className="flex items-center justify-between flex-wrap gap-2">
@@ -317,9 +318,9 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                             </CardDescription>
                         </div>
                         <Badge variant={getRiskBadgeVariant(healthScore.risk_level)} className="capitalize">
-                            {healthScore.risk_level === 'healthy' ? <><span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-1" /> {t("Excellent")}</> : null}
-                            {healthScore.risk_level === 'at-risk' ? <><span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1" /> {t("Good")}</> : null}
-                            {healthScore.risk_level === 'critical' ? <><span className="inline-block h-2 w-2 rounded-full bg-red-500 mr-1" /> {t("Needs Attention")}</> : null}
+                            {healthScore.risk_level === 'healthy' ? <><span className="inline-block h-2 w-2 rounded-full bg-success mr-1" /> {t("Excellent")}</> : null}
+                            {healthScore.risk_level === 'at-risk' ? <><span className="inline-block h-2 w-2 rounded-full bg-warning mr-1" /> {t("Good")}</> : null}
+                            {healthScore.risk_level === 'critical' ? <><span className="inline-block h-2 w-2 rounded-full bg-destructive mr-1" /> {t("Needs Attention")}</> : null}
                         </Badge>
                     </div>
                 </CardHeader>
@@ -337,15 +338,15 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
 
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl text-center">
                             <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
-                                <p className="text-2xl font-bold text-blue-600 font-headline">{healthScore.consecutive_days_used}</p>
+                                <p className="text-2xl font-bold text-info font-headline">{healthScore.consecutive_days_used}</p>
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t("Day Streak")}</p>
                             </div>
                             <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
-                                <p className="text-2xl font-bold text-green-600 font-headline">{healthScore.estimated_students_impacted}</p>
+                                <p className="text-2xl font-bold text-success font-headline">{healthScore.estimated_students_impacted}</p>
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t("Students Impacted")}</p>
                             </div>
                             <div className="p-3 bg-muted border border-border rounded-xl shadow-soft">
-                                <p className="text-2xl font-bold text-purple-600 font-headline">
+                                <p className="text-2xl font-bold text-primary font-headline">
                                     {healthScore.days_since_last_use === 0 ? t('Today') : `${healthScore.days_since_last_use}${t('d ago')}`}
                                 </p>
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t("Last Active")}</p>
@@ -355,7 +356,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
                         {(relativeUpdated || error) && (
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                 {relativeUpdated && <span>{t("Updated")} {relativeUpdated}</span>}
-                                {error && <span className="text-amber-600">{t("Showing last good values")}</span>}
+                                {error && <span className="text-warning">{t("Showing last good values")}</span>}
                                 <button
                                     onClick={() => { setIsRefreshing(true); fetchHealthScore(); }}
                                     disabled={isRefreshing}
@@ -372,7 +373,7 @@ export function TeacherAnalyticsDashboard({ userId }: { userId: string }) {
             </div>
 
             {/* Component Scores */}
-            <div className="w-full bg-card border border-border shadow-soft rounded-2xl overflow-hidden p-6">
+            <div className="w-full bg-card border border-border shadow-soft rounded-surface-lg overflow-hidden p-6">
                 <CardHeader className="px-0 pt-0">
                     <CardTitle className="font-headline">{t("Score Breakdown")}</CardTitle>
                     <CardDescription>

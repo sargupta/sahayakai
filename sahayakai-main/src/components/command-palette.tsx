@@ -95,7 +95,7 @@ const ROUTES: Route[] = [
   // My work
   { href: "/my-library", label: "My Library", i18nKey: "My Library", keywords: "library saved my work folder", group: "My work", icon: Library },
   { href: "/messages", label: "Messages", i18nKey: "Messages", keywords: "messages chat dm", group: "My work", icon: MessageCircle },
-  { href: "/impact-dashboard", label: "Impact", i18nKey: "Impact", keywords: "impact dashboard stats usage", group: "Labs", icon: BarChart },
+  { href: "/impact-dashboard", label: "Impact", i18nKey: "Impact", keywords: "impact dashboard score stats activity engagement growth streak", group: "My work", icon: BarChart },
   { href: "/notifications", label: "Notifications", i18nKey: "Notifications", keywords: "notifications alerts", group: "My work", icon: Bell },
 
   // Account
