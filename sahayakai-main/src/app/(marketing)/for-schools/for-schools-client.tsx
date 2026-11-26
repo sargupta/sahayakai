@@ -16,37 +16,44 @@ import {
 } from "@/lib/school-pricing";
 
 /**
- * /for-schools — the page for the person who approves the spend (principal,
- * trust, school owner). It leads with the two figures that person decides on,
- * hours and rupees per year, and it computes both from the visitor's own
- * inputs with the founder-approved savings model in src/lib/school-pricing.ts.
+ * /for-schools — the page a school reads together.
  *
- * Every figure on this page comes from that module. Do not type an hours or
- * price number into the markup: src/__tests__/landing/
- * time-saved-claims-consistent.test.ts fails the build if one appears.
+ * WHO READS IT (founder review, 2026-11-26)
+ * Usually a teacher finds it first and recommends it upward, so the page has
+ * to be safe and motivating for a teacher before it is useful to the person
+ * who approves the spend. Three rules follow, and copy changes must keep them:
+ *   1. The teacher leads. SahayakAI assists and never replaces. No line may
+ *      count teachers as a cost, a headcount or a "full-time equivalent".
+ *   2. Purpose first: what changes for children, teachers and the school.
+ *      The estimate matters but sits lower on the page, not centre stage.
+ *   3. Every screen: phone, laptop and the classroom display. Never "phone
+ *      only".
  *
- * The figures are estimates and are labelled as estimates. There is no
- * testimonial and no usage claim here: the design system allows neither
- * without signed consent and measured data (guide "The website").
+ * FIGURES
+ * Every hours and price figure comes from the founder-approved model in
+ * src/lib/school-pricing.ts. Do not type one into the markup:
+ * src/__tests__/landing/time-saved-claims-consistent.test.ts fails the build
+ * if one appears. The figures are estimates and are labelled as estimates.
  *
- * No floating controls on this page (no PageAudio, no mic): a fixed button
- * sits on top of the figures on a phone, which is what the founder reported
- * on the homepage on 2026-11-26.
+ * NOT ON THIS PAGE
+ * No customer testimonial and no usage claim (the design system allows
+ * neither without signed consent and measured data). The one quotation is the
+ * founder's own stated belief, credited to him. No floating controls: a fixed
+ * button covers the content on a phone.
  *
- * The page has to work for a teacher who opens it too, not only the person
- * who signs the cheque: the classroom and evening illustrations, the film and
- * the "For your teachers" section are there for that (founder review,
- * 2026-11-26). The two illustrations were generated with Gemini in the style
- * of the SahayakAI film and carry Gemini's mark; they are illustrations, not
- * photographs of a customer.
+ * IMAGES
+ * The three illustrations in /public/images/for-schools were generated with
+ * Gemini in the flat style of the SahayakAI film and keep Gemini's mark. They
+ * are illustrations, not photographs of a customer. The film opens on
+ * YouTube from a local poster, so no third-party frame or script loads here.
  */
 
 const CALENDLY_URL = "https://calendly.com/contact-sargvision/30min";
-/** The SahayakAI film on the SARGVISION YouTube channel. */
-const FILM_ID = "Y24Sox3NRGE";
-const FILM_URL = `https://www.youtube.com/watch?v=${FILM_ID}`;
-const FILM_POSTER = `https://i.ytimg.com/vi/${FILM_ID}/maxresdefault.jpg`;
+/** The SahayakAI film on the SARGVISION YouTube channel, and its length. */
+const FILM_URL = "https://www.youtube.com/watch?v=Y24Sox3NRGE";
+const FILM_LENGTH = "2:43";
 const SCEPTICAL_REALISATION = 0.5;
+const IMG = "/images/for-schools";
 
 const inr = (n: number) => Math.round(n).toLocaleString("en-IN");
 
@@ -68,10 +75,14 @@ function getWhatsAppDeepLink(): string {
   return `https://wa.me/${phone}?text=${message}`;
 }
 
-const EYEBROW = "text-xs font-semibold uppercase tracking-[0.16em] text-saffron-700";
-const H2 = "font-headline font-bold tracking-tight text-web-h2 text-ink-900 max-w-[22ch]";
-const LEAD = "text-base leading-[1.66] text-ink-600 max-w-[62ch]";
-const SECTION = "container-wide py-16 sm:py-[88px] flex flex-col gap-9";
+/* One card language for the whole page: a soft white tile on an off-white
+   ground, a hairline edge, and a gentle lift on hover. */
+const TILE = "rounded-[28px] bg-card border border-black/[0.06] shadow-soft overflow-hidden";
+const TILE_LIFT = `${TILE} transition duration-small ease-out-quart hover:-translate-y-1 hover:shadow-elevated`;
+const EYEBROW = "text-tile font-semibold text-ink-500";
+const H2 = "font-headline font-bold tracking-tight text-web-h2 text-ink-900";
+const LEAD = "text-base sm:text-web-lead text-ink-600 max-w-[60ch]";
+const SECTION = "container-wide py-14 sm:py-20 flex flex-col items-center gap-9 sm:gap-11";
 const PRIMARY_CTA =
   "inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-saffron text-white shadow-elevated hover:bg-saffron-600 transition-colors";
 const OUTLINE_CTA =
@@ -79,82 +90,250 @@ const OUTLINE_CTA =
 
 export function ForSchoolsClient() {
   const { openAuthModal } = useAuth();
-  const whatsAppLink = getWhatsAppDeepLink();
+  const demoHref = getWhatsAppDeepLink();
 
   return (
-    <div className="flex flex-col min-h-screen bg-milk-50">
+    <div className="flex flex-col min-h-screen bg-milk-200">
       <LandingNav onAuthClick={openAuthModal} />
       <main>
-        <HeroWithCalculator demoHref={whatsAppLink} />
+        <Hero demoHref={demoHref} />
         <Film />
+        <Belief />
         <ForTeachers />
-        <HoursBreakdown />
-        <Oversight />
+        <ForTheSchool />
+        <Estimate demoHref={demoHref} />
         <HowToStart />
-        <ClosingBand demoHref={whatsAppLink} />
+        <ClosingBand demoHref={demoHref} />
       </main>
       <LandingFooter />
     </div>
   );
 }
 
-function DemoLink({ href, className, children }: { href: string; className: string; children: React.ReactNode }) {
+function ExternalLink({ href, className, children, label }: { href: string; className: string; children: React.ReactNode; label?: string }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className} aria-label={label}>
       {children}
     </a>
   );
 }
 
-function HeroWithCalculator({ demoHref }: { demoHref: string }) {
-  const { t } = useLanguage();
+/** Centred eyebrow, two-line headline (the second line in saffron), lead. */
+function Heading({ eyebrow, line1, line2, lead, as = "h2" }: { eyebrow: string; line1: string; line2?: string; lead?: string; as?: "h1" | "h2" }) {
+  const Tag = as;
   return (
-    <section className="container-wide pt-10 sm:pt-16 pb-16 sm:pb-24 flex flex-col items-center gap-10 sm:gap-12">
-      {/* The statement beside a classroom, then the simulator straight after. */}
-      <div className="w-full max-w-[1080px] grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        <div className="flex flex-col items-start gap-5">
-          <div className="inline-flex items-center gap-2 text-tile font-medium text-saffron-700 bg-saffron-50 border border-saffron-200 rounded-full px-[14px] py-[7px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-saffron" aria-hidden />
-            {t("For principals, trusts and school owners")}
-          </div>
-          <h1 className="font-headline font-bold tracking-tight text-4xl sm:text-5xl leading-[1.06] text-ink-900">
-            {t("Your teachers' time is your largest cost.")}{" "}
-            <span className="text-saffron">{t("See how much of it comes back.")}</span>
-          </h1>
-          <p className="text-base sm:text-web-lead text-ink-600">
-            {t("SahayakAI takes lesson planning, grading, worksheets and parent calls off each teacher's desk. Enter your school's numbers and see the hours and rupees returned each year, with every assumption shown.")}
-          </p>
-        </div>
-        <img
-          src="/images/for-schools/classroom.webp"
-          alt={t("Illustration: a teacher in her classroom with children raising their hands")}
-          width={1456}
-          height={812}
-          className="w-full h-auto rounded-[28px] shadow-elevated"
-        />
-      </div>
-
-      <SavingsCalculator demoHref={demoHref} />
-
-      <dl className="w-full max-w-[1080px] pt-6 border-t border-border grid grid-cols-3 gap-4 text-center">
-        <Fact value={`${SAVINGS_HOURS_PER_TEACHER_YEAR} ${t("hrs")}`} label={t("estimated per teacher, per year")} />
-        <Fact value={`₹${inr(SCHOOL_PRICING.annualPerTeacher)}`} label={t("per teacher, per year")} />
-        <Fact value="11" label={t("Indian languages")} />
-      </dl>
-    </section>
-  );
-}
-
-function Fact({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="min-w-0">
-      <dt className="font-headline font-bold text-page-title sm:text-metric text-ink-900">{value}</dt>
-      <dd className="mt-1 text-tile text-ink-600">{label}</dd>
+    <div className="flex flex-col items-center text-center gap-4 max-w-[860px]">
+      <div className={EYEBROW}>{eyebrow}</div>
+      <Tag
+        className={
+          as === "h1"
+            ? "font-headline font-bold tracking-tight text-4xl sm:text-5xl lg:text-6xl leading-[1.05] text-ink-900"
+            : H2
+        }
+      >
+        {line1}
+        {line2 ? (
+          <>
+            {" "}
+            <span className="text-saffron sm:block">{line2}</span>
+          </>
+        ) : null}
+      </Tag>
+      {lead ? <p className={LEAD}>{lead}</p> : null}
     </div>
   );
 }
 
-function SavingsCalculator({ demoHref }: { demoHref: string }) {
+function Hero({ demoHref }: { demoHref: string }) {
+  const { t } = useLanguage();
+  return (
+    <section className="container-wide pt-10 sm:pt-16 pb-14 sm:pb-20 flex flex-col items-center gap-8 sm:gap-10">
+      <Heading
+        as="h1"
+        eyebrow={t("For teachers, parents and the people who lead schools")}
+        line1={t("Every child deserves a teacher")}
+        line2={t("with time to teach.")}
+        lead={t("SahayakAI stands beside the teacher. It drafts the paperwork, keeps parents in the loop and gives the school one clear view, so the day goes back to teaching. On a phone, a laptop or the classroom screen.")}
+      />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <a href="#film" className={PRIMARY_CTA}>
+          <Play className="w-4 h-4" fill="currentColor" aria-hidden />
+          {t("Watch the film")}
+        </a>
+        <ExternalLink href={demoHref} className={OUTLINE_CTA}>
+          <MessageCircle className="w-4 h-4" strokeWidth={2.2} aria-hidden />
+          {t("Book a 30-minute demo")}
+        </ExternalLink>
+      </div>
+      <div className="inline-flex items-center gap-2 text-tile font-medium text-leaf-700 bg-card border border-black/[0.06] rounded-full px-4 py-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-leaf-500" aria-hidden />
+        {t("Built to assist teachers. Never to replace them.")}
+      </div>
+      <img
+        src={`${IMG}/classroom.webp`}
+        alt={t("Illustration: a teacher in her classroom with children raising their hands")}
+        width={1456}
+        height={812}
+        className="w-full max-w-[1080px] h-auto rounded-[32px] border border-black/[0.06] shadow-elevated"
+      />
+    </section>
+  );
+}
+
+function Film() {
+  const { t } = useLanguage();
+  return (
+    <section id="film" className="scroll-mt-20">
+      <div className={SECTION}>
+        <Heading
+          eyebrow={t("The film")}
+          line1={t("One co-pilot for teachers, parents and principals.")}
+          lead={t("Under three minutes. Watch a school day with SahayakAI in it.")}
+        />
+        {/* A local poster that opens YouTube: no third-party frame or script. */}
+        <ExternalLink
+          href={FILM_URL}
+          label={t("Play the SahayakAI film on YouTube")}
+          className={`group relative block w-full max-w-[1080px] ${TILE_LIFT}`}
+        >
+          <img
+            src={`${IMG}/staffroom.webp`}
+            alt=""
+            width={1456}
+            height={812}
+            loading="lazy"
+            className="block w-full h-auto"
+          />
+          <span className="absolute inset-0 flex items-center justify-center">
+            <span className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-saffron text-white shadow-elevated transition-transform duration-small group-hover:scale-105">
+              <Play className="h-8 w-8 sm:h-10 sm:w-10 translate-x-0.5" fill="currentColor" aria-hidden />
+            </span>
+          </span>
+          <span className="absolute left-4 bottom-4 sm:left-6 sm:bottom-6 inline-flex items-center gap-2 rounded-full bg-card/90 backdrop-blur px-4 py-2 text-tile font-semibold text-ink-900">
+            {t("Watch the film")} · {FILM_LENGTH}
+          </span>
+        </ExternalLink>
+      </div>
+    </section>
+  );
+}
+
+/** The founder's own stated belief, credited to him. Not a testimonial. */
+function Belief() {
+  const { t } = useLanguage();
+  return (
+    <section className="bg-saffron-50">
+      <div className="container-wide py-16 sm:py-24 flex flex-col items-center text-center gap-5">
+        <div className={EYEBROW}>{t("Why we built it")}</div>
+        <p className="font-headline font-bold tracking-tight text-3xl sm:text-5xl leading-[1.1] text-ink-900 max-w-[20ch]">
+          {t("A child's future shouldn't be decided by its pincode.")}
+        </p>
+        <p className="text-sm text-ink-600">{t("Abhishek Gupta, Founder & CEO, SARGVISION")}</p>
+      </div>
+    </section>
+  );
+}
+
+function TextTile({ title, body, className = "", orb = false }: { title: string; body: string; className?: string; orb?: boolean }) {
+  return (
+    <div className={`${TILE_LIFT} p-7 sm:p-9 flex flex-col justify-end gap-3 ${className}`}>
+      {orb ? (
+        /* VIDYA is drawn as a plain saffron sphere, never with a glyph on it. */
+        <span
+          aria-hidden
+          className="mb-auto h-20 w-20 rounded-full bg-gradient-to-br from-saffron-200 to-saffron shadow-elevated"
+        />
+      ) : null}
+      <h3 className="font-headline font-bold tracking-tight text-2xl sm:text-3xl leading-[1.12] text-ink-900">{title}</h3>
+      <p className="text-base leading-[1.6] text-ink-600">{body}</p>
+    </div>
+  );
+}
+
+function ForTeachers() {
+  const { t } = useLanguage();
+  return (
+    <section id="teachers" className="scroll-mt-20">
+      <div className={SECTION}>
+        <Heading
+          eyebrow={t("For your teachers")}
+          line1={t("The teacher leads.")}
+          line2={t("SahayakAI carries the load.")}
+        />
+        <div className="w-full max-w-[1080px] grid grid-cols-1 lg:grid-cols-6 gap-5">
+          <div className={`${TILE_LIFT} lg:col-span-4 flex flex-col`}>
+            <img
+              src={`${IMG}/evening.webp`}
+              alt={t("Illustration: a teacher at home in the evening, drawing with her daughter")}
+              width={1456}
+              height={812}
+              loading="lazy"
+              className="block w-full h-auto"
+            />
+            <div className="p-7 sm:p-9 flex flex-col gap-3">
+              <h3 className="font-headline font-bold tracking-tight text-2xl sm:text-3xl leading-[1.12] text-ink-900">
+                {t("Paperwork done before you leave school.")}
+              </h3>
+              <p className="text-base leading-[1.6] text-ink-600">
+                {t("Less paperwork after the bell. More of the day for teaching.")}
+              </p>
+            </div>
+          </div>
+          <TextTile
+            className="lg:col-span-2 bg-gradient-to-b from-saffron-50 to-card"
+            orb
+            title={t("You teach. VIDYA drafts.")}
+            body={t("Speak once, in your own language. VIDYA drafts the lesson plan, worksheet or quiz.")}
+          />
+          <TextTile
+            className="lg:col-span-3"
+            title={t("You have the final word.")}
+            body={t("You review and approve everything. Nothing goes out without you.")}
+          />
+          <TextTile
+            className="lg:col-span-3"
+            title={t("Any screen, any language.")}
+            body={t("Phone, laptop or the classroom screen, in 11 Indian languages.")}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ForTheSchool() {
+  const { t } = useLanguage();
+  return (
+    <section id="school" className="scroll-mt-20">
+      <div className={SECTION}>
+        <Heading
+          eyebrow={t("For your school")}
+          line1={t("Teachers, parents and leaders,")}
+          line2={t("moving together.")}
+        />
+        <div className="w-full max-w-[1080px] grid grid-cols-1 lg:grid-cols-6 gap-5">
+          <TextTile
+            className="lg:col-span-3 bg-gradient-to-b from-saffron-50 to-card"
+            title={t("Parents in the loop.")}
+            body={t("When a child has been away, the school calls to ask if all is well, in the parent's own language.")}
+          />
+          <TextTile
+            className="lg:col-span-3"
+            title={t("One view for the school.")}
+            body={t("See how many teachers use it and the hours going back to teaching, across the school.")}
+          />
+          <TextTile
+            className="lg:col-span-6"
+            title={t("Your board, your textbooks.")}
+            body={t("CBSE, ICSE and state boards. Every output names the board and chapter it follows.")}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Estimate({ demoHref }: { demoHref: string }) {
   const [teachers, setTeachers] = useState(50);
   const [salary, setSalary] = useState(30000);
   const [sceptical, setSceptical] = useState(false);
@@ -169,107 +348,129 @@ function SavingsCalculator({ demoHref }: { demoHref: string }) {
       }),
     [teachers, salary, sceptical]
   );
+  const weeklyPerTeacher = s.hoursPerTeacherPerYear / SAVINGS_MODEL.weeksPerYear;
+  const longest = Math.max(...SAVINGS_CAPABILITIES.map((c) => c.hoursPerWeek));
 
   return (
-    <div
-      id="savings"
-      className="w-full max-w-[1080px] scroll-mt-28 rounded-surface-lg bg-card border border-border shadow-elevated overflow-hidden"
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-2">
-        {/* Inputs: the visitor's own school */}
-        <div className="p-6 sm:p-8 flex flex-col gap-5 lg:border-r border-border">
-          <div className="flex flex-col gap-1">
-            <div className={EYEBROW}>{t("Your school, per year")}</div>
-            <h2 className="font-headline font-semibold text-page-title text-ink-900">{t("Savings estimate")}</h2>
-          </div>
-          <Slider
-            id="fs-teachers"
-            label={t("Teachers")}
-            display={inr(teachers)}
-            min={10}
-            max={300}
-            step={5}
-            value={teachers}
-            onChange={setTeachers}
-          />
-          <Slider
-            id="fs-salary"
-            label={t("Average teacher salary, per month")}
-            display={`₹${inr(salary)}`}
-            min={15000}
-            max={80000}
-            step={1000}
-            value={salary}
-            onChange={setSalary}
-          />
-          <label className="flex items-center gap-3 min-h-[44px] text-sm text-ink-900 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={sceptical}
-              onChange={(e) => setSceptical(e.target.checked)}
-              className="h-5 w-5 accent-saffron-600"
-            />
-            {t("Be sceptical: assume only half the hours are saved")}
-          </label>
-        </div>
-
-        {/* The working, line by line, so the result can be checked */}
-        <dl className="p-6 sm:p-8 flex flex-col justify-center border-t lg:border-t-0 border-border" aria-live="polite">
-          <LedgerRow label={t("teacher hours returned")} value={inr(s.hoursReclaimedSchool)} />
-          <LedgerRow label={t("full-time teachers' worth of time")} value={s.fteEquivalent.toFixed(1)} />
-          <LedgerRow label={t("value of that time")} value={inrCompact(s.valueSchoolPerYear, t)} />
-          <LedgerRow label={t("SahayakAI fee, before GST")} value={`− ${inrCompact(s.sahayakaiCostPerYear, t)}`} />
-          <LedgerRow label={t("Net saving after SahayakAI's fee")} value={inrCompact(s.netSavingsPerYear, t)} strong />
-        </dl>
-      </div>
-
-      {/* The answer, on the warm saffron tint the homepage uses */}
-      <div className="bg-saffron-50 border-y border-saffron-200 px-6 sm:px-8 py-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <Headline value={inrCompact(s.netSavingsPerYear, t)} label={t("Net saving after SahayakAI's fee")} large />
-        <Headline value={`₹${s.roiMultiple.toFixed(1)}`} label={t("back for every ₹1 spent")} />
-        <Headline
-          value={t("{n} months").replace("{n}", s.paybackMonths > 0 ? s.paybackMonths.toFixed(1) : "0")}
-          label={t("to pay back the fee")}
+    <section id="estimate" className="bg-saffron-50 scroll-mt-20">
+      <div className={SECTION}>
+        <Heading
+          eyebrow={t("What it adds up to")}
+          line1={t("Time back for teaching,")}
+          line2={t("counted for your school.")}
         />
-      </div>
 
-      <div className="p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
-        <p className="flex-1 text-sm sm:text-card-title text-ink-900">
-          {t("Each month you wait is about {amount} of teacher time spent on work SahayakAI can do.").replace(
-            "{amount}",
-            inrCompact(s.valueSchoolPerYear / 12, t)
-          )}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <DemoLink href={demoHref} className={PRIMARY_CTA}>
-            <MessageCircle className="w-4 h-4" strokeWidth={2.2} aria-hidden />
-            {t("Book a 30-minute demo")}
-          </DemoLink>
-          <a href="#hours" className={OUTLINE_CTA}>
-            {t("See how the estimate is built")}
-          </a>
+        <div id="savings" className={`w-full max-w-[1080px] ${TILE}`}>
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            <div className="p-6 sm:p-9 flex flex-col gap-5 lg:border-r border-black/[0.06]">
+              <div className={EYEBROW}>{t("Your school, per year")}</div>
+              <Slider
+                id="fs-teachers"
+                label={t("Teachers")}
+                display={inr(teachers)}
+                min={10}
+                max={300}
+                step={5}
+                value={teachers}
+                onChange={setTeachers}
+              />
+              <Slider
+                id="fs-salary"
+                label={t("Average teacher salary, per month")}
+                display={`₹${inr(salary)}`}
+                min={15000}
+                max={80000}
+                step={1000}
+                value={salary}
+                onChange={setSalary}
+              />
+              <label className="flex items-center gap-3 min-h-[44px] text-sm text-ink-900 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sceptical}
+                  onChange={(e) => setSceptical(e.target.checked)}
+                  className="h-5 w-5 accent-saffron-600"
+                />
+                {t("Be sceptical: assume only half the hours are saved")}
+              </label>
+            </div>
+
+            <dl className="p-6 sm:p-9 flex flex-col justify-center border-t lg:border-t-0 border-black/[0.06]" aria-live="polite">
+              <LedgerRow label={t("hours returned to teaching")} value={inr(s.hoursReclaimedSchool)} />
+              <LedgerRow label={t("per teacher, every week")} value={`${weeklyPerTeacher.toFixed(1)} ${t("hrs")}`} />
+              <LedgerRow label={t("what that time is worth")} value={inrCompact(s.valueSchoolPerYear, t)} />
+              <LedgerRow label={t("SahayakAI fee, before GST")} value={`− ${inrCompact(s.sahayakaiCostPerYear, t)}`} />
+            </dl>
+          </div>
+
+          <div className="bg-milk-300 border-y border-black/[0.06] px-6 sm:px-9 py-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <Answer value={inrCompact(s.netSavingsPerYear, t)} label={t("worth of teaching time, after the fee")} large />
+            <Answer value={`₹${s.roiMultiple.toFixed(1)}`} label={t("back for every ₹1 spent")} />
+            <Answer
+              value={t("{n} months").replace("{n}", s.paybackMonths > 0 ? s.paybackMonths.toFixed(1) : "0")}
+              label={t("to pay back the fee")}
+            />
+          </div>
+
+          <p className="px-6 sm:px-9 py-5 text-xs leading-[1.5] text-ink-500">
+            {t("An estimate from your inputs, not a measured result. Based on {weekly} hours a week across {tools} tools, over {weeks} teaching weeks, valued at salary ÷ {paid} paid hours a month.")
+              .replace("{weekly}", SAVINGS_WEEKLY_HOURS.toFixed(1))
+              .replace("{tools}", String(SAVINGS_CAPABILITIES.length))
+              .replace("{weeks}", String(SAVINGS_MODEL.weeksPerYear))
+              .replace("{paid}", String(SAVINGS_MODEL.paidHoursPerMonth))}
+          </p>
         </div>
-      </div>
 
-      <p className="px-6 sm:px-8 pb-6 text-xs leading-[1.5] text-ink-500">
-        {t("An estimate from your inputs, not a measured result. Based on {weekly} hours a week across {tools} tools, over {weeks} teaching weeks, valued at salary ÷ {paid} paid hours a month.")
-          .replace("{weekly}", SAVINGS_WEEKLY_HOURS.toFixed(1))
-          .replace("{tools}", String(SAVINGS_CAPABILITIES.length))
-          .replace("{weeks}", String(SAVINGS_MODEL.weeksPerYear))
-          .replace("{paid}", String(SAVINGS_MODEL.paidHoursPerMonth))}
-      </p>
-    </div>
+        {/* How the estimate is built: the nine jobs, itemised */}
+        <div id="hours" className={`w-full max-w-[1080px] ${TILE} p-6 sm:p-9 flex flex-col gap-5 scroll-mt-24`}>
+          <div className="flex flex-col gap-2">
+            <div className={EYEBROW}>{t("Where the hours go")}</div>
+            <p className="text-base leading-[1.6] text-ink-600 max-w-[62ch]">
+              {t("The estimate is itemised, so you can strike out anything your school will not use. The teacher reviews and approves every output.")}
+            </p>
+          </div>
+          <ul className="flex flex-col gap-3">
+            {SAVINGS_CAPABILITIES.map((c) => (
+              <li
+                key={c.name}
+                className="grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,260px)_minmax(0,1fr)_84px] gap-x-4 gap-y-1.5 items-center text-sm sm:text-card-title text-ink-900"
+              >
+                <span>{t(c.name)}</span>
+                <span className="font-semibold sm:order-3 sm:text-right">
+                  {c.hoursPerWeek.toFixed(1)} {t("hrs")}
+                </span>
+                <span aria-hidden className="col-span-2 sm:col-span-1 sm:order-2 block h-2.5 rounded-full bg-milk-400 overflow-hidden">
+                  <span
+                    className="block h-2.5 rounded-full bg-saffron"
+                    style={{ width: `${Math.round((c.hoursPerWeek / longest) * 100)}%` }}
+                  />
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="pt-4 border-t border-black/[0.06] flex flex-wrap justify-between gap-x-6 gap-y-1 text-sm sm:text-card-title font-semibold text-ink-900">
+            <span>{t("Total per teacher")}</span>
+            <span>
+              {t("{weekly} hrs a week · {yearly} hrs a year")
+                .replace("{weekly}", SAVINGS_WEEKLY_HOURS.toFixed(1))
+                .replace("{yearly}", String(SAVINGS_HOURS_PER_TEACHER_YEAR))}
+            </span>
+          </div>
+        </div>
+
+        <ExternalLink href={demoHref} className={PRIMARY_CTA}>
+          <MessageCircle className="w-4 h-4" strokeWidth={2.2} aria-hidden />
+          {t("Book a 30-minute demo")}
+        </ExternalLink>
+      </div>
+    </section>
   );
 }
 
-function LedgerRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+function LedgerRow({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className={`flex items-baseline justify-between gap-4 py-3 border-b border-border last:border-b-0 ${
-        strong ? "text-ink-900 font-semibold" : "text-ink-600"
-      }`}
-    >
-      <dt className="text-sm">{label}</dt>
+    <div className="flex items-baseline justify-between gap-4 py-3.5 border-b border-black/[0.06] last:border-b-0">
+      <dt className="text-sm text-ink-600">{label}</dt>
       <dd className="font-headline font-semibold text-card-title sm:text-output-title text-ink-900 tabular-nums whitespace-nowrap">
         {value}
       </dd>
@@ -277,7 +478,7 @@ function LedgerRow({ label, value, strong }: { label: string; value: string; str
   );
 }
 
-function Headline({ value, label, large }: { value: string; label: string; large?: boolean }) {
+function Answer({ value, label, large }: { value: string; label: string; large?: boolean }) {
   return (
     <div className="min-w-0">
       <div
@@ -333,168 +534,6 @@ function Slider({
   );
 }
 
-function SectionHeader({ eyebrow, title, lead }: { eyebrow: string; title: string; lead?: string }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className={EYEBROW}>{eyebrow}</div>
-      <h2 className={H2}>{title}</h2>
-      {lead ? <p className={LEAD}>{lead}</p> : null}
-    </div>
-  );
-}
-
-function Film() {
-  const { t } = useLanguage();
-  return (
-    <section id="film" className="bg-saffron-50 scroll-mt-20">
-      <div className={`${SECTION} items-center text-center`}>
-        <div className="flex flex-col items-center gap-3">
-          <div className={EYEBROW}>{t("The film")}</div>
-          <h2 className={`${H2} max-w-[26ch]`}>{t("One co-pilot for teachers, parents and principals.")}</h2>
-          <p className={LEAD}>{t("Under three minutes. Watch a school day with SahayakAI in it.")}</p>
-        </div>
-        {/* A poster that opens YouTube: no third-party frame or script on this page. */}
-        <a
-          href={FILM_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={t("Play the SahayakAI film on YouTube")}
-          className="group relative block w-full max-w-[920px] overflow-hidden rounded-[28px] shadow-elevated"
-        >
-          <img
-            src={FILM_POSTER}
-            alt=""
-            width={1280}
-            height={720}
-            loading="lazy"
-            className="block w-full h-auto aspect-video object-cover"
-          />
-          <span className="absolute inset-0 flex items-center justify-center">
-            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-saffron text-white shadow-elevated transition-transform group-hover:scale-105">
-              <Play className="h-8 w-8 translate-x-0.5" fill="currentColor" aria-hidden />
-            </span>
-          </span>
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function ForTeachers() {
-  const { t } = useLanguage();
-  const points = [
-    t("Speak once, in your own language. VIDYA drafts the lesson plan, worksheet or quiz."),
-    t("You review and approve everything. Nothing goes out without you."),
-    t("It works on the phone you already have, in 11 Indian languages."),
-  ];
-  return (
-    <section id="teachers" className="scroll-mt-20">
-      <div className="container-wide py-16 sm:py-[88px] grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-        <img
-          src="/images/for-schools/evening.webp"
-          alt={t("Illustration: a teacher at home in the evening, drawing with her daughter")}
-          width={1456}
-          height={812}
-          loading="lazy"
-          className="w-full h-auto rounded-[28px] shadow-elevated"
-        />
-        <div className="flex flex-col gap-5">
-          <div className={EYEBROW}>{t("For your teachers")}</div>
-          <h2 className={H2}>{t("Less paperwork after the bell. More of the day for teaching.")}</h2>
-          <ul className="flex flex-col gap-3">
-            {points.map((p) => (
-              <li key={p} className="flex gap-3 text-base leading-[1.6] text-ink-600">
-                <span className="mt-[9px] h-2 w-2 flex-none rounded-full bg-leaf-500" aria-hidden />
-                <span>{p}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HoursBreakdown() {
-  const { t } = useLanguage();
-  const longest = Math.max(...SAVINGS_CAPABILITIES.map((c) => c.hoursPerWeek));
-  return (
-    <section id="hours" className="bg-saffron-50 scroll-mt-20">
-      <div className={SECTION}>
-        <SectionHeader
-          eyebrow={t("Where the hours go")}
-          title={t("Nine jobs teachers do after the bell. One assistant that drafts them.")}
-          lead={t("The estimate is itemised, so you can strike out anything your school will not use. The teacher reviews and approves every output.")}
-        />
-        <div className="max-w-[860px] flex flex-col gap-3">
-          <ul className="flex flex-col gap-3">
-            {SAVINGS_CAPABILITIES.map((c) => (
-              <li
-                key={c.name}
-                className="grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)_84px] gap-x-4 gap-y-1.5 items-center text-sm sm:text-card-title text-ink-900"
-              >
-                <span>{t(c.name)}</span>
-                <span className="font-semibold sm:order-3 sm:text-right">{c.hoursPerWeek.toFixed(1)} {t("hrs")}</span>
-                <span
-                  aria-hidden
-                  className="col-span-2 sm:col-span-1 sm:order-2 block h-2.5 rounded-full bg-border overflow-hidden"
-                >
-                  <span
-                    className="block h-2.5 rounded-full bg-saffron-500"
-                    style={{ width: `${Math.round((c.hoursPerWeek / longest) * 100)}%` }}
-                  />
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-1 pt-3.5 border-t border-border flex flex-wrap justify-between gap-x-6 gap-y-1 text-sm sm:text-card-title font-semibold text-ink-900">
-            <span>{t("Total per teacher")}</span>
-            <span>
-              {t("{weekly} hrs a week · {yearly} hrs a year")
-                .replace("{weekly}", SAVINGS_WEEKLY_HOURS.toFixed(1))
-                .replace("{yearly}", String(SAVINGS_HOURS_PER_TEACHER_YEAR))}
-            </span>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Oversight() {
-  const { t } = useLanguage();
-  const sample = [
-    { label: t("Teachers active this week"), value: "22 / 25" },
-    { label: t("Lessons, quizzes and worksheets"), value: "147" },
-    { label: t("Hours saved this week"), value: "138" },
-    { label: t("Parent calls completed"), value: "64" },
-  ];
-  return (
-    <section id="oversight" className="scroll-mt-20">
-      <div className={SECTION}>
-        <SectionHeader
-          eyebrow={t("Oversight")}
-          title={t("You approve the spend. You see what it returns.")}
-          lead={t("The school console shows who is using SahayakAI, what they made and the hours it took off their week, so the saving is checked against your own data.")}
-        />
-        <div className="rounded-surface-lg bg-card border border-border shadow-soft p-6 sm:p-7">
-          <dl className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {sample.map((m) => (
-              <div key={m.label} className="min-w-0">
-                <dt className="text-tile text-ink-600">{m.label}</dt>
-                <dd className="mt-1 font-headline font-bold text-metric sm:text-3xl text-ink-900">{m.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-5 pt-3.5 border-t border-border text-tile text-ink-500">
-            {t("Sample figures, to show the layout. Your school's own numbers appear after the first week.")}
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function HowToStart() {
   const { t } = useLanguage();
   const steps = [
@@ -518,12 +557,12 @@ function HowToStart() {
     },
   ];
   return (
-    <section id="start" className="bg-saffron-50 scroll-mt-20">
+    <section id="start" className="scroll-mt-20">
       <div className={SECTION}>
-        <SectionHeader eyebrow={t("How to start")} title={t("Decide on evidence. Not on a sales deck.")} />
-        <ol className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-8">
+        <Heading eyebrow={t("How to start")} line1={t("Decide on evidence. Not on a sales deck.")} />
+        <ol className="w-full max-w-[1080px] grid grid-cols-1 md:grid-cols-3 gap-5">
           {steps.map((s) => (
-            <li key={s.step} className="flex flex-col gap-2 border-t-2 border-ink-900 pt-4">
+            <li key={s.step} className={`${TILE_LIFT} p-7 flex flex-col gap-2.5`}>
               <span className="text-tile font-semibold text-saffron-700">{s.step}</span>
               <h3 className="font-headline font-semibold text-web-h3 text-ink-900">{s.title}</h3>
               <p className="text-card-title leading-[1.6] text-ink-600">{s.body}</p>
@@ -538,29 +577,29 @@ function HowToStart() {
 function ClosingBand({ demoHref }: { demoHref: string }) {
   const { t } = useLanguage();
   return (
-    <section id="book-demo" className="container-wide py-16 sm:py-[88px] scroll-mt-20">
-      <div className="rounded-[36px] bg-saffron px-6 sm:px-11 py-12 sm:py-16 flex flex-col items-center text-center gap-5">
-        <h2 className="font-headline font-bold tracking-tight text-web-h2 text-milk-100 max-w-[24ch]">
-          {t("Bring your numbers. We will show you ours.")}
+    <section id="book-demo" className="container-wide pb-16 sm:pb-24 scroll-mt-20">
+      <div className="mx-auto max-w-[1080px] rounded-[36px] bg-saffron px-6 sm:px-11 py-14 sm:py-20 flex flex-col items-center text-center gap-5">
+        <h2 className="font-headline font-bold tracking-tight text-web-h2 text-white max-w-[22ch]">
+          {t("Transform your school, one staff room at a time.")}
         </h2>
-        <p className="text-base leading-[1.6] text-milk-100 max-w-[52ch]">
+        <p className="text-base leading-[1.6] text-white max-w-[52ch]">
           {t("A 30-minute demo at your school, with the founder, on your own syllabus.")}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <DemoLink
+          <ExternalLink
             href={demoHref}
-            className="inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-milk-100 text-saffron-800 hover:bg-milk-50 transition-colors"
+            className="inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-white text-saffron-800 hover:bg-milk-50 transition-colors"
           >
             <MessageCircle className="w-4 h-4" strokeWidth={2.2} aria-hidden />
             {t("Book a 30-minute demo")}
-          </DemoLink>
-          <DemoLink
+          </ExternalLink>
+          <ExternalLink
             href={CALENDLY_URL}
-            className="inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full border border-milk-100/50 text-milk-100 hover:bg-saffron-600 transition-colors"
+            className="inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full border border-white/60 text-white hover:bg-saffron-600 transition-colors"
           >
             <Calendar className="w-4 h-4" strokeWidth={2.2} aria-hidden />
             {t("Pick a time on the calendar")}
-          </DemoLink>
+          </ExternalLink>
         </div>
       </div>
     </section>
