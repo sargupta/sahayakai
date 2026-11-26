@@ -134,6 +134,28 @@ afterEach(() => {
     delete process.env.SAMPARK_LIVE_DIAL_ENABLED;
 });
 
+/**
+ * The request carries signed `t=` tokens whose signature is random base64url.
+ * About once in a few thousand runs that signature happens to contain "ptm"
+ * (it did on 2026-11-26, blocking an unrelated pull request), so the "no child
+ * data in the request" assertions must look at the request WITHOUT the tokens.
+ * Covers `?t=`, `&t=` and their URL-encoded forms inside a form-encoded body.
+ */
+function withoutSignedTokens(serialised: string): string {
+    return serialised.replace(/(\?|&|%3F|%26)t(=|%3D)[^&"\s]*/gi, '$1t$2<token>');
+}
+
+describe('withoutSignedTokens', () => {
+    it('removes a token whose signature spells a guarded word, and keeps real leaks visible', () => {
+        const leakInToken = 'StatusCallback=https%3A%2F%2Fx.test%2Fstatus%3Ft%3Dsampark%7Edemo%7Eabc.1.WU2ptmEj6Vo&TimeLimit=660';
+        expect(withoutSignedTokens(leakInToken)).not.toMatch(/ptm/i);
+        const realLeak = 'CustomField=ptm-reminder&StatusCallback=https%3A%2F%2Fx.test%2Fstatus%3Ft%3Dabc';
+        expect(withoutSignedTokens(realLeak)).toMatch(/ptm/i);
+        expect(withoutSignedTokens('{"answer_url":"https://x.test/answer?t=abc.ptm","note":"Asha"}')).toMatch(/Asha/);
+        expect(withoutSignedTokens('{"answer_url":"https://x.test/answer?t=abc.ptm"}')).not.toMatch(/ptm/i);
+    });
+});
+
 describe('four providers at the SamparkAI entry', () => {
     it('offers all four; each unconfigured one names its missing settings (never values)', () => {
         const opts = providerOptions({ ...baseEnv });
@@ -187,7 +209,7 @@ describe('Plivo', () => {
         expect(body.hangup_url).toContain('/api/webhooks/plivo-riya/status?kind=hangup&t=');
         expect(body.ring_url).toContain('/api/webhooks/plivo-riya/status?kind=ring&t=');
         expect(body.time_limit).toBe(660);
-        expect(JSON.stringify(body)).not.toMatch(/Asha|2026-10-10|ptm/i);
+        expect(withoutSignedTokens(JSON.stringify(body))).not.toMatch(/Asha|2026-10-10|ptm/i);
         expect(r.call.provider).toBe('plivo');
         expect(r.call.state).toBe('initiated');
         expect(r.call.providerConversationId).toBe(`plivo:${PLIVO_UUID}`);
@@ -281,7 +303,7 @@ describe('Exotel', () => {
         expect(form.getAll('StatusCallbackEvents[]')).toEqual(['terminal', 'answered']);
         expect(form.get('StatusCallbackContentType')).toBe('application/json');
         expect(form.get('TimeLimit')).toBe('660');
-        expect(String(init.body)).not.toMatch(/Asha|2026-10-10|ptm/i);
+        expect(withoutSignedTokens(String(init.body))).not.toMatch(/Asha|2026-10-10|ptm/i);
         expect(r.call.provider).toBe('exotel');
         expect(r.call.providerConversationId).toBe(`exotel:${EXOTEL_SID}`);
     });
