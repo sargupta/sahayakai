@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calendar, MessageCircle } from "lucide-react";
+import { Calendar, MessageCircle, Play } from "lucide-react";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { useAuth } from "@/context/auth-context";
@@ -32,9 +32,20 @@ import {
  * No floating controls on this page (no PageAudio, no mic): a fixed button
  * sits on top of the figures on a phone, which is what the founder reported
  * on the homepage on 2026-11-26.
+ *
+ * The page has to work for a teacher who opens it too, not only the person
+ * who signs the cheque: the classroom and evening illustrations, the film and
+ * the "For your teachers" section are there for that (founder review,
+ * 2026-11-26). The two illustrations were generated with Gemini in the style
+ * of the SahayakAI film and carry Gemini's mark; they are illustrations, not
+ * photographs of a customer.
  */
 
 const CALENDLY_URL = "https://calendly.com/contact-sargvision/30min";
+/** The SahayakAI film on the SARGVISION YouTube channel. */
+const FILM_ID = "Y24Sox3NRGE";
+const FILM_URL = `https://www.youtube.com/watch?v=${FILM_ID}`;
+const FILM_POSTER = `https://i.ytimg.com/vi/${FILM_ID}/maxresdefault.jpg`;
 const SCEPTICAL_REALISATION = 0.5;
 
 const inr = (n: number) => Math.round(n).toLocaleString("en-IN");
@@ -62,7 +73,7 @@ const H2 = "font-headline font-bold tracking-tight text-web-h2 text-ink-900 max-
 const LEAD = "text-base leading-[1.66] text-ink-600 max-w-[62ch]";
 const SECTION = "container-wide py-16 sm:py-[88px] flex flex-col gap-9";
 const PRIMARY_CTA =
-  "inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-saffron-600 text-white shadow-elevated hover:bg-saffron-700 transition-colors";
+  "inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-saffron text-white shadow-elevated hover:bg-saffron-600 transition-colors";
 const OUTLINE_CTA =
   "inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full bg-card border border-border text-ink-900 hover:bg-milk-300 transition-colors";
 
@@ -71,10 +82,12 @@ export function ForSchoolsClient() {
   const whatsAppLink = getWhatsAppDeepLink();
 
   return (
-    <div className="flex flex-col min-h-screen bg-milk-200">
+    <div className="flex flex-col min-h-screen bg-milk-50">
       <LandingNav onAuthClick={openAuthModal} />
       <main>
         <HeroWithCalculator demoHref={whatsAppLink} />
+        <Film />
+        <ForTeachers />
         <HoursBreakdown />
         <Oversight />
         <HowToStart />
@@ -96,20 +109,29 @@ function DemoLink({ href, className, children }: { href: string; className: stri
 function HeroWithCalculator({ demoHref }: { demoHref: string }) {
   const { t } = useLanguage();
   return (
-    <section className="container-wide pt-12 sm:pt-20 pb-16 sm:pb-24 flex flex-col items-center gap-10 sm:gap-12">
-      {/* One statement, centred, then the simulator. Nothing else competes. */}
-      <div className="flex flex-col items-center text-center gap-5 max-w-[820px]">
-        <div className="inline-flex items-center gap-2 text-tile font-medium text-ink-600 bg-card border border-border rounded-full px-[14px] py-[7px]">
-          <span className="w-1.5 h-1.5 rounded-full bg-leaf-500" aria-hidden />
-          {t("For principals, trusts and school owners")}
+    <section className="container-wide pt-10 sm:pt-16 pb-16 sm:pb-24 flex flex-col items-center gap-10 sm:gap-12">
+      {/* The statement beside a classroom, then the simulator straight after. */}
+      <div className="w-full max-w-[1080px] grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="flex flex-col items-start gap-5">
+          <div className="inline-flex items-center gap-2 text-tile font-medium text-saffron-700 bg-saffron-50 border border-saffron-200 rounded-full px-[14px] py-[7px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-saffron" aria-hidden />
+            {t("For principals, trusts and school owners")}
+          </div>
+          <h1 className="font-headline font-bold tracking-tight text-4xl sm:text-5xl leading-[1.06] text-ink-900">
+            {t("Your teachers' time is your largest cost.")}{" "}
+            <span className="text-saffron">{t("See how much of it comes back.")}</span>
+          </h1>
+          <p className="text-base sm:text-web-lead text-ink-600">
+            {t("SahayakAI takes lesson planning, grading, worksheets and parent calls off each teacher's desk. Enter your school's numbers and see the hours and rupees returned each year, with every assumption shown.")}
+          </p>
         </div>
-        <h1 className="font-headline font-bold tracking-tight text-4xl sm:text-5xl lg:text-6xl leading-[1.05] text-ink-900">
-          {t("Your teachers' time is your largest cost.")}{" "}
-          <span className="text-saffron-600">{t("See how much of it comes back.")}</span>
-        </h1>
-        <p className="text-base sm:text-web-lead text-ink-600 max-w-[60ch]">
-          {t("SahayakAI takes lesson planning, grading, worksheets and parent calls off each teacher's desk. Enter your school's numbers and see the hours and rupees returned each year, with every assumption shown.")}
-        </p>
+        <img
+          src="/images/for-schools/classroom.webp"
+          alt={t("Illustration: a teacher in her classroom with children raising their hands")}
+          width={1456}
+          height={812}
+          className="w-full h-auto rounded-[28px] shadow-elevated"
+        />
       </div>
 
       <SavingsCalculator demoHref={demoHref} />
@@ -201,8 +223,8 @@ function SavingsCalculator({ demoHref }: { demoHref: string }) {
         </dl>
       </div>
 
-      {/* The answer: the one dark surface on the page */}
-      <div className="bg-ink-900 text-milk-100 px-6 sm:px-8 py-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
+      {/* The answer, on the warm saffron tint the homepage uses */}
+      <div className="bg-saffron-50 border-y border-saffron-200 px-6 sm:px-8 py-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
         <Headline value={inrCompact(s.netSavingsPerYear, t)} label={t("Net saving after SahayakAI's fee")} large />
         <Headline value={`₹${s.roiMultiple.toFixed(1)}`} label={t("back for every ₹1 spent")} />
         <Headline
@@ -260,12 +282,12 @@ function Headline({ value, label, large }: { value: string; label: string; large
     <div className="min-w-0">
       <div
         className={`font-headline font-bold tracking-tight tabular-nums ${
-          large ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"
+          large ? "text-4xl sm:text-5xl text-saffron" : "text-3xl sm:text-4xl text-ink-900"
         }`}
       >
         {value}
       </div>
-      <div className="mt-1.5 text-tile text-milk-100/80">{label}</div>
+      <div className="mt-1.5 text-tile text-ink-600">{label}</div>
     </div>
   );
 }
@@ -321,11 +343,83 @@ function SectionHeader({ eyebrow, title, lead }: { eyebrow: string; title: strin
   );
 }
 
+function Film() {
+  const { t } = useLanguage();
+  return (
+    <section id="film" className="bg-saffron-50 scroll-mt-20">
+      <div className={`${SECTION} items-center text-center`}>
+        <div className="flex flex-col items-center gap-3">
+          <div className={EYEBROW}>{t("The film")}</div>
+          <h2 className={`${H2} max-w-[26ch]`}>{t("One co-pilot for teachers, parents and principals.")}</h2>
+          <p className={LEAD}>{t("Under three minutes. Watch a school day with SahayakAI in it.")}</p>
+        </div>
+        {/* A poster that opens YouTube: no third-party frame or script on this page. */}
+        <a
+          href={FILM_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("Play the SahayakAI film on YouTube")}
+          className="group relative block w-full max-w-[920px] overflow-hidden rounded-[28px] shadow-elevated"
+        >
+          <img
+            src={FILM_POSTER}
+            alt=""
+            width={1280}
+            height={720}
+            loading="lazy"
+            className="block w-full h-auto aspect-video object-cover"
+          />
+          <span className="absolute inset-0 flex items-center justify-center">
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-saffron text-white shadow-elevated transition-transform group-hover:scale-105">
+              <Play className="h-8 w-8 translate-x-0.5" fill="currentColor" aria-hidden />
+            </span>
+          </span>
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function ForTeachers() {
+  const { t } = useLanguage();
+  const points = [
+    t("Speak once, in your own language. VIDYA drafts the lesson plan, worksheet or quiz."),
+    t("You review and approve everything. Nothing goes out without you."),
+    t("It works on the phone you already have, in 11 Indian languages."),
+  ];
+  return (
+    <section id="teachers" className="scroll-mt-20">
+      <div className="container-wide py-16 sm:py-[88px] grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+        <img
+          src="/images/for-schools/evening.webp"
+          alt={t("Illustration: a teacher at home in the evening, drawing with her daughter")}
+          width={1456}
+          height={812}
+          loading="lazy"
+          className="w-full h-auto rounded-[28px] shadow-elevated"
+        />
+        <div className="flex flex-col gap-5">
+          <div className={EYEBROW}>{t("For your teachers")}</div>
+          <h2 className={H2}>{t("Less paperwork after the bell. More of the day for teaching.")}</h2>
+          <ul className="flex flex-col gap-3">
+            {points.map((p) => (
+              <li key={p} className="flex gap-3 text-base leading-[1.6] text-ink-600">
+                <span className="mt-[9px] h-2 w-2 flex-none rounded-full bg-leaf-500" aria-hidden />
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function HoursBreakdown() {
   const { t } = useLanguage();
   const longest = Math.max(...SAVINGS_CAPABILITIES.map((c) => c.hoursPerWeek));
   return (
-    <section id="hours" className="bg-milk-400 scroll-mt-20">
+    <section id="hours" className="bg-saffron-50 scroll-mt-20">
       <div className={SECTION}>
         <SectionHeader
           eyebrow={t("Where the hours go")}
@@ -424,7 +518,7 @@ function HowToStart() {
     },
   ];
   return (
-    <section id="start" className="bg-milk-400 scroll-mt-20">
+    <section id="start" className="bg-saffron-50 scroll-mt-20">
       <div className={SECTION}>
         <SectionHeader eyebrow={t("How to start")} title={t("Decide on evidence. Not on a sales deck.")} />
         <ol className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-8">
@@ -445,7 +539,7 @@ function ClosingBand({ demoHref }: { demoHref: string }) {
   const { t } = useLanguage();
   return (
     <section id="book-demo" className="container-wide py-16 sm:py-[88px] scroll-mt-20">
-      <div className="rounded-[36px] bg-saffron-600 px-6 sm:px-11 py-12 sm:py-16 flex flex-col items-center text-center gap-5">
+      <div className="rounded-[36px] bg-saffron px-6 sm:px-11 py-12 sm:py-16 flex flex-col items-center text-center gap-5">
         <h2 className="font-headline font-bold tracking-tight text-web-h2 text-milk-100 max-w-[24ch]">
           {t("Bring your numbers. We will show you ours.")}
         </h2>
@@ -462,7 +556,7 @@ function ClosingBand({ demoHref }: { demoHref: string }) {
           </DemoLink>
           <DemoLink
             href={CALENDLY_URL}
-            className="inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full border border-milk-100/50 text-milk-100 hover:bg-saffron-700 transition-colors"
+            className="inline-flex items-center justify-center gap-2 min-h-[48px] text-sm font-semibold px-6 rounded-full border border-milk-100/50 text-milk-100 hover:bg-saffron-600 transition-colors"
           >
             <Calendar className="w-4 h-4" strokeWidth={2.2} aria-hidden />
             {t("Pick a time on the calendar")}
