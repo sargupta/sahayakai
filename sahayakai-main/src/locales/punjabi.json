@@ -1505,7 +1505,7 @@
   "{name} joined SahayakAI from {school}": "{name} ਨੇ {school} ਤੋਂ SahayakAI ਜੁਆਇਨ ਕੀਤਾ",
   "{percent}% use {feature}": "{percent}% {feature} ਵਰਤਦੇ ਹਨ",
   "{{earned}} of {{total}} points": "{{total}} ਵਿੱਚੋਂ {{earned}} ਅੰਕ",
-  "~200 hrs/year": "~200 ਘੰਟੇ/ਸਾਲ",
+  "~400 hrs/year": "~400 ਘੰਟੇ/ਸਾਲ",
   "/ month": "/ ਮਹੀਨਾ",
   "/minute": "/ਮਿੰਟ",
   "/month, billed annually": "/ਮਹੀਨਾ, ਸਾਲਾਨਾ ਬਿਲਿੰਗ",
@@ -2394,7 +2394,7 @@
   "Generate an assessment": "ਮੁਲਾਂਕਣ ਬਣਾਓ",
   "One professional infrastructure for the entire school day": "ਸਾਰੇ ਸਕੂਲ ਦਿਨ ਲਈ ਇੱਕ ਪੇਸ਼ੇਵਰ ਪ੍ਰਣਾਲੀ",
   "Rubric-based AI grading for homework, papers and worksheets": "ਹੋਮਵਰਕ, ਪੇਪਰ ਅਤੇ ਵਰਕਸ਼ੀਟਾਂ ਲਈ ਰੂਬਰਿਕ-ਅਧਾਰਤ AI ਗਰੇਡਿੰਗ",
-  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across 28 state boards.": "SahayakAI ਭਾਰਤੀ ਅਧਿਆਪਕਾਂ ਲਈ AI ਸਹਿ-ਅਧਿਆਪਕ ਹੈ — ਪਾਠ ਯੋਜਨਾਵਾਂ, ਮੁਲਾਂਕਣ, ਮਾਪਿਆਂ ਨਾਲ ਸੰਪਰਕ ਅਤੇ 11 ਭਾਸ਼ਾਵਾਂ, 28 ਰਾਜ ਬੋਰਡਾਂ ਵਿੱਚ ਸਮਾਂ ਬਚਾਓ।",
+  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across CBSE, ICSE and 28 state boards.": "SahayakAI ਭਾਰਤੀ ਅਧਿਆਪਕਾਂ ਲਈ AI ਸਹਿ-ਅਧਿਆਪਕ ਹੈ — ਪਾਠ ਯੋਜਨਾਵਾਂ, ਮੁਲਾਂਕਣ, ਮਾਪਿਆਂ ਨਾਲ ਸੰਪਰਕ ਅਤੇ 11 ਭਾਸ਼ਾਵਾਂ, CBSE, ICSE ਅਤੇ 28 ਰਾਜ ਬੋਰਡਾਂ ਵਿੱਚ ਸਮਾਂ ਬਚਾਓ।",
   "Summarise my class": "ਮੇਰੀ ਕਲਾਸ ਦਾ ਸਾਰ",
   "A teacher's day": "ਇੱਕ ਅਧਿਆਪਕ ਦਾ ਦਿਨ",
   "Speak a request — VIDYA does the work behind it.": "ਬੋਲੋ — ਬਾਕੀ ਕੰਮ VIDYA ਖੁਦ ਕਰ ਲੈਂਦਾ ਹੈ।",
@@ -3821,5 +3821,7 @@
   "We verify the school": "ਅਸੀਂ ਸਕੂਲ ਦੀ ਤਸਦੀਕ ਕਰਦੇ ਹਾਂ",
   "We check the board affiliation and call the school office.": "ਅਸੀਂ ਬੋਰਡ ਦੀ ਮਾਨਤਾ ਜਾਂਚਦੇ ਹਾਂ ਅਤੇ ਸਕੂਲ ਦਫ਼ਤਰ ਨੂੰ ਫ਼ੋਨ ਕਰਦੇ ਹਾਂ।",
   "Your pilot opens": "ਤੁਹਾਡਾ ਪਾਇਲਟ ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ",
-  "You invite your teachers with one link.": "ਤੁਸੀਂ ਇੱਕ ਲਿੰਕ ਰਾਹੀਂ ਆਪਣੇ ਅਧਿਆਪਕਾਂ ਨੂੰ ਸੱਦਾ ਦਿੰਦੇ ਹੋ।"
+  "You invite your teachers with one link.": "ਤੁਸੀਂ ਇੱਕ ਲਿੰਕ ਰਾਹੀਂ ਆਪਣੇ ਅਧਿਆਪਕਾਂ ਨੂੰ ਸੱਦਾ ਦਿੰਦੇ ਹੋ।",
+  "CBSE, ICSE": "CBSE, ICSE",
+  "and 28 state boards": "ਅਤੇ 28 ਰਾਜ ਬੋਰਡ"
 }

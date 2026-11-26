@@ -1505,7 +1505,7 @@
   "{name} joined SahayakAI from {school}": "{name} {school} থেকে SahayakAI-তে যোগ দিয়েছেন",
   "{percent}% use {feature}": "{percent}% {feature} ব্যবহার করে",
   "{{earned}} of {{total}} points": "{{total}} এর মধ্যে {{earned}} পয়েন্ট",
-  "~200 hrs/year": "~২০০ ঘণ্টা/বছর",
+  "~400 hrs/year": "~৪০০ ঘণ্টা/বছর",
   "/ month": "/ মাস",
   "/minute": "/মিনিট",
   "/month, billed annually": "/মাস, বার্ষিক বিল করা হয়",
@@ -2394,7 +2394,7 @@
   "Generate an assessment": "মূল্যায়ন তৈরি করুন",
   "One professional infrastructure for the entire school day": "পুরো স্কুল দিনের জন্য একটি পেশাদার অবকাঠামো",
   "Rubric-based AI grading for homework, papers and worksheets": "হোমওয়ার্ক, পেপার ও ওয়ার্কশিটের জন্য রুব্রিক-ভিত্তিক AI গ্রেডিং",
-  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across 28 state boards.": "SahayakAI হল ভারতীয় শিক্ষকদের জন্য AI সহ-শিক্ষক — শিক্ষণ পরিকল্পনা, মূল্যায়ন, অভিভাবক যোগাযোগ ও 11 ভাষা, 28 রাজ্য বোর্ডে সময় বাঁচান।",
+  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across CBSE, ICSE and 28 state boards.": "SahayakAI হল ভারতীয় শিক্ষকদের জন্য AI সহ-শিক্ষক — শিক্ষণ পরিকল্পনা, মূল্যায়ন, অভিভাবক যোগাযোগ ও 11 ভাষা, CBSE, ICSE এবং 28 রাজ্য বোর্ডে সময় বাঁচান।",
   "Summarise my class": "আমার ক্লাসের সারসংক্ষেপ",
   "A teacher's day": "একজন শিক্ষকের দিন",
   "Speak a request — VIDYA does the work behind it.": "বলুন — বাকি কাজ VIDYA নিজেই করে নেয়।",
@@ -3821,5 +3821,7 @@
   "We verify the school": "আমরা স্কুলটি যাচাই করি",
   "We check the board affiliation and call the school office.": "আমরা বোর্ডের অনুমোদন যাচাই করি এবং স্কুল অফিসে ফোন করি।",
   "Your pilot opens": "আপনার পাইলট শুরু হয়",
-  "You invite your teachers with one link.": "আপনি একটি লিঙ্ক দিয়ে আপনার শিক্ষকদের আমন্ত্রণ জানান।"
+  "You invite your teachers with one link.": "আপনি একটি লিঙ্ক দিয়ে আপনার শিক্ষকদের আমন্ত্রণ জানান।",
+  "CBSE, ICSE": "CBSE, ICSE",
+  "and 28 state boards": "এবং 28টি রাজ্য বোর্ড"
 }

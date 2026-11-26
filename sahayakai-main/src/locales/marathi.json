@@ -1505,7 +1505,7 @@
   "{name} joined SahayakAI from {school}": "{name} यांनी {school} मधून SahayakAI जॉइन केले",
   "{percent}% use {feature}": "{percent}% {feature} वापरतात",
   "{{earned}} of {{total}} points": "{{total}} पैकी {{earned}} गुण",
-  "~200 hrs/year": "~200 तास/वर्ष",
+  "~400 hrs/year": "~400 तास/वर्ष",
   "/ month": "/ महिना",
   "/minute": "/मिनिट",
   "/month, billed annually": "/महिना, वार्षिक बिलिंग",
@@ -2394,7 +2394,7 @@
   "Generate an assessment": "मूल्यांकन तयार करा",
   "One professional infrastructure for the entire school day": "संपूर्ण शाळेच्या दिवसासाठी एक व्यावसायिक प्रणाली",
   "Rubric-based AI grading for homework, papers and worksheets": "गृहपाठ, प्रश्नपत्रिका आणि वर्कशीटसाठी रुब्रिक-आधारित AI ग्रेडिंग",
-  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across 28 state boards.": "SahayakAI हा भारतीय शिक्षकांसाठी AI सह-शिक्षक आहे — धडे, मूल्यांकन, पालक संपर्क आणि 11 भाषा व 28 राज्य मंडळांमध्ये वेळ वाचवा.",
+  "SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across CBSE, ICSE and 28 state boards.": "SahayakAI हा भारतीय शिक्षकांसाठी AI सह-शिक्षक आहे — धडे, मूल्यांकन, पालक संपर्क आणि 11 भाषा व CBSE, ICSE आणि 28 राज्य मंडळांमध्ये वेळ वाचवा.",
   "Summarise my class": "माझ्या वर्गाचा सारांश",
   "A teacher's day": "शिक्षकाचा दिवस",
   "Speak a request — VIDYA does the work behind it.": "बोला — उरलेले काम VIDYA स्वतः करते.",
@@ -3821,5 +3821,7 @@
   "We verify the school": "आम्ही शाळेची पडताळणी करतो",
   "We check the board affiliation and call the school office.": "आम्ही बोर्ड संलग्नता तपासतो आणि शाळेच्या कार्यालयाला फोन करतो.",
   "Your pilot opens": "तुमचा पायलट सुरू होतो",
-  "You invite your teachers with one link.": "तुम्ही एका लिंकद्वारे तुमच्या शिक्षकांना आमंत्रित करता."
+  "You invite your teachers with one link.": "तुम्ही एका लिंकद्वारे तुमच्या शिक्षकांना आमंत्रित करता.",
+  "CBSE, ICSE": "CBSE, ICSE",
+  "and 28 state boards": "आणि 28 राज्य बोर्ड"
 }

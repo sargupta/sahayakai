@@ -8,8 +8,16 @@
  * which returns 503 unless VIDYA_VOICE_PUBLIC_ENABLED === 'true'. cloudbuild.yaml
  * set that in neither region, and the sidecar that accepts the public token
  * was not deployed either, so every visitor who tapped the orb granted the mic
- * and got "Voice isn't available right now". The same change had also removed
- * the working floating mic (GlobalVoiceInterface) from the signed-out home.
+ * and got "Voice isn't available right now".
+ *
+ * FOLLOW-UP (founder report, 2026-11-26)
+ * While the orb was off, the signed-out home fell back to the legacy
+ * turn-based floating mic (GlobalVoiceInterface). The founder saw it in
+ * production: it is not VIDYA, and on phones it covered the hero's proof
+ * strip. It is retired. Signed-out pages now carry no floating voice control;
+ * the hero orb is the only public voice entry, behind the flag above. The last
+ * describe block gates the class: no floating mic of any kind in the
+ * signed-out shell.
  *
  * WHAT THIS GATE CATCHES
  * Not "this orb" but the class: a client voice control that ships while the
@@ -96,8 +104,12 @@ jest.mock("next/dynamic", () => {
 jest.mock("next/navigation", () => ({ usePathname: () => "/", useSelectedLayoutSegment: () => null }));
 jest.mock("next/link", () => ({ __esModule: true, default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 jest.mock("@/context/auth-context", () => ({ useAuth: () => ({ user: null, loading: false }) }));
-jest.mock("@/components/global-voice-interface", () => ({
-  GlobalVoiceInterface: () => <div data-testid="global-voice-interface" />,
+// Any MicrophoneInput mounted with `isFloating` is a fixed, screen-covering
+// voice control; the signed-out shell must never render one.
+jest.mock("@/components/microphone-input", () => ({
+  MicrophoneInput: ({ isFloating }: { isFloating?: boolean }) => (
+    <div data-testid={isFloating ? "floating-mic" : "inline-mic"} />
+  ),
 }));
 jest.mock("@/components/omni-orb", () => ({ OmniOrb: () => null }));
 jest.mock("@/components/app-sidebar", () => ({ AppSidebar: () => null }));
@@ -288,31 +300,51 @@ describe("public VIDYA voice orb is gated on its server route being live", () =>
   });
 });
 
-describe("signed-out home keeps a working voice entry while the public orb is off", () => {
-  it("renders the turn-based floating mic (GlobalVoiceInterface) when the flag is off", async () => {
-    delete process.env[FLAG];
+describe("signed-out shell never mounts a floating voice control", () => {
+  const renderShell = async () => {
     render(
       <AppShell>
         <div />
       </AppShell>,
     );
-    expect(await screen.findByTestId("global-voice-interface")).toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+    });
+  };
+
+  it("renders no floating mic while the public orb flag is off", async () => {
+    delete process.env[FLAG];
+    await renderShell();
+    expect(screen.queryByTestId("floating-mic")).toBeNull();
   });
 
-  it("does not stack the floating mic on top of the hero orb when the flag is on", async () => {
+  it("renders no floating mic while the public orb flag is on", async () => {
     process.env[FLAG] = "1";
     try {
-      render(
-        <AppShell>
-          <div />
-        </AppShell>,
-      );
-      await act(async () => {
-        await Promise.resolve();
-      });
-      expect(screen.queryByTestId("global-voice-interface")).toBeNull();
+      await renderShell();
+      expect(screen.queryByTestId("floating-mic")).toBeNull();
     } finally {
       delete process.env[FLAG];
     }
+  });
+
+  it("the retired legacy mic component is gone and nothing imports it", () => {
+    expect(existsSync(path.join(SRC, "components", "global-voice-interface.tsx"))).toBe(false);
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = path.join(dir, name);
+        if (statSync(full).isDirectory()) {
+          if (name === "__tests__" || name === "node_modules") continue;
+          walk(full);
+        } else if (/\.(ts|tsx)$/.test(name)) {
+          if (/from\s+["']@\/components\/global-voice-interface["']|import\(["']@\/components\/global-voice-interface["']\)/.test(readFileSync(full, "utf8"))) {
+            offenders.push(path.relative(APP_ROOT, full));
+          }
+        }
+      }
+    };
+    walk(SRC);
+    expect(offenders).toEqual([]);
   });
 });
