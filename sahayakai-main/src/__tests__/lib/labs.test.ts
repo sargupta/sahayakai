@@ -3,8 +3,8 @@ import { getCapability, getSection } from '@/lib/vidya/app-manifest';
 
 describe('labs registry', () => {
     it('matches parked routes and their subroutes', () => {
-        expect(isLabsRoute('/video-storyteller')).toBe(true);
-        expect(isLabsRoute('/video-storyteller/history')).toBe(true);
+        expect(isLabsRoute('/visual-aid-designer')).toBe(true);
+        expect(isLabsRoute('/visual-aid-designer/history')).toBe(true);
     });
 
     it('keeps Teacher Training out of Labs (restored to the main nav)', () => {
@@ -20,6 +20,8 @@ describe('labs registry', () => {
     it.each([
         ['virtual-field-trip', '/virtual-field-trip'],
         ['assessment-scanner', '/assessment-scanner'],
+        ['video-storyteller', '/video-storyteller'],
+        ['impact-dashboard', '/impact-dashboard'],
     ] as const)('keeps %s out of Labs (restored to the main nav)', (id, href) => {
         expect(isLabsRoute(href)).toBe(false);
         expect(isLabsRoute(`${href}/anything`)).toBe(false);

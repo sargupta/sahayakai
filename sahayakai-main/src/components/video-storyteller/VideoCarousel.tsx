@@ -65,8 +65,8 @@ export const VideoCarousel: React.FC<VideoCarouselProps> = ({
                         </CarouselItem>
                     ))}
                 </CarouselContent>
-                <CarouselPrevious className="hidden md:flex -left-5 bg-card border-border hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
-                <CarouselNext className="hidden md:flex -right-5 bg-card border-border hover:bg-primary hover:text-white transition-all shadow-md disabled:opacity-0" />
+                <CarouselPrevious className="hidden md:flex -left-5 bg-card border-border hover:bg-primary hover:text-primary-foreground transition-all shadow-md disabled:opacity-0" />
+                <CarouselNext className="hidden md:flex -right-5 bg-card border-border hover:bg-primary hover:text-primary-foreground transition-all shadow-md disabled:opacity-0" />
             </Carousel>
         </div>
     );
