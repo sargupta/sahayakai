@@ -96,40 +96,29 @@ function DemoLink({ href, className, children }: { href: string; className: stri
 function HeroWithCalculator({ demoHref }: { demoHref: string }) {
   const { t } = useLanguage();
   return (
-    <section className="container-wide pt-12 sm:pt-[72px] pb-16 sm:pb-[84px] grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-14 items-start">
-      <div className="flex flex-col gap-6 min-w-0">
-        <div className="self-start inline-flex items-center gap-2 text-tile font-medium text-ink-600 bg-card border border-border rounded-full px-[14px] py-[7px]">
+    <section className="container-wide pt-12 sm:pt-20 pb-16 sm:pb-24 flex flex-col items-center gap-10 sm:gap-12">
+      {/* One statement, centred, then the simulator. Nothing else competes. */}
+      <div className="flex flex-col items-center text-center gap-5 max-w-[820px]">
+        <div className="inline-flex items-center gap-2 text-tile font-medium text-ink-600 bg-card border border-border rounded-full px-[14px] py-[7px]">
           <span className="w-1.5 h-1.5 rounded-full bg-leaf-500" aria-hidden />
           {t("For principals, trusts and school owners")}
         </div>
-
         <h1 className="font-headline font-bold tracking-tight text-4xl sm:text-5xl lg:text-6xl leading-[1.05] text-ink-900">
           {t("Your teachers' time is your largest cost.")}{" "}
           <span className="text-saffron-600">{t("See how much of it comes back.")}</span>
         </h1>
-
-        <p className="text-base sm:text-web-lead text-ink-600 max-w-[54ch]">
+        <p className="text-base sm:text-web-lead text-ink-600 max-w-[60ch]">
           {t("SahayakAI takes lesson planning, grading, worksheets and parent calls off each teacher's desk. Enter your school's numbers and see the hours and rupees returned each year, with every assumption shown.")}
         </p>
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          <DemoLink href={demoHref} className={PRIMARY_CTA}>
-            <MessageCircle className="w-4 h-4" strokeWidth={2.2} aria-hidden />
-            {t("Book a 30-minute demo")}
-          </DemoLink>
-          <a href="#hours" className={OUTLINE_CTA}>
-            {t("See how the estimate is built")}
-          </a>
-        </div>
-
-        <dl className="mt-2 pt-4 border-t border-border grid grid-cols-3 gap-4">
-          <Fact value={`${SAVINGS_HOURS_PER_TEACHER_YEAR} ${t("hrs")}`} label={t("estimated per teacher, per year")} />
-          <Fact value={`₹${inr(SCHOOL_PRICING.annualPerTeacher)}`} label={t("per teacher, per year")} />
-          <Fact value="11" label={t("Indian languages")} />
-        </dl>
       </div>
 
-      <SavingsCalculator />
+      <SavingsCalculator demoHref={demoHref} />
+
+      <dl className="w-full max-w-[1080px] pt-6 border-t border-border grid grid-cols-3 gap-4 text-center">
+        <Fact value={`${SAVINGS_HOURS_PER_TEACHER_YEAR} ${t("hrs")}`} label={t("estimated per teacher, per year")} />
+        <Fact value={`₹${inr(SCHOOL_PRICING.annualPerTeacher)}`} label={t("per teacher, per year")} />
+        <Fact value="11" label={t("Indian languages")} />
+      </dl>
     </section>
   );
 }
@@ -143,7 +132,7 @@ function Fact({ value, label }: { value: string; label: string }) {
   );
 }
 
-function SavingsCalculator() {
+function SavingsCalculator({ demoHref }: { demoHref: string }) {
   const [teachers, setTeachers] = useState(50);
   const [salary, setSalary] = useState(30000);
   const [sceptical, setSceptical] = useState(false);
@@ -162,77 +151,121 @@ function SavingsCalculator() {
   return (
     <div
       id="savings"
-      className="min-w-0 scroll-mt-28 rounded-surface-lg bg-card border border-border shadow-elevated p-6 sm:p-7 flex flex-col gap-5"
+      className="w-full max-w-[1080px] scroll-mt-28 rounded-surface-lg bg-card border border-border shadow-elevated overflow-hidden"
     >
-      <div className="flex flex-col gap-1">
-        <div className={EYEBROW}>{t("Your school, per year")}</div>
-        <h2 className="font-headline font-semibold text-page-title text-ink-900">{t("Savings estimate")}</h2>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <Slider
-          id="fs-teachers"
-          label={t("Teachers")}
-          display={inr(teachers)}
-          min={10}
-          max={300}
-          step={5}
-          value={teachers}
-          onChange={setTeachers}
-        />
-        <Slider
-          id="fs-salary"
-          label={t("Average teacher salary, per month")}
-          display={`₹${inr(salary)}`}
-          min={15000}
-          max={80000}
-          step={1000}
-          value={salary}
-          onChange={setSalary}
-        />
-      </div>
-
-      <div className="rounded-surface-md bg-milk-300 border border-border px-5 py-[18px]" aria-live="polite">
-        <div className="text-tile text-ink-600">{t("Net saving after SahayakAI's fee")}</div>
-        <div className="mt-1 font-headline font-bold tracking-tight text-4xl sm:text-5xl text-leaf-700">
-          {inrCompact(s.netSavingsPerYear, t)}
+      <div className="grid grid-cols-1 lg:grid-cols-2">
+        {/* Inputs: the visitor's own school */}
+        <div className="p-6 sm:p-8 flex flex-col gap-5 lg:border-r border-border">
+          <div className="flex flex-col gap-1">
+            <div className={EYEBROW}>{t("Your school, per year")}</div>
+            <h2 className="font-headline font-semibold text-page-title text-ink-900">{t("Savings estimate")}</h2>
+          </div>
+          <Slider
+            id="fs-teachers"
+            label={t("Teachers")}
+            display={inr(teachers)}
+            min={10}
+            max={300}
+            step={5}
+            value={teachers}
+            onChange={setTeachers}
+          />
+          <Slider
+            id="fs-salary"
+            label={t("Average teacher salary, per month")}
+            display={`₹${inr(salary)}`}
+            min={15000}
+            max={80000}
+            step={1000}
+            value={salary}
+            onChange={setSalary}
+          />
+          <label className="flex items-center gap-3 min-h-[44px] text-sm text-ink-900 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={sceptical}
+              onChange={(e) => setSceptical(e.target.checked)}
+              className="h-5 w-5 accent-saffron-600"
+            />
+            {t("Be sceptical: assume only half the hours are saved")}
+          </label>
         </div>
-        <div className="mt-1 text-sm text-ink-600">
-          {t("₹{roi} of teacher time back for every ₹1 spent").replace("{roi}", s.roiMultiple.toFixed(1))}
+
+        {/* The working, line by line, so the result can be checked */}
+        <dl className="p-6 sm:p-8 flex flex-col justify-center border-t lg:border-t-0 border-border" aria-live="polite">
+          <LedgerRow label={t("teacher hours returned")} value={inr(s.hoursReclaimedSchool)} />
+          <LedgerRow label={t("full-time teachers' worth of time")} value={s.fteEquivalent.toFixed(1)} />
+          <LedgerRow label={t("value of that time")} value={inrCompact(s.valueSchoolPerYear, t)} />
+          <LedgerRow label={t("SahayakAI fee, before GST")} value={`− ${inrCompact(s.sahayakaiCostPerYear, t)}`} />
+          <LedgerRow label={t("Net saving after SahayakAI's fee")} value={inrCompact(s.netSavingsPerYear, t)} strong />
+        </dl>
+      </div>
+
+      {/* The answer: the one dark surface on the page */}
+      <div className="bg-ink-900 text-milk-100 px-6 sm:px-8 py-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <Headline value={inrCompact(s.netSavingsPerYear, t)} label={t("Net saving after SahayakAI's fee")} large />
+        <Headline value={`₹${s.roiMultiple.toFixed(1)}`} label={t("back for every ₹1 spent")} />
+        <Headline
+          value={t("{n} months").replace("{n}", s.paybackMonths > 0 ? s.paybackMonths.toFixed(1) : "0")}
+          label={t("to pay back the fee")}
+        />
+      </div>
+
+      <div className="p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
+        <p className="flex-1 text-sm sm:text-card-title text-ink-900">
+          {t("Each month you wait is about {amount} of teacher time spent on work SahayakAI can do.").replace(
+            "{amount}",
+            inrCompact(s.valueSchoolPerYear / 12, t)
+          )}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <DemoLink href={demoHref} className={PRIMARY_CTA}>
+            <MessageCircle className="w-4 h-4" strokeWidth={2.2} aria-hidden />
+            {t("Book a 30-minute demo")}
+          </DemoLink>
+          <a href="#hours" className={OUTLINE_CTA}>
+            {t("See how the estimate is built")}
+          </a>
         </div>
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-5 gap-y-4">
-        <Result value={inr(s.hoursReclaimedSchool)} label={t("teacher hours returned")} />
-        <Result value={s.fteEquivalent.toFixed(1)} label={t("full-time teachers' worth of time")} />
-        <Result value={inrCompact(s.valueSchoolPerYear, t)} label={t("value of that time")} />
-        <Result value={inrCompact(s.sahayakaiCostPerYear, t)} label={t("SahayakAI fee, before GST")} />
-      </dl>
-
-      <p className="pt-4 border-t border-border text-sm text-ink-900">
-        {t("Each month you wait is about {amount} of teacher time spent on work SahayakAI can do.").replace(
-          "{amount}",
-          inrCompact(s.valueSchoolPerYear / 12, t)
-        )}
-      </p>
-
-      <label className="flex items-center gap-3 min-h-[44px] text-sm text-ink-900 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={sceptical}
-          onChange={(e) => setSceptical(e.target.checked)}
-          className="h-5 w-5 accent-saffron-600"
-        />
-        {t("Be sceptical: assume only half the hours are saved")}
-      </label>
-
-      <p className="text-xs leading-[1.5] text-ink-500">
+      <p className="px-6 sm:px-8 pb-6 text-xs leading-[1.5] text-ink-500">
         {t("An estimate from your inputs, not a measured result. Based on {weekly} hours a week across {tools} tools, over {weeks} teaching weeks, valued at salary ÷ {paid} paid hours a month.")
           .replace("{weekly}", SAVINGS_WEEKLY_HOURS.toFixed(1))
           .replace("{tools}", String(SAVINGS_CAPABILITIES.length))
           .replace("{weeks}", String(SAVINGS_MODEL.weeksPerYear))
           .replace("{paid}", String(SAVINGS_MODEL.paidHoursPerMonth))}
       </p>
+    </div>
+  );
+}
+
+function LedgerRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div
+      className={`flex items-baseline justify-between gap-4 py-3 border-b border-border last:border-b-0 ${
+        strong ? "text-ink-900 font-semibold" : "text-ink-600"
+      }`}
+    >
+      <dt className="text-sm">{label}</dt>
+      <dd className="font-headline font-semibold text-card-title sm:text-output-title text-ink-900 tabular-nums whitespace-nowrap">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function Headline({ value, label, large }: { value: string; label: string; large?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <div
+        className={`font-headline font-bold tracking-tight tabular-nums ${
+          large ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"
+        }`}
+      >
+        {value}
+      </div>
+      <div className="mt-1.5 text-tile text-milk-100/80">{label}</div>
     </div>
   );
 }
@@ -262,7 +295,7 @@ function Slider({
         <label htmlFor={id} className="text-ink-600">
           {label}
         </label>
-        <span className="font-semibold text-ink-900">{display}</span>
+        <span className="font-headline font-semibold text-card-title text-ink-900 tabular-nums">{display}</span>
       </div>
       <input
         id={id}
@@ -274,15 +307,6 @@ function Slider({
         onChange={(e) => onChange(Number(e.target.value))}
         className="mt-1 h-11 w-full accent-saffron-600 cursor-pointer"
       />
-    </div>
-  );
-}
-
-function Result({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="min-w-0">
-      <dt className="font-headline font-semibold text-page-title text-ink-900">{value}</dt>
-      <dd className="mt-0.5 text-tile text-ink-600">{label}</dd>
     </div>
   );
 }
