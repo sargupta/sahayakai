@@ -123,6 +123,7 @@
     "src/features/mcp-demo/lesson-planner/mcp-lesson-planner-view.tsx": { "l": ["vocab-languages"] },
     "src/lib/attendance/call-refusal-messages.ts": { "label": ["attendance-call-refusal-labels"] },
     "src/app/(marketing)/school-pricing/school-pricing-client.tsx": { "c.name": ["school-pricing-savings"] },
+    "src/app/(marketing)/for-schools/for-schools-client.tsx": { "c.name": ["school-pricing-savings"] },
     "src/app/(marketing)/terms/terms-client.tsx": { "key": ["terms-tldr"] },
     "src/app/assess-assignment/assess-client.tsx": { "s": ["assess-processing-stages"] },
     "src/app/assessment-scanner/page.tsx": { "s": { "sources": ["assessment-subjects"], "count": 2 } },

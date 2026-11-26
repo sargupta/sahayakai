@@ -151,6 +151,13 @@ export interface SchoolSavingsInput {
     teachers: number;
     /** Average teacher salary per month, in ₹. */
     salaryPerMonth: number;
+    /**
+     * Share of the modelled hours the school expects to realise, 0–1.
+     * Defaults to 1 (the full methodology figure). The /for-schools page
+     * offers 0.5 as its "be sceptical" scenario; out-of-range input is
+     * clamped so the page can never show more than the methodology claims.
+     */
+    realisation?: number;
 }
 
 export interface SchoolSavingsResult {
@@ -185,7 +192,9 @@ export function estimateSchoolSavings(input: SchoolSavingsInput): SchoolSavingsR
     const teachers = nonNegInt(input.teachers);
     const salaryPerMonth = nonNeg(input.salaryPerMonth);
     const hourlyCost = salaryPerMonth / SAVINGS_MODEL.paidHoursPerMonth;
-    const hoursPerTeacherPerYear = SAVINGS_HOURS_PER_TEACHER_YEAR;
+    const r = input.realisation;
+    const realisation = r === undefined || !Number.isFinite(r) ? 1 : Math.min(1, Math.max(0, r));
+    const hoursPerTeacherPerYear = Math.round(SAVINGS_HOURS_PER_TEACHER_YEAR * realisation);
     const hoursReclaimedSchool = teachers * hoursPerTeacherPerYear;
     const valuePerTeacherPerYear = hoursPerTeacherPerYear * hourlyCost;
     const valueSchoolPerYear = teachers * valuePerTeacherPerYear;
