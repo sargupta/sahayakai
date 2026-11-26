@@ -22,6 +22,7 @@ import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 import { LANGUAGE_CODE_MAP } from "@/types";
 import { useLanguage } from "@/context/language-context";
+import { AuthGate } from "@/components/auth/auth-gate";
 
 interface VideoRecommendations {
   categories: {
@@ -174,6 +175,20 @@ function VideoStorytellerPageInner() {
   const handleVideoSelect = (video: YouTubeVideo) => {
     window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank");
   };
+
+  // Signed-out teachers get the standard sign-in prompt (same flow as Impact,
+  // Library and AI Coach) instead of an empty page under the filters.
+  if (!user) {
+    return (
+      <AuthGate
+        icon={Video}
+        title={t("Sign in to continue")}
+        description={t("Curated educational videos for Indian classrooms")}
+      >
+        {null}
+      </AuthGate>
+    );
+  }
 
   // ── Expanded category view ──────────────────────────────────────────────────
   if (expandedCategory && recommendations) {
