@@ -95,23 +95,37 @@ const OUTLINE_CTA =
 
 export function ForSchoolsClient() {
   const { openAuthModal } = useAuth();
-  const demoHref = getWhatsAppDeepLink();
 
   return (
     <div className="flex flex-col min-h-screen bg-milk-50">
       <LandingNav onAuthClick={openAuthModal} />
-      <main>
-        <Hero demoHref={demoHref} />
-        <Film />
-        <Belief />
-        <ForTeachers />
-        <ForTheSchool />
-        <Estimate demoHref={demoHref} />
-        <HowToStart />
-        <ClosingBand demoHref={demoHref} />
-      </main>
+      <SchoolsStory />
       <LandingFooter />
     </div>
+  );
+}
+
+/**
+ * The page body, without nav or footer. Rendered here and on the signed-out
+ * homepage (src/components/landing/landing-page.tsx), so a visitor sees one
+ * story at both addresses. The empty #product anchor is the target of the
+ * shared nav's "Product" link (/#product).
+ */
+export function SchoolsStory() {
+  const demoHref = getWhatsAppDeepLink();
+
+  return (
+    <main>
+      <Hero demoHref={demoHref} />
+      <Film />
+      <Belief />
+      <div id="product" className="scroll-mt-20" aria-hidden />
+      <ForTeachers />
+      <ForTheSchool />
+      <Estimate demoHref={demoHref} />
+      <HowToStart />
+      <ClosingBand demoHref={demoHref} />
+    </main>
   );
 }
 

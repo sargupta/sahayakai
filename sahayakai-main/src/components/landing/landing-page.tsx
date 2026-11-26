@@ -1,37 +1,25 @@
 "use client";
 
-import { useLandingTitleIndex } from "@/hooks/use-landing-title-index";
+import { SchoolsStory } from "@/app/(marketing)/for-schools/for-schools-client";
 import { LandingNav } from "./landing-nav";
-import { LandingHero } from "./landing-hero";
-import { LandingFeatures } from "./landing-features";
-import { LandingQuote } from "./landing-quote";
 import { LandingFooter } from "./landing-footer";
-import { ScriptMarks } from "./script-marks";
 import { SignedOutBanner } from "./signed-out-banner";
 
 type Props = {
   onAuthClick: () => void;
 };
 
+/**
+ * The signed-out homepage. It shows the same story as /for-schools
+ * (founder decision, 2026-11-27: the page people land on is the new design,
+ * not a separate older one), so the two addresses can never disagree.
+ */
 export function LandingPage({ onAuthClick }: Props) {
-  const titleIndex = useLandingTitleIndex();
-
   return (
-    <div className="force-light flex flex-col min-h-screen">
+    <div className="force-light flex flex-col min-h-screen bg-milk-50">
       <SignedOutBanner />
       <LandingNav onAuthClick={onAuthClick} />
-
-      {/* Warm stage: a breathing saffron glow, floating Indian-script marks,
-          and a fine film-grain overlay — layered behind the content. */}
-      <div className="relative flex-1 overflow-hidden bg-[hsl(40_20%_99.5%)]">
-        <div className="ambient-glow" aria-hidden />
-        <ScriptMarks />
-        <div className="ambient-grain" aria-hidden />
-        <LandingHero titleIndex={titleIndex} onAuthClick={onAuthClick} />
-        <LandingFeatures />
-        <LandingQuote />
-      </div>
-
+      <SchoolsStory />
       <LandingFooter />
     </div>
   );

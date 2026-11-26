@@ -31,6 +31,12 @@
  * The whole LandingPage is rendered (not just the hero), and any source file
  * that opens a public-scope VIDYA session is checked, so a second mount point
  * cannot dodge the flag.
+ *
+ * HOMEPAGE CHANGE (founder decision, 2026-11-27)
+ * The signed-out homepage now shows the /for-schools story, which mounts no
+ * voice orb. So the homepage must offer no orb with the flag on or off; the
+ * flag is still checked on LandingHero, the one component that mounts the orb,
+ * so the gate holds if the hero is ever placed on a page again.
  */
 import React from "react";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -134,6 +140,7 @@ jest.mock("@/components/community/community-messages-panel", () => ({ CommunityM
 jest.mock("@/components/community/messages-header-button", () => ({ MessagesHeaderButton: () => null }));
 
 import { LandingPage } from "@/components/landing/landing-page";
+import { LandingHero } from "@/components/landing/landing-hero";
 import { AppShell } from "@/app/app-shell";
 
 // ── Deploy config ─────────────────────────────────────────────────────────
@@ -213,11 +220,17 @@ function withBuildFlag<T>(on: boolean, fn: () => T): T {
   }
 }
 
-/** True when the landing offers the public voice orb. */
-function landingRendersPublicOrb(buildFlagOn: boolean): boolean {
+/** True when the rendered tree offers the public voice orb. */
+function landingRendersPublicOrb(buildFlagOn: boolean, tree: "page" | "hero" = "page"): boolean {
   mockPublicSessions.length = 0;
   return withBuildFlag(buildFlagOn, () => {
-    const { unmount } = render(<LandingPage onAuthClick={() => {}} />);
+    const { unmount } = render(
+      tree === "page" ? (
+        <LandingPage onAuthClick={() => {}} />
+      ) : (
+        <LandingHero titleIndex={0} onAuthClick={() => {}} />
+      ),
+    );
     const offered =
       mockPublicSessions.length > 0 ||
       screen.queryByRole("button", { name: /talk to vidya/i }) !== null ||
@@ -253,15 +266,28 @@ describe("public VIDYA voice orb is gated on its server route being live", () =>
       // An orb on the page with the route off = mic prompt, then 503.
       expect(server.missing).toEqual([]);
     }
-    expect(rendered).toBe(shipped && server.ok);
+    // The homepage may offer the orb only when the build and both regions
+    // allow it. It need not offer it at all.
+    if (rendered) expect(shipped && server.ok).toBe(true);
+    const heroRendered = landingRendersPublicOrb(shipped, "hero");
+    if (heroRendered) expect(server.missing).toEqual([]);
+    expect(heroRendered).toBe(shipped && server.ok);
   });
 
-  it("with the build flag off, the landing renders no public voice orb", () => {
+  it("with the build flag off, neither the homepage nor the hero renders a public voice orb", () => {
     expect(landingRendersPublicOrb(false)).toBe(false);
+    expect(landingRendersPublicOrb(false, "hero")).toBe(false);
   });
 
-  it("with the build flag on, the landing renders the orb (the flag is the switch)", () => {
-    expect(landingRendersPublicOrb(true)).toBe(true);
+  it("with the build flag on, the hero renders the orb (the flag is the switch)", () => {
+    expect(landingRendersPublicOrb(true, "hero")).toBe(true);
+  });
+
+  it("the homepage shows the /for-schools story and no voice orb, even with the flag on", () => {
+    expect(landingRendersPublicOrb(true)).toBe(false);
+    const { unmount } = render(<LandingPage onAuthClick={() => {}} />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("Every child deserves a teacher");
+    unmount();
   });
 
   it("a build that bakes the flag on must also declare the route in both regions", () => {
