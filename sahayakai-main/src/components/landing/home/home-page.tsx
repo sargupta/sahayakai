@@ -221,30 +221,19 @@ function Hero() {
   return (
     <section
       className="wrap"
-      style={{ paddingTop: "56px", paddingBottom: "40px" }}
+      style={{ paddingTop: "48px", paddingBottom: "48px" }}
     >
-      <h1
-        style={{
-          margin: 0,
-          fontSize: "clamp(44px, 7.4vw, 104px)",
-          lineHeight: 1,
-          maxWidth: "1040px",
-        }}
-      >
-        {t("Quality education for every classroom in India.")}
-      </h1>
       <div
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: "40px",
-          marginTop: "44px",
-          alignItems: "flex-start",
+          gap: "40px 48px",
+          alignItems: "center",
         }}
       >
         <div
           style={{
-            flex: "1 1 340px",
+            flex: "1 1 420px",
             minWidth: 0,
             display: "flex",
             flexDirection: "column",
@@ -252,10 +241,20 @@ function Hero() {
             alignItems: "flex-start",
           }}
         >
+          <h1
+            style={{
+              margin: 0,
+              fontSize: "var(--fs-display)",
+              lineHeight: 1.04,
+              maxWidth: "620px",
+            }}
+          >
+            {t("Quality education for every classroom in India.")}
+          </h1>
           <p
             style={{
               margin: 0,
-              fontSize: "20px",
+              fontSize: "var(--fs-lead)",
               lineHeight: 1.55,
               color: "var(--hp-body)",
             }}
@@ -297,15 +296,15 @@ function Hero() {
               setHeld(false);
           }}
           style={{
-            flex: "2 1 560px",
+            flex: "1.15 1 480px",
             minWidth: 0,
             position: "relative",
             overflow: "hidden",
             borderRadius: "32px",
-            padding: "36px",
+            padding: "28px",
             display: "flex",
             flexDirection: "column",
-            gap: "20px",
+            gap: "16px",
             background:
               "radial-gradient(45% 55% at 85% 12%, rgba(255,139,43,.34), transparent 62%), radial-gradient(55% 65% at 0% 100%, var(--hp-indigo-92), transparent 62%), radial-gradient(40% 50% at 100% 100%, var(--hp-green-86), transparent 60%), var(--hp-cream)",
             boxShadow:
@@ -313,11 +312,11 @@ function Hero() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <Orb size={64} pulse />
+            <Orb size={52} pulse />
             <div>
               <h2
                 className="d"
-                style={{ margin: 0, fontSize: "28px", lineHeight: 1.1 }}
+                style={{ margin: 0, fontSize: "var(--fs-h3)", lineHeight: 1.1 }}
               >
                 {t("Try VIDYA")}
               </h2>
@@ -368,7 +367,7 @@ function Hero() {
                 className="d"
                 style={{
                   margin: 0,
-                  fontSize: "clamp(22px, 2.4vw, 30px)",
+                  fontSize: "var(--fs-said)",
                   lineHeight: 1.22,
                 }}
               >
@@ -530,7 +529,7 @@ function Film() {
       <h2
         style={{
           margin: 0,
-          fontSize: "clamp(32px, 4.2vw, 56px)",
+          fontSize: "var(--fs-h2)",
           lineHeight: 1.05,
         }}
       >
@@ -586,7 +585,7 @@ function Film() {
               <div
                 className="d"
                 style={{
-                  fontSize: "clamp(34px, 4.4vw, 58px)",
+                  fontSize: "var(--fs-quote)",
                   lineHeight: 1.02,
                 }}
               >
@@ -855,7 +854,7 @@ function Calculator() {
       <h2
         style={{
           margin: "0 0 10px",
-          fontSize: "clamp(32px, 4.2vw, 56px)",
+          fontSize: "var(--fs-h2)",
           lineHeight: 1.05,
         }}
       >
@@ -864,7 +863,7 @@ function Calculator() {
       <p
         style={{
           margin: "0 0 36px",
-          fontSize: "20px",
+          fontSize: "var(--fs-lead)",
           color: "var(--hp-body)",
         }}
       >
@@ -1043,7 +1042,7 @@ function Calculator() {
             <div
               className="d num"
               style={{
-                fontSize: "clamp(48px, 6.4vw, 84px)",
+                fontSize: "var(--fs-metric)",
                 lineHeight: 1,
                 marginTop: "6px",
               }}
@@ -1065,7 +1064,7 @@ function Calculator() {
               <div style={tileLabel}>{t("Teacher time returned")}</div>
               <div
                 className="d num"
-                style={{ fontSize: "30px", lineHeight: 1.1 }}
+                style={{ fontSize: "26px", lineHeight: 1.1 }}
               >
                 {t("{n} hours").replace(
                   "{n}",
@@ -1080,7 +1079,7 @@ function Calculator() {
               <div style={tileLabel}>{t("Value of that time")}</div>
               <div
                 className="d num"
-                style={{ fontSize: "30px", lineHeight: 1.1 }}
+                style={{ fontSize: "26px", lineHeight: 1.1 }}
               >
                 {money(r.valueSchoolPerYear, t)}
               </div>
@@ -1092,7 +1091,7 @@ function Calculator() {
               <div style={tileLabel}>{t("SahayakAI subscription")}</div>
               <div
                 className="d num"
-                style={{ fontSize: "30px", lineHeight: 1.1 }}
+                style={{ fontSize: "26px", lineHeight: 1.1 }}
               >
                 {money(r.sahayakaiCostPerYear, t)}
               </div>
@@ -1177,7 +1176,7 @@ function Community() {
           <h2
             style={{
               margin: 0,
-              fontSize: "clamp(32px, 4.2vw, 56px)",
+              fontSize: "var(--fs-h2)",
               lineHeight: 1.05,
             }}
           >
@@ -1186,7 +1185,7 @@ function Community() {
           <p
             style={{
               margin: 0,
-              fontSize: "20px",
+              fontSize: "var(--fs-lead)",
               color: "var(--hp-saffron-22)",
               maxWidth: "520px",
             }}

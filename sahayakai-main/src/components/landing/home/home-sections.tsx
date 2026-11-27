@@ -88,7 +88,7 @@ export function HomeQuote() {
           <blockquote
             style={{
               margin: "0",
-              fontSize: "clamp(34px, 4.8vw, 66px)",
+              fontSize: "var(--fs-quote)",
               lineHeight: 1.05,
             }}
           >
@@ -390,7 +390,7 @@ export function HomeCapabilities() {
       <h2
         style={{
           margin: "0 0 14px",
-          fontSize: "clamp(32px, 4.2vw, 56px)",
+          fontSize: "var(--fs-h2)",
           lineHeight: 1.05,
           maxWidth: "860px",
           marginBottom: "10px",
@@ -401,7 +401,7 @@ export function HomeCapabilities() {
       <p
         style={{
           margin: "0 0 40px",
-          fontSize: "20px",
+          fontSize: "var(--fs-lead)",
           color: "var(--hp-body)",
         }}
       >
@@ -410,7 +410,7 @@ export function HomeCapabilities() {
       <div className="grid2">
         <article className="card">
           <div>
-            <h3 style={{ margin: "0", fontSize: "36px", lineHeight: 1.08 }}>
+            <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
               {t("Calls to parents")}
             </h3>
             <p
@@ -1057,7 +1057,7 @@ export function HomeCapabilities() {
         </article>
         <article className="card">
           <div>
-            <h3 style={{ margin: "0", fontSize: "36px", lineHeight: 1.08 }}>
+            <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
               {t("VIDYA")}
             </h3>
             <p
@@ -1532,7 +1532,7 @@ export function HomeCapabilities() {
         </article>
         <article className="card">
           <div>
-            <h3 style={{ margin: "0", fontSize: "36px", lineHeight: 1.08 }}>
+            <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
               {t("Exam papers")}
             </h3>
             <p
@@ -1965,7 +1965,7 @@ export function HomeCapabilities() {
         </article>
         <article className="card">
           <div>
-            <h3 style={{ margin: "0", fontSize: "36px", lineHeight: 1.08 }}>
+            <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
               {t("AI Mentor")}
             </h3>
             <p
@@ -2217,7 +2217,7 @@ export function HomeCapabilities() {
         >
           <div style={{ flex: "1 1 420px", minWidth: "0" }}>
             <h3
-              style={{ margin: "0 0 6px", fontSize: "30px", lineHeight: 1.1 }}
+              style={{ margin: "0 0 6px", fontSize: "var(--fs-h3)", lineHeight: 1.1 }}
             >
               {t("And the tools of every school day")}
             </h3>
@@ -2259,7 +2259,7 @@ export function HomeNep() {
         <h2
           style={{
             margin: "0 0 36px",
-            fontSize: "clamp(32px, 4.2vw, 56px)",
+            fontSize: "var(--fs-h2)",
             lineHeight: 1.05,
             maxWidth: "820px",
           }}
@@ -2314,7 +2314,7 @@ export function HomeNep() {
             <div
               className="d num"
               style={{
-                fontSize: "52px",
+                fontSize: "var(--fs-stat)",
                 lineHeight: 1,
                 color: "var(--hp-success)",
               }}
@@ -2384,7 +2384,7 @@ export function HomeNep() {
             <div
               className="d num"
               style={{
-                fontSize: "52px",
+                fontSize: "var(--fs-stat)",
                 lineHeight: 1,
                 color: "var(--hp-accent-deep)",
               }}
@@ -2454,7 +2454,7 @@ export function HomeNep() {
             <div
               className="d num"
               style={{
-                fontSize: "52px",
+                fontSize: "var(--fs-stat)",
                 lineHeight: 1,
                 color: "var(--hp-indigo-36)",
               }}
@@ -2522,7 +2522,7 @@ export function HomeNep() {
             <div
               className="d num"
               style={{
-                fontSize: "52px",
+                fontSize: "var(--fs-stat)",
                 lineHeight: 1,
                 color: "var(--hp-red-32)",
               }}
@@ -2592,7 +2592,7 @@ export function HomeNep() {
             <div
               className="d num"
               style={{
-                fontSize: "52px",
+                fontSize: "var(--fs-stat)",
                 lineHeight: 1,
                 color: "var(--hp-success)",
               }}
