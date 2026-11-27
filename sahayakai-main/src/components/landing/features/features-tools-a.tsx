@@ -13,7 +13,7 @@ export function ToolCardsA({ sel, pick }: CompareProps) {
     <>
       <article className="card">
         <div>
-          <h3 style={{ margin: "0", fontSize: "30px", lineHeight: 1.08 }}>
+          <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
             {t("Lesson plan")}
           </h3>
           <p
@@ -481,7 +481,7 @@ export function ToolCardsA({ sel, pick }: CompareProps) {
       </article>
       <article className="card">
         <div>
-          <h3 style={{ margin: "0", fontSize: "30px", lineHeight: 1.08 }}>
+          <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
             {t("Quiz")}
           </h3>
           <p
@@ -1073,7 +1073,7 @@ export function ToolCardsA({ sel, pick }: CompareProps) {
       </article>
       <article className="card">
         <div>
-          <h3 style={{ margin: "0", fontSize: "30px", lineHeight: 1.08 }}>
+          <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
             {t("Virtual field trip")}
           </h3>
           <p
@@ -1554,7 +1554,7 @@ export function ToolCardsA({ sel, pick }: CompareProps) {
       </article>
       <article className="card">
         <div>
-          <h3 style={{ margin: "0", fontSize: "30px", lineHeight: 1.08 }}>
+          <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
             {t("Assessment scanner")}
           </h3>
           <p

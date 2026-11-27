@@ -165,7 +165,7 @@ export function FeaturesPage() {
             className="wrap"
             style={{
               position: "relative",
-              paddingTop: "64px",
+              paddingTop: "40px",
               paddingBottom: "24px",
               textAlign: "center",
               display: "flex",
@@ -177,7 +177,7 @@ export function FeaturesPage() {
               id="features-title"
               style={{
                 margin: "0",
-                fontSize: "clamp(44px, 7vw, 96px)",
+                fontSize: "var(--fs-display)",
                 lineHeight: 1,
                 maxWidth: "1000px",
               }}
@@ -186,8 +186,8 @@ export function FeaturesPage() {
             </h1>
             <p
               style={{
-                margin: "28px 0 0",
-                fontSize: "21px",
+                margin: "20px 0 0",
+                fontSize: "var(--fs-lead)",
                 lineHeight: 1.55,
                 color: "var(--hp-body)",
                 maxWidth: "700px",
@@ -204,7 +204,7 @@ export function FeaturesPage() {
                 gap: "18px",
                 width: "100%",
                 maxWidth: "1080px",
-                marginTop: "56px",
+                marginTop: "36px",
                 textAlign: "left",
               }}
             >
@@ -220,7 +220,7 @@ export function FeaturesPage() {
               >
                 <div
                   className="d num"
-                  style={{ fontSize: "48px", lineHeight: 1 }}
+                  style={{ fontSize: "var(--fs-stat)", lineHeight: 1 }}
                 >
                   {t("Over 70%")}
                 </div>
@@ -251,7 +251,7 @@ export function FeaturesPage() {
               >
                 <div
                   className="d num"
-                  style={{ fontSize: "48px", lineHeight: 1 }}
+                  style={{ fontSize: "var(--fs-stat)", lineHeight: 1 }}
                 >
                   {"72%"}
                 </div>
@@ -282,7 +282,7 @@ export function FeaturesPage() {
               >
                 <div
                   className="d num"
-                  style={{ fontSize: "48px", lineHeight: 1 }}
+                  style={{ fontSize: "var(--fs-stat)", lineHeight: 1 }}
                 >
                   {t("Class 3+")}
                 </div>
@@ -328,7 +328,7 @@ export function FeaturesPage() {
             <h2
               style={{
                 margin: "0 0 28px",
-                fontSize: "clamp(30px, 3.8vw, 50px)",
+                fontSize: "var(--fs-h2)",
                 lineHeight: 1.05,
               }}
             >
@@ -349,7 +349,7 @@ export function FeaturesPage() {
             <h2
               style={{
                 margin: "0 0 28px",
-                fontSize: "clamp(30px, 3.8vw, 50px)",
+                fontSize: "var(--fs-h2)",
                 lineHeight: 1.05,
               }}
             >
@@ -393,7 +393,7 @@ export function FeaturesPage() {
               <h2
                 style={{
                   margin: "0",
-                  fontSize: "clamp(32px, 4.2vw, 56px)",
+                  fontSize: "var(--fs-h2)",
                   lineHeight: 1.05,
                 }}
               >
@@ -402,7 +402,7 @@ export function FeaturesPage() {
               <p
                 style={{
                   margin: "0",
-                  fontSize: "20px",
+                  fontSize: "var(--fs-lead)",
                   color: "var(--hp-saffron-22)",
                   maxWidth: "520px",
                 }}

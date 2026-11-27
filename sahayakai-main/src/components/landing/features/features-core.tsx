@@ -13,7 +13,7 @@ export function CoreCards({ sel, pick }: CompareProps) {
     <>
       <article className="card big">
         <div>
-          <h3 style={{ margin: "0", fontSize: "36px", lineHeight: 1.08 }}>
+          <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
             {t("Calls to parents")}
           </h3>
           <p
@@ -917,7 +917,7 @@ export function CoreCards({ sel, pick }: CompareProps) {
       </article>
       <article className="card big">
         <div>
-          <h3 style={{ margin: "0", fontSize: "36px", lineHeight: 1.08 }}>
+          <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
             {t("VIDYA")}
           </h3>
           <p
@@ -1803,7 +1803,7 @@ export function CoreCards({ sel, pick }: CompareProps) {
       </article>
       <article className="card big">
         <div>
-          <h3 style={{ margin: "0", fontSize: "36px", lineHeight: 1.08 }}>
+          <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
             {t("Exam papers")}
           </h3>
           <p
@@ -2790,7 +2790,7 @@ export function CoreCards({ sel, pick }: CompareProps) {
       </article>
       <article className="card big">
         <div>
-          <h3 style={{ margin: "0", fontSize: "36px", lineHeight: 1.08 }}>
+          <h3 style={{ margin: "0", fontSize: "var(--fs-h3)", lineHeight: 1.08 }}>
             {t("AI Mentor")}
           </h3>
           <p
