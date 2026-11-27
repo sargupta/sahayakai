@@ -107,7 +107,7 @@ After generating any content (like a Lesson Plan), test the buttons at the botto
 
 ---
 
-## 🛠️ Feature 4: Teacher Training / AI Coach (`/teacher-training`)
+## 🛠️ Feature 4: AI Mentor (formerly Teacher Training / AI Coach) (`/teacher-training`)
 
 1.  **Classroom Management**
     *   🇺🇸 **English:** "How can I handle a student who is constantly talking while I am writing on the blackboard?"

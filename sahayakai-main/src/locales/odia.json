@@ -20,7 +20,7 @@
   "7-day refund. Cancel anytime.": "7-ଦିନର ରିଫଣ୍ଡ୍। ଯେକୌଣସି ସମୟରେ ବାତିଲ କରନ୍ତୁ।",
   "A few more details so we can recommend better content.": "ଭଲ ବିଷୟବସ୍ତୁ ସୁପାରିଶ କରିବା ପାଇଁ ଆଉ କିଛି ବିବରଣୀ।",
   "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.": "ରୁବ୍ରିକ୍ ହେଉଛି ଏକ ସ୍କୋରିଂ ସାଧନ ଯାହା ଏକ ଆସାଇନମେଣ୍ଟ କିମ୍ବା କାର୍ଯ୍ୟ ପାଇଁ କାର୍ଯ୍ୟଦକ୍ଷତା ଆଶା ସ୍ପଷ୍ଟ ଭାବେ ପ୍ରତିନିଧିତ୍ୱ କରେ।",
-  "AI Coach": "AI କୋଚ୍",
+  "AI Mentor": "AI ମେଣ୍ଟର",
   "AI Training Data": "AI ତାଲିମ ଡାଟା",
   "AI service is busy. Please try again in a minute.": "AI ସେବା ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ଗୋଟିଏ ମିନିଟ୍ ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
   "AI will generate a standard pattern.": "AI ଏକ ମାନକ ପ୍ୟାଟର୍ନ ସୃଷ୍ଟି କରିବ।",
@@ -1055,7 +1055,7 @@
   "Sign back in": "ପୁନଃ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ",
   "Sign in required": "ସାଇନ୍ ଇନ୍ ଆବଶ୍ୟକ",
   "Sign in to acknowledge these commitments.": "ଏହି ପ୍ରତିବଦ୍ଧତାଗୁଡ଼ିକୁ ସ୍ୱୀକାର କରିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।",
-  "Sign in to ask the AI Coach": "AI କୋଚ୍‌ଙ୍କୁ ପଚାରିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ",
+  "Sign in to ask the AI Mentor": "AI ମେଣ୍ଟରଙ୍କୁ ପଚାରିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ",
   "Sign in to continue": "ଜାରି ରଖିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ",
   "Sign in to customise your language, plan preferences, and notification settings.": "ଆପଣଙ୍କ ଭାଷା, ପ୍ଲାନ୍ ପସନ୍ଦ ଏବଂ ବିଜ୍ଞପ୍ତି ସେଟିଂସ କଷ୍ଟମାଇଜ୍ କରିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।",
   "Sign in to get notified when a fellow teacher connects, replies, or shares a resource.": "ଯେତେବେଳେ ଜଣେ ସହକର୍ମୀ ଶିକ୍ଷକ ସଂଯୋଗ କରନ୍ତି, ଉତ୍ତର ଦିଅନ୍ତି କିମ୍ବା ସମ୍ବଳ ସେୟାର କରନ୍ତି, ବିଜ୍ଞପ୍ତି ପାଇବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।",
@@ -3918,5 +3918,8 @@
   "per teacher, every week": "ପ୍ରତି ଶିକ୍ଷକ, ପ୍ରତି ସପ୍ତାହ",
   "what that time is worth": "ସେହି ସମୟର ମୂଲ୍ୟ",
   "worth of teaching time, after the fee": "ଫି ପରେ, ପଢ଼ାଇବା ସମୟର ମୂଲ୍ୟ",
-  "Transform your school, one staff room at a time.": "ଆପଣଙ୍କ ବିଦ୍ୟାଳୟକୁ ବଦଳାନ୍ତୁ, ଗୋଟିଏ ଗୋଟିଏ ଷ୍ଟାଫ୍ ରୁମ୍‌ରୁ।"
+  "Transform your school, one staff room at a time.": "ଆପଣଙ୍କ ବିଦ୍ୟାଳୟକୁ ବଦଳାନ୍ତୁ, ଗୋଟିଏ ଗୋଟିଏ ଷ୍ଟାଫ୍ ରୁମ୍‌ରୁ।",
+  "Your personal AI mentor, providing advice grounded in sound pedagogical principles.": "ଆପଣଙ୍କ ବ୍ୟକ୍ତିଗତ AI ମେଣ୍ଟର, ଯିଏ ଶିକ୍ଷଣ ନୀତି ଉପରେ ଆଧାରିତ ପରାମର୍ଶ ଦିଅନ୍ତି।",
+  "Ask for techniques, classroom strategies, or motivation.": "କୌଶଳ, ଶ୍ରେଣୀଗୃହ ରଣନୀତି କିମ୍ବା ପ୍ରେରଣା ପାଇଁ ପଚାରନ୍ତୁ।",
+  "e.g., 'How can I get my students to be quiet without shouting?'": "ଉଦା., 'ପାଟି ନକରି ମୋ ଛାତ୍ରଛାତ୍ରୀଙ୍କୁ କିପରି ଚୁପ୍ କରାଇବି?'"
 }

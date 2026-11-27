@@ -30,7 +30,7 @@ const RESOURCE_CONFIG: Record<string, { color: string; icon: React.ElementType; 
     "visual-aid":         { color: "bg-chart-5/10 border-chart-5/30 text-chart-5", icon: Images,         label: "Visual Aid"    },
     "virtual-field-trip": { color: "bg-leaf-100/50 border-leaf-300 text-leaf-700", icon: Globe2,         label: "Field Trip"    },
     "rubric":             { color: "bg-muted border-border text-foreground", icon: GraduationCap,  label: "Rubric"        },
-    "teacher-training":   { color: "bg-tint-warning border-warning/30 text-warning", icon: Wand2,          label: "AI Coach"      },
+    "teacher-training":   { color: "bg-tint-warning border-warning/30 text-warning", icon: Wand2,          label: "AI Mentor"      },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

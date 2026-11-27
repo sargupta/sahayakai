@@ -20,7 +20,7 @@
   "7-day refund. Cancel anytime.": "7-நாள் பணத்திரும்ப பெறல். எப்போது வேண்டுமானாலும் ரத்து செய்யலாம்.",
   "A few more details so we can recommend better content.": "சிறந்த உள்ளடக்கத்தை பரிந்துரைக்க இன்னும் சில விவரங்கள்.",
   "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.": "ரூப்ரிக் என்பது ஒரு வேலை அல்லது பணிக்கான செயல்திறன் எதிர்பார்ப்புகளை வெளிப்படையாக பிரதிநிதித்துவப்படுத்தும் ஒரு மதிப்பீட்டுக் கருவியாகும்.",
-  "AI Coach": "AI பயிற்சியாளர்",
+  "AI Mentor": "AI வழிகாட்டி",
   "AI Training Data": "AI பயிற்சி தரவு",
   "AI service is busy. Please try again in a minute.": "AI சேவை பணியில் உள்ளது. ஒரு நிமிடத்தில் மீண்டும் முயற்சிக்கவும்.",
   "AI will generate a standard pattern.": "AI ஒரு நிலையான வடிவத்தை உருவாக்கும்.",
@@ -1055,7 +1055,7 @@
   "Sign back in": "மீண்டும் உள்நுழைக",
   "Sign in required": "உள்நுழைவு தேவை",
   "Sign in to acknowledge these commitments.": "இந்த உறுதிமொழிகளை ஒப்புக்கொள்ள உள்நுழையவும்.",
-  "Sign in to ask the AI Coach": "AI பயிற்சியாளரிடம் கேட்க உள்நுழைக",
+  "Sign in to ask the AI Mentor": "AI வழிகாட்டியிடம் கேட்க உள்நுழைக",
   "Sign in to continue": "தொடர சைன் இன் செய்யவும்",
   "Sign in to customise your language, plan preferences, and notification settings.": "உங்கள் மொழி, திட்ட விருப்பங்கள் மற்றும் அறிவிப்பு அமைப்புகளைத் தனிப்பயனாக்க உள்நுழைக.",
   "Sign in to get notified when a fellow teacher connects, replies, or shares a resource.": "ஒரு சக ஆசிரியர் இணைக்கும், பதிலளிக்கும் அல்லது வளத்தைப் பகிரும்போது அறிவிப்பு பெற உள்நுழைக.",
@@ -3918,5 +3918,8 @@
   "per teacher, every week": "ஒரு ஆசிரியருக்கு, ஒவ்வொரு வாரமும்",
   "what that time is worth": "அந்த நேரத்தின் மதிப்பு",
   "worth of teaching time, after the fee": "கட்டணத்திற்குப் பிறகு, கற்பித்தல் நேரத்தின் மதிப்பு",
-  "Transform your school, one staff room at a time.": "உங்கள் பள்ளியை மாற்றுங்கள், ஒவ்வொரு ஆசிரியர் அறையாக."
+  "Transform your school, one staff room at a time.": "உங்கள் பள்ளியை மாற்றுங்கள், ஒவ்வொரு ஆசிரியர் அறையாக.",
+  "Your personal AI mentor, providing advice grounded in sound pedagogical principles.": "உங்கள் தனிப்பட்ட AI வழிகாட்டி, கல்விசார் கொள்கைகளின் அடிப்படையில் ஆலோசனைகளை வழங்குகிறது.",
+  "Ask for techniques, classroom strategies, or motivation.": "நுட்பங்கள், வகுப்பறை உத்திகள் அல்லது உந்துதலுக்காகக் கேளுங்கள்.",
+  "e.g., 'How can I get my students to be quiet without shouting?'": "உதா., 'கத்தாமல் என் மாணவர்களை அமைதியாக இருக்க வைப்பது எப்படி?'"
 }

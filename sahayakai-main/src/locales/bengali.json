@@ -20,7 +20,7 @@
   "7-day refund. Cancel anytime.": "7-দিনের রিফান্ড। যেকোনো সময় বাতিল করুন।",
   "A few more details so we can recommend better content.": "আরও ভালো কন্টেন্ট সুপারিশ করতে আরও কিছু বিবরণ।",
   "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.": "রুব্রিক একটি স্কোরিং টুল যা একটি অ্যাসাইনমেন্ট বা কাজের জন্য পারফরম্যান্স প্রত্যাশাগুলি স্পষ্টভাবে প্রতিনিধিত্ব করে।",
-  "AI Coach": "AI কোচ",
+  "AI Mentor": "AI মেন্টর",
   "AI Training Data": "AI প্রশিক্ষণ ডেটা",
   "AI service is busy. Please try again in a minute.": "AI পরিষেবা ব্যস্ত। অনুগ্রহ করে এক মিনিট পরে আবার চেষ্টা করুন।",
   "AI will generate a standard pattern.": "AI একটি মানক প্যাটার্ন তৈরি করবে।",
@@ -1055,7 +1055,7 @@
   "Sign back in": "পুনরায় সাইন ইন করুন",
   "Sign in required": "সাইন ইন প্রয়োজন",
   "Sign in to acknowledge these commitments.": "এই প্রতিশ্রুতিগুলি স্বীকার করতে সাইন ইন করুন।",
-  "Sign in to ask the AI Coach": "AI কোচকে জিজ্ঞাসা করতে সাইন ইন করুন",
+  "Sign in to ask the AI Mentor": "AI মেন্টরকে জিজ্ঞাসা করতে সাইন ইন করুন",
   "Sign in to continue": "চালিয়ে যেতে সাইন ইন করুন",
   "Sign in to customise your language, plan preferences, and notification settings.": "আপনার ভাষা, প্ল্যান পছন্দ এবং বিজ্ঞপ্তি সেটিংস কাস্টমাইজ করতে সাইন ইন করুন।",
   "Sign in to get notified when a fellow teacher connects, replies, or shares a resource.": "একজন সহকর্মী শিক্ষক সংযোগ করলে, উত্তর দিলে বা সম্পদ শেয়ার করলে নোটিফিকেশন পেতে সাইন ইন করুন।",
@@ -3918,5 +3918,8 @@
   "per teacher, every week": "প্রতি শিক্ষক, প্রতি সপ্তাহে",
   "what that time is worth": "সেই সময়ের মূল্য",
   "worth of teaching time, after the fee": "ফি বাদ দিয়ে, পড়ানোর সময়ের মূল্য",
-  "Transform your school, one staff room at a time.": "আপনার স্কুলকে বদলে দিন, একটি একটি করে স্টাফ রুম থেকে।"
+  "Transform your school, one staff room at a time.": "আপনার স্কুলকে বদলে দিন, একটি একটি করে স্টাফ রুম থেকে।",
+  "Your personal AI mentor, providing advice grounded in sound pedagogical principles.": "আপনার ব্যক্তিগত AI মেন্টর, যা শিক্ষাগত নীতির উপর ভিত্তি করে পরামর্শ দেয়।",
+  "Ask for techniques, classroom strategies, or motivation.": "কৌশল, শ্রেণীকক্ষের কৌশল বা অনুপ্রেরণার জন্য জিজ্ঞাসা করুন।",
+  "e.g., 'How can I get my students to be quiet without shouting?'": "উদা., 'চিৎকার না করে আমি কীভাবে আমার ছাত্রদের চুপ করাতে পারি?'"
 }

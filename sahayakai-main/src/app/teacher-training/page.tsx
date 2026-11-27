@@ -48,52 +48,6 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 
-const descriptionTranslations: Record<string, [string, string]> = {
-  en: [
-    "Your personal AI coach, providing advice grounded in sound pedagogical principles.",
-    "Ask for techniques, classroom strategies, or motivation."
-  ],
-  hi: [
-    "आपका व्यक्तिगत AI कोच, जो ठोस शैक्षणिक सिद्धांतों पर आधारित सलाह प्रदान करता है।",
-    "तकनीक, कक्षा रणनीतियों, या प्रेरणा के लिए पूछें।"
-  ],
-  bn: [
-    "আপনার ব্যক্তিগত এআই কোচ, যা শিক্ষাগত নীতির উপর ভিত্তি করে পরামর্শ প্রদান করে।",
-    "কৌশল, শ্রেণীকক্ষের কৌশল বা অনুপ্রেরণার জন্য জিজ্ঞাসা করুন।"
-  ],
-  te: [
-    "మీ వ్యక్తిగత AI కోచ్, ధృడమైన బోధనా సూత్రాలపై ఆధారపడిన సలహాలను అందిస్తుంది.",
-    "పద్ధతులు, తరగతి గది వ్యూహాలు లేదా ప్రేరణ కోసం అడగండి."
-  ],
-  mr: [
-    "तुमचे वैयक्तिक AI प्रशिक्षक, जे योग्य शैक्षणिक तत्त्वांवर आधारित सल्ला देतात.",
-    "तंत्र, वर्गातील रणनीती किंवा प्रेरणेसाठी विचारा."
-  ],
-  ta: [
-    "உங்கள் தனிப்பட்ட AI பயிற்சியாளர், கல்விசார் கொள்கைகளின் அடிப்படையில் ஆலோசனைகளை வழங்குகிறார்.",
-    "நுட்பங்கள், வகுப்பறை உத்திகள் அல்லது உந்துதலுக்காகக் கேளுங்கள்."
-  ],
-  gu: [
-    "તમારા અંગત AI કોચ, જે શિક્ષણશાસ્ત્રના સિદ્ધાંતો પર આધારિત સલાહ પૂરી પાડે છે.",
-    "તકનીકો, વર્ગખંડની વ્યૂહરચનાઓ અથવા પ્રેરણા માટે પૂછો."
-  ],
-  kn: [
-    "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಎಐ ತರಬೇತುದಾರ, ಶಿಕ್ಷಣಾತ್ಮಕ ತತ್ವಗಳ ಮೇಲೆ ಆಧಾರಿತವಾದ ಸಲಹೆಯನ್ನು ನೀಡುತ್ತದೆ.",
-    "ತಂತ್ರಗಳು, ತರಗತಿಯ ತಂತ್ರಗಳು, ಅಥವಾ ಪ್ರೇರಣೆಗಾಗಿ ಕೇಳಿ."
-  ],
-};
-
-const placeholderTranslations: Record<string, string> = {
-  en: "e.g., 'How can I get my students to be quiet without shouting?'",
-  hi: "उदा., 'मैं अपने छात्रों को बिना चिल्लाए शांत कैसे करा सकता हूँ?'",
-  bn: "উদা., 'চিৎকার না করে আমি কীভাবে আমার ছাত্রদের চুপ করাতে পারি?'",
-  te: "ఉదా., 'అరవకుండా నా విద్యార్థులను నిశ్శబ్దంగా ఉండేలా చేయడం ఎలా?'",
-  mr: "उदा., 'मी माझ्या विद्यार्थ्यांना न ओरडता शांत कसे करू शकेन?'",
-  ta: "உதா., 'கத்தாமல் என் மாணவர்களை அமைதியாக இருக்க வைப்பது எப்படி?'",
-  gu: "દા.ત., 'હું મારા વિદ્યાર્થીઓને બૂમો પાડ્યા વગર શાંત કેવી રીતે કરી શકું?'",
-  kn: "ಉದಾ., 'ನನ್ನ ವಿದ್ಯಾರ್ಥಿಗಳನ್ನು ಕೂಗದೆ ಸುಮ್ಮನಿರಿಸುವುದು ಹೇಗೆ?'",
-};
-
 // UX audit #5: rotate through 4 useful pro tips so the sidebar tip
 // isn't static across visits. Index advances daily based on date so
 // the same tip stays for a session but changes day-to-day.
@@ -163,9 +117,11 @@ function TeacherTrainingContent() {
   // UI chrome (tagline, placeholder) follows the global UI language, NOT the
   // AI-output language form field. Without this, switching the app to Bengali
   // leaves the chrome English until a hard refresh re-initialises the form.
-  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
-  const descriptionLines = descriptionTranslations[uiLangCode] || descriptionTranslations.en;
-  const placeholder = placeholderTranslations[uiLangCode] || placeholderTranslations.en;
+  const descriptionLines = [
+    t("Your personal AI mentor, providing advice grounded in sound pedagogical principles."),
+    t("Ask for techniques, classroom strategies, or motivation."),
+  ];
+  const placeholder = t("e.g., 'How can I get my students to be quiet without shouting?'");
   const searchParams = useSearchParams();
 
   // Restore snapshot on mount — only when no URL params are present
@@ -392,7 +348,7 @@ function TeacherTrainingContent() {
       <GeneratorHeader
         icon={GraduationCap}
         eyebrow={t("Class")}
-        title={t("AI Coach")}
+        title={t("AI Mentor")}
         description={
           <>
             <span>{descriptionLines[0]}</span>{" "}
@@ -645,7 +601,7 @@ export default function TeacherTrainingPage() {
           a form that silently breaks. */}
       <AuthGate
         icon={GraduationCap}
-        title={t("Sign in to ask the AI Coach")}
+        title={t("Sign in to ask the AI Mentor")}
         description={t("Get advice grounded in pedagogical principles — sign in to ask anything about teaching.")}
       >
         <TeacherTrainingContent />

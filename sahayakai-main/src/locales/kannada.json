@@ -20,7 +20,7 @@
   "7-day refund. Cancel anytime.": "7 ದಿನಗಳ ಮರುಪಾವತಿ. ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದುಮಾಡಿ.",
   "A few more details so we can recommend better content.": "ಉತ್ತಮ ವಿಷಯವನ್ನು ಶಿಫಾರಸು ಮಾಡಲು ಇನ್ನೂ ಕೆಲವು ವಿವರಗಳು.",
   "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.": "ರೂಬ್ರಿಕ್ ಎನ್ನುವುದು ಯಾವುದೇ ನಿಯೋಜನೆ ಅಥವಾ ಕೆಲಸಕ್ಕೆ ಪ್ರದರ್ಶನ ನಿರೀಕ್ಷೆಗಳನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಪ್ರತಿನಿಧಿಸುವ ಸ್ಕೋರಿಂಗ್ ಸಾಧನವಾಗಿದೆ.",
-  "AI Coach": "AI ಕೋಚ್",
+  "AI Mentor": "AI ಮೆಂಟರ್",
   "AI Training Data": "AI ತರಬೇತಿ ಡೇಟಾ",
   "AI service is busy. Please try again in a minute.": "AI ಸೇವೆ ಕಾರ್ಯನಿರತವಾಗಿದೆ. ದಯವಿಟ್ಟು ಒಂದು ನಿಮಿಷದಲ್ಲಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
   "AI will generate a standard pattern.": "AI ಪ್ರಮಾಣಿತ ಮಾದರಿಯನ್ನು ರಚಿಸುತ್ತದೆ.",
@@ -1076,7 +1076,7 @@
   "Sign back in": "ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ",
   "Sign in required": "ಸೈನ್ ಇನ್ ಅಗತ್ಯವಿದೆ",
   "Sign in to acknowledge these commitments.": "ಈ ಬದ್ಧತೆಗಳನ್ನು ಒಪ್ಪಿಕೊಳ್ಳಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.",
-  "Sign in to ask the AI Coach": "AI ಕೋಚ್ ಅನ್ನು ಕೇಳಲು ಸೈನ್ ಇನ್ ಮಾಡಿ",
+  "Sign in to ask the AI Mentor": "AI ಮೆಂಟರ್ ಅನ್ನು ಕೇಳಲು ಸೈನ್ ಇನ್ ಮಾಡಿ",
   "Sign in to continue": "ಮುಂದುವರಿಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ",
   "Sign in to customise your language, plan preferences, and notification settings.": "ನಿಮ್ಮ ಭಾಷೆ, ಯೋಜನೆ ಆದ್ಯತೆಗಳು ಮತ್ತು ಅಧಿಸೂಚನೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.",
   "Sign in to get notified when a fellow teacher connects, replies, or shares a resource.": "ಸಹ ಶಿಕ್ಷಕರೊಬ್ಬರು ಸಂಪರ್ಕಿಸಿದಾಗ, ಉತ್ತರಿಸಿದಾಗ ಅಥವಾ ಸಂಪನ್ಮೂಲವನ್ನು ಹಂಚಿಕೊಂಡಾಗ ಸೂಚನೆ ಪಡೆಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.",
@@ -3927,5 +3927,8 @@
   "per teacher, every week": "ಪ್ರತಿ ಶಿಕ್ಷಕರಿಗೆ, ಪ್ರತಿ ವಾರ",
   "what that time is worth": "ಆ ಸಮಯದ ಮೌಲ್ಯ",
   "worth of teaching time, after the fee": "ಶುಲ್ಕದ ನಂತರ, ಬೋಧನಾ ಸಮಯದ ಮೌಲ್ಯ",
-  "Transform your school, one staff room at a time.": "ನಿಮ್ಮ ಶಾಲೆಯನ್ನು ಬದಲಾಯಿಸಿ, ಒಂದೊಂದೇ ಸಿಬ್ಬಂದಿ ಕೊಠಡಿಯಿಂದ."
+  "Transform your school, one staff room at a time.": "ನಿಮ್ಮ ಶಾಲೆಯನ್ನು ಬದಲಾಯಿಸಿ, ಒಂದೊಂದೇ ಸಿಬ್ಬಂದಿ ಕೊಠಡಿಯಿಂದ.",
+  "Your personal AI mentor, providing advice grounded in sound pedagogical principles.": "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ AI ಮೆಂಟರ್, ಶಿಕ್ಷಣಾತ್ಮಕ ತತ್ವಗಳ ಮೇಲೆ ಆಧಾರಿತವಾದ ಸಲಹೆಯನ್ನು ನೀಡುತ್ತದೆ.",
+  "Ask for techniques, classroom strategies, or motivation.": "ತಂತ್ರಗಳು, ತರಗತಿಯ ತಂತ್ರಗಳು, ಅಥವಾ ಪ್ರೇರಣೆಗಾಗಿ ಕೇಳಿ.",
+  "e.g., 'How can I get my students to be quiet without shouting?'": "ಉದಾ., 'ನನ್ನ ವಿದ್ಯಾರ್ಥಿಗಳನ್ನು ಕೂಗದೆ ಸುಮ್ಮನಿರಿಸುವುದು ಹೇಗೆ?'"
 }

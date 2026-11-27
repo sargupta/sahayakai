@@ -22,7 +22,7 @@ const FEATURE_META: Record<string, { icon: React.ElementType; label: string; hre
     'worksheet':         { icon: PencilRuler,     label: 'Worksheets',         href: '/worksheet-wizard' },
     'rubric':            { icon: ClipboardCheck,  label: 'Rubrics',            href: '/rubric-generator' },
     'instant-answer':    { icon: Sparkles,        label: 'Instant Answers',    href: '/' },
-    'teacher-training':  { icon: GraduationCap,   label: 'AI Coach',           href: '/teacher-training' },
+    'teacher-training':  { icon: GraduationCap,   label: 'AI Mentor',           href: '/teacher-training' },
     'virtual-field-trip':{ icon: Globe2,          label: 'Virtual Field Trips', href: '/virtual-field-trip' },
     'visual-aid':        { icon: Images,          label: 'Visual Aids',        href: '/visual-aid-designer' },
     'avatar':            { icon: User,            label: 'AI Avatars',         href: '/my-profile' },

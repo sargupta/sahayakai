@@ -44,7 +44,7 @@ Use these specific "Teacher Prompts" to test the AI output quality, cultural con
 4.  **Local Knowledge:** "Explain the importance of the 'Banyan Tree' in Indian villages for Class 4."
 5.  **Science Mystery:** "Why do we see rainbows after rain? Explain with a simple analogy of a shopkeeper and mirrors."
 
-## 6. **Teacher Training / AI Coach** (`/teacher-training`)
+## 6. **AI Mentor (formerly Teacher Training / AI Coach)** (`/teacher-training`)
 *Testing: Classroom management and soft skills.*
 1.  **Management:** "How can I handle a student who is constantly talking while I am writing on the blackboard?"
 2.  **Inclusion:** "How can I make my Science lesson more inclusive for a student with a mild hearing impairment?"

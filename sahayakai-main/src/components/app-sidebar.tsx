@@ -248,7 +248,7 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
       key: "training",
       tier: "secondary",
       items: [
-        { key: "teacher-training", label: t("AI Coach"), shortLabel: t("AI Coach"), icon: GraduationCap, href: "/teacher-training", active: starts("/teacher-training") },
+        { key: "teacher-training", label: t("AI Mentor"), shortLabel: t("AI Mentor"), icon: GraduationCap, href: "/teacher-training", active: starts("/teacher-training") },
         // Un-parked from Labs: the teacher's own Impact score sits with her growth, always visible.
         { key: "impact", label: t("Impact"), icon: BarChart3, href: "/impact-dashboard", active: starts("/impact-dashboard") },
       ],

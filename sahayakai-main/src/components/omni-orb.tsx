@@ -85,7 +85,7 @@ const FLOW_LABEL: Record<VidyaAction['flow'], string> = {
     'visual-aid-designer': 'Visual aid',
     'worksheet-wizard': 'Worksheet',
     'virtual-field-trip': 'Field trip',
-    'teacher-training': 'AI Coach',
+    'teacher-training': 'AI Mentor',
     'rubric-generator': 'Rubric',
     'exam-paper': 'Exam paper',
     'video-storyteller': 'Video',
