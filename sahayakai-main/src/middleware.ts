@@ -723,8 +723,9 @@ export async function middleware(request: NextRequest) {
             `https://static.cloudflareinsights.com`,     // CF Insights loader
             `https://*.run.app`,                         // voice-call / sidecar Cloud Run services
         ].join(' '),
-        // Iframes we embed: reCAPTCHA (App Check) + Firebase auth handler.
-        `frame-src 'self' https://www.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+        // Iframes we embed: reCAPTCHA (App Check) + Firebase auth handler +
+        // the SahayakAI film on the homepage (YouTube's no-cookie player).
+        `frame-src 'self' https://www.google.com https://www.gstatic.com https://*.firebaseapp.com https://www.youtube-nocookie.com`,
         // Web workers / service worker (next-pwa) are same-origin; blob: for
         // inline workers spawned by libraries.
         `worker-src 'self' blob:`,

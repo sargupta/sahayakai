@@ -44,13 +44,17 @@ import {
  * IMAGES
  * The three illustrations in /public/images/for-schools were generated with
  * Gemini in the flat style of the SahayakAI film and keep Gemini's mark. They
- * are illustrations, not photographs of a customer. The film opens on
- * YouTube from a local poster, so no third-party frame or script loads here.
+ * are illustrations, not photographs of a customer. The film plays
+ * in the page from a local poster; YouTube's player loads only on play.
  */
 
 const CALENDLY_URL = "https://calendly.com/contact-sargvision/30min";
 /** The SahayakAI film on the SARGVISION YouTube channel, and its length. */
-const FILM_URL = "https://www.youtube.com/watch?v=Y24Sox3NRGE";
+const FILM_ID = "Y24Sox3NRGE";
+const FILM_URL = `https://www.youtube.com/watch?v=${FILM_ID}`;
+// Plays in the page. The host must stay in frame-src in src/middleware.ts;
+// src/__tests__/landing/film-plays-inline.test.ts fails if the two drift.
+const FILM_EMBED_URL = `https://www.youtube-nocookie.com/embed/${FILM_ID}?autoplay=1&rel=0&playsinline=1`;
 const FILM_LENGTH = "2:43";
 const SCEPTICAL_REALISATION = 0.5;
 const IMG = "/images/for-schools";
@@ -208,6 +212,7 @@ function Hero({ demoHref }: { demoHref: string }) {
 
 function Film() {
   const { t } = useLanguage();
+  const [playing, setPlaying] = useState(false);
   return (
     <section id="film" className="scroll-mt-20">
       <div className={SECTION}>
@@ -216,28 +221,46 @@ function Film() {
           line1={t("One co-pilot for teachers, parents and principals.")}
           lead={t("Under three minutes. Watch a school day with SahayakAI in it.")}
         />
-        {/* A local poster that opens YouTube: no third-party frame or script. */}
-        <ExternalLink
-          href={FILM_URL}
-          label={t("Play the SahayakAI film on YouTube")}
-          className={`group relative block w-full max-w-[1080px] ${TILE_LIFT}`}
-        >
-          <img
-            src={`${IMG}/staffroom.webp`}
-            alt=""
-            width={1456}
-            height={812}
-            loading="lazy"
-            className="block w-full h-auto"
-          />
-          <span className="absolute inset-0 flex items-center justify-center">
-            <span className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-saffron text-white shadow-elevated transition-transform duration-small group-hover:scale-105">
-              <Play className="h-8 w-8 sm:h-10 sm:w-10 translate-x-0.5" fill="currentColor" aria-hidden />
-            </span>
-          </span>
-          <span className="absolute left-4 bottom-4 sm:left-6 sm:bottom-6 inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-4 py-2 text-tile font-semibold text-ink-900">
-            {t("Watch the film")} · {FILM_LENGTH}
-          </span>
+        {/* The film plays here, in the page (founder report, 2026-11-27: it
+            used to send the visitor to YouTube). Nothing from YouTube loads
+            until the visitor presses play. */}
+        <div className={`relative w-full max-w-[1080px] aspect-video ${TILE}`}>
+          {playing ? (
+            <iframe
+              src={FILM_EMBED_URL}
+              title={t("Watch the film")}
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+              className="absolute inset-0 h-full w-full border-0"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPlaying(true)}
+              aria-label={t("Watch the film")}
+              className="group absolute inset-0 block h-full w-full cursor-pointer"
+            >
+              <img
+                src={`${IMG}/staffroom.webp`}
+                alt=""
+                width={1456}
+                height={812}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-saffron text-white shadow-elevated transition-transform duration-small group-hover:scale-105">
+                  <Play className="h-8 w-8 sm:h-10 sm:w-10 translate-x-0.5" fill="currentColor" aria-hidden />
+                </span>
+              </span>
+              <span className="absolute left-4 bottom-4 sm:left-6 sm:bottom-6 inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-4 py-2 text-tile font-semibold text-ink-900">
+                {t("Watch the film")} · {FILM_LENGTH}
+              </span>
+            </button>
+          )}
+        </div>
+        <ExternalLink href={FILM_URL} className="text-tile font-medium text-ink-600 underline underline-offset-4 hover:text-ink-900">
+          {t("Play the SahayakAI film on YouTube")}
         </ExternalLink>
       </div>
     </section>
