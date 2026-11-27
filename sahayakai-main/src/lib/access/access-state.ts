@@ -164,7 +164,7 @@ export const PUBLIC_PAGE_PREFIXES: readonly string[] = [
     // access flow
     '/access', '/request-access', '/join',
     // marketing + legal
-    '/about', '/blog', '/pricing', '/school-pricing', '/for-schools', '/faq',
+    '/about', '/blog', '/pricing', '/school-pricing', '/for-schools', '/features', '/faq',
     '/terms', '/privacy', '/privacy-for-teachers', '/try-call',
     // localised marketing roots
     '/hi', '/bn', '/kn', '/ta', '/te', '/mr', '/gu', '/pa', '/ml', '/or',

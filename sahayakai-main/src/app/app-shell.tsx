@@ -37,8 +37,8 @@ import { CommunityMessagesProvider } from "@/components/community/community-mess
 import { CommunityMessagesPanel } from "@/components/community/community-messages-panel";
 import { MessagesHeaderButton } from "@/components/community/messages-header-button";
 
-const MARKETING_PATHS = [
-  "/for-schools", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about",
+export const MARKETING_PATHS: readonly string[] = [
+  "/for-schools", "/features", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about",
   // Access-gate flow (docs/ACCESS_GATE_DESIGN.md): these pages are shown to
   // accounts that are NOT entitled yet, so they must render without the app
   // chrome (sidebar, VIDYA orb, global hooks) whose API calls would all 403.

@@ -42,7 +42,7 @@ export const SAHAYAK_ROUTE_SEGMENTS = [
     'review-panel', 'rubric-generator', 'settings', 'submit-content', 'teacher-training', 'try-call',
     'usage', 'video-storyteller', 'virtual-field-trip', 'visual-aid-designer', 'worksheet-wizard',
     // src/app/(marketing)
-    'about', 'blog', 'bn', 'for-schools', 'kn', 'school-pricing', 'ta', 'terms',
+    'about', 'blog', 'bn', 'features', 'for-schools', 'kn', 'school-pricing', 'ta', 'terms',
 ] as const;
 
 /**

@@ -58,4 +58,14 @@ describe("embedded frames on marketing pages", () => {
         expect(film).toContain("FILM_EMBED_URL");
         expect(page!.src).toMatch(/FILM_EMBED_URL = `https:\/\/www\.youtube-nocookie\.com\/embed\//);
     });
+
+    it("the homepage film plays in the page", () => {
+        const page = sources.find(({ f }) => f.endsWith(path.join("home", "home-page.tsx")));
+        expect(page).toBeDefined();
+        const film = page!.src.slice(page!.src.indexOf("function Film()"), page!.src.indexOf("/* ------------------------------------------------------------ calculator"));
+        expect(film).toMatch(/<iframe\b/);
+        expect(film).toContain("FILM_EMBED_URL");
+        expect(film).not.toMatch(/href=\{?["'`]https:\/\/(www\.)?youtube\.com\/watch/);
+        expect(page!.src).toMatch(/FILM_EMBED_URL = `https:\/\/www\.youtube-nocookie\.com\/embed\//);
+    });
 });

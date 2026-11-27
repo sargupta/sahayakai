@@ -33,7 +33,9 @@
  * cannot dodge the flag.
  *
  * HOMEPAGE CHANGE (founder decision, 2026-11-27)
- * The signed-out homepage now shows the /for-schools story, which mounts no
+ * The signed-out homepage is now the founder-approved "Homepage v1" design
+ * (src/components/landing/home/). Its "Try VIDYA" panel is a scripted sample
+ * that opens no microphone and no session. It mounts no
  * voice orb. So the homepage must offer no orb with the flag on or off; the
  * flag is still checked on LandingHero, the one component that mounts the orb,
  * so the gate holds if the hero is ever placed on a page again.
@@ -283,10 +285,10 @@ describe("public VIDYA voice orb is gated on its server route being live", () =>
     expect(landingRendersPublicOrb(true, "hero")).toBe(true);
   });
 
-  it("the homepage shows the /for-schools story and no voice orb, even with the flag on", () => {
+  it("the homepage shows the v1 hero and no voice orb, even with the flag on", () => {
     expect(landingRendersPublicOrb(true)).toBe(false);
     const { unmount } = render(<LandingPage onAuthClick={() => {}} />);
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("Every child deserves a teacher");
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("Quality education for every classroom in India.");
     unmount();
   });
 
