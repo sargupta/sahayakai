@@ -26,15 +26,15 @@ export function LandingNav({ onAuthClick }: Props) {
         />
         <span className="flex items-baseline gap-1.5">
           SahayakAI
-          <span className="hidden sm:inline text-[10px] font-medium tracking-wide uppercase text-neutral-400">
+          <span className="hidden sm:inline text-[10px] font-medium tracking-wide uppercase text-ink-400">
             {t("by SARGVISION Intelligence")}
           </span>
         </span>
       </div>
 
-      <div className="hidden md:flex gap-7 text-[13px] text-neutral-600 font-medium">
-        <a href="/#product" className="hover:text-foreground transition-colors">
-          {t("Product")}
+      <div className="hidden md:flex gap-7 text-[13px] text-ink-600 font-medium">
+        <a href="/features" className="hover:text-foreground transition-colors">
+          {t("All features")}
         </a>
         <a href="/pricing" className="hover:text-foreground transition-colors">
           {t("Pricing")}
@@ -46,7 +46,7 @@ export function LandingNav({ onAuthClick }: Props) {
         <button
           type="button"
           onClick={onAuthClick}
-          className="hidden sm:inline text-[13px] text-neutral-600 font-medium hover:text-foreground cursor-pointer transition-colors"
+          className="hidden sm:inline text-[13px] text-ink-600 font-medium hover:text-foreground cursor-pointer transition-colors"
         >
           {t("Log in")}
         </button>

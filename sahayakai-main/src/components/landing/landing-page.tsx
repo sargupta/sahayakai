@@ -1,8 +1,6 @@
 "use client";
 
-import { SchoolsStory } from "@/app/(marketing)/for-schools/for-schools-client";
-import { LandingNav } from "./landing-nav";
-import { LandingFooter } from "./landing-footer";
+import { HomePage } from "./home/home-page";
 import { SignedOutBanner } from "./signed-out-banner";
 
 type Props = {
@@ -10,17 +8,16 @@ type Props = {
 };
 
 /**
- * The signed-out homepage. It shows the same story as /for-schools
- * (founder decision, 2026-11-27: the page people land on is the new design,
- * not a separate older one), so the two addresses can never disagree.
+ * The signed-out homepage: the founder-approved "Homepage v1" design
+ * (founder decision, 2026-11-27: v1 goes to production). /for-schools keeps
+ * the decision-maker savings story; the homepage calculator reads the same
+ * model (src/lib/school-pricing.ts), so the two pages can never disagree.
  */
 export function LandingPage({ onAuthClick }: Props) {
   return (
-    <div className="force-light flex flex-col min-h-screen bg-milk-50">
+    <>
       <SignedOutBanner />
-      <LandingNav onAuthClick={onAuthClick} />
-      <SchoolsStory />
-      <LandingFooter />
-    </div>
+      <HomePage onAuthClick={onAuthClick} />
+    </>
   );
 }

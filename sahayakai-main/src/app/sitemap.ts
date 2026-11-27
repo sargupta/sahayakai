@@ -7,7 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // ââ Homepage ââ
     {
       url: `${baseUrl}/`,
-      lastModified: '2026-05-09',
+      lastModified: '2026-11-27',
       changeFrequency: 'weekly',
       priority: 1.0,
     },
@@ -22,6 +22,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${baseUrl}/for-schools`,
       lastModified: '2026-05-01',
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/features`,
+      lastModified: '2026-11-27',
       changeFrequency: 'monthly',
       priority: 0.9,
     },

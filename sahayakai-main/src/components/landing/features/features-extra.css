@@ -1,0 +1,12 @@
+/*
+ * Hand-written additions for /features. features.css is generated from the
+ * design (see docs/HOMEPAGE_V1.md); keep edits here so a regeneration does not
+ * drop them.
+ */
+
+/* Inactive scenes leave the accessibility tree and tab order once faded out,
+   so a screen reader reads only the setting that is shown. */
+.hpf .scene:not(.on){visibility:hidden;transition:opacity .6s ease,transform .8s cubic-bezier(.2,.85,.25,1),filter .6s ease,visibility 0s linear .6s}
+.hpf .scene.on{visibility:visible}
+/* No blur during the swap on phones: it is expensive on low-end GPUs. */
+@media(max-width:640px){.hpf .scene{filter:none!important}}

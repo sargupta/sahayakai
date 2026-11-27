@@ -110,10 +110,10 @@ export function ForSchoolsClient() {
 }
 
 /**
- * The page body, without nav or footer. Rendered here and on the signed-out
- * homepage (src/components/landing/landing-page.tsx), so a visitor sees one
- * story at both addresses. The empty #product anchor is the target of the
- * shared nav's "Product" link (/#product).
+ * The page body, without nav or footer. Rendered on /for-schools. (Until
+ * 2026-11-27 the signed-out homepage showed it too; the homepage is now the
+ * founder-approved v1 design in src/components/landing/home/, whose
+ * calculator reads the same model in src/lib/school-pricing.ts.)
  */
 export function SchoolsStory() {
   const demoHref = getWhatsAppDeepLink();

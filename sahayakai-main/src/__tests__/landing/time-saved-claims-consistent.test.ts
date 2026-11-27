@@ -32,6 +32,8 @@ import {
 const SRC = path.resolve(__dirname, "..", "..");
 const HERO = path.join(SRC, "components", "landing", "landing-hero.tsx");
 const FOR_SCHOOLS = path.join(SRC, "app", "(marketing)", "for-schools", "for-schools-client.tsx");
+// The homepage (founder-approved v1, 2026-11-27) carries the school calculator.
+const HOME = path.join(SRC, "components", "landing", "home", "home-page.tsx");
 const LOCALES = path.join(SRC, "locales");
 
 const MIN_DAYS = 180;
@@ -104,4 +106,34 @@ describe("/for-schools types no figure of its own", () => {
   it("carries no testimonial or usage claim", () => {
     expect(/<blockquote|<figcaption|pilot school|Live with \d+/i.test(code)).toBe(false);
   });
+});
+
+describe("the homepage calculator types no figure of its own", () => {
+  // Comments may explain the numbers; only code and copy are checked.
+  const code = readFileSync(HOME, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+
+  it("reads hours, weeks and price from src/lib/school-pricing.ts", () => {
+    for (const name of [
+      "SAVINGS_HOURS_PER_TEACHER_YEAR",
+      "SAVINGS_WEEKLY_HOURS",
+      "SAVINGS_CAPABILITIES",
+      "SCHOOL_PRICING.annualPerTeacher",
+      "estimateSchoolSavings",
+    ]) {
+      expect(code).toContain(name);
+    }
+  });
+
+  it("contains no typed hours figure", () => {
+    expect(code.match(/\d+(?:\.\d+)?\+?\s*(?:hrs?|hours?)\b/gi) ?? []).toEqual([]);
+  });
+
+  it("contains no typed price", () => {
+    const price = SCHOOL_PRICING.annualPerTeacher;
+    expect(code).not.toContain(String(price));
+    expect(code).not.toContain(price.toLocaleString("en-IN"));
+  });
+
 });
