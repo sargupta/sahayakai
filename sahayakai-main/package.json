@@ -6,7 +6,7 @@
     "dev": "node_modules/.bin/next dev",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "next build",
+    "build": "node scripts/build-with-retry.mjs",
     "start": "next start",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
