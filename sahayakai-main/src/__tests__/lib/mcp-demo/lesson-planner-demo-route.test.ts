@@ -14,7 +14,7 @@
 jest.mock('server-only', () => ({}));
 jest.mock('@/lib/logger/structured-logger', () => ({ StructuredLogger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() } }));
 
-import { mintApiKey, MCP_API_KEYS_COLLECTION } from '@/lib/mcp/api-keys';
+import { mintApiKey, MCP_API_KEYS_COLLECTION, parseApiKey } from '@/lib/mcp/api-keys';
 import { handleMcpHttpRequest } from '@/lib/mcp/http-handler';
 import { lessonPlannerCapability } from '@/lib/mcp/lesson-planner/capability';
 import { createLessonPlanViaMcp, getMcpDemoConfig } from '@/lib/mcp-demo/lesson-planner-client';
@@ -94,7 +94,7 @@ describe('route: /api/mcp-demo/lesson-planner', () => {
     it('never returns the API key, the MCP URL or service internals to the browser', async () => {
         const res = await POST(new Request('http://localhost/x', signedIn({ method: 'POST', body: JSON.stringify(DEMO_ARGS) })));
         const text = await res.text();
-        for (const secret of [apiKey, apiKey.split('_').pop()!, keyId, PEPPER, MCP_URL, '127.0.0.1', 'sidecar', 'secret-version', 'bucket', 'anonymous_user']) {
+        for (const secret of [apiKey, parseApiKey(apiKey)!.secret, keyId, PEPPER, MCP_URL, '127.0.0.1', 'sidecar', 'secret-version', 'bucket', 'anonymous_user']) {
             expect(text).not.toContain(secret);
         }
         const status = await (await GET(new Request('http://localhost/x', signedIn()))).text();
