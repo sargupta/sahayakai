@@ -1718,7 +1718,7 @@
   "All schools": "அனைத்துப் பள்ளிகள்",
   "Already called four times in the last 30 days": "கடந்த 30 நாட்களில் ஏற்கெனவே நான்கு முறை அழைக்கப்பட்டது",
   "Annual Day": "ஆண்டு விழா",
-  "Answered": "பதிலளிக்கப்பட்டது",
+  "Answered": "பேசினார்",
   "Approve": "அங்கீகரி",
   "Approve this campaign?": "இந்த அழைப்புத் தொகுப்பை அங்கீகரிக்கவா?",
   "Approved {when}": "{when} அங்கீகரிக்கப்பட்டது",
@@ -4231,7 +4231,7 @@
   "of 10": "10-இல்",
   "of government school teachers view AI positively, and 26% use it regularly.": "அரசுப் பள்ளி ஆசிரியர்கள் AI-ஐ நேர்மறையாகப் பார்க்கின்றனர்; 26% பேர் அதைத் தொடர்ந்து பயன்படுத்துகின்றனர்.",
   "of teachers surveyed report using AI tools in their teaching.": "கணக்கெடுப்பில் பங்கேற்ற ஆசிரியர்கள் தங்கள் கற்பித்தலில் AI கருவிகளைப் பயன்படுத்துவதாகத் தெரிவிக்கின்றனர்.",
-  "reached": "தொடர்புகொள்ளப்பட்டது",
+  "reached": "தொடர்பு",
   "{m} min {s} s": "{m} நிமி {s} வி",
   "{n} hours": "{n} மணி நேரம்",
   "“Open Class 8 attendance.”": "“எட்டாம் வகுப்பு வருகையைத் திற.”",
@@ -4240,5 +4240,7 @@
   "About {h} hours per teacher": "ஒரு ஆசிரியருக்குச் சுமார் {h} மணி நேரம்",
   "Pause animations": "அனிமேஷனை இடைநிறுத்து",
   "Play animations": "அனிமேஷனை இயக்கு",
-  "At this salary, the subscription costs more than the value of the time it returns.": "இந்தச் சம்பளத்தில், சந்தாக் கட்டணம் மிச்சமாகும் நேரத்தின் மதிப்பை விட அதிகம்."
+  "At this salary, the subscription costs more than the value of the time it returns.": "இந்தச் சம்பளத்தில், சந்தாக் கட்டணம் மிச்சமாகும் நேரத்தின் மதிப்பை விட அதிகம்.",
+  "About ₹{x} back for every ₹1 spent. The subscription pays for itself in under a month.": "செலவிடும் ஒவ்வொரு ₹1-க்கும் சுமார் ₹{x} திரும்பக் கிடைக்கிறது. சந்தாவின் செலவு ஒரு மாதத்துக்கும் குறைவான காலத்தில் ஈடாகிவிடும்.",
+  "a month": "ஒரு மாத"
 }

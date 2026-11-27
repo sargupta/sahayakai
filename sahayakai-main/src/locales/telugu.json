@@ -4240,5 +4240,7 @@
   "About {h} hours per teacher": "ఒక్కో ఉపాధ్యాయుడికి సుమారు {h} గంటలు",
   "Pause animations": "యానిమేషన్లు ఆపండి",
   "Play animations": "యానిమేషన్లు ప్లే చేయండి",
-  "At this salary, the subscription costs more than the value of the time it returns.": "ఈ జీతం వద్ద, చందా ఖర్చు ఆదా అయ్యే సమయం విలువ కంటే ఎక్కువ."
+  "At this salary, the subscription costs more than the value of the time it returns.": "ఈ జీతం వద్ద, చందా ఖర్చు ఆదా అయ్యే సమయం విలువ కంటే ఎక్కువ.",
+  "About ₹{x} back for every ₹1 spent. The subscription pays for itself in under a month.": "ఖర్చు చేసిన ప్రతి ₹1 కి సుమారు ₹{x} తిరిగి వస్తుంది. సబ్‌స్క్రిప్షన్ ఖర్చు ఒక నెల కంటే తక్కువ వ్యవధిలోనే తిరిగి వస్తుంది.",
+  "a month": "ఒక నెల"
 }

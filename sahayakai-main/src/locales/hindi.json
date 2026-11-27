@@ -4249,5 +4249,7 @@
   "About {h} hours per teacher": "प्रति शिक्षक लगभग {h} घंटे",
   "Pause animations": "एनिमेशन रोकें",
   "Play animations": "एनिमेशन चलाएँ",
-  "At this salary, the subscription costs more than the value of the time it returns.": "इस वेतन पर सदस्यता की लागत, बचाए गए समय के मूल्य से अधिक है।"
+  "At this salary, the subscription costs more than the value of the time it returns.": "इस वेतन पर सदस्यता की लागत, बचाए गए समय के मूल्य से अधिक है।",
+  "About ₹{x} back for every ₹1 spent. The subscription pays for itself in under a month.": "खर्च किए गए हर ₹1 पर लगभग ₹{x} वापस। सदस्यता की लागत एक महीने से कम में वसूल हो जाती है।",
+  "a month": "एक महीने"
 }

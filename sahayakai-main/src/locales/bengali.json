@@ -4240,5 +4240,7 @@
   "About {h} hours per teacher": "শিক্ষক প্রতি প্রায় {h} ঘণ্টা",
   "Pause animations": "অ্যানিমেশন থামান",
   "Play animations": "অ্যানিমেশন চালান",
-  "At this salary, the subscription costs more than the value of the time it returns.": "এই বেতনে, সাবস্ক্রিপশনের খরচ বাঁচানো সময়ের মূল্যের চেয়ে বেশি।"
+  "At this salary, the subscription costs more than the value of the time it returns.": "এই বেতনে, সাবস্ক্রিপশনের খরচ বাঁচানো সময়ের মূল্যের চেয়ে বেশি।",
+  "About ₹{x} back for every ₹1 spent. The subscription pays for itself in under a month.": "প্রতি ₹1 খরচে প্রায় ₹{x} ফেরত। সাবস্ক্রিপশনের খরচ এক মাসেরও কম সময়ে উঠে আসে।",
+  "a month": "এক মাস"
 }

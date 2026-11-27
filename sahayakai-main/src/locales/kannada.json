@@ -1744,7 +1744,7 @@
   "All schools": "ಎಲ್ಲಾ ಶಾಲೆಗಳು",
   "Already called four times in the last 30 days": "ಕಳೆದ 30 ದಿನಗಳಲ್ಲಿ ಈಗಾಗಲೇ ನಾಲ್ಕು ಬಾರಿ ಕರೆ ಮಾಡಲಾಗಿದೆ",
   "Annual Day": "ವಾರ್ಷಿಕೋತ್ಸವ",
-  "Answered": "ಸ್ವೀಕರಿಸಲಾಗಿದೆ",
+  "Answered": "ಮಾತಾಡಿದರು",
   "Approve": "ಅನುಮೋದಿಸಿ",
   "Approve this campaign?": "ಈ ಅಭಿಯಾನವನ್ನು ಅನುಮೋದಿಸಬೇಕೆ?",
   "Approved {when}": "{when} ಅನುಮೋದಿಸಲಾಗಿದೆ",
@@ -4239,7 +4239,7 @@
   "of 10": "/ 10",
   "of government school teachers view AI positively, and 26% use it regularly.": "ಸರ್ಕಾರಿ ಶಾಲಾ ಶಿಕ್ಷಕರು AI ಬಗ್ಗೆ ಸಕಾರಾತ್ಮಕ ಅಭಿಪ್ರಾಯ ಹೊಂದಿದ್ದಾರೆ, ಮತ್ತು 26% ಜನರು ಅದನ್ನು ನಿಯಮಿತವಾಗಿ ಬಳಸುತ್ತಾರೆ.",
   "of teachers surveyed report using AI tools in their teaching.": "ಸಮೀಕ್ಷೆಗೆ ಒಳಗಾದ ಶಿಕ್ಷಕರು ತಮ್ಮ ಬೋಧನೆಯಲ್ಲಿ AI ಸಾಧನಗಳನ್ನು ಬಳಸುತ್ತಿರುವುದಾಗಿ ತಿಳಿಸಿದ್ದಾರೆ.",
-  "reached": "ಸಂಪರ್ಕಿಸಲಾಗಿದೆ",
+  "reached": "ತಲುಪಿದೆ",
   "{m} min {s} s": "{m} ನಿ {s} ಸೆ",
   "{n} hours": "{n} ಗಂಟೆಗಳು",
   "“Open Class 8 attendance.”": "“8ನೇ ತರಗತಿ ಹಾಜರಾತಿ ತೆರೆಯಿರಿ.”",
@@ -4248,5 +4248,7 @@
   "About {h} hours per teacher": "ಪ್ರತಿ ಶಿಕ್ಷಕರಿಗೆ ಸುಮಾರು {h} ಗಂಟೆಗಳು",
   "Pause animations": "ಅನಿಮೇಷನ್ ನಿಲ್ಲಿಸಿ",
   "Play animations": "ಅನಿಮೇಷನ್ ಪ್ಲೇ ಮಾಡಿ",
-  "At this salary, the subscription costs more than the value of the time it returns.": "ಈ ವೇತನದಲ್ಲಿ, ಚಂದಾದಾರಿಕೆಯ ವೆಚ್ಚವು ಉಳಿಸಿದ ಸಮಯದ ಮೌಲ್ಯಕ್ಕಿಂತ ಹೆಚ್ಚು."
+  "At this salary, the subscription costs more than the value of the time it returns.": "ಈ ವೇತನದಲ್ಲಿ, ಚಂದಾದಾರಿಕೆಯ ವೆಚ್ಚವು ಉಳಿಸಿದ ಸಮಯದ ಮೌಲ್ಯಕ್ಕಿಂತ ಹೆಚ್ಚು.",
+  "About ₹{x} back for every ₹1 spent. The subscription pays for itself in under a month.": "ಖರ್ಚು ಮಾಡಿದ ಪ್ರತಿ ₹1 ಕ್ಕೆ ಸುಮಾರು ₹{x} ಹಿಂತಿರುಗುತ್ತದೆ. ಚಂದಾದಾರಿಕೆಯ ವೆಚ್ಚ ಒಂದು ತಿಂಗಳಿಗಿಂತ ಕಡಿಮೆ ಅವಧಿಯಲ್ಲಿ ವಸೂಲಾಗುತ್ತದೆ.",
+  "a month": "ಒಂದು ತಿಂಗಳ"
 }

@@ -201,3 +201,14 @@
 html:has(.hpv1){scroll-padding-top:84px}
 @media(max-width:640px){html:has(.hpv1){scroll-padding-top:16px}}
 .hpv1 .calc-r:focus-visible{outline:2px solid var(--hp-accent-deep);outline-offset:6px}
+.hpv1 .hp-nav .navl[aria-current="page"]{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+/* Long-script languages (Tamil, Malayalam) wrap the header below 1366px: keep only "All features" there. */
+@media(max-width:1365px){.hpv1 .hp-nav .navl-wide{display:none}}
+/* Tap targets of at least 44px (WCAG 2.5.8 and thumbs on phones). */
+.hpv1 .hp-brand{min-height:44px}
+.hpv1 .hp-footer-links a{display:inline-flex;align-items:center;min-height:44px}
+.hpv1 #calculator label:has(input[type="checkbox"]){min-height:44px}
+.hpv1 .calc-r{height:28px;background:linear-gradient(var(--hp-clay-89-3),var(--hp-clay-89-3)) center/100% 8px no-repeat;border-radius:9999px}
+/* Scene text on phones: the scenes are scaled to 82%, so small labels are raised to read at 11px or more. */
+@media(max-width:640px){.hpv1 .fit [style*="font-size: 9px"],.hpv1 .fit [style*="font-size:9px"]{font-size:13.5px!important}.hpv1 .fit [style*="font-size: 10px"],.hpv1 .fit [style*="font-size:10px"]{font-size:14px!important}.hpv1 .fit [style*="font-size: 11px"],.hpv1 .fit [style*="font-size:11px"]{font-size:14.5px!important}.hpv1 .fit [style*="font-size: 12px"],.hpv1 .fit [style*="font-size:12px"]{font-size:15px!important}.hpv1 .fit [style*="font-size: 13px"],.hpv1 .fit [style*="font-size:13px"]{font-size:15.5px!important}.hpv1 .fit .chip{font-size:15px!important}}
+@media(max-width:640px){.hpv1 .fit .chip{white-space:normal;max-width:100%}}

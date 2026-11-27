@@ -102,6 +102,30 @@ const DEMO_COUNT = 3;
 
 const WAVE = [40, 80, 55, 100, 65, 90, 45, 75, 60, 95, 50, 85, 35, 70, 55, 90];
 
+/**
+ * All variants laid in one grid cell; only the active one is visible. The
+ * box keeps the height of the longest, so the page below never jumps while
+ * the requests cycle.
+ */
+function Stacked({ items, active }: { items: string[]; active: number }) {
+  return (
+    <span style={{ display: "grid" }}>
+      {items.map((text, i) => (
+        <span
+          key={i}
+          aria-hidden={i === active ? undefined : true}
+          style={{
+            gridArea: "1 / 1",
+            visibility: i === active ? "visible" : "hidden",
+          }}
+        >
+          {text}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function Orb({
   size,
   pulse = false,
@@ -348,7 +372,7 @@ function Hero() {
                   lineHeight: 1.22,
                 }}
               >
-                “{d.said}”
+                <Stacked items={list.map((x) => `“${x.said}”`)} active={pick} />
               </p>
               <div
                 style={{
@@ -434,7 +458,7 @@ function Hero() {
                     lineHeight: 1.35,
                   }}
                 >
-                  {d.result}
+                  <Stacked items={list.map((x) => x.result)} active={pick} />
                 </div>
                 <div
                   style={{
@@ -729,40 +753,47 @@ function Calculator() {
   const fte = Math.round(r.fteEquivalent);
   const perRupee =
     r.roiMultiple >= 2
-      ? String(Math.round(r.roiMultiple))
+      ? Math.round(r.roiMultiple).toLocaleString("en-IN")
       : r.roiMultiple.toFixed(1);
-  const payback =
-    r.paybackMonths < 1
-      ? t("less than a month")
-      : t("{n} months").replace(
-          "{n}",
-          String(Math.max(1, Math.round(r.paybackMonths))),
-        );
+  const paybackMonths = Math.round(r.paybackMonths);
   const has = r.teachers > 0 && r.valueSchoolPerYear > 0;
 
-  const netValue =
-    r.teachers > 0
-      ? (r.netSavingsPerYear < 0 ? "−" : "") + money(r.netSavingsPerYear, t)
-      : "₹0";
+  const netValue = has
+    ? (r.netSavingsPerYear < 0 ? "−" : "") + money(r.netSavingsPerYear, t)
+    : "₹0";
+  const back = (line: string) => line.replace("{x}", perRupee);
   const roiLine = !has
     ? t("Enter the number of teachers and their average salary.")
     : r.roiMultiple < 1
       ? t(
           "At this salary, the subscription costs more than the value of the time it returns.",
         )
-      : t(
-          "About ₹{x} back for every ₹1 spent. The subscription pays for itself in about {payback}.",
-        )
-          .replace("{x}", perRupee)
-          .replace("{payback}", payback);
+      : r.paybackMonths < 1
+        ? back(
+            t(
+              "About ₹{x} back for every ₹1 spent. The subscription pays for itself in under a month.",
+            ),
+          )
+        : back(
+            t(
+              "About ₹{x} back for every ₹1 spent. The subscription pays for itself in about {payback}.",
+            ),
+          ).replace(
+            "{payback}",
+            paybackMonths <= 1
+              ? t("a month")
+              : t("{n} months").replace("{n}", String(paybackMonths)),
+          );
+  // Per-teacher hours are shown exactly; the "time of N teachers" framing only
+  // from two full-time teachers up (one full-time teacher = SAVINGS_MODEL.fteHoursPerYear).
   const hoursNote =
-    r.fteEquivalent >= 1
+    fte >= 2
       ? t("About {h} hours per teacher, the time of {n} full-time teachers")
-          .replace("{h}", String(roundHours(r.hoursPerTeacherPerYear)))
-          .replace("{n}", String(fte))
+          .replace("{h}", String(r.hoursPerTeacherPerYear))
+          .replace("{n}", fte.toLocaleString("en-IN"))
       : t("About {h} hours per teacher").replace(
           "{h}",
-          String(roundHours(r.hoursPerTeacherPerYear)),
+          String(r.hoursPerTeacherPerYear),
         );
   const method = t(
     "An estimate from your inputs, not a measured result. ₹{price} is SahayakAI’s yearly price per teacher; it is not a salary. Time saved is {hw} hours a week per teacher across {tools} tools, over {weeks} teaching weeks, valued at salary ÷ {paid} paid hours a month.",
@@ -792,6 +823,8 @@ function Calculator() {
     border: "1px solid rgba(23,19,16,.16)",
     borderRadius: "12px",
     padding: "6px 10px",
+    minHeight: "44px",
+    boxSizing: "border-box",
   };
   const input: CSSProperties = {
     width: "96px",
@@ -1095,7 +1128,11 @@ function Calculator() {
       >
         {t("Per teacher, that is about {h} hours a year.").replace(
           "{h}",
-          String(SAVINGS_HOURS_PER_TEACHER_YEAR),
+          String(
+            conservative
+              ? r.hoursPerTeacherPerYear
+              : SAVINGS_HOURS_PER_TEACHER_YEAR,
+          ),
         )}{" "}
         <a href="/for-schools">{t("See the full savings method")}</a>
       </p>

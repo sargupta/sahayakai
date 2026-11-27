@@ -26,7 +26,7 @@ export function LanguageSwitcher() {
         <DropdownMenu>
             <DropdownMenuTrigger
                 aria-label={`${t("Language")}: ${current}`}
-                className="inline-flex items-center gap-1.5 min-h-[44px] text-[13px] font-medium text-ink-600 hover:text-foreground transition-colors cursor-pointer px-2 py-1 rounded-md hover:bg-black/5 data-[state=open]:bg-black/5">
+                className="inline-flex items-center gap-1.5 min-h-[44px] text-tile font-medium text-ink-600 hover:text-foreground transition-colors cursor-pointer px-2 py-1 rounded-md hover:bg-black/5 data-[state=open]:bg-black/5">
                 <Globe className="h-3.5 w-3.5" strokeWidth={2.2} />
                 <span className="hidden sm:inline">{current}</span>
                 <span className="sm:hidden" aria-hidden>
@@ -38,7 +38,7 @@ export function LanguageSwitcher() {
                     <DropdownMenuItem
                         key={lang}
                         onClick={() => void setLanguage(lang as Language)}
-                        className={`cursor-pointer text-[13px] ${
+                        className={`cursor-pointer text-tile ${
                             lang === language ? "bg-saffron-50 font-semibold text-saffron-700" : ""
                         }`}
                     >

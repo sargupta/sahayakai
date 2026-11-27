@@ -10,3 +10,15 @@
 .hpf .scene.on{visibility:visible}
 /* No blur during the swap on phones: it is expensive on low-end GPUs. */
 @media(max-width:640px){.hpf .scene{filter:none!important}}
+
+/* The generated .wrap rule zeroes vertical padding, which squashed the shared
+   header; and overflow:hidden on the root stopped the header from sticking.
+   clip keeps the decorative glows from causing sideways scroll without
+   creating a scroll container. */
+.hpf{overflow:clip}
+.hpf .hp-header-row{padding-top:16px;padding-bottom:16px}
+@media(max-width:640px){.hpf .hp-header-row{padding-top:12px;padding-bottom:12px}}
+
+/* Scene text on phones: raised so labels read at 11px or more after the 82% scene scale. */
+@media(max-width:640px){.hpf .fit [style*="font-size: 9px"],.hpf .fit [style*="font-size:9px"]{font-size:13.5px!important}.hpf .fit [style*="font-size: 10px"],.hpf .fit [style*="font-size:10px"]{font-size:14px!important}.hpf .fit [style*="font-size: 11px"],.hpf .fit [style*="font-size:11px"]{font-size:14.5px!important}.hpf .fit [style*="font-size: 12px"],.hpf .fit [style*="font-size:12px"]{font-size:15px!important}.hpf .fit [style*="font-size: 13px"],.hpf .fit [style*="font-size:13px"]{font-size:15.5px!important}.hpf .fit .chip{font-size:15px!important}}
+@media(max-width:640px){.hpf .fit .chip{white-space:normal;max-width:100%}}

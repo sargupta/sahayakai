@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLanguage } from "@/context/language-context";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
 import { useAccessMode } from "../use-access-mode";
@@ -16,11 +17,12 @@ import { CONTACT_EMAIL, CONTACT_PHONE, demoHref } from "./home-links";
 export function HomeHeader({ onAuthClick }: { onAuthClick: () => void }) {
   const { t } = useLanguage();
   const gated = useAccessMode() === "enforce";
+  const onFeatures = usePathname() === "/features";
 
   return (
     <header className="hp-header">
       <div className="wrap hp-header-row">
-        <Link href="/" className="hp-brand" aria-label={t("SahayakAI home")}>
+        <Link href="/" className="hp-brand">
           <img
             src="/icons/mark.png"
             alt=""
@@ -32,13 +34,17 @@ export function HomeHeader({ onAuthClick }: { onAuthClick: () => void }) {
           <span className="hp-brand-by">{t("by SARGVISION Intelligence")}</span>
         </Link>
         <nav className="hp-nav" aria-label={t("Main")}>
-          <a href="/features" className="navl navl-keep">
+          <a
+            href="/features"
+            className="navl navl-keep"
+            aria-current={onFeatures ? "page" : undefined}
+          >
             {t("All features")}
           </a>
-          <a href="/#nep" className="navl">
+          <a href="/#nep" className="navl navl-wide">
             {t("NEP 2020")}
           </a>
-          <a href="/#community" className="navl">
+          <a href="/#community" className="navl navl-wide">
             {t("Teachers community")}
           </a>
           <LanguageSwitcher />

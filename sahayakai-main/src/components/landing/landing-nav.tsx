@@ -18,7 +18,7 @@ export function LandingNav({ onAuthClick }: Props) {
 
   return (
     <nav className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-11 py-[22px] bg-white/70 backdrop-blur-md border-b border-black/5">
-      <div className="flex items-center gap-2.5 font-headline font-bold text-[18px] tracking-tight text-foreground">
+      <div className="flex items-center gap-2.5 font-headline font-bold text-lg tracking-tight text-foreground">
         <img
           src="/icons/mark.png"
           alt={t("SahayakAI logo")}
@@ -26,13 +26,13 @@ export function LandingNav({ onAuthClick }: Props) {
         />
         <span className="flex items-baseline gap-1.5">
           SahayakAI
-          <span className="hidden sm:inline text-[10px] font-medium tracking-wide uppercase text-ink-400">
+          <span className="hidden sm:inline text-xs font-medium tracking-wide uppercase text-ink-400">
             {t("by SARGVISION Intelligence")}
           </span>
         </span>
       </div>
 
-      <div className="hidden md:flex gap-7 text-[13px] text-ink-600 font-medium">
+      <div className="hidden md:flex gap-7 text-tile text-ink-600 font-medium">
         <a href="/features" className="hover:text-foreground transition-colors">
           {t("All features")}
         </a>
@@ -46,7 +46,7 @@ export function LandingNav({ onAuthClick }: Props) {
         <button
           type="button"
           onClick={onAuthClick}
-          className="hidden sm:inline text-[13px] text-ink-600 font-medium hover:text-foreground cursor-pointer transition-colors"
+          className="hidden sm:inline text-tile text-ink-600 font-medium hover:text-foreground cursor-pointer transition-colors"
         >
           {t("Log in")}
         </button>
