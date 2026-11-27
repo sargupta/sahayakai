@@ -20,7 +20,7 @@
   "7-day refund. Cancel anytime.": "7-ਦਿਨ ਦੀ ਵਾਪਸੀ। ਕਦੇ ਵੀ ਰੱਦ ਕਰੋ।",
   "A few more details so we can recommend better content.": "ਬਿਹਤਰ ਸਮੱਗਰੀ ਸੁਝਾਉਣ ਲਈ ਕੁਝ ਹੋਰ ਵੇਰਵੇ।",
   "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.": "ਰੁਬ੍ਰਿਕ ਇੱਕ ਸਕੋਰਿੰਗ ਟੂਲ ਹੈ ਜੋ ਅਸਾਈਨਮੈਂਟ ਜਾਂ ਕੰਮ ਲਈ ਪ੍ਰਦਰਸ਼ਨ ਉਮੀਦਾਂ ਨੂੰ ਸਪਸ਼ਟ ਤੌਰ 'ਤੇ ਦਰਸਾਉਂਦਾ ਹੈ।",
-  "AI Coach": "AI ਕੋਚ",
+  "AI Mentor": "AI ਮੈਂਟਰ",
   "AI Training Data": "AI ਸਿਖਲਾਈ ਡਾਟਾ",
   "AI service is busy. Please try again in a minute.": "AI ਸੇਵਾ ਰੁਝੀ ਹੋਈ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਮਿੰਟ ਬਾਅਦ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
   "AI will generate a standard pattern.": "AI ਇੱਕ ਮਿਆਰੀ ਪੈਟਰਨ ਬਣਾਏਗਾ।",
@@ -1055,7 +1055,7 @@
   "Sign back in": "ਮੁੜ ਸਾਈਨ ਇਨ ਕਰੋ",
   "Sign in required": "ਸਾਈਨ ਇਨ ਲੋੜੀਂਦਾ ਹੈ",
   "Sign in to acknowledge these commitments.": "ਇਹਨਾਂ ਵਚਨਬੱਧਤਾਵਾਂ ਨੂੰ ਸਵੀਕਾਰ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।",
-  "Sign in to ask the AI Coach": "AI ਕੋਚ ਨੂੰ ਪੁੱਛਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ",
+  "Sign in to ask the AI Mentor": "AI ਮੈਂਟਰ ਨੂੰ ਪੁੱਛਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ",
   "Sign in to continue": "ਜਾਰੀ ਰੱਖਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ",
   "Sign in to customise your language, plan preferences, and notification settings.": "ਆਪਣੀ ਭਾਸ਼ਾ, ਪਲੈਨ ਤਰਜੀਹਾਂ ਅਤੇ ਨੋਟੀਫਿਕੇਸ਼ਨ ਸੈਟਿੰਗਾਂ ਅਨੁਕੂਲਿਤ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।",
   "Sign in to get notified when a fellow teacher connects, replies, or shares a resource.": "ਜਦੋਂ ਕੋਈ ਸਾਥੀ ਅਧਿਆਪਕ ਜੁੜੇ, ਜਵਾਬ ਦੇਵੇ, ਜਾਂ ਸਰੋਤ ਸਾਂਝਾ ਕਰੇ ਤਾਂ ਸੂਚਨਾ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।",
@@ -3918,5 +3918,8 @@
   "per teacher, every week": "ਪ੍ਰਤੀ ਅਧਿਆਪਕ, ਹਰ ਹਫ਼ਤੇ",
   "what that time is worth": "ਉਸ ਸਮੇਂ ਦਾ ਮੁੱਲ",
   "worth of teaching time, after the fee": "ਫੀਸ ਤੋਂ ਬਾਅਦ, ਪੜ੍ਹਾਉਣ ਦੇ ਸਮੇਂ ਦਾ ਮੁੱਲ",
-  "Transform your school, one staff room at a time.": "ਆਪਣੇ ਸਕੂਲ ਨੂੰ ਬਦਲੋ, ਇੱਕ-ਇੱਕ ਸਟਾਫ਼ ਰੂਮ ਤੋਂ।"
+  "Transform your school, one staff room at a time.": "ਆਪਣੇ ਸਕੂਲ ਨੂੰ ਬਦਲੋ, ਇੱਕ-ਇੱਕ ਸਟਾਫ਼ ਰੂਮ ਤੋਂ।",
+  "Your personal AI mentor, providing advice grounded in sound pedagogical principles.": "ਤੁਹਾਡਾ ਨਿੱਜੀ AI ਮੈਂਟਰ, ਜੋ ਠੋਸ ਸਿੱਖਿਆ ਸਿਧਾਂਤਾਂ 'ਤੇ ਅਧਾਰਿਤ ਸਲਾਹ ਦਿੰਦਾ ਹੈ।",
+  "Ask for techniques, classroom strategies, or motivation.": "ਤਕਨੀਕਾਂ, ਕਲਾਸਰੂਮ ਰਣਨੀਤੀਆਂ ਜਾਂ ਪ੍ਰੇਰਣਾ ਲਈ ਪੁੱਛੋ।",
+  "e.g., 'How can I get my students to be quiet without shouting?'": "ਉਦਾ., 'ਮੈਂ ਬਿਨਾਂ ਚੀਕੇ ਆਪਣੇ ਵਿਦਿਆਰਥੀਆਂ ਨੂੰ ਚੁੱਪ ਕਿਵੇਂ ਕਰਾਵਾਂ?'"
 }

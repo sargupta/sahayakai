@@ -54,7 +54,7 @@ const TYPE_CONFIG: Record<string, {
   'image':              { border: 'border-t-chart-5/60',  bg: 'bg-chart-5/10',   text: 'text-chart-5',     label: 'Visual Aid',   route: 'visual-aid-designer' },
   'visual-aid':         { border: 'border-t-chart-5/60',  bg: 'bg-chart-5/10',   text: 'text-chart-5',    label: 'Visual Aid',   route: 'visual-aid-designer' },
   'virtual-field-trip': { border: 'border-t-leaf-300',    bg: 'bg-leaf-100/50',  text: 'text-leaf-700',    label: 'Field Trip',   route: 'virtual-field-trip' },
-  'teacher-training':   { border: 'border-t-warning/60',  bg: 'bg-tint-warning', text: 'text-warning',     label: 'AI Coach',     route: 'teacher-training' },
+  'teacher-training':   { border: 'border-t-warning/60',  bg: 'bg-tint-warning', text: 'text-warning',     label: 'AI Mentor',     route: 'teacher-training' },
 };
 
 const cfg = (type: string) =>

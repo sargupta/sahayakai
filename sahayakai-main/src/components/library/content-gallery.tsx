@@ -477,7 +477,7 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                             <SelectItem value="rubric">{t("Rubrics")}</SelectItem>
                             <SelectItem value="virtual-field-trip">{t("Field Trips")}</SelectItem>
                             <SelectItem value="exam-paper">{t("Exam Paper")}</SelectItem>
-                            <SelectItem value="teacher-training">{t("AI Coach")}</SelectItem>
+                            <SelectItem value="teacher-training">{t("AI Mentor")}</SelectItem>
                             <SelectItem value="instant-answer">{t("Instant Answer")}</SelectItem>
                         </SelectContent>
                     </Select>

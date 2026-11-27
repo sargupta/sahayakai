@@ -20,7 +20,7 @@
   "7-day refund. Cancel anytime.": "7-రోజుల రీఫండ్. ఎప్పుడైనా రద్దు చేయవచ్చు.",
   "A few more details so we can recommend better content.": "మెరుగైన కంటెంట్‌ను సిఫారసు చేయడానికి మరికొన్ని వివరాలు.",
   "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.": "రుబ్రిక్ అనేది ఒక అసైన్‌మెంట్ లేదా పని కోసం పనితీరు అంచనాలను స్పష్టంగా సూచించే స్కోరింగ్ సాధనం.",
-  "AI Coach": "AI కోచ్",
+  "AI Mentor": "AI మెంటర్",
   "AI Training Data": "AI శిక్షణ డేటా",
   "AI service is busy. Please try again in a minute.": "AI సేవ బిజీగా ఉంది. దయచేసి ఒక నిమిషంలో మళ్లీ ప్రయత్నించండి.",
   "AI will generate a standard pattern.": "AI ఒక ప్రామాణిక నమూనాను రూపొందిస్తుంది.",
@@ -1055,7 +1055,7 @@
   "Sign back in": "మళ్లీ సైన్ ఇన్ చేయండి",
   "Sign in required": "సైన్ ఇన్ అవసరం",
   "Sign in to acknowledge these commitments.": "ఈ నిబద్ధతలను అంగీకరించడానికి సైన్ ఇన్ చేయండి.",
-  "Sign in to ask the AI Coach": "AI కోచ్‌ని అడగడానికి సైన్ ఇన్ చేయండి",
+  "Sign in to ask the AI Mentor": "AI మెంటర్‌ని అడగడానికి సైన్ ఇన్ చేయండి",
   "Sign in to continue": "కొనసాగడానికి సైన్ ఇన్ చేయండి",
   "Sign in to customise your language, plan preferences, and notification settings.": "మీ భాష, ప్లాన్ ప్రాధాన్యతలు మరియు నోటిఫికేషన్ సెట్టింగ్‌లను అనుకూలీకరించడానికి సైన్ ఇన్ చేయండి.",
   "Sign in to get notified when a fellow teacher connects, replies, or shares a resource.": "తోటి ఉపాధ్యాయుడు కనెక్ట్ అయినప్పుడు, ప్రత్యుత్తరం ఇచ్చినప్పుడు లేదా వనరును పంచుకున్నప్పుడు తెలుసుకోవడానికి సైన్ ఇన్ చేయండి.",
@@ -3918,5 +3918,8 @@
   "per teacher, every week": "ప్రతి ఉపాధ్యాయుడికి, ప్రతి వారం",
   "what that time is worth": "ఆ సమయం విలువ",
   "worth of teaching time, after the fee": "రుసుము తర్వాత, బోధన సమయం విలువ",
-  "Transform your school, one staff room at a time.": "మీ పాఠశాలను మార్చండి, ఒక్కో స్టాఫ్ రూమ్‌తో."
+  "Transform your school, one staff room at a time.": "మీ పాఠశాలను మార్చండి, ఒక్కో స్టాఫ్ రూమ్‌తో.",
+  "Your personal AI mentor, providing advice grounded in sound pedagogical principles.": "మీ వ్యక్తిగత AI మెంటర్, దృఢమైన బోధనా సూత్రాలపై ఆధారపడిన సలహాలను అందిస్తుంది.",
+  "Ask for techniques, classroom strategies, or motivation.": "పద్ధతులు, తరగతి గది వ్యూహాలు లేదా ప్రేరణ కోసం అడగండి.",
+  "e.g., 'How can I get my students to be quiet without shouting?'": "ఉదా., 'అరవకుండా నా విద్యార్థులను నిశ్శబ్దంగా ఉండేలా చేయడం ఎలా?'"
 }

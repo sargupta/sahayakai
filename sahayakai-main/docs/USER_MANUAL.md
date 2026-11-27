@@ -73,7 +73,7 @@ Please execute the following test cases across the application. Your goal is to 
 
 ---
 
-## 🛠️ Feature 4: Teacher Training / AI Coach (`/teacher-training`)
+## 🛠️ Feature 4: AI Mentor (formerly Teacher Training / AI Coach) (`/teacher-training`)
 
 1.  **Classroom Management:** "How can I handle a student who is constantly talking while I am writing on the blackboard?"  
     *ಕನ್ನಡದಲ್ಲಿ ಪ್ರಶ್ನೆ:* "ನಾನು ಕಪ್ಪುಹಲಗೆಯ ಮೇಲೆ ಬರೆಯುವಾಗ ನಿರಂತರವಾಗಿ ಮಾತನಾಡುತ್ತಿರುವ ವಿದ್ಯಾರ್ಥಿಯನ್ನು ನಾನು ಹೇಗೆ ನಿಭಾಯಿಸಬಹುದು?"

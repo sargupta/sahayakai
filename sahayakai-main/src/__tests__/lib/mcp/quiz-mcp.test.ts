@@ -22,7 +22,7 @@ jest.mock('@/lib/logger/structured-logger', () => ({
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { mintApiKey, MCP_API_KEYS_COLLECTION, type McpScope } from '@/lib/mcp/api-keys';
+import { mintApiKey, MCP_API_KEYS_COLLECTION, type McpScope, parseApiKey } from '@/lib/mcp/api-keys';
 import { handleMcpHttpRequest, type McpCapabilityDefinition, type McpHandlerDeps } from '@/lib/mcp/http-handler';
 import { quizCapability } from '@/lib/mcp/quiz/capability';
 import { QuizResult } from '@/lib/mcp/quiz/schema';
@@ -313,7 +313,7 @@ describe('security', () => {
         const client = await connect(keyA.apiKey);
         const res = await client.callTool({ name: 'create_quiz', arguments: { ...VALID, topic: 'Fractions for Ramesh in 7B' } });
         await client.close();
-        const secretPart = keyA.apiKey.split('_').pop()!;
+        const secretPart = parseApiKey(keyA.apiKey)!.secret;
         const storedHash = (docs.get(`${MCP_API_KEYS_COLLECTION}/${keyA.keyId}`) as any).secretHash;
         const logs = JSON.stringify([...logInfo.mock.calls, ...logWarn.mock.calls]);
         for (const s of [PEPPER, secretPart, storedHash, keyA.apiKey]) {

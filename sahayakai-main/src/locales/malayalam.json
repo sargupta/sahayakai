@@ -20,7 +20,7 @@
   "7-day refund. Cancel anytime.": "7-ദിവസത്തെ റീഫണ്ട്. എപ്പോൾ വേണമെങ്കിലും റദ്ദാക്കാം.",
   "A few more details so we can recommend better content.": "മികച്ച ഉള്ളടക്കം ശുപാർശ ചെയ്യാൻ ഏതാനും വിശദാംശങ്ങൾ കൂടി.",
   "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.": "ഒരു അസൈൻമെന്റ് അല്ലെങ്കിൽ ജോലിക്കായുള്ള പ്രകടന പ്രതീക്ഷകളെ വ്യക്തമായി പ്രതിനിധീകരിക്കുന്ന സ്കോറിംഗ് ഉപകരണമാണ് റൂബ്രിക്.",
-  "AI Coach": "AI കോച്ച്",
+  "AI Mentor": "AI മെന്റർ",
   "AI Training Data": "AI പരിശീലന ഡാറ്റ",
   "AI service is busy. Please try again in a minute.": "AI സേവനം തിരക്കിലാണ്. ദയവായി ഒരു മിനിറ്റിനു ശേഷം വീണ്ടും ശ്രമിക്കുക.",
   "AI will generate a standard pattern.": "AI ഒരു സ്റ്റാൻഡേർഡ് പാറ്റേൺ സൃഷ്ടിക്കും.",
@@ -1055,7 +1055,7 @@
   "Sign back in": "വീണ്ടും സൈൻ ഇൻ ചെയ്യുക",
   "Sign in required": "സൈൻ ഇൻ ആവശ്യമാണ്",
   "Sign in to acknowledge these commitments.": "ഈ പ്രതിബദ്ധതകൾ അംഗീകരിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.",
-  "Sign in to ask the AI Coach": "AI കോച്ചിനോട് ചോദിക്കാൻ സൈൻ ഇൻ ചെയ്യുക",
+  "Sign in to ask the AI Mentor": "AI മെന്ററിനോട് ചോദിക്കാൻ സൈൻ ഇൻ ചെയ്യുക",
   "Sign in to continue": "തുടരാൻ സൈൻ ഇൻ ചെയ്യുക",
   "Sign in to customise your language, plan preferences, and notification settings.": "നിങ്ങളുടെ ഭാഷ, പ്ലാൻ മുൻഗണനകൾ, അറിയിപ്പ് ക്രമീകരണങ്ങൾ എന്നിവ ഇഷ്ടാനുസൃതമാക്കാൻ സൈൻ ഇൻ ചെയ്യുക.",
   "Sign in to get notified when a fellow teacher connects, replies, or shares a resource.": "ഒരു സഹപ്രവർത്തക അധ്യാപകൻ ബന്ധിപ്പിക്കുമ്പോഴോ, മറുപടി നൽകുമ്പോഴോ, വിഭവം പങ്കിടുമ്പോഴോ അറിയിപ്പ് നേടാൻ സൈൻ ഇൻ ചെയ്യുക.",
@@ -3918,5 +3918,8 @@
   "per teacher, every week": "ഒരു അധ്യാപകന്, ഓരോ ആഴ്ചയും",
   "what that time is worth": "ആ സമയത്തിന്റെ മൂല്യം",
   "worth of teaching time, after the fee": "ഫീസ് കഴിഞ്ഞ്, പഠിപ്പിക്കൽ സമയത്തിന്റെ മൂല്യം",
-  "Transform your school, one staff room at a time.": "നിങ്ങളുടെ സ്കൂളിനെ മാറ്റൂ, ഓരോ സ്റ്റാഫ് റൂമായി."
+  "Transform your school, one staff room at a time.": "നിങ്ങളുടെ സ്കൂളിനെ മാറ്റൂ, ഓരോ സ്റ്റാഫ് റൂമായി.",
+  "Your personal AI mentor, providing advice grounded in sound pedagogical principles.": "നിങ്ങളുടെ വ്യക്തിഗത AI മെന്റർ, മികച്ച ബോധനശാസ്ത്ര തത്വങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള ഉപദേശം നൽകുന്നു.",
+  "Ask for techniques, classroom strategies, or motivation.": "സാങ്കേതിക വിദ്യകൾ, ക്ലാസ് മുറി തന്ത്രങ്ങൾ അല്ലെങ്കിൽ പ്രചോദനം എന്നിവയ്ക്കായി ചോദിക്കുക.",
+  "e.g., 'How can I get my students to be quiet without shouting?'": "ഉദാ., 'ഒച്ചയിടാതെ എന്റെ വിദ്യാർത്ഥികളെ എങ്ങനെ നിശ്ശബ്ദരാക്കാം?'"
 }

@@ -20,7 +20,7 @@
   "7-day refund. Cancel anytime.": "7 दिन का रिफंड। कभी भी रद्द करें।",
   "A few more details so we can recommend better content.": "कुछ और जानकारी ताकि हम बेहतर सामग्री की सिफ़ारिश कर सकें।",
   "A rubric is a scoring tool that explicitly represents the performance expectations for an assignment or piece of work.": "रूब्रिक एक स्कोरिंग उपकरण है जो किसी असाइनमेंट या काम के लिए प्रदर्शन अपेक्षाओं का स्पष्ट रूप से प्रतिनिधित्व करता है।",
-  "AI Coach": "AI कोच",
+  "AI Mentor": "AI मेंटर",
   "AI Training Data": "AI प्रशिक्षण डेटा",
   "AI service is busy. Please try again in a minute.": "AI सेवा व्यस्त है। कृपया एक मिनट में पुनः प्रयास करें।",
   "AI will generate a standard pattern.": "AI एक मानक पैटर्न तैयार करेगा।",
@@ -1076,7 +1076,7 @@
   "Sign back in": "फिर से साइन इन करें",
   "Sign in required": "साइन इन आवश्यक है",
   "Sign in to acknowledge these commitments.": "इन प्रतिबद्धताओं को स्वीकार करने के लिए साइन इन करें।",
-  "Sign in to ask the AI Coach": "AI कोच से पूछने के लिए साइन इन करें",
+  "Sign in to ask the AI Mentor": "AI मेंटर से पूछने के लिए साइन इन करें",
   "Sign in to continue": "जारी रखने के लिए साइन इन करें",
   "Sign in to customise your language, plan preferences, and notification settings.": "अपनी भाषा, प्लान प्राथमिकताएँ और सूचना सेटिंग्स अनुकूलित करने के लिए साइन इन करें।",
   "Sign in to get notified when a fellow teacher connects, replies, or shares a resource.": "जब कोई साथी शिक्षक कनेक्ट करे, जवाब दे, या संसाधन साझा करे तो सूचना पाने के लिए साइन इन करें।",
@@ -3928,5 +3928,8 @@
   "per teacher, every week": "प्रति शिक्षक, हर सप्ताह",
   "what that time is worth": "उस समय का मूल्य",
   "worth of teaching time, after the fee": "शुल्क के बाद, पढ़ाने के समय का मूल्य",
-  "Transform your school, one staff room at a time.": "अपने स्कूल को बदलिए, एक-एक स्टाफ़ रूम से।"
+  "Transform your school, one staff room at a time.": "अपने स्कूल को बदलिए, एक-एक स्टाफ़ रूम से।",
+  "Your personal AI mentor, providing advice grounded in sound pedagogical principles.": "आपका व्यक्तिगत AI मेंटर, जो ठोस शैक्षणिक सिद्धांतों पर आधारित सलाह देता है।",
+  "Ask for techniques, classroom strategies, or motivation.": "तकनीक, कक्षा रणनीतियों, या प्रेरणा के लिए पूछें।",
+  "e.g., 'How can I get my students to be quiet without shouting?'": "उदा., 'मैं अपने छात्रों को बिना चिल्लाए शांत कैसे करा सकता हूँ?'"
 }

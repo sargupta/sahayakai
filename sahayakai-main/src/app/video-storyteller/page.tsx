@@ -177,7 +177,7 @@ function VideoStorytellerPageInner() {
   };
 
   // Signed-out teachers get the standard sign-in prompt (same flow as Impact,
-  // Library and AI Coach) instead of an empty page under the filters.
+  // Library and AI Mentor) instead of an empty page under the filters.
   if (!user) {
     return (
       <AuthGate
