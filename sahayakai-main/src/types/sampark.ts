@@ -312,6 +312,12 @@ export interface Suppression {
     officeVerification: 'pending' | 'confirmed' | 'reversed';
     createdAt: string;
     callId: string | null;
+    /** When the suppression was reversed by the office (set when officeVerification='reversed'). */
+    reversedAt?: string | null;
+    /** Admin UID who reversed the suppression. */
+    reversedBy?: string | null;
+    /** Reason the office gave for reversing the suppression. */
+    reversedReason?: string | null;
 }
 
 // ── Imports ─────────────────────────────────────────────────────────────────
