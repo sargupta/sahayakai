@@ -4,6 +4,13 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
+// CONTENT POLICY (2026-11-24, access gate Phase 0): the file served here is
+// public and written for crawlers. It carries marketing facts only: what the
+// product does, who it is for, languages, how to book a demonstration. It
+// must NOT disclose the tech stack, model names, hosting, caching or cost
+// strategy, internal architecture, plan/credit tables or any price (pricing
+// is quoted per school). Guarded by src/__tests__/access/platform-llms.test.ts.
+
 // Cached file contents (read once per server instance to avoid blocking the event loop)
 let cachedContent: string | null = null;
 let cachedAt = 0;
@@ -31,7 +38,7 @@ export async function GET() {
       },
     });
   } catch {
-    return new NextResponse('# SahayakAI — Full Reference\n\n> The Operating System for Teaching in India\n\nFor complete information visit https://sahayakai.com', {
+    return new NextResponse('# SahayakAI — Full Reference\n\n> The Operating System for Teaching in India\n\nFor complete information visit https://www.sahayakai.com', {
       status: 200,
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',

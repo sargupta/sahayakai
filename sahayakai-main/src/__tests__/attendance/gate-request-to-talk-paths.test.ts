@@ -539,6 +539,8 @@ const FACES_A_CALL_WITHOUT_OUTREACH_CONTENT: Record<string, string> = {
     'app/api/webhooks/vobiz-riya/answer/route.ts': 'Sampark Riya over Vobiz: streams to the bridge with a signed Sampark ref, no outreach content',
     'lib/sampark/voice/xml.ts': 'Sampark notice XML: plays rendered catalogue clips, no outreach content',
     'server/sampark/vobiz-riya.ts': 'Sampark Riya over Vobiz: answer/stream for Sampark calls, no outreach content',
+    'app/api/webhooks/plivo-riya/answer/route.ts': 'Sampark Riya over Plivo: streams to the bridge with a signed Sampark ref, no outreach content',
+    'server/sampark/plivo-riya.ts': 'Sampark Riya over Plivo: answer XML (a bridge <Stream>) for Sampark calls, no outreach content',
 };
 
 describe('structural: concern fields reach a parent only through parentCallContent (all of src/)', () => {

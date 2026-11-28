@@ -1,9 +1,9 @@
 import { ForSchoolsClient } from './for-schools-client';
 
 export const metadata = {
-    title: 'SahayakAI for Schools: AI teaching assistant with principal dashboard',
+    title: 'SahayakAI for Schools: every child deserves a teacher with time to teach',
     description:
-        'The AI tool your teachers actually use. And the dashboard you actually need. Built for Indian schools in 11 languages, voice-first, on any Android phone.',
+        'SahayakAI stands beside the teacher: it drafts the paperwork, keeps parents in the loop and gives the school one clear view. Includes an estimate of the hours and rupees your school gets back each year.',
 };
 
 export default function ForSchoolsPage() {

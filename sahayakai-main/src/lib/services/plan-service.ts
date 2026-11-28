@@ -16,7 +16,10 @@ export async function setUserPlan(uid: string, plan: PlanType): Promise<void> {
   const [authInstance, db] = await Promise.all([getAuthInstance(), getDb()]);
 
   // 1. Set Firebase custom claim (appears in JWT after next token refresh)
-  await authInstance.setCustomUserClaims(uid, { planType: plan });
+  //    Merged with the existing claims: replacing them would drop the
+  //    access-gate, organisation and onboarding claims.
+  const { mergeCustomClaims } = await import('@/lib/access/access-admin');
+  await mergeCustomClaims(uid, { planType: plan }, authInstance);
 
   // 2. Mirror to Firestore (source of truth for queries, dashboards, etc.)
   await db.collection('users').doc(uid).update({ planType: plan });

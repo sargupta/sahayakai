@@ -107,7 +107,7 @@ const FLOW_CONFIG: Record<string, { route: string; icon: React.ReactNode; color:
         route: "/teacher-training",
         icon: <GraduationCap className="w-4 h-4" />,
         color: "bg-primary/5 border-primary/20 text-primary",
-        label: "AI Coach",
+        label: "AI Mentor",
     },
     "virtual-field-trip": {
         route: "/virtual-field-trip",
@@ -362,7 +362,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                     aria-label={t("Open VIDYA Mentor")}
                 >
                     <Brain className="h-6 w-6 text-white" />
-                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-background animate-pulse" />
+                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-success rounded-full border-2 border-background animate-pulse" />
                     {/* Tooltip */}
                     <div className="absolute right-16 bottom-1 bg-foreground text-background text-xs px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         {t("Ask VIDYA")}
@@ -386,7 +386,7 @@ export function VoiceAssistant({ context }: VoiceAssistantProps) {
                             <div className="p-1.5 rounded-xl bg-primary/10">
                                 <Brain className="h-4 w-4 text-primary" />
                             </div>
-                            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-green-400 rounded-full border border-background" />
+                            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-success rounded-full border border-background" />
                         </div>
                         <div className="min-w-0">
                             <p className="font-bold text-foreground tracking-tight text-sm leading-none">VIDYA</p>

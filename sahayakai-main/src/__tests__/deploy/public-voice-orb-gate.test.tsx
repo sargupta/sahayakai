@@ -8,8 +8,16 @@
  * which returns 503 unless VIDYA_VOICE_PUBLIC_ENABLED === 'true'. cloudbuild.yaml
  * set that in neither region, and the sidecar that accepts the public token
  * was not deployed either, so every visitor who tapped the orb granted the mic
- * and got "Voice isn't available right now". The same change had also removed
- * the working floating mic (GlobalVoiceInterface) from the signed-out home.
+ * and got "Voice isn't available right now".
+ *
+ * FOLLOW-UP (founder report, 2026-11-26)
+ * While the orb was off, the signed-out home fell back to the legacy
+ * turn-based floating mic (GlobalVoiceInterface). The founder saw it in
+ * production: it is not VIDYA, and on phones it covered the hero's proof
+ * strip. It is retired. Signed-out pages now carry no floating voice control;
+ * the hero orb is the only public voice entry, behind the flag above. The last
+ * describe block gates the class: no floating mic of any kind in the
+ * signed-out shell.
  *
  * WHAT THIS GATE CATCHES
  * Not "this orb" but the class: a client voice control that ships while the
@@ -23,6 +31,14 @@
  * The whole LandingPage is rendered (not just the hero), and any source file
  * that opens a public-scope VIDYA session is checked, so a second mount point
  * cannot dodge the flag.
+ *
+ * HOMEPAGE CHANGE (founder decision, 2026-11-27)
+ * The signed-out homepage is now the founder-approved "Homepage v1" design
+ * (src/components/landing/home/). Its "Try VIDYA" panel is a scripted sample
+ * that opens no microphone and no session. It mounts no
+ * voice orb. So the homepage must offer no orb with the flag on or off; the
+ * flag is still checked on LandingHero, the one component that mounts the orb,
+ * so the gate holds if the hero is ever placed on a page again.
  */
 import React from "react";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -96,8 +112,12 @@ jest.mock("next/dynamic", () => {
 jest.mock("next/navigation", () => ({ usePathname: () => "/", useSelectedLayoutSegment: () => null }));
 jest.mock("next/link", () => ({ __esModule: true, default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 jest.mock("@/context/auth-context", () => ({ useAuth: () => ({ user: null, loading: false }) }));
-jest.mock("@/components/global-voice-interface", () => ({
-  GlobalVoiceInterface: () => <div data-testid="global-voice-interface" />,
+// Any MicrophoneInput mounted with `isFloating` is a fixed, screen-covering
+// voice control; the signed-out shell must never render one.
+jest.mock("@/components/microphone-input", () => ({
+  MicrophoneInput: ({ isFloating }: { isFloating?: boolean }) => (
+    <div data-testid={isFloating ? "floating-mic" : "inline-mic"} />
+  ),
 }));
 jest.mock("@/components/omni-orb", () => ({ OmniOrb: () => null }));
 jest.mock("@/components/app-sidebar", () => ({ AppSidebar: () => null }));
@@ -122,6 +142,7 @@ jest.mock("@/components/community/community-messages-panel", () => ({ CommunityM
 jest.mock("@/components/community/messages-header-button", () => ({ MessagesHeaderButton: () => null }));
 
 import { LandingPage } from "@/components/landing/landing-page";
+import { LandingHero } from "@/components/landing/landing-hero";
 import { AppShell } from "@/app/app-shell";
 
 // ── Deploy config ─────────────────────────────────────────────────────────
@@ -201,11 +222,17 @@ function withBuildFlag<T>(on: boolean, fn: () => T): T {
   }
 }
 
-/** True when the landing offers the public voice orb. */
-function landingRendersPublicOrb(buildFlagOn: boolean): boolean {
+/** True when the rendered tree offers the public voice orb. */
+function landingRendersPublicOrb(buildFlagOn: boolean, tree: "page" | "hero" = "page"): boolean {
   mockPublicSessions.length = 0;
   return withBuildFlag(buildFlagOn, () => {
-    const { unmount } = render(<LandingPage onAuthClick={() => {}} />);
+    const { unmount } = render(
+      tree === "page" ? (
+        <LandingPage onAuthClick={() => {}} />
+      ) : (
+        <LandingHero titleIndex={0} onAuthClick={() => {}} />
+      ),
+    );
     const offered =
       mockPublicSessions.length > 0 ||
       screen.queryByRole("button", { name: /talk to vidya/i }) !== null ||
@@ -241,15 +268,28 @@ describe("public VIDYA voice orb is gated on its server route being live", () =>
       // An orb on the page with the route off = mic prompt, then 503.
       expect(server.missing).toEqual([]);
     }
-    expect(rendered).toBe(shipped && server.ok);
+    // The homepage may offer the orb only when the build and both regions
+    // allow it. It need not offer it at all.
+    if (rendered) expect(shipped && server.ok).toBe(true);
+    const heroRendered = landingRendersPublicOrb(shipped, "hero");
+    if (heroRendered) expect(server.missing).toEqual([]);
+    expect(heroRendered).toBe(shipped && server.ok);
   });
 
-  it("with the build flag off, the landing renders no public voice orb", () => {
+  it("with the build flag off, neither the homepage nor the hero renders a public voice orb", () => {
     expect(landingRendersPublicOrb(false)).toBe(false);
+    expect(landingRendersPublicOrb(false, "hero")).toBe(false);
   });
 
-  it("with the build flag on, the landing renders the orb (the flag is the switch)", () => {
-    expect(landingRendersPublicOrb(true)).toBe(true);
+  it("with the build flag on, the hero renders the orb (the flag is the switch)", () => {
+    expect(landingRendersPublicOrb(true, "hero")).toBe(true);
+  });
+
+  it("the homepage shows the v1 hero and no voice orb, even with the flag on", () => {
+    expect(landingRendersPublicOrb(true)).toBe(false);
+    const { unmount } = render(<LandingPage onAuthClick={() => {}} />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("Quality education for every classroom in India.");
+    unmount();
   });
 
   it("a build that bakes the flag on must also declare the route in both regions", () => {
@@ -288,31 +328,51 @@ describe("public VIDYA voice orb is gated on its server route being live", () =>
   });
 });
 
-describe("signed-out home keeps a working voice entry while the public orb is off", () => {
-  it("renders the turn-based floating mic (GlobalVoiceInterface) when the flag is off", async () => {
-    delete process.env[FLAG];
+describe("signed-out shell never mounts a floating voice control", () => {
+  const renderShell = async () => {
     render(
       <AppShell>
         <div />
       </AppShell>,
     );
-    expect(await screen.findByTestId("global-voice-interface")).toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+    });
+  };
+
+  it("renders no floating mic while the public orb flag is off", async () => {
+    delete process.env[FLAG];
+    await renderShell();
+    expect(screen.queryByTestId("floating-mic")).toBeNull();
   });
 
-  it("does not stack the floating mic on top of the hero orb when the flag is on", async () => {
+  it("renders no floating mic while the public orb flag is on", async () => {
     process.env[FLAG] = "1";
     try {
-      render(
-        <AppShell>
-          <div />
-        </AppShell>,
-      );
-      await act(async () => {
-        await Promise.resolve();
-      });
-      expect(screen.queryByTestId("global-voice-interface")).toBeNull();
+      await renderShell();
+      expect(screen.queryByTestId("floating-mic")).toBeNull();
     } finally {
       delete process.env[FLAG];
     }
+  });
+
+  it("the retired legacy mic component is gone and nothing imports it", () => {
+    expect(existsSync(path.join(SRC, "components", "global-voice-interface.tsx"))).toBe(false);
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = path.join(dir, name);
+        if (statSync(full).isDirectory()) {
+          if (name === "__tests__" || name === "node_modules") continue;
+          walk(full);
+        } else if (/\.(ts|tsx)$/.test(name)) {
+          if (/from\s+["']@\/components\/global-voice-interface["']|import\(["']@\/components\/global-voice-interface["']\)/.test(readFileSync(full, "utf8"))) {
+            offenders.push(path.relative(APP_ROOT, full));
+          }
+        }
+      }
+    };
+    walk(SRC);
+    expect(offenders).toEqual([]);
   });
 });

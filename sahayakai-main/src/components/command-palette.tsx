@@ -80,9 +80,9 @@ const ROUTES: Route[] = [
   { href: samparkEntryUrl("/workspace"), label: "SamparkAI · School calls", i18nKey: "SamparkAI · School calls", keywords: "school calls parents families ptm event closure notice sampark samparkai", group: "Assess", icon: PhoneCall, sampark: true },
 
   // Engage
-  { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend", group: "Labs", icon: Video },
+  { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend recommendations videos pedagogy storytelling training courses", group: "Engage", icon: Video },
   { href: "/virtual-field-trip", label: "Virtual Field Trip", i18nKey: "Virtual Field Trip", keywords: "virtual field trip explore visit tour places geography", group: "Engage", icon: Globe2 },
-  { href: "/teacher-training", label: "AI Coach", i18nKey: "AI Coach", keywords: "ai coach teaching coach teacher training professional development cpd classroom strategies", group: "Engage", icon: GraduationCap },
+  { href: "/teacher-training", label: "AI Mentor", i18nKey: "AI Mentor", keywords: "ai mentor teaching mentor ai coach teaching coach teacher training professional development cpd classroom strategies", group: "Engage", icon: GraduationCap },
   { href: "/community", label: "Community", i18nKey: "Community", keywords: "community teachers chat discover", group: "Engage", icon: Library },
 
   // Ask
@@ -95,7 +95,7 @@ const ROUTES: Route[] = [
   // My work
   { href: "/my-library", label: "My Library", i18nKey: "My Library", keywords: "library saved my work folder", group: "My work", icon: Library },
   { href: "/messages", label: "Messages", i18nKey: "Messages", keywords: "messages chat dm", group: "My work", icon: MessageCircle },
-  { href: "/impact-dashboard", label: "Impact", i18nKey: "Impact", keywords: "impact dashboard stats usage", group: "Labs", icon: BarChart },
+  { href: "/impact-dashboard", label: "Impact", i18nKey: "Impact", keywords: "impact dashboard score stats activity engagement growth streak", group: "My work", icon: BarChart },
   { href: "/notifications", label: "Notifications", i18nKey: "Notifications", keywords: "notifications alerts", group: "My work", icon: Bell },
 
   // Account

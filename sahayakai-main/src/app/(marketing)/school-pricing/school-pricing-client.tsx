@@ -27,6 +27,8 @@ import {
     SAVINGS_WEEKLY_HOURS,
     type Billing,
 } from "@/lib/school-pricing";
+import type { QuoteEstimate } from "@/lib/api/access";
+import { QuoteRequestForm } from "./quote-request-form";
 
 const inr = (n: number) => Math.round(n).toLocaleString("en-IN");
 /** Compact ₹ for large sums: ₹18.0L / ₹1.4Cr. */
@@ -67,29 +69,21 @@ export function SchoolPricingClient() {
         [teachers, salary]
     );
 
-    const quoteHref = useMemo(() => {
-        const lines = [
-            "Hello SARGVISION team,",
-            "",
-            "We would like a formal quote for SahayakAI. Our estimate from the calculator:",
-            "",
-            `Teachers: ${calc.teachers}`,
-            `Billing: ${billing === "annual" ? "Annual (Rs 10,000/teacher/year)" : "Monthly (Rs 1,600/teacher/month)"}`,
-            `Teacher subtotal: Rs ${inr(calc.teacherSubtotal)}/year`,
-            includeCalls
-                ? `Parent calls: ${students} students x ${callsPerYear} calls/yr x ${avgMinutes} min = ${inr(
-                      calc.parentCallMinutesPerYear
-                  )} min/yr -> Rs ${inr(calc.parentCallCostPerYear)}/year`
-                : "Parent calls: not included",
-            `Subtotal: Rs ${inr(calc.subtotalPerYear)}/year (excl. GST)`,
-            `With ${GST_PCT}% GST: Rs ${inr(calc.totalPerYearInclGst)}/year`,
-            "",
-            "We understand chains and large schools are quoted a further discount. Please share a formal quote and next steps.",
-        ];
-        return `mailto:contact@sargvision.com?subject=${encodeURIComponent(
-            "SahayakAI school quote request"
-        )}&body=${encodeURIComponent(lines.join("\n"))}`;
-    }, [calc, billing, includeCalls, students, callsPerYear, avgMinutes]);
+    // Formal quotes go through a form that names the school (the old
+    // pre-filled mailto let anyone request one anonymously).
+    const [quoteOpen, setQuoteOpen] = useState(false);
+    const quoteEstimate = useMemo<QuoteEstimate>(
+        () => ({
+            teachers: calc.teachers,
+            billing,
+            includeParentCalls: includeCalls,
+            students,
+            callsPerStudentPerYear: callsPerYear,
+            avgMinutesPerCall: avgMinutes,
+            totalPerYearInclGst: calc.totalPerYearInclGst,
+        }),
+        [calc, billing, includeCalls, students, callsPerYear, avgMinutes]
+    );
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -254,7 +248,7 @@ export function SchoolPricingClient() {
 
                             {/* Summary */}
                             <div className="lg:col-span-2">
-                                <div className="lg:sticky lg:top-24 rounded-surface-lg bg-card border border-border p-6 shadow-elevated">
+                                <div className={`rounded-surface-lg bg-card border border-border p-6 shadow-elevated ${quoteOpen ? "" : "lg:sticky lg:top-24"}`}>
                                     <div className="text-xs font-bold uppercase tracking-[0.12em] text-saffron-700 mb-4">
                                         {t("Your estimate")}
                                     </div>
@@ -297,13 +291,19 @@ export function SchoolPricingClient() {
                                         </p>
                                     </div>
 
-                                    <a
-                                        href={quoteHref}
-                                        className="mt-6 w-full inline-flex items-center justify-center gap-2 text-sm font-medium px-6 py-3 rounded-full bg-saffron text-white shadow-elevated hover:bg-saffron-600 transition-colors cursor-pointer"
-                                    >
-                                        {t("Get a formal quote")}
-                                        <ArrowRight className="h-4 w-4" />
-                                    </a>
+                                    {quoteOpen ? (
+                                        <QuoteRequestForm estimate={quoteEstimate} />
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setQuoteOpen(true)}
+                                            aria-expanded={false}
+                                            className="mt-6 w-full inline-flex items-center justify-center gap-2 text-sm font-medium px-6 py-3 rounded-full bg-saffron text-white shadow-elevated hover:bg-saffron-600 transition-colors cursor-pointer"
+                                        >
+                                            {t("Get a formal quote")}
+                                            <ArrowRight className="h-4 w-4" />
+                                        </button>
+                                    )}
                                     <a
                                         href="https://calendly.com/contact-sargvision/30min"
                                         target="_blank"

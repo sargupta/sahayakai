@@ -1,7 +1,8 @@
 /**
  * The calling-provider choice made at the SahayakAI → SamparkAI boundary.
  *
- * One authoritative mechanism: the person picks "ElevenLabs Calls" or "Vobiz Calls" on
+ * One authoritative mechanism: the person picks "ElevenLabs Calls", "Vobiz Calls", "Plivo Calls"
+ * or "Exotel Calls" on
  * /sampark/choose-provider every time they enter SamparkAI from SahayakAI. The server stores
  * the choice in an httpOnly, per-browser-session cookie (set only by POST /api/sampark/provider,
  * after sign-in, and only for a provider this deployment has configured). The Riya routes read it
@@ -14,11 +15,11 @@
 
 export const PROVIDER_COOKIE = 'sampark_provider';
 export const CHOOSER_SEGMENT = 'choose-provider';
-export const PROVIDER_CHOICES = ['elevenlabs', 'vobiz'] as const;
+export const PROVIDER_CHOICES = ['elevenlabs', 'vobiz', 'plivo', 'exotel'] as const;
 export type ProviderChoice = (typeof PROVIDER_CHOICES)[number];
 
 export function parseProviderChoice(value: string | null | undefined): ProviderChoice | null {
-    return value === 'elevenlabs' || value === 'vobiz' ? value : null;
+    return (PROVIDER_CHOICES as readonly string[]).includes(value ?? '') ? (value as ProviderChoice) : null;
 }
 
 /** The choice from a request's Cookie header (route handlers receive a plain Request). */
@@ -85,4 +86,6 @@ export function switchProviderHref(chooserPath: string, here: string): string {
 export const PROVIDER_LABEL: Record<ProviderChoice, string> = {
     elevenlabs: 'ElevenLabs Calls',
     vobiz: 'Vobiz Calls',
+    plivo: 'Plivo Calls',
+    exotel: 'Exotel Calls',
 };

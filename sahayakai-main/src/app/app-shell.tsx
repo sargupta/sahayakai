@@ -36,16 +36,14 @@ import { useLanguage } from "@/context/language-context";
 import { CommunityMessagesProvider } from "@/components/community/community-messages-context";
 import { CommunityMessagesPanel } from "@/components/community/community-messages-panel";
 import { MessagesHeaderButton } from "@/components/community/messages-header-button";
-import { isPublicVoiceOrbEnabled } from "@/lib/vidya-live/public-voice";
-// GlobalVoiceInterface (voice input for unauthenticated visitors) is loaded
-// client-side only on the landing page to avoid adding its dependencies to
-// the initial bundle unnecessarily. Its action/prefill contracts are unchanged.
-const GlobalVoiceInterface = dynamic(() => import("@/components/global-voice-interface").then((m) => m.GlobalVoiceInterface), {
-  ssr: false,
-  loading: () => null,
-});
 
-const MARKETING_PATHS = ["/for-schools", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about"];
+export const MARKETING_PATHS: readonly string[] = [
+  "/for-schools", "/features", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about",
+  // Access-gate flow (docs/ACCESS_GATE_DESIGN.md): these pages are shown to
+  // accounts that are NOT entitled yet, so they must render without the app
+  // chrome (sidebar, VIDYA orb, global hooks) whose API calls would all 403.
+  "/access", "/request-access", "/join",
+];
 
 function isMarketingPath(pathname: string | null): boolean {
   if (!pathname) return false;
@@ -100,16 +98,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // teachers and a dashboard-chrome flash for cold visitors.
   if (isHome && loading) return null;
 
-  // Signed-out home: the hero's public VIDYA orb is the voice entry ONLY when
-  // its server route is live (NEXT_PUBLIC_VIDYA_VOICE_PUBLIC, see
-  // src/lib/vidya-live/public-voice.ts). Until then the home keeps the
-  // turn-based floating mic it always had, as do the marketing pages.
+  // Signed-out home and marketing pages carry NO floating voice control. The
+  // only public voice entry is the hero's VIDYA orb, and only when its server
+  // route is live (NEXT_PUBLIC_VIDYA_VOICE_PUBLIC, src/lib/vidya-live/
+  // public-voice.ts). The legacy turn-based floating mic was retired on
+  // 2026-11-26 (founder decision): it was not VIDYA and it covered the hero's
+  // proof strip on phones.
   if ((isHome && !user) || isMarketing) {
     return (
       <>
         {children}
         <PWAInstallPrompt />
-        {(isMarketing || !isPublicVoiceOrbEnabled()) && <GlobalVoiceInterface />}
       </>
     );
   }

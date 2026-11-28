@@ -1,7 +1,12 @@
 "use client";
 
 import { useLanguage } from "@/context/language-context";
+import Link from "next/link";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
+import { useAccessMode } from "./use-access-mode";
+
+const NAV_CTA_CLASS =
+  "inline-flex items-center text-tile bg-ink-900 text-white px-[18px] py-[9px] rounded-full font-medium hover:bg-ink-800 transition-colors cursor-pointer";
 
 type Props = {
   onAuthClick: () => void;
@@ -9,10 +14,11 @@ type Props = {
 
 export function LandingNav({ onAuthClick }: Props) {
   const { t } = useLanguage();
+  const gated = useAccessMode() === "enforce";
 
   return (
     <nav className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-11 py-[22px] bg-white/70 backdrop-blur-md border-b border-black/5">
-      <div className="flex items-center gap-2.5 font-headline font-bold text-[18px] tracking-tight text-foreground">
+      <div className="flex items-center gap-2.5 font-headline font-bold text-lg tracking-tight text-foreground">
         <img
           src="/icons/mark.png"
           alt={t("SahayakAI logo")}
@@ -20,15 +26,15 @@ export function LandingNav({ onAuthClick }: Props) {
         />
         <span className="flex items-baseline gap-1.5">
           SahayakAI
-          <span className="hidden sm:inline text-[10px] font-medium tracking-wide uppercase text-neutral-400">
+          <span className="hidden sm:inline text-xs font-medium tracking-wide uppercase text-ink-400">
             {t("by SARGVISION Intelligence")}
           </span>
         </span>
       </div>
 
-      <div className="hidden md:flex gap-7 text-[13px] text-neutral-600 font-medium">
-        <a href="/#product" className="hover:text-foreground transition-colors">
-          {t("Product")}
+      <div className="hidden md:flex gap-7 text-tile text-ink-600 font-medium">
+        <a href="/features" className="hover:text-foreground transition-colors">
+          {t("All features")}
         </a>
         <a href="/pricing" className="hover:text-foreground transition-colors">
           {t("Pricing")}
@@ -40,17 +46,21 @@ export function LandingNav({ onAuthClick }: Props) {
         <button
           type="button"
           onClick={onAuthClick}
-          className="hidden sm:inline text-[13px] text-neutral-600 font-medium hover:text-foreground cursor-pointer transition-colors"
+          className="hidden sm:inline text-tile text-ink-600 font-medium hover:text-foreground cursor-pointer transition-colors"
         >
           {t("Log in")}
         </button>
-        <button
-          type="button"
-          onClick={onAuthClick}
-          className="inline-flex items-center text-[13px] bg-[#0b0b0f] text-white px-[18px] py-[9px] rounded-full font-medium hover:bg-[#1c1c21] transition-colors cursor-pointer"
-        >
-          {t("Start free")}
-        </button>
+        {gated ? (
+          /* Access gate enforced (docs/ACCESS_GATE_DESIGN.md). "Log in"
+             above stays for existing accounts. */
+          <Link href="/request-access" className={NAV_CTA_CLASS}>
+            {t("Request access")}
+          </Link>
+        ) : (
+          <button type="button" onClick={onAuthClick} className={NAV_CTA_CLASS}>
+            {t("Start free")}
+          </button>
+        )}
       </div>
     </nav>
   );

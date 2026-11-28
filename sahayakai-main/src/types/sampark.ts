@@ -161,10 +161,10 @@ export interface SamparkSchool {
     localAfterHoursTest?: { armedAt: string; until: string } | null;
     /**
      * Which backend runs Riya's real (Test-mode) calls: the hosted ElevenLabs agent (default) or
-     * SahayakAI's own Vobiz + Gemini Live bridge. Same console, gates, records and callbacks either way;
-     * missing = 'elevenlabs'. Practice mode is always simulated.
+     * SahayakAI's own Gemini Live bridge over a carrier (Vobiz, Plivo or Exotel). Same console, gates,
+     * records and callbacks either way; missing = 'elevenlabs'. Practice mode is always simulated.
      */
-    conversationProvider?: 'elevenlabs' | 'vobiz' | null;
+    conversationProvider?: 'elevenlabs' | 'vobiz' | 'plivo' | 'exotel' | null;
     createdAt: string;
     updatedAt: string;
 }

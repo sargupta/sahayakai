@@ -20,7 +20,7 @@ jest.mock('@/lib/logger/structured-logger', () => ({
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { mintApiKey, MCP_API_KEYS_COLLECTION, type McpScope } from '@/lib/mcp/api-keys';
+import { mintApiKey, parseApiKey, MCP_API_KEYS_COLLECTION, type McpScope } from '@/lib/mcp/api-keys';
 import { handleMcpHttpRequest, type McpCapabilityDefinition, type McpHandlerDeps } from '@/lib/mcp/http-handler';
 import { examPaperCapability } from '@/lib/mcp/exam-paper/capability';
 import { ExamPaperResult } from '@/lib/mcp/exam-paper/schema';
@@ -350,7 +350,10 @@ describe('security', () => {
         const client = await connect(keyA.apiKey);
         const res = await client.callTool({ name: 'create_exam_paper', arguments: { ...VALID, chapters: ['Ramesh in 8B special chapter'] } });
         await client.close();
-        const secretPart = keyA.apiKey.split('_').pop()!;
+        // The base64url secret may itself contain '_', so split('_') can return a
+        // one-letter tail that appears in any paper. Parse it the way the app does.
+        const secretPart = parseApiKey(keyA.apiKey)!.secret;
+        expect(secretPart).toHaveLength(43);
         const storedHash = (docs.get(`${MCP_API_KEYS_COLLECTION}/${keyA.keyId}`) as any).secretHash;
         const logs = JSON.stringify([...logInfo.mock.calls, ...logWarn.mock.calls]);
         for (const s of [PEPPER, secretPart, storedHash, keyA.apiKey]) {

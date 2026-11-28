@@ -2,9 +2,14 @@
 
 import { Calendar, Sparkles } from "lucide-react";
 import { AnimatedHeadline } from "./animated-headline";
+import Link from "next/link";
 import { LandingVoiceOrb } from "./landing-voice-orb";
 import { useLanguage } from "@/context/language-context";
 import { isPublicVoiceOrbEnabled } from "@/lib/vidya-live/public-voice";
+import { useAccessMode } from "./use-access-mode";
+
+const PRIMARY_CTA_CLASS =
+  "inline-flex items-center justify-center gap-2 text-sm font-medium px-[22px] py-[13px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer";
 
 type Props = {
   titleIndex: number;
@@ -13,10 +18,11 @@ type Props = {
 
 export function LandingHero({ titleIndex, onAuthClick }: Props) {
   const { t } = useLanguage();
+  const gated = useAccessMode() === "enforce";
   // The public VIDYA orb needs a server route and sidecar that production does
-  // not run yet; until the build flag is on, the hero offers no voice control
-  // and the signed-out home keeps its floating mic (app-shell.tsx). Read
-  // src/lib/vidya-live/public-voice.ts before turning the flag on.
+  // not run yet; until the build flag is on, the signed-out home offers no
+  // voice control at all (the legacy floating mic was retired 2026-11-26).
+  // Read src/lib/vidya-live/public-voice.ts before turning the flag on.
   const publicVoice = isPublicVoiceOrbEnabled();
 
   return (
@@ -49,19 +55,24 @@ export function LandingHero({ titleIndex, onAuthClick }: Props) {
 
         {/* Subhead */}
         <p className="font-body text-base sm:text-web-lead text-ink-600 leading-[1.6] max-w-[58ch] mt-6 mx-auto">
-          {t("SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across 28 state boards.")}
+          {t("SahayakAI is the AI co-teacher for Indian educators — plan lessons, create assessments, connect with parents, and save time in 11 languages across CBSE, ICSE and 28 state boards.")}
         </p>
 
         {/* CTA pair */}
         <div className="flex flex-col sm:flex-row gap-3 mt-7 justify-center w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={onAuthClick}
-            className="inline-flex items-center justify-center gap-2 text-sm font-medium px-[22px] py-[13px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer"
-          >
-            <Sparkles className="w-[15px] h-[15px]" strokeWidth={2.2} />
-            {t("Start free")}
-          </button>
+          {gated ? (
+            /* Access gate enforced: new accounts apply for their school
+               instead of signing straight in (docs/ACCESS_GATE_DESIGN.md). */
+            <Link href="/request-access" className={PRIMARY_CTA_CLASS}>
+              <Sparkles className="w-[15px] h-[15px]" strokeWidth={2.2} />
+              {t("Request access")}
+            </Link>
+          ) : (
+            <button type="button" onClick={onAuthClick} className={PRIMARY_CTA_CLASS}>
+              <Sparkles className="w-[15px] h-[15px]" strokeWidth={2.2} />
+              {t("Start free")}
+            </button>
+          )}
           <a
             href="https://calendly.com/contact-sargvision/30min"
             target="_blank"
@@ -84,9 +95,9 @@ export function LandingHero({ titleIndex, onAuthClick }: Props) {
         {/* Proof strip — 4 flat stats */}
         <div className="flex gap-6 sm:gap-7 mt-8 text-tile font-medium text-ink-600 justify-center flex-wrap items-center">
           <ProofStat value="11" label={t("Indian languages")} />
-          <ProofStat value="28" label={t("state boards")} />
+          <ProofStat value={t("CBSE, ICSE")} label={t("and 28 state boards")} />
           <ProofStat value={t("2+ hrs")} label={t("saved daily")} />
-          <ProofStat value={t("~200 hrs/year")} label={t("per teacher")} />
+          <ProofStat value={t("~410 hrs/year")} label={t("per teacher")} />
         </div>
       </div>
     </section>

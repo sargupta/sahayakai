@@ -39,7 +39,7 @@ const SHAREABLE_TYPES: { type: SharedResource["type"]; label: string; icon: Reac
     { type: "visual-aid",         label: "Visual Aid",   icon: Images,         route: "visual-aid-designer" },
     { type: "virtual-field-trip", label: "Field Trip",   icon: Globe2,         route: "virtual-field-trip"  },
     { type: "rubric",             label: "Rubric",       icon: GraduationCap,  route: "rubric-generator"    },
-    { type: "teacher-training",   label: "AI Coach",     icon: Wand2,          route: "teacher-training"    },
+    { type: "teacher-training",   label: "AI Mentor",     icon: Wand2,          route: "teacher-training"    },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

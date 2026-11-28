@@ -134,7 +134,7 @@ export const VideoFilterBar: React.FC<VideoFilterBarProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={handleClear}
-                            className="h-9 w-9 p-0 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 shrink-0"
+                            className="h-9 w-9 p-0 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
                             title={t("Clear filters")}
                         >
                             <X className="w-4 h-4" />

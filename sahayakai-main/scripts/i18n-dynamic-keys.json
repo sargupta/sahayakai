@@ -111,14 +111,19 @@
     "runtime-plan-id": { "runtime": "a plan id PLAN_DISPLAY_NAMES does not know yet, shown capitalised as a last resort" },
     "runtime-ai-duration": { "runtime": "the lesson plan's duration as the AI wrote it (e.g. \"45 minutes\"); free text, translated only when it matches a key" },
     "runtime-raw-audit-action": { "runtime": "an audit action newer than HISTORY_ACTION, shown as its code as a last resort" },
-    "runtime-raw-venue-id": { "runtime": "a demo venue id missing from DEMO_VENUES, shown as its id as a last resort" }
+    "runtime-raw-venue-id": { "runtime": "a demo venue id missing from DEMO_VENUES, shown as its id as a last resort" },
+    "access-quote-role-options": { "file": "src/app/(marketing)/school-pricing/quote-request-form.tsx", "name": "ROLE_OPTIONS", "note": "role choices on the school quote request form" },
+    "access-request-role-options": { "file": "src/app/request-access/page.tsx", "name": "ROLE_OPTIONS", "note": "role choices on the access request form" }
   },
   "sites": {
+    "src/app/(marketing)/school-pricing/quote-request-form.tsx": { "r": ["access-quote-role-options"] },
+    "src/app/request-access/page.tsx": { "r": ["access-request-role-options"] },
     "src/features/mcp-demo/calling/mcp-calling-view.tsx": { "s.parent_language": ["vocab-languages"], "callResult.parent_language": ["vocab-languages"], "r.labelKey": ["mcp-calling-reasons-label"], "r.descriptionKey": ["mcp-calling-reasons-description"], "REASONS.find((r) => r.value === reason)!.labelKey": ["mcp-calling-reasons-label"] },
     "src/features/mcp-demo/lesson-planner/mcp-lesson-plan-display.tsx": { "plan.subject": ["vocab-subjects"], "plan.language": ["vocab-languages"], "a.phase": ["mcp-lesson-phases"] },
     "src/features/mcp-demo/lesson-planner/mcp-lesson-planner-view.tsx": { "l": ["vocab-languages"] },
     "src/lib/attendance/call-refusal-messages.ts": { "label": ["attendance-call-refusal-labels"] },
     "src/app/(marketing)/school-pricing/school-pricing-client.tsx": { "c.name": ["school-pricing-savings"] },
+    "src/app/(marketing)/for-schools/for-schools-client.tsx": { "c.name": ["school-pricing-savings"] },
     "src/app/(marketing)/terms/terms-client.tsx": { "key": ["terms-tldr"] },
     "src/app/assess-assignment/assess-client.tsx": { "s": ["assess-processing-stages"] },
     "src/app/assessment-scanner/page.tsx": { "s": { "sources": ["assessment-subjects"], "count": 2 } },

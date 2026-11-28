@@ -43,6 +43,7 @@ SCOPE_DEFAULT=(
     "src/components/landing"
     "src/components/community"
     "src/app/page.tsx"
+    "src/app/home-gate.tsx"
     "src/app/community"
     "src/app/(marketing)"
 )

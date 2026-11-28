@@ -8,6 +8,23 @@ import { initAnalytics, trackSessionStart, trackSessionEnd, flushAnalytics } fro
 import { syncUserAction } from '@/lib/api/auth';
 import { startTeacherSession, endTeacherSession } from '@/lib/teacher-activity-tracker';
 import { consumePendingSignIn } from '@/lib/sign-in-with-google';
+import { isAccessFlowPage, syncAccess, type AccessSyncResult } from '@/lib/api/client';
+import { getAccessStatus } from '@/lib/api/access';
+
+// Access gate (docs/ACCESS_GATE_DESIGN.md): after sign-in, ask the server once
+// per session to bring the `access` custom claim in line with its source of
+// truth. `syncAccess` refreshes the ID token itself when the claim changed,
+// and onIdTokenChanged below then rewrites the auth-token cookie. It never
+// throws, so a failed sync can never block sign-in.
+const accessSyncByUid = new Map<string, Promise<AccessSyncResult | null>>();
+function syncAccessOncePerSession(uid: string): Promise<AccessSyncResult | null> {
+    let pending = accessSyncByUid.get(uid);
+    if (!pending) {
+        pending = syncAccess().catch(() => null);
+        accessSyncByUid.set(uid, pending);
+    }
+    return pending;
+}
 import { devLoginActive } from '@/lib/dev-login';
 
 // Keep the auth-token cookie in sync with Firebase's token lifecycle.
@@ -78,16 +95,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 // Sync auth-token cookie synchronously so the next server
                 // route call (profile-check) carries x-user-id.
-                try {
-                    const token = await signedInUser.getIdToken();
-                    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-                    document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
-                } catch {
-                    // onIdTokenChanged will retry the cookie sync.
-                }
+                const writeAuthCookie = async () => {
+                    try {
+                        const token = await signedInUser.getIdToken();
+                        const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+                        document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
+                    } catch {
+                        // onIdTokenChanged will retry the cookie sync.
+                    }
+                };
+                await writeAuthCookie();
 
+                // Profile check FIRST, exactly where it ran before the access
+                // gate existed: awaiting anything ahead of it gives the
+                // concurrent /api/account/sync time to create users/{uid},
+                // which would make a brand-new account look like a returning
+                // one and skip onboarding.
+                let redirectToOnboarding = false;
                 if (flow.runProfileCheck) {
-                    let redirectToOnboarding = false;
                     try {
                         const response = await fetch(`/api/auth/profile-check?uid=${signedInUser.uid}`);
                         if (response.ok) {
@@ -99,10 +124,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     } catch {
                         // API error — don't block, send to returnTo.
                     }
-                    router.replace(redirectToOnboarding ? '/onboarding' : flow.returnTo);
-                } else {
-                    router.replace(flow.returnTo);
                 }
+
+                // Access gate: repair/refresh the access claim, then rewrite
+                // the cookie so it carries the fresh token.
+                await syncAccessOncePerSession(signedInUser.uid);
+                await writeAuthCookie();
+
+                // Access-flow pages (/access, /request-access, /join/<code>)
+                // handle the signed-in state themselves: return there as-is.
+                const returnPath = flow.returnTo.split(/[?#]/)[0];
+                if (isAccessFlowPage(returnPath)) {
+                    router.replace(flow.returnTo);
+                    return;
+                }
+
+                // Gate enforced and this account is not entitled: go to the
+                // status page instead of onboarding or the app. Any failure
+                // here falls through to the existing behaviour (the
+                // middleware still enforces server-side).
+                try {
+                    const access = await getAccessStatus();
+                    if (cancelled) return;
+                    if (access.mode === 'enforce' && !access.entitled) {
+                        router.replace('/access');
+                        return;
+                    }
+                } catch {
+                    // status unavailable — continue as before
+                }
+
+                if (cancelled) return;
+                router.replace(redirectToOnboarding ? '/onboarding' : flow.returnTo);
             } catch (err) {
                 // Sign-in error or cancelled — leave user on the page they're
                 // already on. The auth dialog can be reopened manually.
@@ -144,6 +197,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     displayName: currentUser.displayName,
                     photoURL: currentUser.photoURL
                 }).catch(err => console.error("Profile sync failed:", err));
+
+                // Access gate: one claim sync per session (shared with the
+                // redirect flow above; never throws).
+                void syncAccessOncePerSession(currentUser.uid);
 
                 // FIX (Bug #1): Start teacher activity tracker with real userId
                 // This initializes the singleton so trackTeacherContent() starts firing events

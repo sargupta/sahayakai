@@ -214,6 +214,16 @@ describe('the four public legs', () => {
         expect(bad.status).toBe(404);
     });
 
+    it('context is refused once the school is paused (covers Exotel, which has no answer hook)', async () => {
+        // Class gate: a pause made while the phone rang must stop Riya before she speaks, on every carrier.
+        const { deps } = await setup();
+        const { call } = await start(deps);
+        const school = await deps.repo.getSchool(ORG);
+        await deps.repo.upsertSchool({ ...school!, pause: { at: new Date().toISOString(), by: 'admin', reason: 'test', scope: 'all' } });
+        const res = await handleVobizRiyaContext(deps, (await mintVobizToken(VOBIZ_DOMAINS.SAMPARK_RIYA_CONTEXT, vobizRiyaRef(ORG, call.id))).token);
+        expect(res.status).toBe(404);
+    });
+
     it('a hangup that never connected settles busy / no answer through the reducer', async () => {
         const { deps, calls } = await setup();
         const { call } = await start(deps);

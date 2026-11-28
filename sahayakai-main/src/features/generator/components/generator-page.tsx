@@ -99,7 +99,7 @@ function ResultDivider({ label }: { label: string }) {
 }
 
 /**
- * Page header shared by every tool page (generators, exam paper, AI Coach):
+ * Page header shared by every tool page (generators, exam paper, AI Mentor):
  * a saffron icon tile, an eyebrow naming the sidebar group, the title and a
  * one-line purpose. `actions` sits top-right on wide screens.
  */

@@ -68,6 +68,7 @@ async def render_line(text: str, out_dir: str) -> None:
             parts=[T.Part(text="You are Riya, a warm school calling assistant. Natural Indian English.")]
         ),
         speech_config=T.SpeechConfig(
+            language_code=os.environ.get("VOBIZ_RIYA_LANGUAGE_CODE", "").strip() or None,
             voice_config=T.VoiceConfig(prebuilt_voice_config=T.PrebuiltVoiceConfig(voice_name=voice))
         ),
         output_audio_transcription=T.AudioTranscriptionConfig(),

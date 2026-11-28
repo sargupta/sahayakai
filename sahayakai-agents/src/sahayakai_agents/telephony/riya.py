@@ -533,6 +533,9 @@ class RiyaCall:
     #: Guardian question re-asked by the bridge (who-is-calling, privacy block,
     #: or a "yes" that did not follow a fully heard guardian question).
     reasks: int = 0
+    #: Decided once, when the Live config is built: the bridge plays the cached opener
+    #: (True) or the model says it (False). None until decided (router._opener_decided).
+    opener_from_cache: bool | None = None
     #: PTM: the parent cannot attend; Riya must ask once for a better time.
     cannot_attend: bool = False
     preferred_time_asked: bool = False
@@ -689,6 +692,14 @@ class RiyaCall:
             "- PTM invitation: until the parent has said whether they can attend, after briefly "
             "answering anything else they ask, come back and ask once more whether they can attend. "
             "Do not ask 'Is there anything else?' before you have that answer.\n"
+            "- Keep every reply short: one or two sentences, then stop and let the parent talk. "
+            "Start answering at once; no filler or long preambles.\n"
+            "- Off-topic or random remarks (anything unrelated to this call's purpose): never "
+            "ignore them and never stay silent. Reply to what they said in one short, friendly "
+            "sentence (if it is a question you cannot answer, say the class teacher or school "
+            "office can help), then bring the conversation straight back to the purpose of this "
+            "call in the same reply, ending with the question you still need answered. Do this "
+            "every time, however many times they drift.\n"
             "- If you hear only noise, a fragment or something you cannot make sense "
             "of, do not guess: briefly ask the parent to say it again.\n"
             "- The tool end_call has no arguments. Call it only by the end_call rules."

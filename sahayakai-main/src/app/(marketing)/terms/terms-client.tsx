@@ -43,7 +43,7 @@ export function TermsClient() {
                         {t("Terms of Service")}
                     </h1>
                     <p className="font-body text-[15px] text-neutral-500 mt-3">
-                        Last updated: April 2026. Governed by the laws of India.
+                        Last updated: November 2026. Governed by the laws of India.
                     </p>
                 </section>
 
@@ -145,6 +145,33 @@ export function TermsClient() {
                         </ul>
                     </Section>
 
+                    {/*
+                      * Evaluation and pilot use (access gate, 2026-11).
+                      * Acceptance of this section is recorded with every access
+                      * request and every school join (EVALUATION_TERMS_VERSION,
+                      * docs/ACCESS_GATE_DESIGN.md). Linked as /terms#evaluation.
+                      *
+                      * LEGAL REVIEW REQUIRED: this wording was drafted by
+                      * engineering and must be reviewed by counsel before the
+                      * gate is enforced. Any change to it must bump
+                      * EVALUATION_TERMS_VERSION.
+                      */}
+                    <Section id="evaluation" kicker="05A" title="Evaluation and pilot use">
+                        <p>
+                            Access to SahayakAI is granted to a named school, either under a paid plan or for a time-limited pilot. When you request access or join through your school&rsquo;s invitation, you agree to the following.
+                        </p>
+                        <ul className="mt-3 space-y-2">
+                            <Bullet>Access is provided so that the named school can evaluate and use the service for its own teaching and administration, and for no other purpose</Bullet>
+                            <Bullet>You will not use SahayakAI, or anything learned through this access, to build, train, or benchmark a competing product or service, or to assist anyone else in doing so</Bullet>
+                            <Bullet>You will not scrape the service, extract its content by automated means, or systematically copy its prompts, outputs, workflows, or interface</Bullet>
+                            <Bullet>You will not share your sign-in credentials, or your school&rsquo;s invitation links, with anyone outside the school</Bullet>
+                            <Bullet>Pilot access ends on the date stated when it was granted, unless SARGVISION Intelligence extends it in writing or the school moves to a paid plan</Bullet>
+                        </ul>
+                        <p className="mt-3">
+                            If these conditions are breached, we may suspend or end access for the account or the school without notice, in addition to any other remedy available to us under these terms or under law.
+                        </p>
+                    </Section>
+
                     <Section kicker="06" title="Payments and subscriptions">
                         <p>
                             Paid plans are billed in Indian Rupees via Razorpay. Individual plans (Pro) include 18% GST. School plans (Gold, Premium) are billed exclusive of GST (ITC claimable). You can cancel anytime from your subscription settings; a 7-day refund is available from the first charge on any paid plan.
@@ -213,9 +240,9 @@ export function TermsClient() {
     );
 }
 
-function Section({ kicker, title, children }: { kicker: string; title: string; children: React.ReactNode }) {
+function Section({ id, kicker, title, children }: { id?: string; kicker: string; title: string; children: React.ReactNode }) {
     return (
-        <section className="mt-10 first:mt-0">
+        <section id={id} className="mt-10 first:mt-0 scroll-mt-24">
             <div className="flex items-baseline gap-3 mb-3">
                 <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-saffron-700">{kicker}</span>
                 <h2 className="font-headline font-semibold text-[20px] text-foreground leading-tight">{title}</h2>

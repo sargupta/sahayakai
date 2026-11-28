@@ -93,6 +93,17 @@ jest.mock('firebase-admin/auth', () => ({
     getAuth: () => ({ setCustomUserClaims: setCustomUserClaimsMock }),
 }));
 
+// organization.ts now writes claims through mergeCustomClaims (access gate:
+// a bare setCustomUserClaims would drop the `access` claim). Route the merge
+// helper to the same mock so the assertions below keep pinning WHAT is
+// written; the merge semantics themselves are covered in
+// src/__tests__/access/.
+jest.mock('@/lib/access/access-admin', () => ({
+    mergeCustomClaims: (uid: string, patch: Record<string, unknown>) => setCustomUserClaimsMock(uid, patch),
+    setAccessState: jest.fn(async () => ({ state: 'active', expiresAt: null })),
+    baseAccessState: jest.fn(async () => ({ state: 'legacy', source: 'default-legacy' })),
+}));
+
 // Default: caller is NOT admin
 const isAdminMock = jest.fn().mockResolvedValue(false);
 jest.mock('@/lib/auth-utils', () => ({

@@ -1,38 +1,23 @@
 "use client";
 
-import { useLandingTitleIndex } from "@/hooks/use-landing-title-index";
-import { LandingNav } from "./landing-nav";
-import { LandingHero } from "./landing-hero";
-import { LandingFeatures } from "./landing-features";
-import { LandingQuote } from "./landing-quote";
-import { LandingFooter } from "./landing-footer";
-import { ScriptMarks } from "./script-marks";
+import { HomePage } from "./home/home-page";
 import { SignedOutBanner } from "./signed-out-banner";
 
 type Props = {
   onAuthClick: () => void;
 };
 
+/**
+ * The signed-out homepage: the founder-approved "Homepage v1" design
+ * (founder decision, 2026-11-27: v1 goes to production). /for-schools keeps
+ * the decision-maker savings story; the homepage calculator reads the same
+ * model (src/lib/school-pricing.ts), so the two pages can never disagree.
+ */
 export function LandingPage({ onAuthClick }: Props) {
-  const titleIndex = useLandingTitleIndex();
-
   return (
-    <div className="force-light flex flex-col min-h-screen">
+    <>
       <SignedOutBanner />
-      <LandingNav onAuthClick={onAuthClick} />
-
-      {/* Warm stage: a breathing saffron glow, floating Indian-script marks,
-          and a fine film-grain overlay — layered behind the content. */}
-      <div className="relative flex-1 overflow-hidden bg-[hsl(40_20%_99.5%)]">
-        <div className="ambient-glow" aria-hidden />
-        <ScriptMarks />
-        <div className="ambient-grain" aria-hidden />
-        <LandingHero titleIndex={titleIndex} onAuthClick={onAuthClick} />
-        <LandingFeatures />
-        <LandingQuote />
-      </div>
-
-      <LandingFooter />
-    </div>
+      <HomePage onAuthClick={onAuthClick} />
+    </>
   );
 }

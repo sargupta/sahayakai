@@ -7,6 +7,13 @@ import {
     verifyProfileCompleteCookie,
 } from '@/lib/profile-complete-cookie';
 import {
+    decideGateAction,
+    evaluateAccess,
+    isInternalDevSurface,
+    resolveEffectiveGateMode,
+    type AccessGateMode,
+} from '@/lib/access/access-state';
+import {
     isSahayakRoute,
     isSamparkHost,
     SAHAYAK_BRIDGE_PREFIX,
@@ -98,6 +105,27 @@ async function verifyIdToken(token: string) {
     }
 }
 
+/**
+ * Access-gate rollout mode for this request (docs/ACCESS_GATE_RUNBOOK.md).
+ *
+ * `enforce` is only honoured when ACCESS_LEGACY_CUTOFF is set AND parses as a
+ * date (see resolveEffectiveGateMode). Otherwise the gate runs in `log` and
+ * says so once per instance.
+ */
+let _warnedMissingCutoff = false;
+function effectiveGateMode(): AccessGateMode {
+    const { mode, misconfigured } = resolveEffectiveGateMode();
+    if (misconfigured && !_warnedMissingCutoff) {
+        _warnedMissingCutoff = true;
+        console.error(JSON.stringify({
+            severity: 'ERROR',
+            message: 'access_gate_misconfigured',
+            detail: 'ACCESS_GATE_MODE=enforce but ACCESS_LEGACY_CUTOFF is unset or not a valid date; running in log mode',
+        }));
+    }
+    return mode;
+}
+
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
@@ -148,6 +176,19 @@ export async function middleware(request: NextRequest) {
         ) ||
         /\.(php|asp|aspx|jsp|cgi)$/i.test(pathname);
     if (isBotProbe) {
+        return new NextResponse(null, { status: 404 });
+    }
+
+    // Internal developer surfaces (2026-11-24): interactive API docs, the API
+    // playground, raw OpenAPI specs and service-worker source maps disclose
+    // the full route map and request shapes to anyone. They are never served
+    // in production. Local development keeps them; a non-production
+    // environment can opt in with ALLOW_DEV_SURFACES=true.
+    if (
+        isInternalDevSurface(pathname) &&
+        process.env.NODE_ENV === 'production' &&
+        process.env.ALLOW_DEV_SURFACES !== 'true'
+    ) {
         return new NextResponse(null, { status: 404 });
     }
 
@@ -258,6 +299,14 @@ export async function middleware(request: NextRequest) {
     // ID-token claims (`email`, `name`).
     requestHeaders.delete('x-user-email');
     requestHeaders.delete('x-user-name');
+    // Access-gate verdict and org identity: set only after token verification
+    // below. Route handlers trust them the same way they trust x-user-id.
+    requestHeaders.delete('x-user-access');
+    requestHeaders.delete('x-user-org');
+    requestHeaders.delete('x-user-org-role');
+    // Set below only from a verified `onboardingCompleted` claim. Left
+    // unstripped, a client could send it and skip the onboarding gate.
+    requestHeaders.delete('x-onboarding-completed');
 
     // Skip static assets entirely
     if (
@@ -299,7 +348,8 @@ export async function middleware(request: NextRequest) {
     // (the client doesn't have a token yet at that moment).
     const isPublicApi =
         pathname.startsWith('/api/health') ||
-        pathname.startsWith('/api-docs') ||
+        pathname === '/api/access/mode' ||   // tells the landing page which CTA to show; returns only the rollout mode
+        pathname === '/api/access/quote' ||  // school quote request form — anon by design; gated in-handler (Turnstile + per-IP caps)
         pathname.startsWith('/api/metrics') ||
         pathname.startsWith('/api/auth/') ||
         pathname.startsWith('/api/attendance/twiml') ||  // Twilio callbacks — no auth header
@@ -382,10 +432,73 @@ export async function middleware(request: NextRequest) {
             requestHeaders.set('x-user-plan', 'pro');
             requestHeaders.set('x-user-email', 'dev@sahayakai.local');
             requestHeaders.set('x-user-name', 'Dev User');
+            requestHeaders.set('x-user-access', 'legacy');
         } else {
             const decoded = await verifyIdToken(rawToken);
             if (decoded?.sub) {
                 requestHeaders.set('x-user-id', decoded.sub);
+
+                // --- Access gate (docs/ACCESS_GATE_RUNBOOK.md) ---
+                // The verdict comes from verified token claims only, so this
+                // costs no I/O. `x-user-access` is forwarded in every mode so
+                // handlers can read it; blocking happens only in `enforce`.
+                const accessDecision = evaluateAccess(decoded as Record<string, unknown>);
+                requestHeaders.set('x-user-access', accessDecision.verdict);
+                const tokenOrg = (decoded as Record<string, unknown>).orgId;
+                if (typeof tokenOrg === 'string' && tokenOrg.length > 0) {
+                    requestHeaders.set('x-user-org', tokenOrg);
+                }
+                const tokenOrgRole = (decoded as Record<string, unknown>).orgRole;
+                if (typeof tokenOrgRole === 'string' && tokenOrgRole.length > 0) {
+                    requestHeaders.set('x-user-org-role', tokenOrgRole);
+                }
+                // Scope: the gate covers SahayakAI. SamparkAI (its own host,
+                // the /sampark route tree and the /api/sampark* APIs) is a
+                // separate product with its own entry rules (provider choice,
+                // demo flags, API keys) and is deliberately left as it was.
+                const isSamparkSurface =
+                    isSamparkHost(host) ||
+                    pathname === SAMPARK_PREFIX ||
+                    pathname.startsWith(`${SAMPARK_PREFIX}/`) ||
+                    pathname.startsWith('/api/sampark');
+                const gateMode = effectiveGateMode();
+                if (gateMode !== 'off' && !isSamparkSurface) {
+                    const action = decideGateAction({
+                        pathname,
+                        method: request.method,
+                        decision: accessDecision,
+                    });
+                    if (action.kind !== 'allow') {
+                        if (gateMode === 'log') {
+                            // Structured line for a Cloud Logging metric. Shadow
+                            // mode: count what enforce WOULD block, block nothing.
+                            console.info(JSON.stringify({
+                                severity: 'NOTICE',
+                                message: 'access_gate_would_block',
+                                uid: decoded.sub,
+                                verdict: accessDecision.verdict,
+                                action: action.kind,
+                                method: request.method,
+                                path: pathname,
+                            }));
+                        } else if (action.kind === 'redirect') {
+                            const target = new URL(action.to, request.url);
+                            // Cloud Run leaks the container port into nextUrl
+                            // (see the canonical-host redirect above).
+                            if (process.env.NODE_ENV === 'production') target.port = '';
+                            return NextResponse.redirect(target);
+                        } else {
+                            return NextResponse.json(
+                                {
+                                    error: 'Access to SahayakAI requires approval.',
+                                    code: 'ACCESS_REQUIRED',
+                                    access: accessDecision.verdict,
+                                },
+                                { status: 403 },
+                            );
+                        }
+                    }
+                }
                 // F1-06 fix (2026-06-06): inject verified-from-token email
                 // and display name. syncUserAction (and any other server
                 // surface that needs to mirror auth profile into Firestore)
@@ -435,6 +548,7 @@ export async function middleware(request: NextRequest) {
                 requestHeaders.set('x-user-plan', 'pro');
                 requestHeaders.set('x-user-email', 'dev@sahayakai.local');
                 requestHeaders.set('x-user-name', 'Dev User');
+                requestHeaders.set('x-user-access', 'legacy');
             } else {
                 return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
             }
@@ -474,6 +588,9 @@ export async function middleware(request: NextRequest) {
     if (isAuthenticatedPageGet) {
         const onboardingAllowlist = [
             '/onboarding',
+            '/access',
+            '/request-access',
+            '/join',
             '/login',
             '/signup',
             '/auth',
@@ -606,8 +723,9 @@ export async function middleware(request: NextRequest) {
             `https://static.cloudflareinsights.com`,     // CF Insights loader
             `https://*.run.app`,                         // voice-call / sidecar Cloud Run services
         ].join(' '),
-        // Iframes we embed: reCAPTCHA (App Check) + Firebase auth handler.
-        `frame-src 'self' https://www.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+        // Iframes we embed: reCAPTCHA (App Check) + Firebase auth handler +
+        // the SahayakAI film on the homepage (YouTube's no-cookie player).
+        `frame-src 'self' https://www.google.com https://www.gstatic.com https://*.firebaseapp.com https://www.youtube-nocookie.com`,
         // Web workers / service worker (next-pwa) are same-origin; blob: for
         // inline workers spawned by libraries.
         `worker-src 'self' blob:`,

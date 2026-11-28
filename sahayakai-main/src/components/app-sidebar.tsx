@@ -11,6 +11,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   ClipboardList,
+  BarChart3,
   Compass,
   FileText,
   FlaskConical,
@@ -30,6 +31,7 @@ import {
   Terminal,
   User,
   Users,
+  Video,
   Zap,
 } from "lucide-react"
 import { collection, query, where, onSnapshot } from "firebase/firestore"
@@ -225,6 +227,8 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
         { key: "instant-answer", label: t("Instant Answer"), icon: Lightbulb, href: "/instant-answer", active: starts("/instant-answer") },
         // Un-parked from Labs (parked by the July IA refocus) so every teacher can find it.
         { key: "virtual-field-trip", label: t("Virtual Field Trip"), icon: Globe2, href: "/virtual-field-trip", active: starts("/virtual-field-trip") },
+        // Un-parked from Labs: personalised video recommendations (pedagogy, storytelling, govt updates, courses) for every teacher.
+        { key: "video-storyteller", label: t("Video Storyteller"), icon: Video, href: "/video-storyteller", active: starts("/video-storyteller") },
       ],
     },
     {
@@ -244,7 +248,9 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
       key: "training",
       tier: "secondary",
       items: [
-        { key: "teacher-training", label: t("AI Coach"), shortLabel: t("AI Coach"), icon: GraduationCap, href: "/teacher-training", active: starts("/teacher-training") },
+        { key: "teacher-training", label: t("AI Mentor"), shortLabel: t("AI Mentor"), icon: GraduationCap, href: "/teacher-training", active: starts("/teacher-training") },
+        // Un-parked from Labs: the teacher's own Impact score sits with her growth, always visible.
+        { key: "impact", label: t("Impact"), icon: BarChart3, href: "/impact-dashboard", active: starts("/impact-dashboard") },
       ],
     },
   ]

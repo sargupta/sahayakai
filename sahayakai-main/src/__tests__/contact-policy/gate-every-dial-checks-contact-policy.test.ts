@@ -34,6 +34,8 @@ const DIAL_SIGNATURES: { carrier: string; re: RegExp }[] = [
     { carrier: 'Vobiz (detailed client)', re: /\bplaceVobizCallDetailed\s*\(/g },
     { carrier: 'Vobiz (raw Call API)', re: /\/Account\/\$\{[^}]+\}\/Call\/`/g },
     { carrier: 'Exotel (voicebot start-call)', re: /process\.env\.VOICE_EXOTEL_CALL_URL\b/g },
+    { carrier: 'Plivo (Sampark Riya)', re: /\bplacePlivoCall\s*\(/g },
+    { carrier: 'Exotel (Sampark Riya stream)', re: /\bplaceExotelStreamCall\s*\(/g },
     { carrier: 'Sampark carrier port', re: /\bcarrier\.place\s*\(/g },
 ];
 
@@ -51,6 +53,16 @@ const ALLOWED: Record<string, string> = {
         'Riya-over-Vobiz carrier adapter (added on main after Step 2 was written). Its only caller, startRiyaCall ' +
         '(server/sampark/conversation.ts), runs the full Sampark gate first: opt-outs, suppression, do-not-contact, ' +
         'the frequency cap and hours. FOLLOW-UP: route it through checkContact too, so the teacher contact ledger counts.',
+    'lib/plivo/client.ts':
+        'The Plivo HTTP client itself (definition of placePlivoCall). Its callers are checked here.',
+    'lib/exotel/client.ts':
+        'The Exotel Calls/connect client itself (definition of placeExotelStreamCall). Its callers are checked here.',
+    'lib/sampark/conversation/plivo-provider.ts':
+        'Riya-over-Plivo carrier adapter, same shape as vobiz-provider: its only caller, startRiyaCall, runs the full ' +
+        'Sampark gate first (opt-outs, suppression, do-not-contact, frequency cap, hours). Same FOLLOW-UP as vobiz-provider.',
+    'lib/sampark/conversation/exotel-provider.ts':
+        'Riya-over-Exotel carrier adapter, same shape as vobiz-provider: its only caller, startRiyaCall, runs the full ' +
+        'Sampark gate first (opt-outs, suppression, do-not-contact, frequency cap, hours). Same FOLLOW-UP as vobiz-provider.',
     'app/api/demo-call/route.ts':
         'Public "Hear the Call" demo: rings the VISITOR\'S OWN number once, at their request, with their consent, behind ' +
         'DEMO_CALL_ENABLED, Turnstile and per-number cooldowns. Not a school-to-parent call. Flagged for review in the Step 2 PR.',

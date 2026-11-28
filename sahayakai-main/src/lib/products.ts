@@ -35,14 +35,14 @@ export const SAMPARK_RESERVED_SEGMENTS = ['workspace', 'demo'] as const;
  */
 export const SAHAYAK_ROUTE_SEGMENTS = [
     // src/app
-    'admin', 'api-docs', 'api-playground', 'assess-assignment', 'assessment-scanner', 'attendance',
+    'access', 'admin', 'api-docs', 'api-playground', 'assess-assignment', 'assessment-scanner', 'attendance',
     'community', 'community-library', 'content-creator', 'exam-paper', 'impact-dashboard',
-    'instant-answer', 'labs', 'lesson-plan', 'mcp-demo', 'messages', 'my-library', 'my-profile', 'notifications',
-    'onboarding', 'organization', 'pricing', 'privacy-for-teachers', 'profile', 'quiz-generator',
+    'instant-answer', 'join', 'labs', 'lesson-plan', 'mcp-demo', 'messages', 'my-library', 'my-profile', 'notifications',
+    'onboarding', 'organization', 'pricing', 'privacy-for-teachers', 'profile', 'quiz-generator', 'request-access',
     'review-panel', 'rubric-generator', 'settings', 'submit-content', 'teacher-training', 'try-call',
     'usage', 'video-storyteller', 'virtual-field-trip', 'visual-aid-designer', 'worksheet-wizard',
     // src/app/(marketing)
-    'about', 'blog', 'bn', 'for-schools', 'kn', 'school-pricing', 'ta', 'terms',
+    'about', 'blog', 'bn', 'features', 'for-schools', 'kn', 'school-pricing', 'ta', 'terms',
 ] as const;
 
 /**

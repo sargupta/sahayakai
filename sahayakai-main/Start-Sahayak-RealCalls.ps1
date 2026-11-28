@@ -1,4 +1,5 @@
-# One click: SahayakAI + SamparkAI with REAL calls to the Sargvision class (ElevenLabs AND Vobiz).
+# One click: SahayakAI + SamparkAI with REAL calls to the Sargvision class (ElevenLabs, Vobiz,
+# Plivo and Exotel — Plivo/Exotel only when their credential files are filled in).
 #
 # Everything Start-Sahayak-Demo.cmd starts, plus:
 #   - the Vobiz voice bridge (sahayakai-agents, :8091, Riya on Gemini Live)
@@ -17,7 +18,11 @@ $State = Join-Path $env:TEMP 'riya-local'
 New-Item -ItemType Directory -Force -Path $State | Out-Null
 $ExtraPids = Join-Path $State 'realcall-pids.json'
 $Node = (Get-Command node -ErrorAction SilentlyContinue).Source; if (-not $Node) { $Node = 'E:\NodeJS\node.exe' }
-$Cloudflared = 'C:\Users\Bhagya\.9router\bin\cloudflared.exe'
+$Cloudflared = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source
+if (-not $Cloudflared) { foreach ($c in @("$env:ProgramFiles\cloudflared\cloudflared.exe", "${env:ProgramFiles(x86)}\cloudflared\cloudflared.exe", 'C:\Users\Bhagya\.9router\bin\cloudflared.exe')) { if (Test-Path $c) { $Cloudflared = $c; break } } }
+if (-not $Cloudflared) { $Cloudflared = 'cloudflared.exe (not found: winget install Cloudflare.cloudflared)' }
+$PlivoCred = if ($env:PLIVO_CRED_FILE) { $env:PLIVO_CRED_FILE } else { 'E:\sargvision\PLIVOCRED.txt' }
+$ExotelCred = if ($env:EXOTEL_CRED_FILE) { $env:EXOTEL_CRED_FILE } else { 'E:\sargvision\EXOTELCRED.txt' }
 $Python = Join-Path $PSScriptRoot '..\sahayakai-agents\.venv\Scripts\python.exe'
 # A worktree has no venv of its own: use the main checkout's (same pinned requirements). The bridge
 # still runs THIS checkout's code (run_local_voice.py puts its own src/ first on sys.path).
@@ -79,7 +84,23 @@ function Start-Bg($name, $exe, $argList, $log, $envs) {
 Step '3. Vobiz voice bridge (:8091) and webhook gateway (:3010 / :8092)'
 $bridgeEnv = @{ SAMPARK_WEB_BASE_URL = 'http://127.0.0.1:3000'; VOBIZ_AUTH_ID = $VobizId; VOBIZ_AUTH_TOKEN = $VobizToken;
   NO_COLOR = '1'; FORCE_COLOR = $null; PYTHONIOENCODING = 'utf-8'; FIRESTORE_EMULATOR_HOST = $null; GCLOUD_PROJECT = $null }
+# The bridge hangs Plivo calls up over Plivo's REST API (Exotel needs nothing: closing the stream ends it).
+if (Test-Path $PlivoCred) {
+  $PlivoId = Read-KV $PlivoCred '^\s*PLIVO_AUTH_ID\s*[=:]\s*(.+)$'
+  $PlivoToken = Read-KV $PlivoCred '^\s*PLIVO_AUTH_TOKEN\s*[=:]\s*(.+)$'
+  if ($PlivoId -and $PlivoToken -and $PlivoId -notmatch '^<') { $bridgeEnv['PLIVO_AUTH_ID'] = $PlivoId; $bridgeEnv['PLIVO_AUTH_TOKEN'] = $PlivoToken }
+}
 if ($VertexProject) { $bridgeEnv['GOOGLE_CLOUD_PROJECT'] = $VertexProject }
+# Riya's pre-rendered opening lines (render with sahayakai-agents\scripts\render_riya_opener.py): the
+# parent hears Riya the moment the call connects instead of ~8 s of silence while Live connects.
+$OpenerDir = Join-Path $env:LOCALAPPDATA 'riya-local\riya-openers'
+New-Item -ItemType Directory -Force -Path $OpenerDir | Out-Null
+$bridgeEnv['VOBIZ_RIYA_OPENER_DIR'] = $OpenerDir
+# Indian English accent, and a little more patience before a parent's turn ends (fewer 'sorry, can you repeat').
+$bridgeEnv['VOBIZ_RIYA_LANGUAGE_CODE'] = 'en-IN'
+$bridgeEnv['VOBIZ_RIYA_VAD_SILENCE_MS'] = '500'
+# Build the Vertex + Firestore clients at bridge start, not on the first call (4.2 s of dead air).
+$bridgeEnv['VOBIZ_RIYA_PREWARM'] = '1'
 Start-Bg 'vobiz-bridge' $Python @('..\sahayakai-agents\scripts\run_local_voice.py', '--port', '8091') (Join-Path $State 'vobiz-bridge.log') $bridgeEnv | Out-Null
 Start-Bg 'webhook-gateway' $Node @('scripts/sampark/webhook-gateway.mjs', '--app', '3000', '--app-gate', '3010', '--bridge', '8091', '--bridge-gate', '8092') (Join-Path $State 'webhook-gateway.log') @{} | Out-Null
 $ok = $false
@@ -110,12 +131,34 @@ $BridgeBase = Start-Tunnel 'tunnel-bridge' 8092
 Write-Host "   Vobiz callbacks → $PublicBase  (webhook paths only)"
 Write-Host "   Media stream    → $BridgeBase  (stream path only)"
 
-Step '5. SahayakAI + SamparkAI with real calls (ElevenLabs and Vobiz)'
+Step '5. SahayakAI + SamparkAI with real calls (ElevenLabs, Vobiz, Plivo, Exotel)'
+$env:PLIVO_CRED_FILE = $PlivoCred
+$env:EXOTEL_CRED_FILE = $ExotelCred
 $env:SAHAYAKAI_REQUEST_SIGNING_KEY = $SigningKey
 $env:ELEVENLABS_API_KEY = $ElKey
 $env:RIYA_REAL_AGENT_ID = $ElAgent
 $env:RIYA_REAL_PHONE_NUMBER_ID = $ElPhone
+# The agent the Riya clone was copied from (the app refuses to call through it). Read from the
+# original agent's export when this shell does not already carry it (never printed).
+$SourceExport = 'E:\sargvision\sahayakcallagentvarunesh.txt'
+if (-not $env:RIYA_REAL_SOURCE_AGENT_ID -and (Test-Path $SourceExport)) {
+  $m = Select-String -Path $SourceExport -Pattern 'agent_[A-Za-z0-9]{20,}' | Select-Object -First 1
+  if ($m) { $env:RIYA_REAL_SOURCE_AGENT_ID = $m.Matches[0].Value }
+}
+if (-not $env:RIYA_REAL_SOURCE_AGENT_ID) { Fail "RIYA_REAL_SOURCE_AGENT_ID not set and not found in $SourceExport" }
+if ($env:RIYA_REAL_SOURCE_AGENT_ID -eq $ElAgent) { Fail 'the configured ElevenLabs agent IS the source agent; use the Riya clone' }
+# The single authorised test phone of the separate test school. When this shell does not carry one,
+# use a Sargvision roster contact's own number (already allow-listed: nobody new becomes callable).
+$TestContact = if ($env:RIYA_TEST_CONTACT) { $env:RIYA_TEST_CONTACT } else { 'sv-alyssa' }
+if (-not $env:RIYA_REAL_TEST_NUMBER) {
+  $rosterFile = Join-Path $PSScriptRoot 'scripts\sampark\sargvision-roster.local.json'
+  if (Test-Path $rosterFile) {
+    $c = (Get-Content $rosterFile -Raw | ConvertFrom-Json).contacts | Where-Object { $_.id -eq $TestContact } | Select-Object -First 1
+    if ($c) { $env:RIYA_REAL_TEST_NUMBER = $c.phone }
+  }
+}
+if (-not $env:RIYA_REAL_TEST_NUMBER) { Fail "RIYA_REAL_TEST_NUMBER not set and roster contact $TestContact not found" }
 $env:VOBIZ_CRED_FILE = $VobizCred
 Remove-Item Env:FORCE_COLOR -ErrorAction SilentlyContinue
 & $Node scripts/sampark/riya-local.mjs --persist --no-menu --ticker --admin dev-user-123 --demo-family --open-home --port 3000 `
-  --real-call --vobiz-call --public-base $PublicBase --bridge-base $BridgeBase --vobiz-allow $AllContacts --batch-real --test-cap 5
+  --real-call --vobiz-call --plivo-call --exotel-call --public-base $PublicBase --bridge-base $BridgeBase --vobiz-allow $AllContacts --batch-real --test-cap 5

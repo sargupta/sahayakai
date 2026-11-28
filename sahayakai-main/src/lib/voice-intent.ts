@@ -1,8 +1,9 @@
 /**
  * Voice-intent handoff shared by every entry mic on the home page.
  *
- * GlobalVoiceInterface (the fixed floating mic) and the hero VIDYA orb
- * must both deliver a recognised transcript through the SAME channel:
+ * Every entry mic (today: the hero VIDYA orb; formerly also the retired
+ * GlobalVoiceInterface floating mic) delivers a recognised transcript
+ * through the SAME channel:
  *
  *   unauthenticated → stash the transcript in sessionStorage so the
  *                     dashboard can auto-fill it after sign-in, then

@@ -300,3 +300,38 @@ Landing pages (`src/app/page.tsx`, `src/components/landing/**`, `src/app/(market
 4. Tag in PR for design review.
 
 Tokens are cheaper than divergence. But every new token is a long-term commitment to maintain — be deliberate.
+
+---
+
+## Marketing v1 palette (homepage and /features, 2026-11-27)
+
+The signed-out homepage and `/features` use their own palette, scoped to
+`.hpv1` / `.hpf` in `src/components/landing/home/home.css` and
+`src/components/landing/features/features.css` (see `docs/HOMEPAGE_V1.md`).
+It never applies inside the authenticated app, and it does not change
+`--primary` (the palette FREEZE above is untouched).
+
+- Role names: `--hp-ink`, `--hp-body`, `--hp-muted`, `--hp-paper`, `--hp-cream`,
+  `--hp-saffron`, `--hp-saffron-deep`, `--hp-accent`, `--hp-accent-deep`,
+  `--hp-white`, `--hp-success`, `--hp-success-deep`.
+- Everything else is named by family and lightness (`--hp-indigo-92`,
+  `--hp-stone-21`): illustration and scene tints. Decorative only — never text
+  unless the pair is in the table below.
+- Components reference `var(--hp-*)`; no raw hex in `.tsx` (Gate 11). A class
+  gate rejects undefined variables and hex-named ones.
+
+Text contrast (WCAG 2.x, measured):
+
+| Pair | Ratio | Level | Use |
+|---|---|---|---|
+| `--hp-ink` on `--hp-paper` | 18.18:1 | AAA | Body and headings |
+| `--hp-body` on `--hp-paper` | 7.41:1 | AAA | Secondary text |
+| `--hp-muted` on `--hp-paper` | 5.62:1 | AA | Captions |
+| `--hp-muted` on `--hp-cream` | 5.21:1 | AA | Captions on cream panels |
+| `--hp-body` on `--hp-cream` | 6.86:1 | AA | Small text on tinted scenes |
+| `--hp-accent` on `--hp-paper` | 4.46:1 | AA large | Display-size accent words and wordmark only (≥ 22px) |
+| `--hp-accent-deep` on `--hp-paper` | 5.28:1 | AA | Links, small accent labels |
+| `--hp-ink` on `--hp-saffron` | 7.90:1 | AAA | Text on the saffron button |
+| `--hp-paper` on `--hp-ink` | 18.18:1 | AAA | Text on the ink button |
+| `--hp-white` on `--hp-success` | 7.55:1 | AAA | Tick on the success dot |
+| `--hp-success-deep` on `--hp-cream` | 9.10:1 | AAA | Calculator result label |

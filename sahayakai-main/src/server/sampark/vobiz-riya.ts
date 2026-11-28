@@ -18,7 +18,8 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { buildVobizAnswerXml, toWebSocketOrigin } from '@/lib/vobiz/answer-xml';
 import { mintVobizToken, verifyVobizToken } from '@/lib/vobiz/tokens';
-import { isTerminalConversationState, type ConversationTranscriptTurn } from '@/lib/sampark/conversation/types';
+import { BRIDGE_AGENT_ID } from '@/lib/sampark/conversation/bridge-carrier';
+import { bridgeConversationId, isBridgeCarrier, isTerminalConversationState, type BridgeCarrier, type ConversationTranscriptTurn } from '@/lib/sampark/conversation/types';
 import {
     parseVobizRiyaRef,
     readVobizRiyaConfig,
@@ -41,12 +42,40 @@ function enabled(env: Env): boolean {
     return env.SAMPARK_ENABLED === 'true' && riyaEnabled(env) && env.SAMPARK_VOBIZ_RIYA_ENABLED === 'true';
 }
 
+/** The switch for each bridge carrier. Riya's context and result legs serve a carrier only while it is on. */
+const CARRIER_FLAG: Record<BridgeCarrier, string> = {
+    vobiz: 'SAMPARK_VOBIZ_RIYA_ENABLED',
+    plivo: 'SAMPARK_PLIVO_RIYA_ENABLED',
+    exotel: 'SAMPARK_EXOTEL_RIYA_ENABLED',
+};
+
+export function bridgeCarrierEnabled(env: Env, carrier: BridgeCarrier): boolean {
+    return env.SAMPARK_ENABLED === 'true' && riyaEnabled(env) && env[CARRIER_FLAG[carrier]] === 'true';
+}
+
+/** Any bridge carrier on: the shared context/event legs exist at all. */
+export function anyBridgeCarrierEnabled(env: Env): boolean {
+    return (Object.keys(CARRIER_FLAG) as BridgeCarrier[]).some((c) => bridgeCarrierEnabled(env, c));
+}
+
 async function vobizCallFor(deps: RiyaDeps, ref: string | null) {
     const parsed = parseVobizRiyaRef(ref);
     if (!parsed) return null;
     const call = await deps.calls.getCall(parsed.orgId, parsed.callId);
     if (!call || call.orgId !== parsed.orgId || call.provider !== 'vobiz') return null;
     return call;
+}
+
+/**
+ * A Sampark call on ANY bridge carrier whose switch is on (the shared context and event legs).
+ * The token / signature says which call; the stored record says which carrier.
+ */
+async function bridgeCallFor(deps: RiyaDeps, env: Env, ref: string | null) {
+    const parsed = parseVobizRiyaRef(ref);
+    if (!parsed) return null;
+    const call = await deps.calls.getCall(parsed.orgId, parsed.callId);
+    if (!call || call.orgId !== parsed.orgId || !isBridgeCarrier(call.provider) || !bridgeCarrierEnabled(env, call.provider)) return null;
+    return { call, carrier: call.provider };
 }
 
 // ── answer ─────────────────────────────────────────────────────────────────
@@ -125,9 +154,17 @@ export interface VobizRiyaContext {
 
 export async function handleVobizRiyaContext(deps: RiyaDeps, token: string | null): Promise<{ status: 200 | 404; body: VobizRiyaContext | { ok: false } }> {
     const env = deps.env ?? process.env;
-    if (!enabled(env)) return { status: 404, body: { ok: false } };
-    const call = await vobizCallFor(deps, await verifyVobizToken(SAMPARK_VOBIZ_DOMAINS.CONTEXT, token));
+    if (!anyBridgeCarrierEnabled(env)) return { status: 404, body: { ok: false } };
+    const found = await bridgeCallFor(deps, env, await verifyVobizToken(SAMPARK_VOBIZ_DOMAINS.CONTEXT, token));
+    const call = found?.call;
     if (!call || isTerminalConversationState(call.state) || !call.variables) return { status: 404, body: { ok: false } };
+    // Every carrier (Vobiz, Plivo, Exotel) fetches context here before Riya speaks. Exotel has no
+    // answer-time hook, so a school paused while the phone rang is caught here: no context, no speech.
+    const school = await deps.repo.getSchool(call.orgId);
+    if (!school || pauseStopsPurpose(school.pause, call.purpose)) {
+        logger.info('Riya context refused: school paused', LOG, { orgId: call.orgId });
+        return { status: 404, body: { ok: false } };
+    }
     const vars: Record<string, string> = {};
     for (const [k, v] of Object.entries(call.variables)) vars[k] = typeof v === 'string' ? v : '';
     return {
@@ -164,7 +201,7 @@ export async function handleVobizRiyaEvent(
     signatureHeader: string | null,
 ): Promise<{ status: 200 | 400 | 401 | 404 | 413 | 503; body: { ok: boolean; error?: string } }> {
     const env = deps.env ?? process.env;
-    if (!enabled(env)) return { status: 404, body: { ok: false, error: 'Not found' } };
+    if (!anyBridgeCarrierEnabled(env)) return { status: 404, body: { ok: false, error: 'Not found' } };
     if (Buffer.byteLength(rawBody, 'utf8') > MAX_WEBHOOK_BYTES) return { status: 413, body: { ok: false, error: 'too large' } };
     const nowSec = Math.floor((deps.wallClock ?? deps.clock).now().getTime() / 1000);
     const sig = verifyBridgeSignature(env.SAHAYAKAI_REQUEST_SIGNING_KEY?.trim(), rawBody, signatureHeader, nowSec);
@@ -180,16 +217,18 @@ export async function handleVobizRiyaEvent(
     } catch {
         return { status: 400, body: { ok: false, error: 'unreadable' } };
     }
-    const call = await vobizCallFor(deps, parsed.ref);
-    if (!call) return { status: 200, body: { ok: true } }; // not ours: accept so it is not retried, change nothing
+    const found = await bridgeCallFor(deps, env, parsed.ref);
+    if (!found) return { status: 200, body: { ok: true } }; // not ours: accept so it is not retried, change nothing
+    const { call, carrier } = found;
     // The signature and the ref already bind this report to THIS call (the bridge only ever got the
-    // ref from a stream token minted for it). Vobiz's request uuid and the answered call's uuid are
-    // the same value on outbound calls; if they ever differ, the call keeps the id it was placed
-    // with and the report still applies — dropping a signed result would leave the call open forever.
-    const reported = vobizConversationId(parsed.callUuid || call.id);
+    // ref from a stream token minted for it). The carrier's request id and the answered call's id
+    // are the same value on Vobiz outbound calls; on any carrier, if they differ, the call keeps the
+    // id it was placed with and the report still applies — dropping a signed result would leave the
+    // call open forever.
+    const reported = bridgeConversationId(carrier, parsed.callUuid || call.id);
     const conversationId = call.providerConversationId ?? reported;
     if (conversationId !== reported) {
-        logger.warn('Vobiz Riya event uuid differs from the placed call uuid; applied to the placed call', LOG, { orgId: call.orgId, callId: call.id });
+        logger.warn('Riya bridge event call id differs from the placed call id; applied to the placed call', LOG, { orgId: call.orgId, callId: call.id, carrier });
     }
     const transcript: ConversationTranscriptTurn[] = parsed.transcript.slice(0, MAX_TRANSCRIPT_TURNS).map((t) => ({
         role: t.role,
@@ -198,9 +237,9 @@ export async function handleVobizRiyaEvent(
     }));
     const event: RiyaWebhookEvent = {
         kind: 'post_call',
-        eventId: `vobiz-post-call:${parsed.callUuid || call.id}`,
+        eventId: `${carrier}-post-call:${parsed.callUuid || call.id}`,
         eventTimestamp: parsed.eventTimestamp,
-        agentId: VOBIZ_RIYA_AGENT_ID,
+        agentId: BRIDGE_AGENT_ID[carrier],
         conversationId,
         userId: `${call.orgId}~${call.id}`,
         status: parsed.status,
