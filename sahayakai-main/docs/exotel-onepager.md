@@ -1,9 +1,9 @@
-# Exotel Call Quality — One-Page Findings Note (SP-18)
+﻿# Exotel Call Quality — One-Page Findings Note (SP-18)
 
 **To:** Abhishek Gupta  
 **From:** Sampark Engineering  
 **Date:** 2026-11-28  
-**Status:** Code audit complete on `sargupta/sahayakai` (`main` after PR #221). Live 3+3 Exotel vs Plivo handset comparison pending test-phone pickup on `+91 7384273605`.
+**Status:** Code audit complete on `sargupta/sahayakai` (`main` after PR #221). Live 3+3 Exotel vs Plivo handset comparison pending test-phone pickup on `$RIYA_REAL_TEST_NUMBER`.
 
 ---
 
@@ -23,4 +23,4 @@
 
 1. **Close PR #230** (`feat/sampark-exotel-calls-fixed`) — `main` already has the working `StreamUrl` client and `exotel_frames.py` from PR #221.
 2. **Test the two P1 audio fixes** on a clean branch off `main` (skipping μ-law round-trip for Exotel + flushing only at turn-end rather than every empty pacer tick).
-3. **Run the SP-18 / SP-17 live comparison** (3–5 answered calls each on Exotel, Vobiz, and Plivo to `+91 7384273605`) to measure `first_audio_ms`, connect rate, and MOS/WER before choosing the default carrier for AtithiVani (SP-10) and Placement World (SP-11).
+3. **Run the SP-18 / SP-17 live comparison** (3–5 answered calls each on Exotel, Vobiz, and Plivo to `$RIYA_REAL_TEST_NUMBER`) to measure `first_audio_ms`, connect rate, and MOS/WER before choosing the default carrier for AtithiVani (SP-10) and Placement World (SP-11).

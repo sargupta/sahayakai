@@ -1,8 +1,8 @@
-# Placement World — Screening Call Specification (SP-11)
+﻿# Placement World — Screening Call Specification (SP-11)
 
 **Updated:** 2026-11-28  
 **Status:** Spec + Sampark flow (`src/lib/sampark/placement-world/`) implemented.  
-**Pending:** Client's recorded screening calls (not present in repository/workspace; current question order uses standard screening structure and must be aligned once recordings are reviewed), native Hindi/Bengali line review, and 3 live test calls on `+91 7384273605` via Plivo (`+91 80 6552 2006`).
+**Pending:** Client's recorded screening calls (not present in repository/workspace; current question order uses standard screening structure and must be aligned once recordings are reviewed), native Hindi/Bengali line review, and 3 live test calls on `$RIYA_REAL_TEST_NUMBER` via Plivo (`$PLACEMENT_WORLD_PLIVO_CALLER_ID`).
 
 ---
 
@@ -10,7 +10,7 @@
 
 1. **Opener constraint:** The opener must say **only** that Riya is calling from **Placement World** and that **the call is recorded**. No role pitch, salary, or fee line is spoken in the opener.
 2. **Fee line placement:** Any Placement World service/registration fee disclosure stays strictly at the **end of the call** (closing stage), never upfront.
-3. **Caller ID:** Outbound Plivo calls use `+91 80 6552 2006` (`918065522006` on Plivo's wire format).
+3. **Caller ID:** Outbound Plivo calls use `$PLACEMENT_WORLD_PLIVO_CALLER_ID` (`$PLACEMENT_WORLD_PLIVO_CALLER_ID` on Plivo's wire format).
 4. **Webhook delivery:** Structured screening answers and terminal edge-case status are posted via HMAC-SHA256 signed JSON webhook (`X-Placement-Signature`).
 
 ---
@@ -19,7 +19,7 @@
 
 ```mermaid
 flowchart TD
-    PW["Placement World Trigger (Caller ID: +91 80 6552 2006 via Plivo)"] --> OP["Opener ONLY: Calling from Placement World + Call is recorded (NO fee line)"]
+    PW["Placement World Trigger (Caller ID: $PLACEMENT_WORLD_PLIVO_CALLER_ID via Plivo)"] --> OP["Opener ONLY: Calling from Placement World + Call is recorded (NO fee line)"]
     OP -->|no_answer| NA["Plivo hangup status -> no_answer"]
     OP -->|wrong_person| WP["Apologize & exit -> Signed Webhook (wrong_person)"]
     OP -->|refuses| RF["Note not interested -> Signed Webhook (refuses)"]

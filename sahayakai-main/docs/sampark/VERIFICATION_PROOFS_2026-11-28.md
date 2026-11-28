@@ -1,6 +1,6 @@
-# Verification Proofs & Follow-up Tasks — SP-18, SP-10, SP-11, SP-17 (2026-11-28)
+﻿# Verification Proofs & Follow-up Tasks — SP-18, SP-10, SP-11, SP-17 (2026-11-28)
 
-All code, diagram, and test proofs below were executed locally on `c:\Users\sachi\Downloads\sahayakai` and verified in GitHub CI. No live PSTN calls were placed to `+91 7384273605` (per instruction: do not call the test number right now).
+All code, diagram, and test proofs below were executed locally on `c:\Users\sachi\Downloads\sahayakai` and verified in GitHub CI. No live PSTN calls were placed to `$RIYA_REAL_TEST_NUMBER` (per instruction: do not call the test number right now).
 
 ---
 
@@ -53,7 +53,7 @@ All code, diagram, and test proofs below were executed locally on `c:\Users\sach
 - **Jest (`sahayakai-main`):**
   - PR #245 suites (`atithivani-flow.test.ts` + `placement-world-flow.test.ts`) → **2/2 suites, 9/9 tests passed**
   - PR #218 suites (`attendance-call-refusals-gate.test.ts` + `api/sampark/routes.test.ts`) → **2/2 suites, 171/171 tests passed**
-- **CI scripts:** `check-design-tokens.mjs` (**523 <= 523**), `find-missing-i18n-keys.mjs --no-write` (**0 missing keys**), `carrier-benchmark.mjs --carrier vobiz --runs 5 --to +917384273605 --dry-run` (**passed**).
+- **CI scripts:** `check-design-tokens.mjs` (**523 <= 523**), `find-missing-i18n-keys.mjs --no-write` (**0 missing keys**), `carrier-benchmark.mjs --carrier vobiz --runs 5 --to $RIYA_REAL_TEST_NUMBER --dry-run` (**passed**).
 
 ---
 
@@ -64,7 +64,7 @@ All code, diagram, and test proofs below were executed locally on `c:\Users\sach
 | **SP-19** | Wire direct PCM16 runtime path for Exotel (`EXOTEL_DIRECT_PCM16`) | High | Update `router.py` (`_pump_carrier_to_live` & `_pace_outbound`) to invoke `pcm8k_le_to_pcm16k` + `pcm24k_to_pcm8k_le` + `ExotelCodec.play_pcm8k_le` when carrier is `exotel`; compare MOS/WER against μ-law path. |
 | **SP-20** | Test Exotel Mumbai cluster (`api.in.exotel.com`) vs Singapore (`api.exotel.com`) | Medium | Measure WebSocket jitter and `first_audio_ms` between Cloud Run (`asia-south1`) and both Exotel endpoints. |
 | **SP-21** | Add AtithiVani Next.js API routes + Firestore `atithivani_feedback_results` adapter & deploy to staging | High | Expose authenticated `POST /api/sampark/atithivani/prepare` & `/feedback` routes backed by Firestore, completing SP-10 *"feedback result is saved"* in staging. |
-| **SP-22** | Add Placement World Plivo webhook route + ingest client screening recordings | High | Wire `/api/webhooks/plivo-placement/` with `PLIVO_FROM_NUMBER=+918065522006`, align question order to client recordings, and get native Hindi/Bengali review. |
+| **SP-22** | Add Placement World Plivo webhook route + ingest client screening recordings | High | Wire `/api/webhooks/plivo-placement/` with `PLIVO_FROM_NUMBER=$PLACEMENT_WORLD_PLIVO_CALLER_ID`, align question order to client recordings, and get native Hindi/Bengali review. |
 | **SP-23** | Provision `GCPSAREADONLYKEY` & migrate `SAMPARKPIIKEY` to Secret Manager (Review C2 / L2) | High | Unblocks Gate 3 Cloud Run `service.yaml` drift detection and removes `SAMPARKPIIKEY` raw env dependency. |
 | **SP-24** | Split `router.py` (~5,100 lines) into focused telephony modules (Review M4) | Medium | Extract admission/auth, pacer/audio loop, and carrier lifecycle out of `router.py` for unit testability. |
 | **SP-25** | Close/rebase stale PR backlog & document branch protection (Review L3 / L4) | Medium | Triage PRs >60 days old (e.g., #66, #90, #114, #115, #128, #152) and document PR review/merge rules. |

@@ -33,7 +33,7 @@ describe('Placement World screening call flow (SP-11)', () => {
         expect(en.opener.toLowerCase()).toContain('recorded');
     });
 
-    it('dials through Plivo using +918065522006 as caller ID and enforces test phone in test mode', async () => {
+    it('dials through Plivo using configured caller ID and enforces test phone in test mode', async () => {
         let sentBody: Record<string, unknown> | null = null;
         const fakeFetch: typeof fetch = async (_url, init) => {
             sentBody = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
@@ -59,9 +59,9 @@ describe('Placement World screening call flow (SP-11)', () => {
             fetchImpl: fakeFetch,
         });
         expect(ok).toEqual({ ok: true, requestUuid: 'plivo-req-123' });
-        expect(sentBody?.from).toBe('918065522006');
-        expect(sentBody?.to).toBe('917384273605');
-        expect(PLACEMENT_WORLD_PLIVO_CALLER_ID).toBe('+918065522006');
+        expect(sentBody?.from).toBe('919800000206');
+        expect(sentBody?.to).toBe('919800000101');
+        expect(PLACEMENT_WORLD_PLIVO_CALLER_ID).toBe('+919800000206');
     });
 
     it('signs and delivers structured screening results by webhook', async () => {

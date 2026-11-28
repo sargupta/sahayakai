@@ -1,8 +1,8 @@
-# SP-17: Carrier Benchmark Script, Scoring Table & Vendor Comparison
+﻿# SP-17: Carrier Benchmark Script, Scoring Table & Vendor Comparison
 
 **Updated:** 2026-11-28  
-**Test Number:** `+91 7384273605` (test phone only)  
-**Target Carriers:** Exotel (`+91 80 4728 4463`), Vobiz (`VOBIZ_FROM_NUMBER`), Plivo (`+91 80 6552 2006`)
+**Test Number:** `$RIYA_REAL_TEST_NUMBER` (test phone only)  
+**Target Carriers:** Exotel (`$EXOTEL_CALLER_ID`), Vobiz (`VOBIZ_FROM_NUMBER`), Plivo (`$PLACEMENT_WORLD_PLIVO_CALLER_ID`)
 
 ---
 
@@ -27,12 +27,12 @@ Run from `sahayakai-main/` (never print or commit credentials; read from `.env.l
 
 ```powershell
 # Dry-run verification (no phone rings):
-node scripts/sampark/carrier-benchmark.mjs --carrier vobiz --runs 5 --to +917384273605 --dry-run
+node scripts/sampark/carrier-benchmark.mjs --carrier vobiz --runs 5 --to $RIYA_REAL_TEST_NUMBER --dry-run
 
-# Live 5-run benchmark (requires +917384273605 to be answered):
-node scripts/sampark/carrier-benchmark.mjs --carrier vobiz --runs 5 --to +917384273605
-node scripts/sampark/carrier-benchmark.mjs --carrier exotel --runs 5 --to +917384273605
-node scripts/sampark/carrier-benchmark.mjs --carrier plivo --runs 5 --to +917384273605
+# Live 5-run benchmark (requires $RIYA_REAL_TEST_NUMBER to be answered):
+node scripts/sampark/carrier-benchmark.mjs --carrier vobiz --runs 5 --to $RIYA_REAL_TEST_NUMBER
+node scripts/sampark/carrier-benchmark.mjs --carrier exotel --runs 5 --to $RIYA_REAL_TEST_NUMBER
+node scripts/sampark/carrier-benchmark.mjs --carrier plivo --runs 5 --to $RIYA_REAL_TEST_NUMBER
 ```
 
 ---
@@ -70,4 +70,4 @@ node scripts/sampark/carrier-benchmark.mjs --carrier plivo --runs 5 --to +917384
 | **Audio Quality Assessment** | Baseline clean PSTN voice | Smooth with 100 ms batching | Degraded by μ-law↔PCM16 round-trip & mid-turn zero-padding |
 | **Webhook Security & Quirk Risk** | Custom token + `keepCallAlive` + REST hangup | Plivo V3 HMAC signature + REST hangup | No webhook HMAC (URL token only); drops URL query params; `Duration` null on AgentStream |
 | **Cost / Minute** | *fill from Vobiz billing* | *fill from Plivo billing* | *fill from Exotel billing* |
-| **Recommendation** | Primary candidate for AtithiVani & Sampark | Required for Placement World (`+91 80 6552 2006`) | Hold for general rollout until P1 codec/flush fixes verify cleanly |
+| **Recommendation** | Primary candidate for AtithiVani & Sampark | Required for Placement World (`$PLACEMENT_WORLD_PLIVO_CALLER_ID`) | Hold for general rollout until P1 codec/flush fixes verify cleanly |

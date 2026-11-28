@@ -1,7 +1,7 @@
-# AtithiVani — Post-Stay Feedback Call Specification (SP-10)
+﻿# AtithiVani — Post-Stay Feedback Call Specification (SP-10)
 
 **Updated:** 2026-11-28  
-**Status:** Spec + isolated Sampark module (`src/lib/sampark/atithivani/`) implemented. Pending live test calls on `+91 7384273605` and production deployment.
+**Status:** Spec + isolated Sampark module (`src/lib/sampark/atithivani/`) implemented. Pending live test calls on `$RIYA_REAL_TEST_NUMBER` and production deployment.
 
 ---
 
@@ -22,7 +22,7 @@ AtithiVani hotel guest feedback calls are **strictly separate** from Sampark's s
 | **First-call deadline** | Within **12 hours** of checkout (`checkedOutAt`) | If `attemptCount === 0` and elapsed > 12h (or next `09:00 IST` opening falls past 12h), block (`checkout_window_expired`) |
 | **Attempt cap** | **At most 2 calls** per guest after checkout | `attemptCount >= 2` → block (`max_attempts_reached`) |
 | **Opt-out** | Respects guest / number opt-out | `optedOut === true` → block (`suppressed`) |
-| **Test mode safety** | Test phone only (`+917384273605`) until live dial enabled | Non-test numbers blocked when `testMode === true` |
+| **Test mode safety** | Test phone only (`$RIYA_REAL_TEST_NUMBER`) until live dial enabled | Non-test numbers blocked when `testMode === true` |
 
 ---
 

@@ -5,7 +5,7 @@
  *   1. Calling window: 09:00–20:00 IST (`ATITHI_START_HOUR` .. `ATITHI_END_HOUR`).
  *   2. First call must start within 12 hours of checkout (`ATITHI_FIRST_CALL_MAX_HOURS`).
  *   3. At most 2 calls per guest after checkout (`ATITHI_MAX_ATTEMPTS`).
- *   4. Respects opt-out suppression and test-phone allow-listing (`+917384273605`).
+ *   4. Respects opt-out suppression and test-phone allow-listing (`RIYA_REAL_TEST_NUMBER`).
  */
 
 import { addDays, istInstant, istParts } from '@/lib/sampark/policy/ist';
@@ -16,7 +16,8 @@ export const ATITHI_START_HOUR = 9;
 export const ATITHI_END_HOUR = 20;
 export const ATITHI_FIRST_CALL_MAX_HOURS = 12;
 export const ATITHI_MAX_ATTEMPTS = 2;
-export const ATITHI_DEFAULT_TEST_PHONE = '+917384273605';
+/** Defaults to env RIYA_REAL_TEST_NUMBER or synthetic 9800000xxx test range (never commit real numbers). */
+export const ATITHI_DEFAULT_TEST_PHONE = process.env.RIYA_REAL_TEST_NUMBER?.trim() || '+919800000101';
 
 const E164_INDIAN_OR_INTL = /^\+[1-9]\d{9,14}$/;
 

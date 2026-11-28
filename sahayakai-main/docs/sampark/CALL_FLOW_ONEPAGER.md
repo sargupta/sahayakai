@@ -1,4 +1,4 @@
-# SamparkAI Call Flow — Unified Architecture & Lifecycle Diagrams
+﻿# SamparkAI Call Flow — Unified Architecture & Lifecycle Diagrams
 
 **Updated:** 2026-11-28  
 **Scope:** End-to-end call flows across **Sampark School Calling**, **AtithiVani Post-Stay**, and **Placement World Screening**, spanning `sahayakai-main` (Next.js) + `sahayakai-agents` (Python bridge) + **Vobiz | Plivo | Exotel | ElevenLabs**.
@@ -12,12 +12,12 @@ flowchart TD
     subgraph TRIG ["1. Triggers & Isolated Policy Gates"]
         TS["Sampark School (Campaign / Teacher / API v1)"] --> GS["evaluateGate (15 rules: consent, suppression, 10:00-19:00 IST, cap 4/30d)"]
         TA["AtithiVani Checkout (SP-10)"] --> GA["evaluateAtithiPolicy (09:00-20:00 IST, <=12h first call, max 2 calls, opt-out)"]
-        TP["Placement World Candidate (SP-11)"] --> GP["placePlacementWorldCall (test-phone guard + Plivo caller ID +918065522006)"]
+        TP["Placement World Candidate (SP-11)"] --> GP["placePlacementWorldCall (test-phone guard + Plivo caller ID $PLACEMENT_WORLD_PLIVO_CALLER_ID)"]
     end
 
     GS -->|Allowed| SEL{"Carrier / AI Path"}
     GA -->|Allowed| SEL
-    GP -->|"Plivo +918065522006"| PL["Plivo REST /Call/ (mu-law 8kHz, 100ms batch)"]
+    GP -->|"Plivo $PLACEMENT_WORLD_PLIVO_CALLER_ID"| PL["Plivo REST /Call/ (mu-law 8kHz, 100ms batch)"]
 
     SEL -->|"Vobiz"| VB["Vobiz REST /Call/ (mu-law 8kHz, 20ms frame)"]
     SEL -->|"Plivo"| PL

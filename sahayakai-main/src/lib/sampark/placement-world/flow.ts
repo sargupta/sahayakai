@@ -1,7 +1,8 @@
 /**
  * Placement World outbound Plivo caller & signed webhook delivery (SP-11).
  *
- * Caller ID is pinned to `+918065522006` (`918065522006` in Plivo format).
+ * Caller ID is read from `PLACEMENT_WORLD_PLIVO_CALLER_ID` (or `plivoConfig.fromNumber`);
+ * synthetic `+919800000206` is the fallback for unit tests only so no real number is committed.
  */
 
 import crypto from 'node:crypto';
@@ -15,8 +16,10 @@ import type {
     PlacementWebhookPayload,
 } from './types';
 
-export const PLACEMENT_WORLD_PLIVO_CALLER_ID = '+918065522006';
-export const PLACEMENT_WORLD_TEST_PHONE = '+917384273605';
+export const PLACEMENT_WORLD_PLIVO_CALLER_ID =
+    process.env.PLACEMENT_WORLD_PLIVO_CALLER_ID?.trim() || '+919800000206';
+export const PLACEMENT_WORLD_TEST_PHONE =
+    process.env.RIYA_REAL_TEST_NUMBER?.trim() || '+919800000101';
 
 export interface PlacePlacementCallInput {
     plivoConfig: Omit<PlivoConfig, 'fromNumber'> & { fromNumber?: string };
@@ -45,11 +48,12 @@ export async function placePlacementWorldCall(input: PlacePlacementCallInput): P
         return { ok: false, failure: { category: 'invalid_destination' } };
     }
 
+    const fromNumber = input.plivoConfig.fromNumber?.trim() || PLACEMENT_WORLD_PLIVO_CALLER_ID;
     const cfg: PlivoConfig = {
         authId: input.plivoConfig.authId,
         authToken: input.plivoConfig.authToken,
         baseUrl: input.plivoConfig.baseUrl,
-        fromNumber: PLACEMENT_WORLD_PLIVO_CALLER_ID,
+        fromNumber,
     };
 
     return placePlivoCall(
@@ -69,6 +73,7 @@ export async function placePlacementWorldCall(input: PlacePlacementCallInput): P
 export function buildPlacementWebhookPayload(params: {
     callId: string;
     carrierCallId?: string | null;
+    callerId?: string;
     candidate: PlacementCandidate;
     status: PlacementOutcomeStatus;
     answers?: Partial<PlacementScreeningAnswers>;
@@ -80,7 +85,7 @@ export function buildPlacementWebhookPayload(params: {
         version: 1,
         callId: params.callId,
         carrierCallId: params.carrierCallId ?? null,
-        callerId: PLACEMENT_WORLD_PLIVO_CALLER_ID,
+        callerId: params.callerId?.trim() || PLACEMENT_WORLD_PLIVO_CALLER_ID,
         candidateId: params.candidate.candidateId,
         language: params.candidate.language,
         status: params.status,

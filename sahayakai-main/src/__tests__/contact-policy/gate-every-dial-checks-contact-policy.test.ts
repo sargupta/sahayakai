@@ -66,6 +66,8 @@ const ALLOWED: Record<string, string> = {
     'app/api/demo-call/route.ts':
         'Public "Hear the Call" demo: rings the VISITOR\'S OWN number once, at their request, with their consent, behind ' +
         'DEMO_CALL_ENABLED, Turnstile and per-number cooldowns. Not a school-to-parent call. Flagged for review in the Step 2 PR.',
+    'lib/sampark/placement-world/flow.ts':
+        'Placement World candidate screening calls (SP-11): not school-to-parent outreach; enforces test-phone allow-list and Plivo caller ID from config/env.',
 };
 
 function walk(dir: string, out: string[] = []): string[] {

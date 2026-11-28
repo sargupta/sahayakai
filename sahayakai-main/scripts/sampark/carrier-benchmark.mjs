@@ -3,11 +3,11 @@
  * SP-17 / SP-18 Carrier Benchmark Runner (Vobiz, Plivo, Exotel).
  *
  * Reads credentials strictly from environment variables (or .env.local), never prints secrets,
- * enforces a destination allow-list (default +917384273605), and outputs a Markdown scoring row
+ * enforces a destination allow-list (from RIYA_REAL_TEST_NUMBER or --to), and outputs a Markdown scoring row
  * per run with setup latency, call SID, status, and recording URL slot.
  *
  * Usage:
- *   node scripts/sampark/carrier-benchmark.mjs --carrier vobiz --runs 5 --to +917384273605 --dry-run
+ *   node scripts/sampark/carrier-benchmark.mjs --carrier vobiz --runs 5 --to +919800000101 --dry-run
  */
 
 import fs from 'node:fs';
@@ -16,7 +16,7 @@ import path from 'node:path';
 const ALLOWED_CARRIERS = new Set(['vobiz', 'plivo', 'exotel']);
 
 function parseArgs(argv) {
-    const out = { carrier: 'vobiz', runs: 5, to: '+917384273605', dryRun: false, delayMs: 3000 };
+    const out = { carrier: 'vobiz', runs: 5, to: process.env.RIYA_REAL_TEST_NUMBER || '+919800000101', dryRun: false, delayMs: 3000 };
     for (let i = 0; i < argv.length; i += 1) {
         const a = argv[i];
         if (a === '--carrier' && argv[i + 1]) out.carrier = argv[++i].toLowerCase();

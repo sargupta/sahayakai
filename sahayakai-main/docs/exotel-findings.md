@@ -1,4 +1,4 @@
-# Exotel Technical Findings & Remediation Guide
+﻿# Exotel Technical Findings & Remediation Guide
 
 **Updated:** 2026-11-28  
 **Scope:** `sahayakai-main/src/lib/exotel/client.ts`, `sahayakai-main/src/lib/sampark/conversation/exotel-provider.ts`, `sahayakai-agents/src/sahayakai_agents/telephony/{exotel_frames.py,carriers.py,audio.py,router.py}`
@@ -27,7 +27,7 @@
 - `EXOTEL_SUBDOMAIN=api.exotel.com` routes through Singapore, while `sahayakai-riya-bridge` (`-el`) runs in `asia-south1` (Mumbai), adding cross-region RTT compared to `api.in.exotel.com` or `asia-southeast1`.
 
 ### 2.4 Exotel API Quirks to Preserve
-- `From` = callee number; `CallerId` = ExoPhone (`08047284463`). Swapping them dials the ExoPhone itself.
+- `From` = callee number; `CallerId` = ExoPhone (`$EXOTEL_CALLER_ID`). Swapping them dials the ExoPhone itself.
 - `Duration` is `null` on AgentStream calls; `exotelOutcome` must read `Call.Status` (`completed` vs `busy` / `no-answer` / `failed` / `canceled`).
 - Exotel returns `To: false` and `AnsweredBy: null` in some payloads and does not HMAC-sign webhooks—callback auth relies on per-call HMAC tokens (`mintVobizToken`).
 
