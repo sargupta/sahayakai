@@ -58,8 +58,23 @@ steps:
   - id: test
     name: node:20
     dir: sahayakai-main
-    entrypoint: npm
-    args: ['test', '--', '--ci', '--coverage', '--maxWorkers=2']
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        BASE="${_BASE_BRANCH}"
+        REPO=https://github.com/sargupta/sahayakai.git
+        REF="+refs/heads/$$BASE:refs/remotes/origin/$$BASE"
+        if [ -n "${_PR_NUMBER}" ] && [ -n "$$BASE" ] && \
+           { git fetch --no-tags --unshallow "$$REPO" "$$REF" 2>/dev/null || \
+             git fetch --no-tags "$$REPO" "$$REF" 2>/dev/null; }; then
+          echo "PR #${_PR_NUMBER}: tests related to files changed vs $$BASE (no coverage)"
+          npm test -- --ci --maxWorkers=2 --changedSince="origin/$$BASE" --passWithNoTests
+        else
+          echo "Full suite + coverage thresholds"
+          npm test -- --ci --coverage --maxWorkers=2
+        fi
     waitFor: [typecheck, lint]
 
   # ── 5. Production build ───────────────────────────────────────────────────
@@ -82,6 +97,7 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  substitutionOption: ALLOW_LOOSE
 
 # Generous but bounded: the suite is ~2,200 tests and a full Next build.
 timeout: 3600s
