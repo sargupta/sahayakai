@@ -18,6 +18,7 @@ from sahayakai_agents.telephony.audio import pcm16_to_ulaw, ulaw_to_pcm16
 from sahayakai_agents.telephony.carriers import CARRIERS, PlivoStyleCodec, hangup_call, new_codec
 from sahayakai_agents.telephony.exotel_frames import (
     EXOTEL_CHUNK_MULTIPLE,
+    EXOTEL_IDLE_FLUSH_TICKS,
     EXOTEL_MIN_CHUNK_BYTES,
     ExotelCodec,
     parse_exotel_inbound,
@@ -103,6 +104,22 @@ class TestExotelOutbound:
         codec.play("S1", FRAME)
         assert json.loads(codec.clear("S1")) == {"event": "clear", "stream_sid": "S1"}
         assert codec.flush("S1") is None
+
+    def test_flush_idle_waits_for_threshold_before_padding_short_tail(self) -> None:
+        codec = ExotelCodec()
+        assert codec.play("S1", FRAME) is None
+        for _ in range(EXOTEL_IDLE_FLUSH_TICKS - 1):
+            assert codec.flush_idle("S1") is None
+        msg = json.loads(codec.flush_idle("S1") or "{}")
+        pcm = base64.b64decode(msg["media"]["payload"])
+        assert len(pcm) == EXOTEL_MIN_CHUNK_BYTES
+
+    def test_play_pcm8k_le_bypasses_mulaw_round_trip(self) -> None:
+        codec = ExotelCodec()
+        samples = [1234, -2345, 5678, -6789] * 400  # 1600 samples = 3200 bytes = 200 ms
+        raw = _pcm_le(samples)
+        msg = json.loads(codec.play_pcm8k_le("S1", raw) or "{}")
+        assert base64.b64decode(msg["media"]["payload"]) == raw
 
 
 class TestPlivoFrames:

@@ -21,7 +21,9 @@ from sahayakai_agents.telephony.audio import (
     ULAW_SILENCE,
     downsample_24k_to_8k,
     pcm16_to_ulaw,
+    pcm24k_to_pcm8k_le,
     pcm24k_to_ulaw8k,
+    pcm8k_le_to_pcm16k,
     ulaw8k_to_pcm16k,
     ulaw_to_pcm16,
     upsample_8k_to_16k,
@@ -166,3 +168,11 @@ class TestWireHelpers:
         _, state = pcm24k_to_ulaw8k(b"\x00\x01" * 480)
         assert len(state.tail) == 30  # taps - 1
         assert state.phase in (0, 1, 2)
+
+    def test_direct_pcm16_helpers_preserve_expected_lengths_without_ulaw(self) -> None:
+        # 20 ms at 8 kHz PCM16 LE (320 bytes) -> 16 kHz PCM16 LE (640 bytes)
+        assert len(pcm8k_le_to_pcm16k(b"\x01\x00" * 160)) == 640
+        # 24 kHz PCM16 LE -> 8 kHz PCM16 LE (even byte length, streamed state)
+        pcm8k, state = pcm24k_to_pcm8k_le(b"\x00\x01" * 480)
+        assert len(pcm8k) % 2 == 0 and len(pcm8k) > 0
+        assert len(state.tail) == 30

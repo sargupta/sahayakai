@@ -27,6 +27,7 @@ whole reason it is not a three-line function.
 from __future__ import annotations
 
 import math
+import sys
 from array import array
 
 __all__ = [
@@ -38,6 +39,8 @@ __all__ = [
     "DecimatorState",
     "ulaw8k_to_pcm16k",
     "pcm24k_to_ulaw8k",
+    "pcm8k_le_to_pcm16k",
+    "pcm24k_to_pcm8k_le",
 ]
 
 _BIAS = 0x84
@@ -239,3 +242,30 @@ def pcm24k_to_ulaw8k(
     samples.frombytes(pcm[: len(pcm) - (len(pcm) % 2)])
     decimated, new_state = downsample_24k_to_8k(samples, state)
     return pcm16_to_ulaw(decimated), new_state
+
+
+def pcm8k_le_to_pcm16k(payload: bytes) -> bytes:
+    """8 kHz PCM16 LE inbound (Exotel) -> 16 kHz PCM16 LE without mu-law loss."""
+    samples = array("h")
+    usable = len(payload) - (len(payload) % 2)
+    samples.frombytes(payload[:usable])
+    if sys.byteorder == "big":
+        samples.byteswap()
+    out = upsample_8k_to_16k(samples)
+    if sys.byteorder == "big":
+        out.byteswap()
+    return out.tobytes()
+
+
+def pcm24k_to_pcm8k_le(
+    pcm: bytes, state: DecimatorState | None = None
+) -> tuple[bytes, DecimatorState]:
+    """24 kHz PCM16 LE -> 8 kHz PCM16 LE directly, avoiding mu-law quantization."""
+    samples = array("h")
+    samples.frombytes(pcm[: len(pcm) - (len(pcm) % 2)])
+    if sys.byteorder == "big":
+        samples.byteswap()
+    decimated, new_state = downsample_24k_to_8k(samples, state)
+    if sys.byteorder == "big":
+        decimated.byteswap()
+    return decimated.tobytes(), new_state
