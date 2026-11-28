@@ -4027,9 +4027,10 @@ async def _pace_outbound(bridge: _Bridge) -> None:
                     msg = bridge.codec.play(bridge.stream_id, chunk)
                     bridge.bytes_down += len(chunk)
                 else:
-                    # Nothing to play this tick: a carrier that batches audio (Exotel) sends
-                    # the tail it is holding, so the end of a sentence is never stuck.
-                    msg = bridge.codec.flush(bridge.stream_id)
+                    # Nothing to play this tick: a carrier that batches audio (Exotel) waits
+                    # briefly before zero-padding a partial chunk so micro-gaps don't stutter.
+                    flush_idle = getattr(bridge.codec, "flush_idle", None)
+                    msg = flush_idle(bridge.stream_id) if callable(flush_idle) else bridge.codec.flush(bridge.stream_id)
                 if msg is not None:
                     await bridge.ws.send_text(msg)
             except Exception:  # noqa: BLE001 — the carrier is gone; the handler decides what that means

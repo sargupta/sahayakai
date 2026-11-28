@@ -42,6 +42,8 @@ __all__ = [
 EXOTEL_MIN_CHUNK_BYTES = 3200
 #: Outbound chunks must be a multiple of this many bytes (20 ms at 8 kHz PCM16).
 EXOTEL_CHUNK_MULTIPLE = 320
+#: Idle empty pacer ticks (~100 ms) before padding and flushing a partial < 200 ms tail.
+EXOTEL_IDLE_FLUSH_TICKS = 5
 
 _SILENCE_PCM_SAMPLE = b"\x00\x00"
 
@@ -118,6 +120,7 @@ class ExotelCodec:
 
     def __init__(self) -> None:
         self._pending = bytearray()
+        self._idle_ticks = 0
 
     @staticmethod
     def parse(raw: str | bytes) -> InboundFrame:
@@ -128,9 +131,7 @@ class ExotelCodec:
         msg = {"event": "media", "stream_sid": stream_id, "media": {"payload": payload}}
         return json.dumps(msg)
 
-    def play(self, stream_id: str, ulaw: bytes) -> str | None:
-        """Queue one mu-law frame; return a media message once a full Exotel chunk is ready."""
-        self._pending.extend(_samples_to_pcm_le(ulaw_to_pcm16(ulaw)))
+    def _emit_ready_chunks(self, stream_id: str) -> str | None:
         if len(self._pending) < EXOTEL_MIN_CHUNK_BYTES:
             return None
         size = len(self._pending) - (len(self._pending) % EXOTEL_CHUNK_MULTIPLE)
@@ -138,8 +139,21 @@ class ExotelCodec:
         del self._pending[:size]
         return self._media(stream_id, chunk)
 
+    def play(self, stream_id: str, ulaw: bytes) -> str | None:
+        """Queue one mu-law frame; return a media message once a full Exotel chunk is ready."""
+        self._idle_ticks = 0
+        self._pending.extend(_samples_to_pcm_le(ulaw_to_pcm16(ulaw)))
+        return self._emit_ready_chunks(stream_id)
+
+    def play_pcm8k_le(self, stream_id: str, pcm8k_le: bytes) -> str | None:
+        """Queue 8 kHz PCM16 LE directly, skipping mu-law quantization round-trip."""
+        self._idle_ticks = 0
+        self._pending.extend(pcm8k_le)
+        return self._emit_ready_chunks(stream_id)
+
     def flush(self, stream_id: str) -> str | None:
         """Send what is held, padded with silence to Exotel's minimum chunk (utterance end)."""
+        self._idle_ticks = 0
         if not self._pending:
             return None
         chunk = bytes(self._pending)
@@ -151,7 +165,18 @@ class ExotelCodec:
             chunk += b"\x00" * (EXOTEL_CHUNK_MULTIPLE - remainder)
         return self._media(stream_id, chunk)
 
+    def flush_idle(self, stream_id: str) -> str | None:
+        """On empty pacer ticks, wait EXOTEL_IDLE_FLUSH_TICKS before zero-padding a short tail."""
+        if not self._pending:
+            self._idle_ticks = 0
+            return None
+        self._idle_ticks += 1
+        if len(self._pending) < EXOTEL_MIN_CHUNK_BYTES and self._idle_ticks < EXOTEL_IDLE_FLUSH_TICKS:
+            return None
+        return self.flush(stream_id)
+
     def clear(self, stream_id: str) -> str:
         """Barge-in: drop what we hold AND what Exotel has buffered."""
         self._pending.clear()
+        self._idle_ticks = 0
         return json.dumps({"event": "clear", "stream_sid": stream_id})
