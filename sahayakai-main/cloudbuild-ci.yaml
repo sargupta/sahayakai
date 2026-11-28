@@ -55,7 +55,7 @@ steps:
   # payments / auth / moderation / billing-reconciliation). Jest exits
   # non-zero when a threshold is missed, so the gate needs no extra logic —
   # it only needs to not swallow the exit code.
-   - id: test
+  - id: test
     name: node:20
     dir: sahayakai-main
     entrypoint: bash
@@ -64,11 +64,11 @@ steps:
       - |
         set -euo pipefail
         BASE="${_BASE_BRANCH}"
+        REPO=https://github.com/sargupta/sahayakai.git
+        REF="+refs/heads/$$BASE:refs/remotes/origin/$$BASE"
         if [ -n "${_PR_NUMBER}" ] && [ -n "$$BASE" ] && \
-           git fetch --no-tags --unshallow https://github.com/sargupta/sahayakai.git \
-             "+refs/heads/$$BASE:refs/remotes/origin/$$BASE" 2>/dev/null || \
-           git fetch --no-tags https://github.com/sargupta/sahayakai.git \
-             "+refs/heads/$$BASE:refs/remotes/origin/$$BASE" 2>/dev/null; then
+           { git fetch --no-tags --unshallow "$$REPO" "$$REF" 2>/dev/null || \
+             git fetch --no-tags "$$REPO" "$$REF" 2>/dev/null; }; then
           echo "PR #${_PR_NUMBER}: tests related to files changed vs $$BASE (no coverage)"
           npm test -- --ci --maxWorkers=2 --changedSince="origin/$$BASE" --passWithNoTests
         else
