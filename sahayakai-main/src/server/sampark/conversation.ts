@@ -68,6 +68,7 @@ import { readExotelRiyaConfig, startExotelRiyaCall, type ExotelRiyaConfig } from
 import { getPlivoCall, plivoRingFailure } from '@/lib/plivo/client';
 import { exotelOutcome, getExotelCall } from '@/lib/exotel/client';
 import { MAX_WEBHOOK_BYTES, parseRiyaWebhook, verifyElevenLabsSignature, type RiyaWebhookEvent } from '@/lib/sampark/conversation/webhook';
+import { forwardResponse, forwardWebhook, isAthithiEvent, productContextOf, readForwardConfig } from '@/lib/sampark/conversation/forward';
 import { hashId } from '@/lib/sampark/intents';
 import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
@@ -1252,7 +1253,7 @@ async function settle(deps: RiyaDeps, call: ConversationCall): Promise<void> {
 
 export interface WebhookOutcome {
     status: 200 | 400 | 401 | 404 | 413 | 503;
-    body: { ok: boolean; error?: string };
+    body: { ok: boolean; error?: string; forwarded?: boolean };
 }
 
 /**
@@ -1275,6 +1276,23 @@ export async function handleRiyaWebhook(deps: RiyaDeps, rawBody: string, signatu
 
     const cfg = readElevenLabsConfig(env);
     if (!cfg.ok) return { status: 503, body: { ok: false, error: 'unconfigured' } };
+
+    // The unified agent's one webhook carries Athithi Vani's hotel calls too: pass those on,
+    // unchanged and still signed, instead of dropping them as "not ours" (lib/.../forward.ts).
+    const forward = readForwardConfig(env);
+    if (forward) {
+        const productContext = productContextOf(rawBody);
+        const athithi = isAthithiEvent({ productContext, agentId: event.agentId, ourAgentId: cfg.config.agentId }, forward);
+        if (athithi) {
+            const outcome = await forwardWebhook(forward, rawBody, signatureHeader ?? '', { fetchImpl: deps.http?.fetchImpl });
+            const fields = { kind: event.kind, productContext, httpStatus: outcome.httpStatus };
+            if (outcome.delivered) logger.info('Riya webhook forwarded to Athithi Vani', LOG, fields);
+            else if (outcome.permanent) logger.error('Athithi Vani refused a forwarded webhook', undefined, LOG, fields);
+            else logger.warn('Athithi Vani webhook forward failed; ElevenLabs will retry', LOG, { ...fields, reason: outcome.reason });
+            return forwardResponse(outcome);
+        }
+    }
+
     if (event.agentId !== cfg.config.agentId) {
         // Not our agent (another agent on the same workspace webhook): accept so it is not retried, change nothing.
         logger.info('Riya webhook for another agent ignored', LOG, {});
